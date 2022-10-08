@@ -10,13 +10,17 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:argon.helloWorld"
+    "*"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [{
-      "command": "argon.helloWorld",
-      "title": "Hello World"
+      "command": "argon.run",
+      "title": "Run server"
+    },
+    {
+      "command": "argon.stop",
+      "title": "Stop server"
     }]
   },
   "scripts": {
