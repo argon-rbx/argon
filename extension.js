@@ -1,25 +1,19 @@
-const vscode = require('vscode');
-const server = require('./js/server.js')
+const vscode = require('vscode')
+const main = require('./js/main.js')
+const config = require('./config/settings.js')
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 async function activate(context) {
-	let runCommand = vscode.commands.registerCommand('argon.run', function () {
-		server.run()
-		vscode.window.showInformationMessage('Server running!');
-	});
-	
-	let stopCommand = vscode.commands.registerCommand('argon.stop', function () {
-		server.stop()
-		vscode.window.showInformationMessage('Server stopped!');
-	});
+	let runCommand = vscode.commands.registerCommand('argon.run', main.run)
+	let stopCommand = vscode.commands.registerCommand('argon.stop', main.stop)
 
-	//temp
-	server.run()
+	context.subscriptions.push(runCommand, stopCommand)
 
-	context.subscriptions.push(runCommand);
-	context.subscriptions.push(stopCommand);
+	if (config.autoRun) {
+		main.run()
+	}
 }
 
 function deactivate() {}
