@@ -36,6 +36,8 @@ function onCreate(uri) {
         }
     }
 
+    parent = parent.slice(vscode.workspace.name.length + 1)
+
     events.onCreate(uri.ext, uri.name, parent)
 }
 

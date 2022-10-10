@@ -2,6 +2,10 @@ const types = require('../config/types')
 
 let queue = []
 
+function push(action, type, name, parent) {
+    queue.push({Action: action, Type: type, Name: name, Parent: parent})
+}
+
 function onCreate(ext, name, parent) {
     if (ext == '.lua') {
         let type = name.split('.')
@@ -10,14 +14,14 @@ function onCreate(ext, name, parent) {
         switch (type) {
             case 'client':
                 name = name.replace('.client', '')
-                queue.push({type: type, name: name, parent: parent})
+                push('create', type, name, parent)
                 break
             case 'server':
                 name = name.replace('.server', '')
-                queue.push({type: type, name: name, parent: parent})
+                push('create', type, name, parent)
                 break
             default:
-                queue.push({type: 'module', name: name, parent: parent})
+                push('create', 'module', name, parent)
                 break
         }
 
@@ -25,7 +29,10 @@ function onCreate(ext, name, parent) {
 
     if (types.includes(ext)) {
         ext = ext.substring(1)
-        queue.push({type: ext, name: name, parent: parent})
+        push('create', ext, name, parent)
+    }
+    else if (ext == '') {
+        push('create', 'folder', name, parent)
     }
 }
 

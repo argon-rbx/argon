@@ -1,16 +1,16 @@
+const vscode = require('vscode')
 const messages = require('../config/messages')
-const window = require('vscode').window
 
 function showMessage(message, mode) {
     switch (mode){
         case 1:
-            window.showWarningMessage(messages[message])
+            vscode.window.showWarningMessage(messages[message])
             break
         case 2:
-            window.showErrorMessage(messages[message])
+            vscode.window.showErrorMessage(messages[message])
             break
         default:
-            window.showInformationMessage(messages[message])
+            vscode.window.showInformationMessage(messages[message])
             break
     }
 }
