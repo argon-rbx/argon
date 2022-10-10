@@ -24,6 +24,7 @@ function onCreate(name, ext) {
     }
 
     if (types.includes(ext)) {
+        ext = ext.substring(1)
         queue.push({type: ext, name: name})
     }
 }
@@ -37,6 +38,7 @@ function onDelete() {
 }
 
 module.exports = {
+    queue,
     onCreate,
     onChange,
     onDelete

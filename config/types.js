@@ -1,6 +1,6 @@
 module.exports = [
-    '.ServerStorage',
-    '.Workspace',
-    '.CylinderHandleAdornment',
-    '.ClickDetector'
+    'ServerStorage',
+    'Workspace',
+    'CylinderHandleAdornment',
+    'ClickDetector'
 ]

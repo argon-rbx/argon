@@ -1,11 +1,12 @@
 const vscode = require('vscode')
 const files = require('./files')
+const server = require('./server')
 const messageHandler = require('./messageHandler')
 
 function run() {
     if (vscode.workspace.name !== undefined) {
         files.run()
-
+        server.run()
         messageHandler.showMessage('main1')
     }
     else {
@@ -16,6 +17,7 @@ function run() {
 function stop()
 {
     files.stop()
+    server.stop()
     messageHandler.showMessage('main3')
 }
 
