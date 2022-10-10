@@ -24,12 +24,10 @@ function requestListener(request, response) {
 
 function run() {
     localServer.listen(PORT, HOST);
-    vscode.window.showInformationMessage('Server running!')
 }
 
 function stop() {
     localServer.close()
-    vscode.window.showInformationMessage('Server stopped!')
 }
 
 module.exports = {

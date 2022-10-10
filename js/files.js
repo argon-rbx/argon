@@ -3,12 +3,40 @@ const fs = require('fs')
 const path = require('path')
 const events = require('./events')
 
-let dir = null
 let watcher = null
 
 function onCreate(uri) {
-    uri = path.parse(uri.fsPath)
-    events.onCreate(uri.name, uri.ext)
+    uri = path.parse(uri.files[0].fsPath)
+
+    let root = uri.dir
+    let dir = root.split('\\')
+    let sameName = 0
+    let parent = ''
+
+    for (let i = dir.length - 1; i >= 0; i--) {
+        if (i != dir.length - 1) {
+            parent = dir[i] + '.' + parent
+        }
+        else {
+            parent = dir[i]
+        }
+
+        if (dir[i] == vscode.workspace.name) {
+            let len = root.split(dir[i]).length - 1
+
+            if (len > 1 && sameName == 0)  {
+                sameName = len - 1
+            }
+            else if (sameName > 1) {
+                sameName--
+            }
+            else {
+                break
+            }
+        }
+    }
+
+    events.onCreate(uri.ext, uri.name, parent)
 }
 
 function onChange() {
@@ -19,21 +47,8 @@ function onDelete() {
     events.onDelete()
 }
 
-function verify() {
-    dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
-
-    if (fs.existsSync(dir) == false) {
-        fs.mkdirSync(dir)
-    }
-}
-
 function run() {
-    verify()
-
-    watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(dir, '*'))
-    watcher.onDidCreate(onCreate)
-    watcher.onDidChange(onChange)
-    watcher.onDidDelete(onDelete)
+    vscode.workspace.onDidCreateFiles(onCreate)
 }
 
 function stop() {

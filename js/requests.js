@@ -1,8 +1,9 @@
 const events = require('./events')
 
 function getSync() {
-    console.log(events.queue);
-    return JSON.stringify(events.queue)
+    let json = JSON.stringify(events.queue)
+    events.queue.length = 0
+    return json
 }
 
 module.exports = {
