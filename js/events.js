@@ -2,10 +2,6 @@ const types = require('../config/types')
 
 let queue = []
 
-function push(action, type, name, parent) {
-    queue.push({Action: action, Type: type, Name: name, Parent: parent})
-}
-
 function onCreate(ext, name, parent) {
     if (ext == '.lua') {
         let type = name.split('.')
@@ -14,14 +10,14 @@ function onCreate(ext, name, parent) {
         switch (type) {
             case 'client':
                 name = name.replace('.client', '')
-                push('create', type, name, parent)
+                queue.push({Action: 'create', Type: type, Name: name, Parent: parent})
                 break
             case 'server':
                 name = name.replace('.server', '')
-                push('create', type, name, parent)
+                queue.push({Action: 'create', Type: type, Name: name, Parent: parent})
                 break
             default:
-                push('create', 'module', name, parent)
+                queue.push({Action: 'create', Type: 'module', Name: name, Parent: parent})
                 break
         }
 
@@ -29,24 +25,25 @@ function onCreate(ext, name, parent) {
 
     if (types.includes(ext)) {
         ext = ext.substring(1)
-        push('create', ext, name, parent)
+        queue.push({Action: 'create', Type: ext, Name: name, Parent: parent})
     }
     else if (ext == '') {
-        push('create', 'folder', name, parent)
+        queue.push({Action: 'create', Type: 'folder', Name: name, Parent: parent})
     }
 }
 
-function onChange() {
-    console.log('file changed')
+function onSave(object, type, source) {
+    queue.push({Action: 'update', Type: type, Object: object, Source: source})
 }
 
-function onDelete() {
-    console.log('file deleted')
+function onDelete(object) {
+    console.log(object)
+    queue.push({Action: 'delete', Object: object})
 }
 
 module.exports = {
     queue,
     onCreate,
-    onChange,
+    onSave,
     onDelete
 }

@@ -3,14 +3,11 @@ const fs = require('fs')
 const path = require('path')
 const events = require('./events')
 
-let watcher = null
+let watchers = []
 
-function onCreate(uri) {
-    uri = path.parse(uri.files[0].fsPath)
-
-    let root = uri.dir
+function getParent(root) {
     let dir = root.split('\\')
-    let sameName = 0
+    let similarName = 0
     let parent = ''
 
     for (let i = dir.length - 1; i >= 0; i--) {
@@ -24,11 +21,11 @@ function onCreate(uri) {
         if (dir[i] == vscode.workspace.name) {
             let len = root.split(dir[i]).length - 1
 
-            if (len > 1 && sameName == 0)  {
-                sameName = len - 1
+            if (len > 1 && similarName == 0)  {
+                similarName = len - 1
             }
-            else if (sameName > 1) {
-                sameName--
+            else if (similarName > 1) {
+                similarName--
             }
             else {
                 break
@@ -37,24 +34,38 @@ function onCreate(uri) {
     }
 
     parent = parent.slice(vscode.workspace.name.length + 1)
-
-    events.onCreate(uri.ext, uri.name, parent)
+    return parent
 }
 
-function onChange() {
-    events.onChange()
+function onCreate(uri) {
+    uri = path.parse(uri.files[0].fsPath)
+    events.onCreate(uri.ext, uri.name, getParent(uri.dir))
 }
 
-function onDelete() {
-    events.onDelete()
+function onSave(uri) {
+    let source = uri.getText()
+    uri = path.parse(uri.fileName)
+
+    events.onSave(getParent(uri.dir) + '.' + uri.name, source)
+}
+
+function onDelete(uri) {
+    uri = path.parse(uri.files[0].fsPath)
+    events.onDelete(getParent(uri.dir) + '.' + uri.name)
 }
 
 function run() {
-    vscode.workspace.onDidCreateFiles(onCreate)
+    watchers.push(vscode.workspace.onDidCreateFiles(onCreate))
+    watchers.push(vscode.workspace.onDidSaveTextDocument(onSave))
+    watchers.push(vscode.workspace.onDidDeleteFiles(onDelete))
 }
 
 function stop() {
-    watcher.dispose()
+    for (let i = 0; i < watchers.length; i++) {
+        watchers[i].dispose()
+    }
+
+    watchers.length = 0
 }
 
 module.exports = {

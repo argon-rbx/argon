@@ -1,7 +1,7 @@
 local GuiHandler = require(script.GuiHandler)
 
 local toolbar = plugin:CreateToolbar("Dervex' utils")
-local button = toolbar:CreateButton('Argon', 'Show Argon UI', 'rbxassetid://4458901886')
+local button = toolbar:CreateButton('Argon', 'Show Argon UI', 'rbxassetid://11230142853')
 
 local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 500, 300, 250, 150)
 local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)

@@ -16,11 +16,15 @@
   "contributes": {
     "commands": [{
       "command": "argon.run",
-      "title": "Run server"
+      "title": "Run Argon"
     },
     {
       "command": "argon.stop",
-      "title": "Stop server"
+      "title": "Stop Argon"
+    },
+    {
+      "command": "argon.update",
+      "title": "Update class database"
     }]
   },
   "scripts": {
