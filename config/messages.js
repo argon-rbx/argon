@@ -1,9 +1,15 @@
 module.exports = {
-    main1: 'Argon is now running!',
-    main2: 'Please open workspace!',
-    main3: 'Argon stopped!',
-    main4: 'Error: Something went wrong!',
-    main5: 'Error: could not connect to Roblox servers!',
-    files1: 'Failed to create file!'
+    //Informations
+    argonRunning: 'Argon is now running!',
+    argonStopped: 'Argon stopped!',
+    databaseUpdated: 'Successfully updated class database',
 
+    //Warnings
+    openWorkspace: 'Please open workspace!',
+    updatingDatabase: 'Please wait database is updating!',
+
+    //Errors
+    error: 'Something went wrong!',
+    serverConnection: 'Could not connect to Roblox servers!',
+    fileFail: 'Failed to save the file'
 }

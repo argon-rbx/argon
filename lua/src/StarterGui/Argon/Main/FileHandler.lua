@@ -1,5 +1,3 @@
-local Data = require(script.Parent.Data)
-
 local function getInstance(parent)
     local lastParent = game
     parent = string.split(parent, '.')
@@ -14,17 +12,35 @@ end
 local fileHandler = {}
 
 function fileHandler.create(type, name, parent)
-    local object = Instance.new(Data.types[type])
-    object.Name = name
-    object.Parent = getInstance(parent)
+    local success, response = pcall(function()
+        local object = Instance.new(type)
+        object.Name = name
+        object.Parent = getInstance(parent)
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
 end
 
 function fileHandler.update(object, source)
-    getInstance(object).Source = source
+    local success, response = pcall(function()
+        getInstance(object).Source = source
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
 end
 
 function fileHandler.delete(object)
-    getInstance(object):Destroy()
+    local success, response = pcall(function()
+        getInstance(object):Destroy()
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
 end
 
 return fileHandler

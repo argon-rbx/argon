@@ -47,6 +47,13 @@ local connections = {}
 local debounce = false
 local state = 0
 
+local function fail(response)
+    action.Text = 'PROCEED'
+    info.Text = response
+    state = 2
+    debounce = false
+end
+
 local function connect()
     if not debounce then
         debounce = true
@@ -61,7 +68,7 @@ local function connect()
             local tween = TweenService:Create(loading, LOADING_TWEEN_INFO, {Rotation = -360})
             tween:Play()
 
-            local success, response = HttpHandler.connect(host, port)
+            local success, response = HttpHandler.connect(host, port, fail)
 
             action.Visible = true
             loading.Visible = false

@@ -1,4 +1,3 @@
-const vscode = require('vscode')
 const http = require('http')
 const config = require('../config/settings.js')
 const requests = require('./requests')
