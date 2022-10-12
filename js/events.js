@@ -2,7 +2,7 @@ let queue = []
 let types = []
 
 function onCreate(ext, name, parent) {
-    if (ext == '.lua') {
+    if (ext == '.lua' || ext == '.luau') {
         let type = name.split('.')
         type = type[type.length - 1]
 

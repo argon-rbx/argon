@@ -13,13 +13,17 @@ const ROOT_NAME = config.rootName
 
 let watchers = []
 
-function verify(uri, parent) {
-    if (uri.dir.includes(ROOT_NAME) && parent != '') {
+function verify(parent) {
+    if (parent != null && parent != '') {
         return true
     }
 }
 
 function getParent(root) {
+    if (root.includes(ROOT_NAME) == false) {
+        return null
+    }
+
     let dir = root.split('\\')
     let similarName = 0
     let parent = ''
@@ -64,7 +68,7 @@ function onCreate(uri) {
     uri = path.parse(uri.files[0].fsPath)
     let parent = getParent(uri.dir)
 
-    if (verify(uri, parent) != true) {
+    if (verify(parent) != true) {
         return
     }
 
@@ -76,7 +80,7 @@ function onSave(uri) {
     uri = path.parse(uri.fileName)
     let parent = getParent(uri.dir)
 
-    if (verify(uri, parent) != true) {
+    if (verify(parent) != true) {
         return
     }
 
@@ -87,11 +91,62 @@ function onDelete(uri) {
     uri = path.parse(uri.files[0].fsPath)
     let parent = getParent(uri.dir)
 
-    if (verify(uri, parent) != true) {
+    if (verify(parent) != true) {
         return
     }
 
     events.onDelete(parent + '.' + uri.name)
+}
+
+function onRename(uri) {
+    uri = uri.files[0]
+
+    let newUri = path.parse(uri.newUri.fsPath)
+    let newParent = getParent(newUri.dir)
+    
+    if (verify(newParent) != true) {
+        return
+    }
+
+    let oldUri = path.parse(uri.oldUri.fsPath)
+    let oldParent = getParent(oldUri.dir)
+
+    if (newUri.name != oldUri.name) {
+        console.log('name changed');
+    }
+    else if (newUri.ext != oldUri.ext) {
+        console.log('type changed');
+    }
+    else {
+        console.log('parent changed');
+    }
+}
+
+function run() {
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
+
+    if (fs.existsSync(dir) == false) {
+        fs.mkdirSync(dir)
+    }
+
+    events.setTypes(types)
+
+    if (config.autoUpdate) {
+        updateClasses()
+    }
+
+    watchers.push(vscode.workspace.onDidCreateFiles(onCreate))
+    watchers.push(vscode.workspace.onDidSaveTextDocument(onSave))
+    watchers.push(vscode.workspace.onDidDeleteFiles(onDelete))
+    watchers.push(vscode.workspace.onDidRenameFiles(onRename))
+}
+
+function stop() {
+    for (let i = 0; i < watchers.length; i++) {
+        watchers[i].dispose()
+    }
+
+    watchers.length = 0
 }
 
 function updateClasses() {
@@ -136,32 +191,6 @@ function updateClasses() {
 
     messageHandler.showMessage('updatingDatabase', 1)
     getData(VERSION_URL)
-}
-
-function run() {
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
-
-    if (fs.existsSync(dir) == false) {
-        fs.mkdirSync(dir)
-    }
-
-    events.setTypes(types)
-
-    if (config.autoUpdate) {
-        updateClasses()
-    }
-
-    watchers.push(vscode.workspace.onDidCreateFiles(onCreate))
-    watchers.push(vscode.workspace.onDidSaveTextDocument(onSave))
-    watchers.push(vscode.workspace.onDidDeleteFiles(onDelete))
-}
-
-function stop() {
-    for (let i = 0; i < watchers.length; i++) {
-        watchers[i].dispose()
-    }
-
-    watchers.length = 0
 }
 
 module.exports = {
