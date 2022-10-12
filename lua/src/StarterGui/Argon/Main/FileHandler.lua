@@ -43,4 +43,24 @@ function fileHandler.delete(object)
     end
 end
 
+function fileHandler.rename(object, name)
+    local success, response = pcall(function()
+        getInstance(object).Name = name
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
+end
+
+function fileHandler.changeParent(object, parent)
+    local success, response = pcall(function()
+        getInstance(object).Parent = getInstance(parent)
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
+end
+
 return fileHandler

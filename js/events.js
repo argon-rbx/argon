@@ -1,7 +1,18 @@
 let queue = []
 let types = []
 
-function onCreate(ext, name, parent) {
+function parse(string) {
+    if (string.includes('.server')) {
+        string = string.replace('.server', '')
+    }
+    else if (string.includes('.client')) {
+        string = string.replace('.client', '')
+    }
+
+    return string
+}
+
+function create(ext, name, parent) {
     if (ext == '.lua' || ext == '.luau') {
         let type = name.split('.')
         type = type[type.length - 1]
@@ -31,19 +42,30 @@ function onCreate(ext, name, parent) {
     }
 }
 
-function onSave(object, source) {
-    if (object.includes('.server')) {
-        object = object.replace('.server', '')
-    }
-    else if (object.includes('.client')) {
-        object = object.replace('.client', '')
-    }
-
+function update(object, source) {
+    object = parse(object)
     queue.push({Action: 'update', Object: object, Source: source})
 }
 
-function onDelete(object) {
+function remove(object) {
+    object = parse(object)
     queue.push({Action: 'delete', Object: object})
+}
+
+function rename(object, name) {
+    object = parse(object)
+    name = parse(name)
+    queue.push({Action: 'rename', Object: object, Name: name})
+}
+
+function changeType(object, type, name) {
+
+}
+
+function changeParent(object, parent) {
+    object = parse(object)
+    console.log(object, parent);
+    queue.push({Action: 'changeParent', Object: object, Parent: parent})
 }
 
 function setTypes(newTypes) {
@@ -56,9 +78,12 @@ function getTypes() {
 
 module.exports = {
     queue,
-    onCreate,
-    onSave,
-    onDelete,
+    create,
+    update,
+    remove,
+    rename,
+    changeType,
+    changeParent,
     setTypes,
     getTypes
 }

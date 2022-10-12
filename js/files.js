@@ -30,8 +30,8 @@ function getParent(root) {
 
     for (let i = dir.length - 1; i >= 0; i--) {
         if (dir[i].includes('.')) {
-            let separated = dir[i].split('.')
-            let type = separated[separated.length - 1]
+            let type = dir[i].split('.')
+            type = type[type.length - 1]
 
             if (events.getTypes().includes(type)) {
                 dir[i] = dir[i].replace('.' + type, '')
@@ -72,7 +72,7 @@ function onCreate(uri) {
         return
     }
 
-    events.onCreate(uri.ext, uri.name, parent)
+    events.create(uri.ext, uri.name, parent)
 }
 
 function onSave(uri) {
@@ -84,7 +84,7 @@ function onSave(uri) {
         return
     }
 
-    events.onSave(parent + '.' + uri.name, source)
+    events.update(parent + '.' + uri.name, source)
 }
 
 function onDelete(uri) {
@@ -95,7 +95,7 @@ function onDelete(uri) {
         return
     }
 
-    events.onDelete(parent + '.' + uri.name)
+    events.remove(parent + '.' + uri.name)
 }
 
 function onRename(uri) {
@@ -112,13 +112,36 @@ function onRename(uri) {
     let oldParent = getParent(oldUri.dir)
 
     if (newUri.name != oldUri.name) {
-        console.log('name changed');
+        if (newUri.ext == '.lua' || newUri.ext == '.luau') {
+            let newSplitted = newUri.name.split('.')
+            let oldSplitted = oldUri.name.split('.')
+
+            if (newSplitted.length != oldSplitted.length) {
+                console.log('both');
+            }
+            else {
+                let newName = newSplitted[0]
+                let newType = newSplitted[newSplitted.length - 1]
+                let oldName = oldSplitted[0]
+                let oldType = oldSplitted[newSplitted.length - 1]
+
+                if (newName != oldName) {
+                    events.rename(oldParent + '.' + oldUri.name, newUri.name)
+                }
+                else if (newType != oldType) {
+                    console.log('type2');
+                }
+            }
+        }
+        else {
+            events.rename(oldParent + '.' + oldUri.name, newUri.name)
+        }
     }
     else if (newUri.ext != oldUri.ext) {
         console.log('type changed');
     }
     else {
-        console.log('parent changed');
+        events.changeParent(oldParent + '.' + oldUri.name, newParent)
     }
 }
 

@@ -25,6 +25,10 @@ local function startSyncing(url)
                         FileHandler.update(v.Object, v.Source)
                     elseif v.Action == 'delete' then
                         FileHandler.delete(v.Object)
+                    elseif v.Action == 'rename' then
+                        FileHandler.rename(v.Object, v.Name)
+                    elseif v.Action == 'changeParent' then
+                        FileHandler.changeParent(v.Object, v.Parent)
                     end
                 end
             end
