@@ -115,21 +115,24 @@ function onRename(uri) {
         if (newUri.ext == '.lua' || newUri.ext == '.luau') {
             let newSplitted = newUri.name.split('.')
             let oldSplitted = oldUri.name.split('.')
-
+            
             if (newSplitted.length != oldSplitted.length) {
-                console.log('both');
+                events.changeType(oldParent + '.' + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
             }
             else {
                 let newName = newSplitted[0]
                 let newType = newSplitted[newSplitted.length - 1]
                 let oldName = oldSplitted[0]
                 let oldType = oldSplitted[newSplitted.length - 1]
-
-                if (newName != oldName) {
+                
+                if (newName != oldName && newType == oldType) {
                     events.rename(oldParent + '.' + oldUri.name, newUri.name)
                 }
-                else if (newType != oldType) {
-                    console.log('type2');
+                else if (newType != oldType && newName == oldName) {
+                    events.changeType(newParent + '.' + newUri.name, newType)
+                }
+                else {
+                    events.changeType(oldParent + '.' + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
             }
         }
@@ -138,7 +141,7 @@ function onRename(uri) {
         }
     }
     else if (newUri.ext != oldUri.ext) {
-        console.log('type changed');
+        events.changeType(newParent + '.' + newUri.name, newUri.ext)
     }
     else {
         events.changeParent(oldParent + '.' + oldUri.name, newParent)

@@ -58,13 +58,44 @@ function rename(object, name) {
     queue.push({Action: 'rename', Object: object, Name: name})
 }
 
+//TODO: sync source when script type changes
 function changeType(object, type, name) {
+    object = parse(object)
+    type = type.replace('.', '')
 
+    if (name) {
+        name = parse(name)
+        switch (type) {
+            case 'server':
+                queue.push({Action: 'changeType', Object: object, Type: 'Script', Name: name})
+                break
+            case 'client':
+                queue.push({Action: 'changeType', Object: object, Type: 'LocalScript', Name: name})
+                break
+            default:
+                queue.push({Action: 'changeType', Object: object, Type: 'ModuleScript', Name: name})
+                break
+        }
+    }
+    else {
+        switch (type) {
+            case 'server':
+                queue.push({Action: 'changeType', Object: object, Type: 'Script',})
+                break
+            case 'client':
+                queue.push({Action: 'changeType', Object: object, Type: 'LocalScript',})
+                break
+            default:
+                if (types.includes(type)) {
+                    queue.push({Action: 'changeType', Object: object, Type: type,})
+                }
+                break
+        }
+    }
 }
 
 function changeParent(object, parent) {
     object = parse(object)
-    console.log(object, parent);
     queue.push({Action: 'changeParent', Object: object, Parent: parent})
 }
 

@@ -29,6 +29,8 @@ local function startSyncing(url)
                         FileHandler.rename(v.Object, v.Name)
                     elseif v.Action == 'changeParent' then
                         FileHandler.changeParent(v.Object, v.Parent)
+                    elseif v.Action == 'changeType' then
+                        FileHandler.changeType(v.Object, v.Type, v.Name)
                     end
                 end
             end

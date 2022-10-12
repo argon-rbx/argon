@@ -63,4 +63,24 @@ function fileHandler.changeParent(object, parent)
     end
 end
 
+function fileHandler.changeType(object, type, name)
+    local success, response = pcall(function()
+        object = getInstance(object)
+
+        local newObject = Instance.new(type)
+        newObject.Parent = object.Parent
+        newObject.Name = name or object.Name
+
+        for _, v in ipairs(object:GetChildren()) do
+            v.Parent = newObject
+        end
+
+        object:Destroy()
+    end)
+
+    if not success then
+        warn('Argon: '..response)
+    end
+end
+
 return fileHandler
