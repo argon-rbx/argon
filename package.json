@@ -27,6 +27,10 @@
       "title": "Update class database"
     }]
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DervexHero/Argon.git"
+  },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
