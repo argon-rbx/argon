@@ -6,22 +6,26 @@ const messageHandler = require('./messageHandler')
 let isRunning = false
 
 function run() {
-    if (vscode.workspace.name !== undefined) {
-        messageHandler.showMessage('argonRunning')
-        files.run()
-        server.run()
-        isRunning = true
-    }
-    else {
-        messageHandler.showMessage('openWorkspace', 1)
+    if (isRunning == false) {
+        if (vscode.workspace.name !== undefined) {
+            messageHandler.showMessage('argonRunning')
+            files.run()
+            server.run()
+            isRunning = true
+        }
+        else {
+            messageHandler.showMessage('openWorkspace', 1)
+        }
     }
 }
 
 function stop() {
-    messageHandler.showMessage('argonStopped')
-    files.stop()
-    server.stop()
-    isRunning = false
+    if (isRunning) {
+        messageHandler.showMessage('argonStopped')
+        files.stop()
+        server.stop()
+        isRunning = false
+    }
 }
 
 function update() {

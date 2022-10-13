@@ -1,8 +1,11 @@
 {
+  "publisher": "Dervex",
   "name": "argon",
   "displayName": "Argon",
-  "description": "Roblox Studio live sync",
+  "description": "Roblox Studio two-way live sync",
+  "icon": "images/ArgonLogo.png",
   "version": "0.0.1",
+  "preview": true,
   "engines": {
     "vscode": "^1.72.0"
   },
@@ -12,19 +15,22 @@
   "activationEvents": [
     "*"
   ],
-  "main": "./extension.js",
+  "main": "./js/extension.js",
   "contributes": {
     "commands": [{
       "command": "argon.run",
-      "title": "Run Argon"
+      "title": "Run Argon",
+      "category": "Argon"
     },
     {
       "command": "argon.stop",
-      "title": "Stop Argon"
+      "title": "Stop Argon",
+      "category": "Argon"
     },
     {
       "command": "argon.update",
-      "title": "Update class database"
+      "title": "Update class database",
+      "category": "Argon"
     }]
   },
   "repository": {

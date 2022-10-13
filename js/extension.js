@@ -1,6 +1,6 @@
 const vscode = require('vscode')
-const main = require('./js/main.js')
-const config = require('./config/settings.js')
+const main = require('./main.js')
+const config = require('../config/settings.js')
 
 /**
  * @param {vscode.ExtensionContext} context

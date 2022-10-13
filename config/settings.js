@@ -3,6 +3,6 @@ module.exports = {
     separator: '|',
     port: 8000,
     host: 'localhost',
-    autoRun: true,
+    autoRun: false,
     autoUpdate: false
 }
