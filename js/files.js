@@ -8,7 +8,7 @@ const types = require('../config/types.js')
 const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
-const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$url-API-Dump.json'
+const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
 const ROOT_NAME = config.rootName
 
 let watchers = []
@@ -149,13 +149,24 @@ function onRename(uri) {
 }
 
 function run() {
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
+    let gameDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
+    let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
 
-    if (fs.existsSync(dir) == false) {
-        fs.mkdirSync(dir)
+    if (fs.existsSync(gameDir) == false) {
+        fs.mkdirSync(gameDir)
     }
 
-    events.setTypes(types)
+    if (fs.existsSync(dataDir)) {
+        // @ts-ignore
+        let json = JSON.parse(fs.readFileSync(dataDir))
+
+        if (json.classes) {
+            events.setTypes(json.classes)
+        }
+    }
+    else {
+        events.setTypes(types)
+    }
 
     if (config.autoUpdate) {
         updateClasses()
@@ -176,8 +187,8 @@ function stop() {
 }
 
 function updateClasses() {
-    function getData(url) {
-        https.get(url, (response) => {
+    function getVersion(callback) {
+        https.get(VERSION_URL, (response) => {
             let body = ''
         
             response.on('data', (data) => {
@@ -185,29 +196,7 @@ function updateClasses() {
             })
     
             response.on('end', () => {
-                try {
-                    if (url == VERSION_URL) {
-                        getData(API_URL.replace('$url', body))
-                    }
-                    else {
-                        let classes = JSON.parse(body).Classes
-                        let newTypes = []
-
-                        for (let i = 0; i < classes.length; i++) {
-                            if (classes[i].Tags == undefined) {
-                                newTypes.push(classes[i].Name)
-                            }
-                            else if (classes[i].Tags.includes('NotCreatable') == false) {
-                                newTypes.push(classes[i].Name)
-                            }
-                        }
-
-                        events.setTypes(newTypes)
-                        messageHandler.showMessage('databaseUpdated')
-                    }
-                } catch (error) {
-                    messageHandler.showMessage('error', 2)
-                }
+                callback(body)
             })
         
         }).on('error', () => {
@@ -215,8 +204,62 @@ function updateClasses() {
         })
     }
 
+    function getClasses(version, dir) {
+        https.get(API_URL.replace('$version', version), (response) => {
+            let body = ''
+        
+            response.on('data', (data) => {
+                body += data
+            })
+    
+            response.on('end', () => {
+                let classes = JSON.parse(body).Classes
+                let newTypes = []
+                let newJson = {}
+            
+                for (let i = 0; i < classes.length; i++) {
+                    if (classes[i].Tags == undefined) {
+                        newTypes.push(classes[i].Name)
+                    }
+                    else if (classes[i].Tags.includes('NotCreatable') == false) {
+                        newTypes.push(classes[i].Name)
+                    }
+                }
+            
+                newJson.version = version
+                newJson.classes = newTypes
+            
+                events.setTypes(newTypes)
+                fs.writeFileSync(dir, JSON.stringify(newJson, null, '\t'))
+                messageHandler.showMessage('databaseUpdated')
+            })
+        
+        }).on('error', () => {
+            messageHandler.showMessage('serverConnection', 2)
+        })
+    }
+
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
     messageHandler.showMessage('updatingDatabase', 1)
-    getData(VERSION_URL)
+
+    if (fs.existsSync(dir)) {
+        // @ts-ignore
+        let json = JSON.parse(fs.readFileSync(dir))
+
+        getVersion(function(version) {
+            if (json.version == version) {
+                messageHandler.showMessage('databaseUpToDate')
+            }
+            else {
+                getClasses(version, dir)
+            }
+        })
+    }
+    else {
+        getVersion(function(version) {
+            getClasses(version, dir)
+        })
+    }
 }
 
 module.exports = {

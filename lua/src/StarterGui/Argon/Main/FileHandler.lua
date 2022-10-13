@@ -1,3 +1,5 @@
+local SCRIPT_TYPES = {'LocalScript', 'ModuleScript', 'Script'}
+
 local function getInstance(parent)
     local lastParent = game
     parent = string.split(parent, '.')
@@ -73,6 +75,10 @@ function fileHandler.changeType(object, type, name)
 
         for _, v in ipairs(object:GetChildren()) do
             v.Parent = newObject
+        end
+
+        if table.find(SCRIPT_TYPES, type) and table.find(SCRIPT_TYPES, object.ClassName) then
+            newObject.Source = object.Source
         end
 
         object:Destroy()

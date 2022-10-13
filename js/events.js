@@ -58,7 +58,6 @@ function rename(object, name) {
     queue.push({Action: 'rename', Object: object, Name: name})
 }
 
-//TODO: sync source when script type changes
 function changeType(object, type, name) {
     object = parse(object)
     type = type.replace('.', '')

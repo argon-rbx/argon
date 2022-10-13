@@ -3,6 +3,7 @@ module.exports = {
     argonRunning: 'Argon is now running!',
     argonStopped: 'Argon stopped!',
     databaseUpdated: 'Successfully updated class database',
+    databaseUpToDate: 'Class database is already up to date!',
 
     //Warnings
     openWorkspace: 'Please open workspace!',
