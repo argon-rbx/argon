@@ -1,8 +1,9 @@
 local SCRIPT_TYPES = {'LocalScript', 'ModuleScript', 'Script'}
+local SEPARATOR = '|'
 
 local function getInstance(parent)
     local lastParent = game
-    parent = string.split(parent, '.')
+    parent = string.split(parent, SEPARATOR)
 
     for _, v in ipairs(parent) do
         lastParent = lastParent[v]
@@ -13,11 +14,17 @@ end
 
 local fileHandler = {}
 
-function fileHandler.create(type, name, parent)
+function fileHandler.create(type, name, parent, delete)
     local success, response = pcall(function()
         local object = Instance.new(type)
+        parent = getInstance(parent)
+
+        if delete and parent:FindFirstChild(name) then
+            parent[name]:Destroy()
+        end
+
         object.Name = name
-        object.Parent = getInstance(parent)
+        object.Parent = parent
     end)
 
     if not success then

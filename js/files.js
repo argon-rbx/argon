@@ -10,6 +10,7 @@ const messageHandler = require('./messageHandler')
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
 const ROOT_NAME = config.rootName
+const SEPARATOR = config.separator
 
 let watchers = []
 
@@ -39,7 +40,7 @@ function getParent(root) {
         }
 
         if (i != dir.length - 1) {
-            parent = dir[i] + '.' + parent
+            parent = dir[i] + SEPARATOR + parent
         }
         else {
             parent = dir[i]
@@ -84,7 +85,12 @@ function onSave(uri) {
         return
     }
 
-    events.update(parent + '.' + uri.name, source)
+    if (uri.name.startsWith('.source')) {
+        events.update(parent, source)
+    }
+    else {
+        events.update(parent + SEPARATOR + uri.name, source)
+    }
 }
 
 function onDelete(uri) {
@@ -95,7 +101,13 @@ function onDelete(uri) {
         return
     }
 
-    events.remove(parent + '.' + uri.name)
+    if (uri.name.startsWith('.source')) {
+        events.remove(parent)
+        fs.rmdirSync(uri.dir)
+    }
+    else {
+        events.remove(parent + SEPARATOR + uri.name)
+    }
 }
 
 function onRename(uri) {
@@ -117,7 +129,7 @@ function onRename(uri) {
             let oldSplitted = oldUri.name.split('.')
             
             if (newSplitted.length != oldSplitted.length) {
-                events.changeType(oldParent + '.' + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
             }
             else {
                 let newName = newSplitted[0]
@@ -126,25 +138,25 @@ function onRename(uri) {
                 let oldType = oldSplitted[newSplitted.length - 1]
                 
                 if (newName != oldName && newType == oldType) {
-                    events.rename(oldParent + '.' + oldUri.name, newUri.name)
+                    events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
                 }
                 else if (newType != oldType && newName == oldName) {
-                    events.changeType(newParent + '.' + newUri.name, newType)
+                    events.changeType(newParent + SEPARATOR + newUri.name, newType)
                 }
                 else {
-                    events.changeType(oldParent + '.' + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                    events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
             }
         }
         else {
-            events.rename(oldParent + '.' + oldUri.name, newUri.name)
+            events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
         }
     }
     else if (newUri.ext != oldUri.ext) {
-        events.changeType(newParent + '.' + newUri.name, newUri.ext)
+        events.changeType(newParent + SEPARATOR + newUri.name, newUri.ext)
     }
     else {
-        events.changeParent(oldParent + '.' + oldUri.name, newParent)
+        events.changeParent(oldParent + SEPARATOR + oldUri.name, newParent)
     }
 }
 

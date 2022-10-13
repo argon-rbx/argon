@@ -20,7 +20,7 @@ local function startSyncing(url)
 
                 for _, v in ipairs(queue) do
                     if v.Action == 'create' then
-                        FileHandler.create(v.Type, v.Name, v.Parent)
+                        FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
                     elseif v.Action == 'update' then
                         FileHandler.update(v.Object, v.Source)
                     elseif v.Action == 'delete' then

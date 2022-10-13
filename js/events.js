@@ -1,3 +1,6 @@
+const config = require('../config/settings')
+const SEPARATOR = config.separator
+
 let queue = []
 let types = []
 
@@ -20,14 +23,43 @@ function create(ext, name, parent) {
         switch (type) {
             case 'server':
                 name = name.replace('.server', '')
-                queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent})
+
+                if (name != '.source') {
+                    queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent})
+                }
+                else {
+                    let splitted = parent.split(SEPARATOR)
+                    name = parent.slice(-splitted[splitted.length - 1].length)
+                    parent = parent.replace(SEPARATOR + name, '')
+                    queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent, Delete: true})
+                }
+
                 break
             case 'client':
                 name = name.replace('.client', '')
-                queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent})
+
+                if (name != '.source') {
+                    queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent})
+                }
+                else {
+                    let splitted = parent.split(SEPARATOR)
+                    name = parent.slice(-splitted[splitted.length - 1].length)
+                    parent = parent.replace(SEPARATOR + name, '')
+                    queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent, Delete: true})
+                }
+
                 break
             default:
-                queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent})
+                if (name != '.source') {
+                    queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent})
+                }
+                else {
+                    let splitted = parent.split(SEPARATOR)
+                    name = parent.slice(-splitted[splitted.length - 1].length)
+                    parent = parent.replace(SEPARATOR + name, '')
+                    queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent, Delete: true})
+                }
+
                 break
         }
     }
@@ -61,6 +93,12 @@ function rename(object, name) {
 function changeType(object, type, name) {
     object = parse(object)
     type = type.replace('.', '')
+
+    if (object.endsWith(SEPARATOR + '.source')) {
+        object = object.replace(SEPARATOR + '.source', '')
+        let splitted = object.split(SEPARATOR)
+        name = object.slice(-splitted[splitted.length - 1].length)
+    }
 
     if (name) {
         name = parse(name)
