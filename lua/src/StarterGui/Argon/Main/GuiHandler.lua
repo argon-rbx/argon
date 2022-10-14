@@ -3,10 +3,8 @@ local TweenService = game:GetService('TweenService')
 local HttpHandler = require(script.Parent.HttpHandler)
 
 local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local SETTINGS_TWEEN_INFO = TweenInfo.new(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local LOADING_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
-
-local BUTTON_OFF = 'rbxassetid://11234403268'
-local BUTTON_ON = 'rbxassetid://11234404003'
 
 local BLACK = Color3.fromRGB(0, 0, 0)
 local WHITE = Color3.fromRGB(255, 255, 255)
@@ -40,7 +38,7 @@ local autoRunButton = settingsPage.Body.AutoRun.Button
 local host = 'localhost'
 local port = '8000'
 
-local autoRun = true
+local autoRun = false
 
 local plugin = nil
 local connections = {}
@@ -147,11 +145,9 @@ local function toggleSetting(setting)
         plugin:SetSetting('AutoRun', autoRun)
 
         if autoRun then
-            autoRunButton.Image = BUTTON_ON
-            autoRunButton.UIGradient.Enabled = true
+            TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
-            autoRunButton.Image = BUTTON_OFF
-            autoRunButton.UIGradient.Enabled = false
+            TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     end
 end
@@ -190,25 +186,26 @@ function guiHandler.init(newPlugin)
     changePage(0)
     plugin = newPlugin
 
-    if plugin:GetSetting('Host') == nil then
-        plugin:SetSetting('Host', 'localhost')
-        host = 'localhost'
-    elseif plugin:GetSetting('Host') ~= host then
-        hostInput.Text = plugin:GetSetting('Host')
+    local hostSetting = plugin:GetSetting('Host')
+    local portSetting = plugin:GetSetting('Port')
+    local autoRunSetting = plugin:GetSetting('AutoRun')
+
+    if hostSetting and hostSetting ~= host then
+        hostInput.Text = hostSetting
+        host = hostSetting
     end
 
-    if plugin:GetSetting('Port') == nil then
-        plugin:SetSetting('Port', '8000')
-        port = '8000'
-    elseif plugin:GetSetting('Port') ~= port then
-        portInput.Text = plugin:GetSetting('Port')
+    if portSetting and portSetting ~= port then
+        portInput.Text = portSetting
+        port = portSetting
     end
 
-    if plugin:GetSetting('AutoRun') == nil then
-        plugin:SetSetting('AutoRun', true)
-        autoRun = true
-    else
-        autoRun = plugin:GetSetting('AutoRun')
+    if autoRunSetting and autoRunSetting ~= autoRun then
+        autoRun = autoRunSetting
+
+        if autoRun then
+            autoRunButton.OnIcon.ImageTransparency = 0
+        end
     end
 end
 

@@ -17,6 +17,9 @@ function run() {
             messageHandler.showMessage('openWorkspace', 1)
         }
     }
+    else {
+        messageHandler.showMessage('alreadyRunning', 1)
+    }
 }
 
 function stop() {
@@ -26,11 +29,17 @@ function stop() {
         server.stop()
         isRunning = false
     }
+    else {
+        messageHandler.showMessage('notRunning', 1)
+    }
 }
 
 function update() {
     if (isRunning) {
         files.updateClasses()
+    }
+    else {
+        messageHandler.showMessage('notRunning', 1)
     }
 }
 

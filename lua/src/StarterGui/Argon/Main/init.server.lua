@@ -43,3 +43,7 @@ end)
 widget:BindToClose(function()
     close()
 end)
+
+if plugin:GetSetting('AutoRun') then
+    open()
+end
