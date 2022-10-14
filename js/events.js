@@ -1,5 +1,4 @@
-const config = require('../config/settings')
-const SEPARATOR = config.separator
+const SEPARATOR = require('../config/settings').separator
 
 let queue = []
 let types = []

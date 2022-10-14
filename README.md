@@ -1,4 +1,4 @@
-![Argon logo and name icon](/images/LogoName.png 'Argon')
+![Argon logo and name icon](/images/LogoNameOutline.png 'Argon')
 # About
 Argon is a simple two-way sync [plugin](https://create.roblox.com/marketplace/asset/11263738833/) for Roblox and [extension](https://marketplace.visualstudio.com/items?itemName=Dervex.argon) for Visual Studio Code allowing developers not only to sync code but every possible Roblox class.
 

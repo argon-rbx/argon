@@ -1,6 +1,7 @@
 const vscode = require('vscode')
 const files = require('./files')
 const server = require('./server')
+const config = require('../config/settings.js')
 const messageHandler = require('./messageHandler')
 
 let isRunning = false
@@ -43,8 +44,18 @@ function update() {
     }
 }
 
+async function activate(context) {
+	let runCommand = vscode.commands.registerCommand('argon.run', run)
+	let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
+	let updateCommand = vscode.commands.registerCommand('argon.update', update)
+
+	context.subscriptions.push(runCommand, stopCommand, updateCommand)
+
+	if (config.autoRun) {
+		run()
+	}
+}
+
 module.exports = {
-    run,
-    stop,
-    update
+	activate
 }
