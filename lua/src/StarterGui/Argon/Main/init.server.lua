@@ -9,16 +9,17 @@ local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)
 local isOpen = false
 
 widget.Title = 'Argon'
+widget.Name = 'Argon'
 widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 script.Parent.ArgonGui.Root.Background.Parent = widget
 button.ClickableWhenViewportHidden = true
 
-local function open()
+local function open(autoConnect)
     if not isOpen then
         isOpen = true
         button:SetActive(true)
         GuiHandler.init(plugin)
-        GuiHandler.run()
+        GuiHandler.run(autoConnect)
         widget.Enabled = true
     end
 end
@@ -45,5 +46,5 @@ widget:BindToClose(function()
 end)
 
 if plugin:GetSetting('AutoRun') then
-    open()
+    open(true)
 end

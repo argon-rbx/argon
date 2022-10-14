@@ -1,5 +1,4 @@
 local HttpService = game:GetService('HttpService')
-local SoundService = game:GetService('SoundService')
 
 local FileHandler = require(script.Parent.FileHandler)
 
@@ -31,6 +30,8 @@ local function startSyncing(url)
                         FileHandler.changeParent(v.Object, v.Parent)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
+                    elseif v.Action == 'changeSeparator' then
+                        FileHandler.separator = v.Separator
                     end
                 end
             end

@@ -1,9 +1,14 @@
+local Data = require(script.Parent.Data)
+
 local SCRIPT_TYPES = {'LocalScript', 'ModuleScript', 'Script'}
-local SEPARATOR = '|'
+
+local fileHandler = {}
+
+fileHandler.separator = '|'
 
 local function getInstance(parent)
     local lastParent = game
-    parent = string.split(parent, SEPARATOR)
+    parent = string.split(parent, fileHandler.spearator)
 
     for _, v in ipairs(parent) do
         lastParent = lastParent[v]
@@ -11,8 +16,6 @@ local function getInstance(parent)
 
     return lastParent
 end
-
-local fileHandler = {}
 
 function fileHandler.create(type, name, parent, delete)
     local success, response = pcall(function()

@@ -7,3 +7,5 @@ test/**
 **/*.map
 **/.eslintrc.json
 lua/**
+images/Icons
+images/Misc
