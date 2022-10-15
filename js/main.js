@@ -4,6 +4,7 @@ const server = require('./server')
 const config = require('../config/settings.js')
 const messageHandler = require('./messageHandler')
 
+let activated = false
 let isRunning = false
 
 function run() {
@@ -45,15 +46,19 @@ function update() {
 }
 
 async function activate(context) {
-	let runCommand = vscode.commands.registerCommand('argon.run', run)
-	let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
-	let updateCommand = vscode.commands.registerCommand('argon.update', update)
+    if (activated == false) {
+        activated = true
 
-	context.subscriptions.push(runCommand, stopCommand, updateCommand)
-
-	if (config.autoRun) {
-		run()
-	}
+        let runCommand = vscode.commands.registerCommand('argon.run', run)
+        let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
+        let updateCommand = vscode.commands.registerCommand('argon.update', update)
+    
+        context.subscriptions.push(runCommand, stopCommand, updateCommand)
+    
+        if (config.autoRun) {
+            run()
+        }
+    }
 }
 
 module.exports = {

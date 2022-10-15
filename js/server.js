@@ -10,28 +10,45 @@ let localServer = http.createServer(requestListener)
 
 function requestListener(request, response) {
     let headers = request.headers
-    let newData = null;
+    let data = null;
 
     switch (headers.action) {
+        case 'init':
+            data = true
+            break
         case 'getSync':
-            newData = JSON.stringify(events.queue)
+            data = JSON.stringify(events.queue)
             events.queue.length = 0
             break
-        case 'port':
-            let body = ''
+        case 'getState':
+            data = JSON.stringify(Date.now() - files.getUnix())
+            break
+        case 'portInstances':
+            var body = ''
         
-            request.on('data', (data) => {
-                body += data
+            request.on('data', (chunk) => {
+                body += chunk
             })
     
             request.on('end', () => {
-                files.port(body)
+                files.portInstances(body)
+            })
+            break
+        case 'portScripts':
+            var body = ''
+        
+            request.on('data', (chunk) => {
+                body += chunk
+            })
+    
+            request.on('end', () => {
+                files.portScripts(body)
             })
             break
     }
 
     response.writeHead(200)
-    response.end(newData)
+    response.end(data)
 }
 
 function run() {

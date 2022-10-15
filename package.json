@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -19,7 +19,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:argon.run",
+    "onCommand:argon.stop",
+    "onCommand:argon.update"
   ],
   "main": "./js/main.js",
   "contributes": {
@@ -48,16 +51,15 @@
           "pattern": "[^ ]",
           "patternErrorMessage": "This symbol is not allowed"
         },
-        "argon.directories.separator": {
+        "argon.directories.extension": {
           "type": "string",
-          "default": "|",
-          "description": "Sync separator (this symbol cannot be used in an instance name in Roblox Studio)",
-          "pattern": "[^. 0-9a-zA-Z]",
-          "patternErrorMessage": "This symbol is not allowed"
+          "default": ".lua",
+          "description": "Default extension of script files when ported from Roblox Studio",
+          "enum": [".lua", ".luau"]
         },
         "argon.extension.autoRun": {
           "type": "boolean",
-          "default": "true",
+          "default": "false",
           "description": "Whether Argon should start automatically"
         },
         "argon.extension.autoUpdate": {

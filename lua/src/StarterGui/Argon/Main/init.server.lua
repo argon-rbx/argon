@@ -47,4 +47,6 @@ end)
 
 if plugin:GetSetting('AutoRun') then
     open(true)
+elseif widget.Enabled then
+    open()
 end

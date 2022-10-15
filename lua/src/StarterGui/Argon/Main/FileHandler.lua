@@ -1,26 +1,9 @@
 local Data = require(script.Parent.Data)
 
-local SCRIPT_TYPES = {'LocalScript', 'ModuleScript', 'Script'}
+local SCRIPT_TYPES = {'Script', 'LocalScript', 'ModuleScript'}
+local SEPARATOR = '|'
 
-local function toArgon(instance)
-    return instance.Name..'.'..instance.ClassName
-end
-
-local function getChildren(dir)
-    local children = {}
-
-    for _, v in pairs(dir:GetChildren()) do
-        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute('ArgonIgnore') == nil then
-            if #v:GetChildren() > 0 then
-                children[toArgon(v)] = getChildren(v)
-            else
-                children[toArgon(v)] = {}
-            end
-        end
-    end
-
-    return children
-end
+local recursiveCount = 0
 
 local function len(array)
     local index = 0
@@ -32,13 +15,85 @@ local function len(array)
     return index
 end
 
-local fileHandler = {}
+local function parse(instance)
+    local name = instance.Name:gsub('[%:%*%?%"%<%>%|]', '')
+    local className = ''
 
-fileHandler.separator = '|'
+    if name:match('^/') or name:match('^\\') then
+        name:sub(2)
+    end
+
+    if instance.ClassName ~= 'Folder' then
+        className = '.'..instance.ClassName
+    end
+
+    instance.Name = name
+
+    return name..className
+end
+
+local function getChildren(dir)
+    local children = {}
+
+    for _, v in pairs(dir:GetChildren()) do
+        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute('ArgonIgnore') == nil then
+            if #v:GetChildren() > 0 then
+                children[parse(v)] = getChildren(v)
+            else
+                children[parse(v)] = {}
+            end
+        end
+    end
+
+    return children
+end
+
+local function getParent(instance, class)
+    local parent = instance.Parent
+    local dir = ''
+
+    recursiveCount += 1
+
+    if instance.ClassName ~= class then
+        local name
+
+        if table.find(SCRIPT_TYPES, instance.ClassName) then
+            if recursiveCount == 1 then
+                name = instance.Name
+
+                if instance.ClassName == 'Script' then
+                    if #instance:GetChildren() == 0 then
+                        name = name..'.server'
+                    else
+                        name = name
+                    end
+                elseif instance.ClassName == 'LocalScript' then
+                    if #instance:GetChildren() == 0 then
+                        name = name..'.client'
+                    else
+                        name = name
+                    end
+                end
+            else
+                name = instance.Name
+            end
+        elseif instance.ClassName == 'Folder' then
+            name = instance.Name
+        else
+            name = instance.Name..'.'..instance.ClassName
+        end
+
+        dir = getParent(parent, class)..'\\'..name
+    else
+        dir = instance.Name
+    end
+
+    return dir
+end
 
 local function getInstance(parent)
     local lastParent = game
-    parent = string.split(parent, fileHandler.spearator)
+    parent = parent:split(SEPARATOR)
 
     for _, v in ipairs(parent) do
         lastParent = lastParent[v]
@@ -46,6 +101,8 @@ local function getInstance(parent)
 
     return lastParent
 end
+
+local fileHandler = {}
 
 function fileHandler.create(type, name, parent, delete)
     local success, response = pcall(function()
@@ -129,7 +186,7 @@ function fileHandler.changeType(object, type, name)
     end
 end
 
-function fileHandler.port()
+function fileHandler.portInstances()
     local instancesToSync = {}
 
     for i, v in pairs(Data.syncedDirectories) do
@@ -145,6 +202,23 @@ function fileHandler.port()
     end
 
     return instancesToSync
+end
+
+function fileHandler.portScripts()
+    local scriptsToSync = {}
+
+    for i, v in pairs(Data.syncedDirectories) do
+        if v then
+            for _, w in ipairs(game[i]:GetDescendants()) do
+                if (w:IsA('LocalScript') or w:IsA('ModuleScript') or w:IsA('Script')) and w:GetAttribute('ArgonIgnore') == nil then
+                    recursiveCount = 0
+                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = getParent(w, i), Source = w.Source})
+                end
+            end
+        end
+    end
+
+    return scriptsToSync
 end
 
 return fileHandler

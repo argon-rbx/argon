@@ -248,7 +248,13 @@ local function portToVS()
         portButton.Image = LOADING_ICON
         tween:Play()
 
-        local success, response = HttpHandler.port(FileHandler.port())
+        local success, response = HttpHandler.portInstances(FileHandler.portInstances())
+
+        if not success then
+            warn('Argon: '..response)
+        end
+
+        success, response = HttpHandler.portScripts(FileHandler.portScripts())
 
         if not success then
             warn('Argon: '..response)

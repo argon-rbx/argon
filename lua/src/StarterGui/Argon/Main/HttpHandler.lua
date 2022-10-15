@@ -31,8 +31,6 @@ local function startSyncing(url)
                         FileHandler.changeParent(v.Object, v.Parent)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
-                    elseif v.Action == 'changeSeparator' then
-                        FileHandler.separator = v.Separator
                     end
                 end
             end
@@ -49,7 +47,7 @@ local httpHandler = {}
 function httpHandler.connect(fail)
     local url = string.format(URL, Data.host, Data.port)
     local headers = {
-        action = 'test'
+        action = 'init'
     }
 
     local success, response = pcall(function()
@@ -72,14 +70,33 @@ function httpHandler.stop()
     end
 end
 
-function httpHandler.port(instancesToSync)
+function httpHandler.portInstances(instancesToSync)
     local url = string.format(URL, Data.host, Data.port)
     local headers = {
-        action = 'port',
+        action = 'portInstances'
     }
 
     local success, response = pcall(function()
         HttpService:PostAsync(url, HttpService:JSONEncode(instancesToSync), Enum.HttpContentType.ApplicationJson, false, headers)
+    end)
+
+    return success, response
+end
+
+function httpHandler.portScripts(scriptsToSync)
+    local url = string.format(URL, Data.host, Data.port)
+    local headers = {
+        action = 'portScripts'
+    }
+
+    local success, response = pcall(function()
+        repeat
+            task.wait(0.5)
+        until tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) > 500
+
+        for _, v in ipairs(scriptsToSync) do
+            HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, headers)
+        end
     end)
 
     return success, response

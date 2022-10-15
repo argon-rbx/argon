@@ -6,7 +6,7 @@ const server = vscode.workspace.getConfiguration('argon.server')
 
 module.exports = {
     rootName: directories.get('rootFolder'),
-    separator: directories.get('separator'),
+    extension: directories.get('extension'),
     autoRun: extension.get('autoRun'),
     autoUpdate: extension.get('autoUpdate'),
     host: server.get('host'),

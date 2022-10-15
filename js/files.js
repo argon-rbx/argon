@@ -10,9 +10,10 @@ const messageHandler = require('./messageHandler')
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
 const ROOT_NAME = config.rootName
-const SEPARATOR = config.separator
+const SEPARATOR = '|'
 
 let watchers = []
+let lastUnix = Date.now()
 
 function verify(parent) {
     if (parent != null && parent != '') {
@@ -281,33 +282,36 @@ function createInstances(dir, instances) {
 
         if (fs.existsSync(folder) == false) {
             if (key.endsWith('.Script')) {
+                folder = folder.slice(0, -7)
+
                 if (value.size == 0) {
-                    folder = folder.slice(0, -7)
-                    fs.writeFileSync(folder + '.server.lua', '')
+                    fs.writeFileSync(folder + '.server' + config.extension, '')
                 }
                 else {
                     fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source.server.lua'), '')
+                    fs.writeFileSync(path.join(folder, '.source.server' + config.extension), '')
                 }
             }
             else if (key.endsWith('.LocalScript')) {
+                folder = folder.slice(0, -12)
+
                 if (value.size == 0) {
-                    folder = folder.slice(0, -12)
-                    fs.writeFileSync(folder + '.client.lua', '')
+                    fs.writeFileSync(folder + '.client' + config.extension, '')
                 }
                 else {
                     fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source.client.lua'), '')
+                    fs.writeFileSync(path.join(folder, '.source.client' + config.extension), '')
                 }
             }
             else if (key.endsWith('.ModuleScript')) {
+                folder = folder.slice(0, -13)
+
                 if (value.size == 0) {
-                    folder = folder.slice(0, -13)
-                    fs.writeFileSync(folder + '.lua', '')
+                    fs.writeFileSync(folder + config.extension, '')
                 }
                 else {
                     fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source.lua'), '')
+                    fs.writeFileSync(path.join(folder, '.source' + config.extension), '')
                 }
             }
             else {
@@ -316,20 +320,64 @@ function createInstances(dir, instances) {
         }
 
         if (value.size > 0) {
-            createInstances(folder, value)
+            setTimeout(() => {
+                createInstances(folder, value)
+            }, 100)
         }
     }
+
+    lastUnix = Date.now()
 }
 
-function port(instances) {
+async function portInstances(instances) {
     let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
     instances = new Map(Object.entries(JSON.parse(instances)))
     createInstances(dir, instances)
+}
+
+function portScripts(scripts) {
+    scripts = JSON.parse(scripts)
+
+    let dir = path.join(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName), scripts.Instance)
+
+    if (fs.existsSync(dir + config.extension)) {
+        fs.writeFileSync(dir + config.extension, scripts.Source)
+    }
+    else {
+        switch (scripts.Type) {
+            case 'Script':
+                var localDir = path.join(dir, '.source.server') + config.extension
+                if (fs.existsSync(localDir)) {
+                    fs.writeFileSync(localDir, scripts.Source)
+                }
+                break
+            case 'LocalScript':
+                var localDir = path.join(dir, '.source.client') + config.extension
+                if (fs.existsSync(localDir)) {
+                    fs.writeFileSync(localDir, scripts.Source)
+                }
+                break
+            case 'ModuleScript':
+                var localDir = path.join(dir, '.source') + config.extension
+                if (fs.existsSync(localDir)) {
+                    fs.writeFileSync(localDir, scripts.Source)
+                }
+                break
+        }
+    }
+
+    lastUnix = Date.now()
+}
+
+function getUnix() {
+    return lastUnix
 }
 
 module.exports = {
     run,
     stop,
     updateClasses,
-    port
+    portInstances,
+    portScripts,
+    getUnix
 }
