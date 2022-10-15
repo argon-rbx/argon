@@ -2,6 +2,36 @@ local Data = require(script.Parent.Data)
 
 local SCRIPT_TYPES = {'LocalScript', 'ModuleScript', 'Script'}
 
+local function toArgon(instance)
+    return instance.Name..'.'..instance.ClassName
+end
+
+local function getChildren(dir)
+    local children = {}
+
+    for _, v in pairs(dir:GetChildren()) do
+        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute('ArgonIgnore') == nil then
+            if #v:GetChildren() > 0 then
+                children[toArgon(v)] = getChildren(v)
+            else
+                children[toArgon(v)] = {}
+            end
+        end
+    end
+
+    return children
+end
+
+local function len(array)
+    local index = 0
+
+    for _, _ in pairs(array) do
+        index += 1
+    end
+
+    return index
+end
+
 local fileHandler = {}
 
 fileHandler.separator = '|'
@@ -97,6 +127,24 @@ function fileHandler.changeType(object, type, name)
     if not success then
         warn('Argon: '..response)
     end
+end
+
+function fileHandler.port()
+    local instancesToSync = {}
+
+    for i, v in pairs(Data.syncedDirectories) do
+        if v then
+            instancesToSync[i] = getChildren(game[i])
+        end
+    end
+
+    for i, v in pairs(instancesToSync) do
+        if len(v) == 0 then
+            instancesToSync[i] = nil
+        end
+    end
+
+    return instancesToSync
 end
 
 return fileHandler

@@ -1,6 +1,7 @@
 local HttpService = game:GetService('HttpService')
 
 local FileHandler = require(script.Parent.FileHandler)
+local Data = require(script.Parent.Data)
 
 local URL = 'http://%s:%s/'
 
@@ -45,8 +46,8 @@ end
 
 local httpHandler = {}
 
-function httpHandler.connect(host, port, fail)
-    local url = string.format(URL, host, port)
+function httpHandler.connect(fail)
+    local url = string.format(URL, Data.host, Data.port)
     local headers = {
         action = 'test'
     }
@@ -69,6 +70,19 @@ function httpHandler.stop()
         task.cancel(thread)
         thread = nil
     end
+end
+
+function httpHandler.port(instancesToSync)
+    local url = string.format(URL, Data.host, Data.port)
+    local headers = {
+        action = 'port',
+    }
+
+    local success, response = pcall(function()
+        HttpService:PostAsync(url, HttpService:JSONEncode(instancesToSync), Enum.HttpContentType.ApplicationJson, false, headers)
+    end)
+
+    return success, response
 end
 
 return httpHandler

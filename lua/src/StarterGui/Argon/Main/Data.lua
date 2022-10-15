@@ -1,5 +1,8 @@
 local data = {}
 
+data.host = 'localhost'
+data.port = '8000'
+
 data.syncedDirectories = {
     ['Workspace'] = true,
     ['Players'] = false,
@@ -18,7 +21,6 @@ data.syncedDirectories = {
     ['LocalizationService'] = false,
     ['TestService'] = false
 }
-
 data.ignoredClasses = {}
 
 return data

@@ -161,7 +161,7 @@ function onRename(uri) {
 }
 
 function run() {
-    let gameDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'game')
+    let gameDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
     let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
 
     if (fs.existsSync(gameDir) == false) {
@@ -274,8 +274,62 @@ function updateClasses() {
     }
 }
 
+function createInstances(dir, instances) {
+    for (let [key, value] of instances) {
+        let folder = path.join(dir, key)
+        value = new Map(Object.entries(value))
+
+        if (fs.existsSync(folder) == false) {
+            if (key.endsWith('.Script')) {
+                if (value.size == 0) {
+                    folder = folder.slice(0, -7)
+                    fs.writeFileSync(folder + '.server.lua', '')
+                }
+                else {
+                    fs.mkdirSync(folder)
+                    fs.writeFileSync(path.join(folder, '.source.server.lua'), '')
+                }
+            }
+            else if (key.endsWith('.LocalScript')) {
+                if (value.size == 0) {
+                    folder = folder.slice(0, -12)
+                    fs.writeFileSync(folder + '.client.lua', '')
+                }
+                else {
+                    fs.mkdirSync(folder)
+                    fs.writeFileSync(path.join(folder, '.source.client.lua'), '')
+                }
+            }
+            else if (key.endsWith('.ModuleScript')) {
+                if (value.size == 0) {
+                    folder = folder.slice(0, -13)
+                    fs.writeFileSync(folder + '.lua', '')
+                }
+                else {
+                    fs.mkdirSync(folder)
+                    fs.writeFileSync(path.join(folder, '.source.lua'), '')
+                }
+            }
+            else {
+                fs.mkdirSync(folder)
+            }
+        }
+
+        if (value.size > 0) {
+            createInstances(folder, value)
+        }
+    }
+}
+
+function port(instances) {
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
+    instances = new Map(Object.entries(JSON.parse(instances)))
+    createInstances(dir, instances)
+}
+
 module.exports = {
     run,
     stop,
-    updateClasses
+    updateClasses,
+    port
 }

@@ -15,6 +15,9 @@ local WHITE = Color3.fromRGB(255, 255, 255)
 local LIGHT_BLACK = Color3.fromRGB(40, 40, 40)
 local LIGHT_WHITE = Color3.fromRGB(240, 240, 240)
 
+local LOADING_ICON = 'rbxassetid://11234420895'
+local START_ICON = 'rbxassetid://11272872815'
+
 local background = script.Parent.Parent.ArgonGui.Root.Background
 
 local mainPage = background.Main
@@ -47,9 +50,6 @@ local ignoredClassesFrame = settingsPage.IgnoredClasses
 
 local portButton = toolsPage.Body.Port.Button
 local updateButton = toolsPage.Body.Update.Button
-
-local host = 'localhost'
-local port = '8000'
 
 local autoRun = false
 local autoReconnect = false
@@ -95,7 +95,7 @@ function connect()
             local tween = TweenService:Create(loading, LOADING_TWEEN_INFO, {Rotation = -360})
             tween:Play()
 
-            local success, response = HttpHandler.connect(host, port, fail)
+            local success, response = HttpHandler.connect(fail)
 
             action.Visible = true
             loading.Visible = false
@@ -104,7 +104,7 @@ function connect()
 
             if success then
                 action.Text = 'STOP'
-                info.Text = host..':'..port
+                info.Text = Data.host..':'..Data.port
                 state = 1
             else
                 fail(response)
@@ -142,21 +142,21 @@ end
 
 local function setAddress(input, isHost)
     if isHost then
-        host = input.Text
+        Data.host = input.Text
 
-        if host == '' then
-            host = 'localhost'
+        if Data.host == '' then
+            Data.host = 'localhost'
         end
 
-        plugin:SetSetting('Host', host)
+        plugin:SetSetting('Host', Data.host)
     else
-        port = input.Text
+        Data.port = input.Text
 
-        if port == '' then
-            port =  '8000'
+        if Data.port == '' then
+            Data.port =  '8000'
         end
 
-        plugin:SetSetting('Port', port)
+        plugin:SetSetting('Port', Data.port)
     end
 end
 
@@ -202,7 +202,7 @@ local function toggleSetting(setting, data)
         end
     elseif setting == 2 then
         data = data:gsub(' ', '')
-        data = string.split(data, '.')
+        data = string.split(data, ',')
 
         Data.ignoredClasses = data
         plugin:SetSetting('IgnoredClasses', data)
@@ -241,7 +241,25 @@ local function expandSetting(setting)
 end
 
 local function portToVS()
-    
+    if not isPorting then
+        isPorting = true
+
+        local tween = TweenService:Create(portButton, LOADING_TWEEN_INFO, {Rotation = -360})
+        portButton.Image = LOADING_ICON
+        tween:Play()
+
+        local success, response = HttpHandler.port(FileHandler.port())
+
+        if not success then
+            warn('Argon: '..response)
+        end
+
+        tween:Cancel()
+        portButton.Rotation = 0
+        portButton.Image = START_ICON
+
+        isPorting = false
+    end
 end
 
 local guiHandler = {}
@@ -285,14 +303,14 @@ function guiHandler.init(newPlugin)
     local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
     local ignoredClassesSetting = plugin:GetSetting('IgnoredClasses')
 
-    if hostSetting and hostSetting ~= host then
+    if hostSetting and hostSetting ~= Data.host then
         hostInput.Text = hostSetting
-        host = hostSetting
+        Data.host = hostSetting
     end
 
-    if portSetting and portSetting ~= port then
+    if portSetting and portSetting ~= Data.port then
         portInput.Text = portSetting
-        port = portSetting
+        Data.port = portSetting
     end
 
     if autoRunSetting and autoRunSetting ~= autoRun then
@@ -358,6 +376,8 @@ function guiHandler.run(autoConnect)
     connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
     connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
     connections['ignoredClassesButton'] = ignoredClassesButton.MouseButton1Click:Connect(function() expandSetting('IgnoredClasses') end)
+
+    connections['portButton'] = portButton.MouseButton1Click:Connect(portToVS)
 
     if autoConnect then
         connect()

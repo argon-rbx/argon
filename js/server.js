@@ -1,6 +1,7 @@
 const http = require('http')
 const config = require('../config/settings.js')
-const requests = require('./requests')
+const events = require('./events')
+const files = require('./files')
 
 const PORT = config.port
 const HOST = config.host
@@ -9,16 +10,28 @@ let localServer = http.createServer(requestListener)
 
 function requestListener(request, response) {
     let headers = request.headers
-    let data = null;
+    let newData = null;
 
     switch (headers.action) {
         case 'getSync':
-            data = requests.getSync()
+            newData = JSON.stringify(events.queue)
+            events.queue.length = 0
+            break
+        case 'port':
+            let body = ''
+        
+            request.on('data', (data) => {
+                body += data
+            })
+    
+            request.on('end', () => {
+                files.port(body)
+            })
             break
     }
 
     response.writeHead(200)
-    response.end(data)
+    response.end(newData)
 }
 
 function run() {
