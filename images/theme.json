@@ -1,0 +1,10 @@
+{
+    "iconDefinitions": {
+        "lua": {
+          "iconPath": "./icons/test.png"
+        }
+    },
+    "fileExtensions" : {
+        "lua": "lua"
+    }
+}

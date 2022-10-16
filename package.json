@@ -4,17 +4,17 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
   },
   "keywords": [
-		"Roblox",
-		"Lua",
+    "Roblox",
+    "Lua",
     "Luau",
     "Sync"
-	],
+  ],
   "categories": [
     "Other"
   ],
@@ -26,22 +26,24 @@
   ],
   "main": "./js/main.js",
   "contributes": {
-    "commands": [{
-      "command": "argon.run",
-      "title": "Run Argon",
-      "category": "Argon"
-    },
-    {
-      "command": "argon.stop",
-      "title": "Stop Argon",
-      "category": "Argon"
-    },
-    {
-      "command": "argon.update",
-      "title": "Update class database",
-      "category": "Argon"
-    }],
-    "configuration" : {
+    "commands": [
+      {
+        "command": "argon.run",
+        "title": "Run Argon",
+        "category": "Argon"
+      },
+      {
+        "command": "argon.stop",
+        "title": "Stop Argon",
+        "category": "Argon"
+      },
+      {
+        "command": "argon.update",
+        "title": "Update class database",
+        "category": "Argon"
+      }
+    ],
+    "configuration": {
       "title": "Argon",
       "properties": {
         "argon.directories.rootFolder": {
@@ -55,7 +57,10 @@
           "type": "string",
           "default": ".lua",
           "description": "Default extension of script files when ported from Roblox Studio",
-          "enum": [".lua", ".luau"]
+          "enum": [
+            ".lua",
+            ".luau"
+          ]
         },
         "argon.extension.autoRun": {
           "type": "boolean",
@@ -83,6 +88,7 @@
         }
       }
     }
+
   },
   "repository": {
     "type": "git",
@@ -94,14 +100,17 @@
     "test": "node ./test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.72.0",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.72.0",
+    "@vscode/test-electron": "^2.1.5",
     "eslint": "^8.24.0",
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
-    "typescript": "^4.8.4",
-    "@vscode/test-electron": "^2.1.5"
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "vscode": "^1.1.37"
   }
 }

@@ -67,14 +67,22 @@ function getParent(root) {
 }
 
 function onCreate(uri) {
-    uri = path.parse(uri.files[0].fsPath)
-    let parent = getParent(uri.dir)
+    let files = uri.files
 
-    if (verify(parent) != true) {
-        return
+    for (uri of files) {
+        uri = path.parse(uri.fsPath)
+        let parent = getParent(uri.dir)
+
+        if (verify(parent) != true) {
+            return
+        }
+
+        if (uri.name.startsWith('.source') && parent.includes(SEPARATOR) == false) {
+            return
+        }
+    
+        events.create(uri.ext, uri.name, parent)
     }
-
-    events.create(uri.ext, uri.name, parent)
 }
 
 function onSave(uri) {
@@ -87,7 +95,9 @@ function onSave(uri) {
     }
 
     if (uri.name.startsWith('.source')) {
-        events.update(parent, source)
+        if (parent.includes(SEPARATOR)) {
+            events.update(parent, source)
+        }
     }
     else {
         events.update(parent + SEPARATOR + uri.name, source)
@@ -95,69 +105,87 @@ function onSave(uri) {
 }
 
 function onDelete(uri) {
-    uri = path.parse(uri.files[0].fsPath)
-    let parent = getParent(uri.dir)
+    let files = uri.files
 
-    if (verify(parent) != true) {
-        return
-    }
-
-    if (uri.name.startsWith('.source')) {
-        events.remove(parent)
-        fs.rmdirSync(uri.dir)
-    }
-    else {
-        events.remove(parent + SEPARATOR + uri.name)
+    for (uri of files) {
+        uri = path.parse(uri.fsPath)
+        let parent = getParent(uri.dir)
+    
+        if (verify(parent) != true) {
+            return
+        }
+    
+        if (uri.name.startsWith('.source')) {
+            if (parent.includes(SEPARATOR)) {
+                events.remove(parent)
+                fs.rmdirSync(uri.dir)
+            }
+        }
+        else {
+            events.remove(parent + SEPARATOR + uri.name)
+        }
     }
 }
 
 function onRename(uri) {
-    uri = uri.files[0]
+    let files = uri.files
 
-    let newUri = path.parse(uri.newUri.fsPath)
-    let newParent = getParent(newUri.dir)
+    for (uri of files) {
+        let newUri = path.parse(uri.newUri.fsPath)
+        let oldUri = path.parse(uri.oldUri.fsPath)
+        let newParent = getParent(newUri.dir)
+        let oldParent = getParent(oldUri.dir)
+        
+        if (verify(newParent) != true || verify(oldParent) != true) {
+            return
+        }
+
+        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && (newParent.includes(SEPARATOR) == false || oldParent.includes(SEPARATOR) == false)) {
+            return
+        }
     
-    if (verify(newParent) != true) {
-        return
-    }
-
-    let oldUri = path.parse(uri.oldUri.fsPath)
-    let oldParent = getParent(oldUri.dir)
-
-    if (newUri.name != oldUri.name) {
-        if (newUri.ext == '.lua' || newUri.ext == '.luau') {
-            let newSplitted = newUri.name.split('.')
-            let oldSplitted = oldUri.name.split('.')
-            
-            if (newSplitted.length != oldSplitted.length) {
-                events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
-            }
-            else {
-                let newName = newSplitted[0]
-                let newType = newSplitted[newSplitted.length - 1]
-                let oldName = oldSplitted[0]
-                let oldType = oldSplitted[newSplitted.length - 1]
+        if (newUri.name != oldUri.name) {
+            if (newUri.ext == '.lua' || newUri.ext == '.luau') {
+                let newSplitted = newUri.name.split('.')
+                let oldSplitted = oldUri.name.split('.')
                 
-                if (newName != oldName && newType == oldType) {
-                    events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
-                }
-                else if (newType != oldType && newName == oldName) {
-                    events.changeType(newParent + SEPARATOR + newUri.name, newType)
-                }
-                else {
+                if (newSplitted.length != oldSplitted.length) {
                     events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
+                else {
+                    let newName = newSplitted[0]
+                    let newType = newSplitted[newSplitted.length - 1]
+                    let oldName = oldSplitted[0]
+                    let oldType = oldSplitted[newSplitted.length - 1]
+                    
+                    if (newName != oldName && newType == oldType) {
+                        events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
+                    }
+                    else if (newType != oldType && newName == oldName) {
+                        events.changeType(newParent + SEPARATOR + newUri.name, newType)
+                    }
+                    else {
+                        events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                    }
+                }
+            }
+            else {
+                events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
             }
         }
-        else {
-            events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
+        else if (newUri.ext != oldUri.ext) {
+            events.changeType(newParent + SEPARATOR + newUri.name, newUri.ext)
         }
-    }
-    else if (newUri.ext != oldUri.ext) {
-        events.changeType(newParent + SEPARATOR + newUri.name, newUri.ext)
-    }
-    else {
-        events.changeParent(oldParent + SEPARATOR + oldUri.name, newParent)
+        else {
+            if (newUri.name.startsWith('.source')) {
+                setTimeout(() => {
+                    fs.renameSync(uri.newUri.fsPath, uri.oldUri.fsPath)
+                }, 100)
+            }
+            else {
+                events.changeParent(oldParent + SEPARATOR + oldUri.name, newParent)
+            }
+        }
     }
 }
 
@@ -170,8 +198,7 @@ function run() {
     }
 
     if (fs.existsSync(dataDir)) {
-        // @ts-ignore
-        let json = JSON.parse(fs.readFileSync(dataDir))
+        let json = JSON.parse(fs.readFileSync(dataDir).toString())
 
         if (json.classes) {
             events.setTypes(json.classes)
@@ -256,8 +283,7 @@ function updateClasses() {
     messageHandler.showMessage('updatingDatabase', 1)
 
     if (fs.existsSync(dir)) {
-        // @ts-ignore
-        let json = JSON.parse(fs.readFileSync(dir))
+        let json = JSON.parse(fs.readFileSync(dir).toString())
 
         getVersion(function(version) {
             if (json.version == version) {

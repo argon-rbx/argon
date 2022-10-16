@@ -2,10 +2,10 @@
 .vscode-test/**
 test/**
 .gitignore
+.github/**
 .yarnrc
 **/jsconfig.json
 **/*.map
 **/.eslintrc.json
 lua/**
-images/Icons
-images/Misc
+assets/**
