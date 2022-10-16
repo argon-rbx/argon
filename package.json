@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"

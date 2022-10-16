@@ -1,9 +1,18 @@
-# Change Log
+# Changelog
 
-All notable changes to the "argon" extension will be documented in this file.
+## 0.0.5
+* Fixed critcal issue
+* Added changelog
+## 0.0.4
+* Finished porting feature
+* Added VS Code extension options
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## 0.0.3
+* Added port to VS Code feature (not completed)
 
-## [Unreleased]
+## 0.0.2
+* Updated Roblox plguin UI
+* Added markdown files
 
-- Initial release
+## 0.0.1
+* Initial release

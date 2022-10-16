@@ -13,9 +13,6 @@ function requestListener(request, response) {
     let data = null;
 
     switch (headers.action) {
-        case 'init':
-            data = true
-            break
         case 'getSync':
             data = JSON.stringify(events.queue)
             events.queue.length = 0
