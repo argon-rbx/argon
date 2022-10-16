@@ -27,8 +27,6 @@ local function parse(instance)
         className = '.'..instance.ClassName
     end
 
-    instance.Name = name
-
     return name..className
 end
 
