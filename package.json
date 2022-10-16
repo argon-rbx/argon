@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -87,8 +87,14 @@
           "maximum": 65535
         }
       }
-    }
-
+    },
+    "iconThemes": [
+      {
+        "id": "argon",
+        "label": "Argon",
+        "path": "./images/theme.json"
+      }
+    ]
   },
   "repository": {
     "type": "git",

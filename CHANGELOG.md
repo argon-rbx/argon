@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.7
+* Added Argon file icon theme
+
 ## 0.0.6
 * Added support for deleting, creating and moving multiple files at once
 * Moving service folders e.g. Workspace no longer causes errors
