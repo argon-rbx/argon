@@ -13,11 +13,11 @@ Argon is a simple two-way sync [plugin](https://create.roblox.com/marketplace/as
 # Usage
 ## Running extension:
 ### 1. In VS code open workspace
-![Usage screenshot](/images/Markdown/1.png 'Usage')
+![Usage screenshot](/images/markdown/1.png 'Usage')
 ### 2. Prees F1 and run Argon
-![Usage screenshot](/images/Markdown/2.png 'Usage')
+![Usage screenshot](/images/markdown/2.png 'Usage')
 ### 3. Open Roblox plugin and press connect
-![Usage screenshot](/images/Markdown/3.png 'Usage')
+![Usage screenshot](/images/markdown/3.png 'Usage')
 
 ## Syncing, creating scripts and instances (video):
-[![Usage video](/images/Markdown/4.png)](https://vimeo.com/760102627 "Argon demo")
+[![Usage video](/images/markdown/4.png)](https://vimeo.com/760102627 "Argon demo")
