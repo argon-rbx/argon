@@ -29,7 +29,7 @@ function create(ext, name, parent) {
                 else {
                     let splitted = parent.split(SEPARATOR)
                     name = parent.slice(-splitted[splitted.length - 1].length)
-                    parent = parent.replace(SEPARATOR + name, '')
+                    parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent, Delete: true})
                 }
 
@@ -43,7 +43,7 @@ function create(ext, name, parent) {
                 else {
                     let splitted = parent.split(SEPARATOR)
                     name = parent.slice(-splitted[splitted.length - 1].length)
-                    parent = parent.replace(SEPARATOR + name, '')
+                    parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent, Delete: true})
                 }
 
@@ -55,7 +55,7 @@ function create(ext, name, parent) {
                 else {
                     let splitted = parent.split(SEPARATOR)
                     name = parent.slice(-splitted[splitted.length - 1].length)
-                    parent = parent.replace(SEPARATOR + name, '')
+                    parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent, Delete: true})
                 }
 

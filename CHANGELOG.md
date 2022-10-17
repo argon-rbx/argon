@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.0.8
+* Fixed bug that caused not changing .source file type
 ## 0.0.7
 * Added Argon file icon theme
 
