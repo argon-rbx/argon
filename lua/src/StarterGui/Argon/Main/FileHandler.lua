@@ -1,6 +1,10 @@
 local Data = require(script.Parent.Data)
 
-local SCRIPT_TYPES = {'Script', 'LocalScript', 'ModuleScript'}
+local SCRIPT_TYPES = {
+    ['ModuleScript'] = '',
+    ['Script'] = 'server',
+    ['LocalScript'] = 'client', 
+}
 local SEPARATOR = '|'
 
 local recursiveCount = 0
@@ -55,25 +59,10 @@ local function getParent(instance, class)
     if instance.ClassName ~= class then
         local name
 
-        if table.find(SCRIPT_TYPES, instance.ClassName) then
-            if recursiveCount == 1 then
-                name = instance.Name
-
-                if instance.ClassName == 'Script' then
-                    if #instance:GetChildren() == 0 then
-                        name = name..'.server'
-                    else
-                        name = name
-                    end
-                elseif instance.ClassName == 'LocalScript' then
-                    if #instance:GetChildren() == 0 then
-                        name = name..'.client'
-                    else
-                        name = name
-                    end
-                end
-            else
-                name = instance.Name
+        if instance:IsA('LuaSourceContainer') then
+			name = instance.Name
+            if recursiveCount == 1 and #instance:GetChildren() == 0 then
+				name ..= '.' .. SCRIPT_TYPES[instance.ClassName]
             end
         elseif instance.ClassName == 'Folder' then
             name = instance.Name
@@ -172,7 +161,7 @@ function fileHandler.changeType(object, type, name)
             v.Parent = newObject
         end
 
-        if table.find(SCRIPT_TYPES, type) and table.find(SCRIPT_TYPES, object.ClassName) then
+        if SCRIPT_TYPES[type] and object:IsA('LuaSourceContainer') then
             newObject.Source = object.Source
         end
 
@@ -208,7 +197,7 @@ function fileHandler.portScripts()
     for i, v in pairs(Data.syncedDirectories) do
         if v then
             for _, w in ipairs(game[i]:GetDescendants()) do
-                if (w:IsA('LocalScript') or w:IsA('ModuleScript') or w:IsA('Script')) and w:GetAttribute('ArgonIgnore') == nil then
+                if w:IsA("LuaSourceContainer") and w:GetAttribute('ArgonIgnore') == nil then
                     recursiveCount = 0
                     table.insert(scriptsToSync, {Type = w.ClassName, Instance = getParent(w, i), Source = w.Source})
                 end
