@@ -60,10 +60,10 @@ local function getParent(instance, class)
         local name
 
         if instance:IsA('LuaSourceContainer') then
-			name = instance.Name
-            if recursiveCount == 1 and #instance:GetChildren() == 0 then
-				name ..= '.' .. SCRIPT_TYPES[instance.ClassName]
-            end
+		name = instance.Name
+		if recursiveCount == 1 and #instance:GetChildren() == 0 then
+			name ..= '.' .. SCRIPT_TYPES[instance.ClassName]
+		end
         elseif instance.ClassName == 'Folder' then
             name = instance.Name
         else
