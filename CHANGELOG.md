@@ -2,18 +2,18 @@
 
 ## 0.0.9
 * Merged changes by [@Almost89](https://github.com/Almost89) in [#1](https://github.com/DervexHero/Argon/pull/1)
-* Fixed issue reported by [@LawMixer](https://devforum.roblox.com/u/bulldo344), [commitblue](https://devforum.roblox.com/u/commitblue), [Voidage](https://devforum.roblox.com/u/voidage) which made users unable to port large places
+* Fixed issue reported by [@LawMixer](https://devforum.roblox.com/u/bulldo344), [@commitblue](https://devforum.roblox.com/u/commitblue), [@Voidage](https://devforum.roblox.com/u/voidage) which made users unable to port large places
 * Added support for renamed services
 * Added history service support
 * Added error ids
 * Added more icons
-* Moved plugin source to Argon and
+* Moved plugin source to Argon
 
 ## 0.0.8
 * Fixed bug that caused not changing .source file type
 ## 0.0.7
 * Added Argon file icon theme
-\
+
 ## 0.0.6
 * Added support for deleting, creating and moving multiple files at once
 * Moving service folders e.g. Workspace no longer causes errors

@@ -369,7 +369,6 @@ function portScripts(scripts) {
 
         if (fs.existsSync(dir + config.extension)) {
             fs.writeFileSync(dir + config.extension, script.Source)
-            console.log(3);
         }
         else {
             switch (script.Type) {
@@ -377,30 +376,18 @@ function portScripts(scripts) {
                     var localDir = path.join(dir, '.source.server') + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
-                        console.log(3);
-                    }
-                    else {
-                        console.log(script.Instance);
                     }
                     break
                 case 'LocalScript':
                     var localDir = path.join(dir, '.source.client') + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
-                        console.log(3);
-                    }
-                    else {
-                        console.log(script.Instance);
                     }
                     break
                 case 'ModuleScript':
                     var localDir = path.join(dir, '.source') + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
-                        console.log(3);
-                    }
-                    else {
-                        console.log(script.Instance);
                     }
                     break
             }
