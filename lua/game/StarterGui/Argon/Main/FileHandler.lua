@@ -1,13 +1,20 @@
+local ChangeHistoryService = game:GetService('ChangeHistoryService')
+
 local Data = require(script.Parent.Data)
 
-local SCRIPT_TYPES = {
-    ['ModuleScript'] = '',
-    ['Script'] = 'server',
-    ['LocalScript'] = 'client', 
-}
 local SEPARATOR = '|'
+local ARGON_IGNORE = 'ArgonIgnore'
+local SCRIPT_TYPES = {
+    Script = 'server',
+    LocalScript = 'client',
+    ModuleScript = ''
+}
 
 local recursiveCount = 0
+
+local function addWaypoint()
+    ChangeHistoryService:SetWaypoint('ArgonSync')
+end
 
 local function len(array)
     local index = 0
@@ -38,7 +45,7 @@ local function getChildren(dir)
     local children = {}
 
     for _, v in pairs(dir:GetChildren()) do
-        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute('ArgonIgnore') == nil then
+        if not Data.ignoredClasses[v.ClassName] and v:GetAttribute(ARGON_IGNORE) == nil then
             if #v:GetChildren() > 0 then
                 children[parse(v)] = getChildren(v)
             else
@@ -60,10 +67,21 @@ local function getParent(instance, class)
         local name
 
         if instance:IsA('LuaSourceContainer') then
-		name = instance.Name
-		if recursiveCount == 1 and #instance:GetChildren() == 0 then
-			name ..= '.' .. SCRIPT_TYPES[instance.ClassName]
-		end
+		    if recursiveCount == 1 then
+                name = instance.Name
+
+                if #instance:GetChildren() == 0 then
+                    if instance.ClassName ~= 'ModuleScript' then
+                        name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                    else
+                        name = name
+                    end
+                else
+                    name = name
+                end
+            else
+                name = instance.Name
+		    end
         elseif instance.ClassName == 'Folder' then
             name = instance.Name
         else
@@ -105,8 +123,10 @@ function fileHandler.create(type, name, parent, delete)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhC)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.update(object, source)
@@ -115,8 +135,10 @@ function fileHandler.update(object, source)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhU)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.delete(object)
@@ -125,8 +147,10 @@ function fileHandler.delete(object)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhD)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.rename(object, name)
@@ -135,8 +159,10 @@ function fileHandler.rename(object, name)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhR)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.changeParent(object, parent)
@@ -145,8 +171,10 @@ function fileHandler.changeParent(object, parent)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhCP)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.changeType(object, type, name)
@@ -161,7 +189,8 @@ function fileHandler.changeType(object, type, name)
             v.Parent = newObject
         end
 
-        if SCRIPT_TYPES[type] and object:IsA('LuaSourceContainer') then
+        ---@diagnostic disable-next-line: invalid-class-name
+        if SCRIPT_TYPES[type] and object:IsA('LuaSourceContainer') then --why the hell Roblox LSP thinks that this is invalid enum?!
             newObject.Source = object.Source
         end
 
@@ -169,8 +198,10 @@ function fileHandler.changeType(object, type, name)
     end)
 
     if not success then
-        warn('Argon: '..response)
+        warn('Argon: '..response..' (fhCT)')
     end
+
+    addWaypoint()
 end
 
 function fileHandler.portInstances()
@@ -178,7 +209,7 @@ function fileHandler.portInstances()
 
     for i, v in pairs(Data.syncedDirectories) do
         if v then
-            instancesToSync[i] = getChildren(game[i])
+            instancesToSync[i] = getChildren(game:GetService(i))
         end
     end
 
@@ -196,8 +227,8 @@ function fileHandler.portScripts()
 
     for i, v in pairs(Data.syncedDirectories) do
         if v then
-            for _, w in ipairs(game[i]:GetDescendants()) do
-                if w:IsA("LuaSourceContainer") and w:GetAttribute('ArgonIgnore') == nil then
+            for _, w in ipairs(game:GetService(i):GetDescendants()) do
+                if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
                     recursiveCount = 0
                     table.insert(scriptsToSync, {Type = w.ClassName, Instance = getParent(w, i), Source = w.Source})
                 end

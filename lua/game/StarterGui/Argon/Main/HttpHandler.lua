@@ -8,6 +8,23 @@ local URL = 'http://%s:%s/'
 local thread = nil
 local func = nil
 
+local function getChunk(data, index)
+    local chunk, lastChunk = {}, {}
+
+    for i = index, #data do
+        index = i
+        table.insert(chunk, data[i])
+
+        if #HttpService:JSONEncode(chunk) / 1000 < 1020 then
+            table.insert(lastChunk, data[i])
+        else
+            return lastChunk, index
+        end
+    end
+
+    return lastChunk, index
+end
+
 local function startSyncing(url)
     local headers = {
         action = 'getSync'
@@ -15,7 +32,7 @@ local function startSyncing(url)
 
     thread = task.spawn(function()
         local success, response = pcall(function()
-            while task.wait(0.1) do
+            while task.wait(0.2) do
                 local queue = HttpService:JSONDecode(HttpService:GetAsync(url, false, headers))
 
                 for _, v in ipairs(queue) do
@@ -94,8 +111,21 @@ function httpHandler.portScripts(scriptsToSync)
             task.wait(0.5)
         until tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) > 500
 
-        for _, v in ipairs(scriptsToSync) do
+        local chunks = {}
+        local index = 1
+
+        repeat
+            local chunk
+            chunk, index = getChunk(scriptsToSync, index)
+            table.insert(chunks, chunk)
+        until index == #scriptsToSync
+
+        for _, v in ipairs(chunks) do
             HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, headers)
+
+            repeat
+                task.wait(0.5)
+            until tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) > 500
         end
     end)
 

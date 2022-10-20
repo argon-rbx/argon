@@ -21,6 +21,7 @@ function requestListener(request, response) {
             data = JSON.stringify(Date.now() - files.getUnix())
             break
         case 'portInstances':
+            console.log(1);
             var body = ''
         
             request.on('data', (chunk) => {
@@ -32,6 +33,7 @@ function requestListener(request, response) {
             })
             break
         case 'portScripts':
+            console.log(2);
             var body = ''
         
             request.on('data', (chunk) => {

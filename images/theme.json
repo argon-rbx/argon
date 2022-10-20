@@ -66,11 +66,18 @@
             "iconPath": "./icons/StarterPlayerScripts.png"
         },
 
+        "roblox": {
+            "iconPath": "./icons/Roblox.png"
+        },
+
         "gitignore": {
             "iconPath": "./icons/material/.gitignore.svg"
         },
         "vscodeignore": {
             "iconPath": "./icons/material/.vscodeignore.svg"
+        },
+        "3d": {
+            "iconPath": "./icons/material/3d.svg"
         },
         "csv": {
             "iconPath": "./icons/material/csv.svg"
@@ -123,8 +130,15 @@
         "server.lua": "script",
         "server.luau": "script",
 
+        "rbxl": "roblox",
+        "rbxlx": "roblox",
+        "rbxm": "roblox",
+        "rbxmx": "roblox",
+
         "gitignore": "gitignore",
         "vscodeignore": "vscodeignore",
+        "fbx": "3d",
+        "obj": "3d",
         "csv": "csv",
         "json": "json",
         "md": "md",
