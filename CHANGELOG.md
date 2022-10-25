@@ -3,7 +3,6 @@
 ## 0.1.0
 * Added port to Roblox feature
 * Changed default root folder name to "src" for convenience
-* Fixed Roblox plugin behaviour when debugging
 * Fixed duplicated instances bug
 
 ## 0.0.9

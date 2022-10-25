@@ -100,6 +100,10 @@ local function getInstance(parent)
         if lastParent == game then
             lastParent = game:GetService(v)
         else
+            --TEMP FIX!
+            v = v:gsub('StarterPlayerScripts.StarterPlayerScripts', 'StarterPlayerScripts')
+            v = v:gsub('StarterCharacterScripts.StarterCharacterScripts', 'StarterCharacterScripts')
+
             lastParent = lastParent[v]
         end
     end
