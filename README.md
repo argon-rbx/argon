@@ -1,23 +1,33 @@
 ![Argon logo and name icon](/images/LogoName.png 'Argon')
 # About
-Argon is a simple two-way sync [plugin](https://create.roblox.com/marketplace/asset/11263738833/) for Roblox and [extension](https://marketplace.visualstudio.com/items?itemName=Dervex.argon) for Visual Studio Code allowing developers not only to sync code but every possible Roblox class.
+Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only to sync code but every possible Roblox class with ease. Argon is an alternative for Rojo not its replacement!
+
+# Links
+* Roblox [plugin](https://create.roblox.com/marketplace/asset/11263738833/)
+* Visual Studio Code [extension](https://marketplace.visualstudio.com/items?itemName=Dervex.argon)
+* Github [repository](https://github.com/DervexHero/Argon)
+* DevForum [topic](https://devforum.roblox.com/t/2021776)
 
 # Features
 * Two-way sync (currently only from VS Code to Roblox is supported)
-* Instance syncing
-* Very simple in use
-* Customizable and expandable
+* Support for renaming, changing directory and classes
+* Instance syncing with differen options
+* Porting in both sides with just one button
 * Self updating class database
-* Easy renaming, changing directory and classes
+* Customizable, expandable and flexible
+* Very simple in use
+* Fast setup
 
 # Usage
-## Running extension:
-### 1. In VS code open workspace
-![Usage screenshot](/images/markdown/1.png 'Usage')
-### 2. Prees F1 and run Argon
-![Usage screenshot](/images/markdown/2.png 'Usage')
-### 3. Open Roblox plugin and press connect
-![Usage screenshot](/images/markdown/3.png 'Usage')
+<details>
+<summary>Connecting</summary>
 
-## Syncing, creating scripts and instances (video):
-[![Usage video](/images/markdown/4.png)](https://vimeo.com/760102627 "Argon demo")
+1. ![Usage screenshot](/images/markdown/1.png 'Usage')
+2. ![Usage screenshot](/images/markdown/2.png 'Usage')
+3. ![Usage screenshot](/images/markdown/3.png 'Usage')
+
+</details>
+
+<details>
+<summary>Soon</summary>
+</details>

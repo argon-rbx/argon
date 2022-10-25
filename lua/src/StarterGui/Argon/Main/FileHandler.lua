@@ -10,8 +10,6 @@ local SCRIPT_TYPES = {
     ModuleScript = ''
 }
 
-local recursiveCount = 0
-
 local function addWaypoint()
     ChangeHistoryService:SetWaypoint('ArgonSync')
 end
@@ -57,17 +55,15 @@ local function getChildren(dir)
     return children
 end
 
-local function getParent(instance, class)
+local function getParent(instance, class, recursive)
     local parent = instance.Parent
     local dir = ''
-
-    recursiveCount += 1
 
     if instance.ClassName ~= class then
         local name
 
         if instance:IsA('LuaSourceContainer') then
-		    if recursiveCount == 1 then
+		    if not recursive then
                 name = instance.Name
 
                 if #instance:GetChildren() == 0 then
@@ -88,9 +84,9 @@ local function getParent(instance, class)
             name = instance.Name..'.'..instance.ClassName
         end
 
-        dir = getParent(parent, class)..'\\'..name
+        dir = getParent(parent, class, true)..'\\'..name
     else
-        dir = instance.Name
+        dir = instance.ClassName
     end
 
     return dir
@@ -101,7 +97,11 @@ local function getInstance(parent)
     parent = parent:split(SEPARATOR)
 
     for _, v in ipairs(parent) do
-        lastParent = lastParent[v]
+        if lastParent == game then
+            lastParent = game:GetService(v)
+        else
+            lastParent = lastParent[v]
+        end
     end
 
     return lastParent
@@ -116,6 +116,8 @@ function fileHandler.create(type, name, parent, delete)
 
         if delete and parent:FindFirstChild(name) then
             parent[name]:Destroy()
+        elseif parent:FindFirstChild(name) then
+            return
         end
 
         object.Name = name
@@ -229,7 +231,6 @@ function fileHandler.portScripts()
         if v then
             for _, w in ipairs(game:GetService(i):GetDescendants()) do
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
-                    recursiveCount = 0
                     table.insert(scriptsToSync, {Type = w.ClassName, Instance = getParent(w, i), Source = w.Source})
                 end
             end

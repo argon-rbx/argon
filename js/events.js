@@ -143,6 +143,11 @@ function getTypes() {
     return types
 }
 
+function portSource(object, source) {
+    object = parse(object)
+    return {Action: 'update', Object: object, Source: source}
+}
+
 module.exports = {
     queue,
     create,
@@ -152,5 +157,6 @@ module.exports = {
     changeType,
     changeParent,
     setTypes,
-    getTypes
+    getTypes,
+    portSource
 }

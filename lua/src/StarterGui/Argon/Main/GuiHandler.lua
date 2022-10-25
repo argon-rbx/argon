@@ -48,8 +48,8 @@ local ignoredClassesButton = settingsPage.Body.IgnoredClasses.Button
 local syncedDirectoriesFrame = settingsPage.SyncedDirectories
 local ignoredClassesFrame = settingsPage.IgnoredClasses
 
-local portButton = toolsPage.Body.Port.Button
-local updateButton = toolsPage.Body.Update.Button
+local portToVSButton = toolsPage.Body.PortToVS.Button
+local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
 
 local autoRun = false
 local autoReconnect = false
@@ -244,8 +244,8 @@ local function portToVS()
     if not isPorting then
         isPorting = true
 
-        local tween = TweenService:Create(portButton, LOADING_TWEEN_INFO, {Rotation = -360})
-        portButton.Image = LOADING_ICON
+        local tween = TweenService:Create(portToVSButton, LOADING_TWEEN_INFO, {Rotation = -360})
+        portToVSButton.Image = LOADING_ICON
         tween:Play()
 
         local success, response = HttpHandler.portInstances(FileHandler.portInstances())
@@ -261,8 +261,30 @@ local function portToVS()
         end
 
         tween:Cancel()
-        portButton.Rotation = 0
-        portButton.Image = START_ICON
+        portToVSButton.Rotation = 0
+        portToVSButton.Image = START_ICON
+
+        isPorting = false
+    end
+end
+
+local function portToRoblox()
+    if not isPorting then
+        isPorting = true
+
+        local tween = TweenService:Create(portToRobloxButton, LOADING_TWEEN_INFO, {Rotation = -360})
+        portToRobloxButton.Image = LOADING_ICON
+        tween:Play()
+
+        local success, response = HttpHandler.portProject()
+
+        if not success then
+            warn('Argon: '..response..' (ui3)')
+        end
+
+        tween:Cancel()
+        portToRobloxButton.Rotation = 0
+        portToRobloxButton.Image = START_ICON
 
         isPorting = false
     end
@@ -383,7 +405,8 @@ function guiHandler.run(autoConnect)
     connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
     connections['ignoredClassesButton'] = ignoredClassesButton.MouseButton1Click:Connect(function() expandSetting('IgnoredClasses') end)
 
-    connections['portButton'] = portButton.MouseButton1Click:Connect(portToVS)
+    connections['portToVSButton'] = portToVSButton.MouseButton1Click:Connect(portToVS)
+    connections['portToRobloxButton'] = portToRobloxButton.MouseButton1Click:Connect(portToRoblox)
 
     if autoConnect then
         connect()

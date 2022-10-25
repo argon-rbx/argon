@@ -13,6 +13,7 @@ const ROOT_NAME = config.rootName
 const SEPARATOR = '|'
 
 let watchers = []
+let filesToSync = []
 let lastUnix = Date.now()
 
 function verify(parent) {
@@ -355,7 +356,7 @@ function createInstances(dir, instances) {
     lastUnix = Date.now()
 }
 
-async function portInstances(instances) {
+function portInstances(instances) {
     let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
     instances = new Map(Object.entries(JSON.parse(instances)))
     createInstances(dir, instances)
@@ -401,11 +402,105 @@ function getUnix() {
     return lastUnix
 }
 
+function portCreate(uri) {
+    uri = path.parse(uri)
+    let parent = getParent(uri.dir)
+
+    if (verify(parent) != true) {
+        return
+    }
+
+    if (uri.name.startsWith('.source') && parent.includes(SEPARATOR) == false) {
+        return
+    }
+
+    events.create(uri.ext, uri.name, parent)
+}
+
+function portSave(uri) {
+    let parsedUri = path.parse(uri)
+    let parent = getParent(parsedUri.dir)
+
+    if (verify(parent) != true) {
+        return
+    }
+
+    let source = fs.readFileSync(uri, 'utf-8')
+
+    if (parsedUri.name.startsWith('.source')) {
+        if (parent.includes(SEPARATOR)) {
+            filesToSync.push(events.portSource(parent, source))
+        }
+    }
+    else {
+        filesToSync.push(events.portSource(parent + SEPARATOR + parsedUri.name, source))
+    }
+}
+
+function getSubDirs(uri) {
+    fs.readdirSync(uri, {withFileTypes: true}).forEach(file => {
+        let subUri = path.join(uri, file.name)
+
+        portCreate(subUri)
+
+        if (file.isDirectory()) {
+            getSubDirs(subUri)
+        }
+        else {
+            portSave(subUri)
+        }
+    })
+}
+
+function getChunk(data, index) {
+    let chunk, lastChunk
+    chunk = lastChunk = []
+
+    for (let i = index; i < data.length; i++) {
+        index = i
+
+        chunk.push(data[i])
+
+        if (JSON.stringify(chunk).length / 1000 < 1020) {
+            lastChunk.push(data[i])
+        }
+        else {
+            return [lastChunk, index]
+        }
+    }
+
+    return [lastChunk, index]
+}
+
+function portProject() {
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
+    let chunks = []
+    let index = 0
+
+    filesToSync.length = 0
+
+    fs.readdirSync(dir).forEach(file => {
+        let uri = path.join(dir, file)
+
+        portCreate(uri)
+        getSubDirs(uri)
+    })
+
+    while (index != filesToSync.length - 1) {
+        let chunk
+        [chunk, index] = getChunk(filesToSync, index)
+        chunks.push(chunk)
+    }
+
+    return chunks
+}
+
 module.exports = {
     run,
     stop,
     updateClasses,
     portInstances,
     portScripts,
-    getUnix
+    getUnix,
+    portProject
 }

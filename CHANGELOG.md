@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0
+* Added port to Roblox feature
+* Changed default root folder name to "src" for convenience
+* Fixed Roblox plugin behaviour when debugging
+* Fixed duplicated instances bug
+
 ## 0.0.9
 * Merged changes by [@Almost89](https://github.com/Almost89) in [#1](https://github.com/DervexHero/Argon/pull/1)
 * Fixed issue reported by [@LawMixer](https://devforum.roblox.com/u/bulldo344), [@commitblue](https://devforum.roblox.com/u/commitblue), [@Voidage](https://devforum.roblox.com/u/voidage) which made users unable to port large places

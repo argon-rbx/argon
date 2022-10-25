@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -48,7 +48,7 @@
       "properties": {
         "argon.directories.rootFolder": {
           "type": "string",
-          "default": "game",
+          "default": "src",
           "description": "The name of the root folder",
           "pattern": "[^ ]",
           "patternErrorMessage": "This symbol is not allowed"
@@ -64,7 +64,7 @@
         },
         "argon.extension.autoRun": {
           "type": "boolean",
-          "default": "false",
+          "default": "true",
           "description": "Whether Argon should start automatically"
         },
         "argon.extension.autoUpdate": {
