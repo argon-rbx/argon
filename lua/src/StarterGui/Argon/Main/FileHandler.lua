@@ -25,7 +25,7 @@ local function len(array)
 end
 
 local function parse(instance)
-    local name = instance.Name:gsub('[%:%*%?%"%<%>%|]', '')
+    local name, num = instance.Name:gsub('[%:%*%?%"%<%>%|]', '')
     local className = ''
 
     if name:match('^/') or name:match('^\\') then
@@ -36,6 +36,10 @@ local function parse(instance)
         className = '.'..instance.ClassName
     end
 
+    if num ~= 0 then
+        warn('Argon: '..instance:GetFullName()..' contains invalid symbols! (fhP)')
+    end
+
     return name..className
 end
 
@@ -43,7 +47,7 @@ local function getChildren(dir)
     local children = {}
 
     for _, v in pairs(dir:GetChildren()) do
-        if not Data.ignoredClasses[v.ClassName] and v:GetAttribute(ARGON_IGNORE) == nil then
+        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute(ARGON_IGNORE) == nil then
             if #v:GetChildren() > 0 then
                 children[parse(v)] = getChildren(v)
             else
@@ -100,10 +104,6 @@ local function getInstance(parent)
         if lastParent == game then
             lastParent = game:GetService(v)
         else
-            --TEMP FIX!
-            v = v:gsub('StarterPlayerScripts.StarterPlayerScripts', 'StarterPlayerScripts')
-            v = v:gsub('StarterCharacterScripts.StarterCharacterScripts', 'StarterCharacterScripts')
-
             lastParent = lastParent[v]
         end
     end

@@ -1,4 +1,6 @@
 module.exports = [
+    'StarterPlayerScripts',
+    'StarterCharacterScripts',
     'Accoutrement',
     'Accessory',
     'Hat',

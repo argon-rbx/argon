@@ -69,6 +69,9 @@
         "roblox": {
             "iconPath": "./icons/Roblox.png"
         },
+        "robloxLock": {
+            "iconPath": "./icons/RobloxLock.png"
+        },
 
         "gitignore": {
             "iconPath": "./icons/material/.gitignore.svg"
@@ -82,11 +85,17 @@
         "csv": {
             "iconPath": "./icons/material/csv.svg"
         },
+        "js": {
+            "iconPath": "./icons/material/js.svg"
+        },
         "json": {
             "iconPath": "./icons/material/json.svg"
         },
         "md": {
             "iconPath": "./icons/material/md.svg"
+        },
+        "py": {
+            "iconPath": "./icons/material/py.svg"
         },
         "toml": {
             "iconPath": "./icons/material/toml.svg"
@@ -100,6 +109,7 @@
         "yaml": {
             "iconPath": "./icons/material/yaml.svg"
         },
+
         "image": {
             "iconPath": "./icons/material/image.svg"
         },
@@ -134,14 +144,17 @@
         "rbxlx": "roblox",
         "rbxm": "roblox",
         "rbxmx": "roblox",
+        "lock": "robloxLock",
 
         "gitignore": "gitignore",
         "vscodeignore": "vscodeignore",
         "fbx": "3d",
         "obj": "3d",
         "csv": "csv",
+        "js": "js",
         "json": "json",
         "md": "md",
+        "py": "py",
         "toml": "toml",
         "ts": "ts",
         "xml": "xml",

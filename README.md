@@ -1,4 +1,5 @@
-![Argon logo and name icon](/images/LogoName.png 'Argon')
+![Argon logo and name](/images/LogoName.png 'Argon')
+
 # About
 Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only to sync code but every possible Roblox class with ease. Argon is an alternative for Rojo not its replacement!
 
@@ -20,14 +21,58 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 
 # Usage
 <details>
-<summary>Connecting</summary>
+<summary>1. Setting up the project</summary>
 
-1. ![Usage screenshot](/images/markdown/1.png 'Usage')
-2. ![Usage screenshot](/images/markdown/2.png 'Usage')
-3. ![Usage screenshot](/images/markdown/3.png 'Usage')
-
+![ProjectSetup](/images/markdown/ProjectSetup.gif 'Project setup')
 </details>
 
 <details>
-<summary>Soon</summary>
+<summary>2. Managing instances</summary>
+
+![ManagingInstances](/images/markdown/ManagingInstances.gif 'Managing instances')
 </details>
+
+<details>
+<summary>3. Managing scripts</summary>
+
+![ManagingScripts](/images/markdown/ManagingScripts.gif 'Managing scripts')
+</details>
+
+<details>
+<summary>4. Syncing code</summary>
+
+![SyncingCode](/images/markdown/SyncingCode.gif 'Syncing code')
+</details>
+
+<details>
+<summary>5. Porting to Visual Studio Code</summary>
+
+![PortingToVSC](/images/markdown/PortingToVSC.gif 'Porting to VSC')
+</details>
+
+<details>
+<summary>6. Porting to Roblox</summary>
+
+![PortingToRoblox](/images/markdown/PortingToRoblox.gif 'Porting to Roblox')
+</details>
+
+<details>
+<summary>7. Ignoring instances and classes</summary>
+
+![IgnoringInstances](/images/markdown/IgnoringInstances.gif 'Ignoring instances and classes')
+</details>
+ 
+
+# Demo
+[![Demo](/images/markdown/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
+
+# Changelog
+## 0.1.1
+* Added better documentation
+* Added new icons
+* Added invalid symbols detection
+* Fixed ignored classes
+* Fixed .source deletion behavior (recursive rmSync)
+* Made StarterPlayerScripts and StarterCharacterScripts detection server sided
+
+## Previous changes can be found in [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/CHANGELOG.md)

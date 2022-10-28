@@ -17,7 +17,7 @@ let filesToSync = []
 let lastUnix = Date.now()
 
 function verify(parent) {
-    if (parent != null && parent != '') {
+    if (parent == null || parent == '' || parent == 'StarterPlayer') {
         return true
     }
 }
@@ -74,7 +74,7 @@ function onCreate(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir)
 
-        if (verify(parent) != true) {
+        if (verify(parent)) {
             return
         }
 
@@ -91,7 +91,7 @@ function onSave(uri) {
     uri = path.parse(uri.fileName)
     let parent = getParent(uri.dir)
 
-    if (verify(parent) != true) {
+    if (verify(parent)) {
         return
     }
 
@@ -112,14 +112,14 @@ function onDelete(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir)
     
-        if (verify(parent) != true) {
+        if (verify(parent)) {
             return
         }
     
         if (uri.name.startsWith('.source')) {
             if (parent.includes(SEPARATOR)) {
                 events.remove(parent)
-                fs.rmdirSync(uri.dir)
+                fs.rmSync(uri.dir, {recursive: true})
             }
         }
         else {
@@ -137,7 +137,7 @@ function onRename(uri) {
         let newParent = getParent(newUri.dir)
         let oldParent = getParent(oldUri.dir)
         
-        if (verify(newParent) != true || verify(oldParent) != true) {
+        if (verify(newParent) || verify(oldParent)) {
             return
         }
 
@@ -266,6 +266,9 @@ function updateClasses() {
                         newTypes.push(classes[i].Name)
                     }
                 }
+
+                newTypes.push('StarterPlayerScripts')
+                newTypes.push('StarterCharacterScripts')
             
                 newJson.version = version
                 newJson.classes = newTypes
@@ -406,7 +409,7 @@ function portCreate(uri) {
     uri = path.parse(uri)
     let parent = getParent(uri.dir)
 
-    if (verify(parent) != true) {
+    if (verify(parent)) {
         return
     }
 
@@ -421,7 +424,7 @@ function portSave(uri) {
     let parsedUri = path.parse(uri)
     let parent = getParent(parsedUri.dir)
 
-    if (verify(parent) != true) {
+    if (verify(parent)) {
         return
     }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1
+* Added better documentation
+* Added new icons
+* Added invalid symbols detection
+* Fixed ignored classes
+* Fixed .source deletion behavior (recursive rmSync)
+* Made StarterPlayerScripts and StarterCharacterScripts detection server sided
+
 ## 0.1.0
 * Added port to Roblox feature
 * Changed default root folder name to "src" for convenience
@@ -16,6 +24,7 @@
 
 ## 0.0.8
 * Fixed bug that caused not changing .source file type
+
 ## 0.0.7
 * Added Argon file icon theme
 
