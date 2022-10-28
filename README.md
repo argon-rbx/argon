@@ -24,42 +24,49 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 <summary>1. Setting up the project</summary>
 
 ![ProjectSetup](/images/markdown/ProjectSetup.gif 'Project setup')
+https://vimeo.com/765130945
 </details>
 
 <details>
 <summary>2. Managing instances</summary>
 
 ![ManagingInstances](/images/markdown/ManagingInstances.gif 'Managing instances')
+https://vimeo.com/765130877
 </details>
 
 <details>
 <summary>3. Managing scripts</summary>
 
 ![ManagingScripts](/images/markdown/ManagingScripts.gif 'Managing scripts')
+https://vimeo.com/765130893
 </details>
 
 <details>
 <summary>4. Syncing code</summary>
 
 ![SyncingCode](/images/markdown/SyncingCode.gif 'Syncing code')
+https://vimeo.com/765130958
 </details>
 
 <details>
 <summary>5. Porting to Visual Studio Code</summary>
 
 ![PortingToVSC](/images/markdown/PortingToVSC.gif 'Porting to VSC')
+https://vimeo.com/765130924
 </details>
 
 <details>
 <summary>6. Porting to Roblox</summary>
 
 ![PortingToRoblox](/images/markdown/PortingToRoblox.gif 'Porting to Roblox')
+https://vimeo.com/765130905
 </details>
 
 <details>
 <summary>7. Ignoring instances and classes</summary>
 
 ![IgnoringInstances](/images/markdown/IgnoringInstances.gif 'Ignoring instances and classes')
+https://vimeo.com/765130864
 </details>
  
 
