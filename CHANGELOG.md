@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+* Replaced heavy GIFs with videos
+* Cleaned .ignore files
+
 ## 0.1.1
 * Added better documentation
 * Added new icons

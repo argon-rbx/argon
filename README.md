@@ -70,15 +70,11 @@ https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-
  
 
 # Demo
-[![Demo](/images/markdown/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
+[![Demo](/images/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 
 # Changelog
-## 0.1.1
-* Added better documentation
-* Added new icons
-* Added invalid symbols detection
-* Fixed ignored classes
-* Fixed .source deletion behavior (recursive rmSync)
-* Made StarterPlayerScripts and StarterCharacterScripts detection server sided
+## 0.1.2
+* Replaced heavy GIFs with videos
+* Cleaned .ignore files
 
 ## Previous changes can be found in [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/CHANGELOG.md)
