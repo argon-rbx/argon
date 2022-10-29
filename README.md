@@ -23,50 +23,49 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 <details>
 <summary>1. Setting up the project</summary>
 
-![ProjectSetup](/images/markdown/ProjectSetup.gif 'Project setup')
-https://vimeo.com/765130945
+https://user-images.githubusercontent.com/78505208/198825348-5c5c2d42-efa9-4083-9950-69388c7ccc71.mp4
 </details>
+
 
 <details>
 <summary>2. Managing instances</summary>
 
-![ManagingInstances](/images/markdown/ManagingInstances.gif 'Managing instances')
-https://vimeo.com/765130877
+https://user-images.githubusercontent.com/78505208/198825549-e2fae0da-5f3f-49a2-a72b-37506fc2c7d0.mp4
 </details>
+
 
 <details>
 <summary>3. Managing scripts</summary>
 
-![ManagingScripts](/images/markdown/ManagingScripts.gif 'Managing scripts')
-https://vimeo.com/765130893
+https://user-images.githubusercontent.com/78505208/198825573-2cd90384-49c4-482c-96f6-729e397112f7.mp4
 </details>
+
 
 <details>
 <summary>4. Syncing code</summary>
 
-![SyncingCode](/images/markdown/SyncingCode.gif 'Syncing code')
-https://vimeo.com/765130958
+https://user-images.githubusercontent.com/78505208/198825590-6bf1425f-ce0c-47a4-b1ef-22fa8deebc81.mp4
 </details>
+
 
 <details>
 <summary>5. Porting to Visual Studio Code</summary>
 
-![PortingToVSC](/images/markdown/PortingToVSC.gif 'Porting to VSC')
-https://vimeo.com/765130924
+https://user-images.githubusercontent.com/78505208/198825619-5437701d-ef82-4894-a58e-663a4793dbad.mp4
 </details>
+
 
 <details>
 <summary>6. Porting to Roblox</summary>
 
-![PortingToRoblox](/images/markdown/PortingToRoblox.gif 'Porting to Roblox')
-https://vimeo.com/765130905
+https://user-images.githubusercontent.com/78505208/198825627-06661154-c964-476e-af3d-674d256c097b.mp4
 </details>
+
 
 <details>
 <summary>7. Ignoring instances and classes</summary>
 
-![IgnoringInstances](/images/markdown/IgnoringInstances.gif 'Ignoring instances and classes')
-https://vimeo.com/765130864
+https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-89d3-7674de206818.mp4
 </details>
  
 
