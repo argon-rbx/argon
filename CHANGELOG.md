@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+* Now Argon will automatically run once you open .lua or .lua file
+* Added more detailed error messages
+
 ## 0.1.2
 * Replaced heavy GIFs with videos
 * Cleaned .ignore files

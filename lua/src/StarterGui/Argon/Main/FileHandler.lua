@@ -130,6 +130,13 @@ function fileHandler.create(type, name, parent, delete)
 
     if not success then
         warn('Argon: '..response..' (fhC)')
+
+        type = type or 'nil'
+        name = name or 'nil'
+        parent = parent or 'nil'
+        delete = delete or 'nil'
+
+        print('Type: '..type..', Name: '..name..', Parent: '..parent..', State: '..delete)
     end
 
     addWaypoint()
@@ -142,6 +149,10 @@ function fileHandler.update(object, source)
 
     if not success then
         warn('Argon: '..response..' (fhU)')
+
+        object = object or 'nil'
+
+        print('Object: '..object)
     end
 
     addWaypoint()
@@ -154,6 +165,10 @@ function fileHandler.delete(object)
 
     if not success then
         warn('Argon: '..response..' (fhD)')
+
+        object = object or 'nil'
+
+        print('Object: '..object)
     end
 
     addWaypoint()
@@ -166,6 +181,11 @@ function fileHandler.rename(object, name)
 
     if not success then
         warn('Argon: '..response..' (fhR)')
+
+        object = object or 'nil'
+        name = name or 'nil'
+
+        print('Object: '..object..', Name: '..name)
     end
 
     addWaypoint()
@@ -178,6 +198,11 @@ function fileHandler.changeParent(object, parent)
 
     if not success then
         warn('Argon: '..response..' (fhCP)')
+
+        object = object or 'nil'
+        parent = parent or 'nil'
+
+        print('Object: '..object..', Parent: '..parent)
     end
 
     addWaypoint()
@@ -205,6 +230,12 @@ function fileHandler.changeType(object, type, name)
 
     if not success then
         warn('Argon: '..response..' (fhCT)')
+
+        object = object or 'nil'
+        type = type or 'nil'
+        name = name or 'nil'
+
+        print('Object: '..object..', Type: '..type..', Name: '..name)
     end
 
     addWaypoint()

@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync",
   "icon": "images/Logo.png",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -19,7 +19,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
+    "onLanguage:lua",
+    "onLanguage:luau",
     "onCommand:argon.run",
     "onCommand:argon.stop",
     "onCommand:argon.update"
