@@ -157,6 +157,7 @@
         "py": "py",
         "toml": "toml",
         "ts": "ts",
+        "vsix": "vscodeignore",
         "xml": "xml",
         "xaml": "xml",
         "yaml": "yaml",

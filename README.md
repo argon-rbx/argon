@@ -73,8 +73,9 @@ https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-
 [![Demo](/images/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 
 # Changelog
-## 0.1.3
-* Now Argon will automatically run once you open .lua or .lua file
-* Added more detailed error messages
+## 0.1.4
+* Instances named same as parent's property no longer cause problems
+* Fixed some error messages
+* Added icon for .vsix files
 
 ## Previous changes can be found in [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/CHANGELOG.md)

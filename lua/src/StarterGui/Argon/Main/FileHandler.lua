@@ -100,11 +100,16 @@ local function getInstance(parent)
     local lastParent = game
     parent = parent:split(SEPARATOR)
 
-    for _, v in ipairs(parent) do
+    for i, v in ipairs(parent) do
         if lastParent == game then
             lastParent = game:GetService(v)
         else
-            lastParent = lastParent[v]
+            for _, w in ipairs(lastParent:GetChildren()) do
+                if w.Name == v then
+                    lastParent = w
+                    break
+                end
+            end
         end
     end
 
@@ -113,9 +118,9 @@ end
 
 local fileHandler = {}
 
-function fileHandler.create(type, name, parent, delete)
+function fileHandler.create(class, name, parent, delete)
     local success, response = pcall(function()
-        local object = Instance.new(type)
+        local object = Instance.new(class)
         parent = getInstance(parent)
 
         if delete and parent:FindFirstChild(name) then
@@ -130,13 +135,11 @@ function fileHandler.create(type, name, parent, delete)
 
     if not success then
         warn('Argon: '..response..' (fhC)')
-
-        type = type or 'nil'
-        name = name or 'nil'
-        parent = parent or 'nil'
-        delete = delete or 'nil'
-
-        print('Type: '..type..', Name: '..name..', Parent: '..parent..', State: '..delete)
+        class = tostring(class)
+        name = tostring(name)
+        parent = tostring(parent)
+        delete = tostring(delete)
+        print('Class: '..class..', Name: '..name..', Parent: '..parent..', State: '..delete)
     end
 
     addWaypoint()
@@ -149,9 +152,7 @@ function fileHandler.update(object, source)
 
     if not success then
         warn('Argon: '..response..' (fhU)')
-
-        object = object or 'nil'
-
+        object = tostring(object)
         print('Object: '..object)
     end
 
@@ -165,9 +166,7 @@ function fileHandler.delete(object)
 
     if not success then
         warn('Argon: '..response..' (fhD)')
-
-        object = object or 'nil'
-
+        object = tostring(object)
         print('Object: '..object)
     end
 
@@ -181,10 +180,8 @@ function fileHandler.rename(object, name)
 
     if not success then
         warn('Argon: '..response..' (fhR)')
-
-        object = object or 'nil'
-        name = name or 'nil'
-
+        object = tostring(object)
+        name = tostring(name)
         print('Object: '..object..', Name: '..name)
     end
 
@@ -198,21 +195,19 @@ function fileHandler.changeParent(object, parent)
 
     if not success then
         warn('Argon: '..response..' (fhCP)')
-
-        object = object or 'nil'
-        parent = parent or 'nil'
-
+        object = tostring(object)
+        parent = tostring(parent)
         print('Object: '..object..', Parent: '..parent)
     end
 
     addWaypoint()
 end
 
-function fileHandler.changeType(object, type, name)
+function fileHandler.changeType(object, class, name)
     local success, response = pcall(function()
         object = getInstance(object)
 
-        local newObject = Instance.new(type)
+        local newObject = Instance.new(class)
         newObject.Parent = object.Parent
         newObject.Name = name or object.Name
 
@@ -221,7 +216,7 @@ function fileHandler.changeType(object, type, name)
         end
 
         ---@diagnostic disable-next-line: invalid-class-name
-        if SCRIPT_TYPES[type] and object:IsA('LuaSourceContainer') then --why the hell Roblox LSP thinks that this is invalid enum?!
+        if SCRIPT_TYPES[class] and object:IsA('LuaSourceContainer') then --why the hell Roblox LSP thinks that this is invalid enum?!
             newObject.Source = object.Source
         end
 
@@ -230,12 +225,10 @@ function fileHandler.changeType(object, type, name)
 
     if not success then
         warn('Argon: '..response..' (fhCT)')
-
-        object = object or 'nil'
-        type = type or 'nil'
-        name = name or 'nil'
-
-        print('Object: '..object..', Type: '..type..', Name: '..name)
+        object = tostring(object)
+        class = tostring(class)
+        name = tostring(name)
+        print('Object: '..object..', Class: '..class..', Name: '..name)
     end
 
     addWaypoint()

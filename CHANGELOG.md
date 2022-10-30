@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+* Instances named same as parent's property no longer cause problems
+* Fixed some error messages
+* Added icon for .vsix files
+
 ## 0.1.3
 * Now Argon will automatically run once you open .lua or .lua file
 * Added more detailed error messages
