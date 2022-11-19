@@ -1,3 +1,5 @@
+local RunService = game:GetService('RunService')
+
 local GuiHandler = require(script.GuiHandler)
 
 local toolbar = plugin:CreateToolbar("Dervex' utils")
@@ -8,8 +10,8 @@ local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)
 
 local isOpen = false
 
-widget.Title = 'Argon'
 widget.Name = 'Argon'
+widget.Title = 'Argon'
 widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 script.Parent.ArgonGui.Root.Background.Parent = widget
 button.ClickableWhenViewportHidden = true
@@ -18,8 +20,7 @@ local function open(autoConnect)
     if not isOpen then
         isOpen = true
         button:SetActive(true)
-        GuiHandler.init(plugin)
-        GuiHandler.run(autoConnect)
+        GuiHandler.run(plugin, autoConnect)
         widget.Enabled = true
     end
 end
@@ -45,8 +46,16 @@ widget:BindToClose(function()
     close()
 end)
 
-if plugin:GetSetting('AutoRun') then
-    open(true)
+widget.WindowFocused:Connect(function()
+    open()
+end)
+
+if RunService:IsEdit() then
+    if plugin:GetSetting('AutoRun') then
+        open(true)
+    elseif widget.Enabled then
+        open()
+    end
 elseif widget.Enabled then
     open()
 end

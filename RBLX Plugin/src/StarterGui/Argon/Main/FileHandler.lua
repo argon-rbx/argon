@@ -10,6 +10,8 @@ local SCRIPT_TYPES = {
     ModuleScript = ''
 }
 
+local fileHandler = {}
+
 local function addWaypoint()
     ChangeHistoryService:SetWaypoint('ArgonSync')
 end
@@ -115,8 +117,6 @@ local function getInstance(parent)
 
     return lastParent
 end
-
-local fileHandler = {}
 
 function fileHandler.create(class, name, parent, delete)
     local success, response = pcall(function()

@@ -8,6 +8,8 @@ local URL = 'http://%s:%s/'
 local thread = nil
 local func = nil
 
+local httpHandler = {}
+
 local function getChunk(data, index)
     local chunk, lastChunk = {}, {}
 
@@ -58,8 +60,6 @@ local function startSyncing(url)
         end
     end)
 end
-
-local httpHandler = {}
 
 function httpHandler.connect(fail)
     local url = string.format(URL, Data.host, Data.port)

@@ -1,5 +1,6 @@
 local StudioService = game:GetService('StudioService')
 local TweenService = game:GetService('TweenService')
+local RunService = game:GetService('RunService')
 
 local HttpHandler = require(script.Parent.HttpHandler)
 local FileHandler = require(script.Parent.FileHandler)
@@ -12,13 +13,17 @@ local LOADING_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.Easing
 local BLACK = Color3.fromRGB(0, 0, 0)
 local WHITE = Color3.fromRGB(255, 255, 255)
 
-local LIGHT_BLACK = Color3.fromRGB(40, 40, 40)
+local LIGHT_BLACK = Color3.fromRGB(50, 50, 50)
 local LIGHT_WHITE = Color3.fromRGB(240, 240, 240)
+
+local ROBLOX_BLACK = Color3.fromRGB(46, 46, 46)
+local ROBLOX_WHITE = Color3.fromRGB(255, 255, 255)
 
 local LOADING_ICON = 'rbxassetid://11234420895'
 local START_ICON = 'rbxassetid://11272872815'
 
 local background = script.Parent.Parent.ArgonGui.Root.Background
+local overlay = background.Overlay
 
 local mainPage = background.Main
 local settingsPage = background.Settings
@@ -57,12 +62,16 @@ local autoReconnect = false
 local plugin = nil
 local connections = {}
 local subConnections = {}
+local themeConnection = nil
 local expandedSetting = nil
+local lastTheme = 'Dark'
 local isPorting = false
 local debounce = false
 local stopped = false
 local state = 0
 local connect
+
+local guiHandler = {}
 
 local function fail(response)
     action.Text = 'PROCEED'
@@ -166,6 +175,8 @@ local function changePage(position, page1, page2)
             page1.ZIndex = 1
             page2.ZIndex = 0
         end
+
+        guiHandler.runPage(page1 or mainPage)
 
         TweenService:Create(mainPage, TWEEN_INFO, {Position = UDim2.fromScale(position, 0)}):Play()
     else
@@ -290,39 +301,97 @@ local function portToRoblox()
     end
 end
 
-local guiHandler = {}
+local function updateTheme()
+    local theme = settings():GetService('Studio').Theme.Name
 
-function guiHandler.init(newPlugin)
-    local theme = settings().Studio.Theme.Name
+    if theme == lastTheme then
+        return
+    end
+    lastTheme = theme
 
     if theme == 'Dark' then
-        background.BackgroundColor3 = Color3.fromHex('#2e2e2e')
-
         for _, v in ipairs(background:GetDescendants()) do
-            if v:IsA('ImageButton') or v.Name == 'Input' then
+            if v:IsA('Frame') or v:IsA('ImageButton') then
                 v.BackgroundColor3 = WHITE
-            elseif v:IsA('TextBox') or (v:IsA('TextLabel') and v.Name ~= 'Text') then
+            elseif v:IsA('TextBox') or v:IsA('TextLabel') then
                 v.TextColor3 = LIGHT_WHITE
+                if v:IsA('TextBox') then
+                    v.BackgroundColor3 = WHITE
+                end
             elseif v.Name == 'Icon' then
                 v.ImageColor3 = LIGHT_WHITE
+            elseif v:IsA('ScrollingFrame') then
+                v.ScrollBarImageColor3 = WHITE
             end
         end
-    elseif theme == 'Light' then
-        background.BackgroundColor3 = Color3.fromHex('#ffffff')
 
+        background.BackgroundColor3 = ROBLOX_BLACK
+        mainPage.BackgroundColor3 = ROBLOX_BLACK
+        settingsPage.BackgroundColor3 = ROBLOX_BLACK
+        toolsPage.BackgroundColor3 = ROBLOX_BLACK
+    elseif theme == 'Light' then
         for _, v in ipairs(background:GetDescendants()) do
-            if v:IsA('ImageButton') or v.Name == 'Input' then
+            if v:IsA('Frame') or v:IsA('ImageButton') then
                 v.BackgroundColor3 = BLACK
-            elseif v:IsA('TextBox') or (v:IsA('TextLabel') and v.Name ~= 'Text') then
+            elseif v:IsA('TextBox') or v:IsA('TextLabel') then
                 v.TextColor3 = LIGHT_BLACK
+                if v:IsA('TextBox') then
+                    v.BackgroundColor3 = BLACK
+                end
             elseif v.Name == 'Icon' then
                 v.ImageColor3 = LIGHT_BLACK
+            elseif v:IsA('ScrollingFrame') then
+                v.ScrollBarImageColor3 = BLACK
             end
         end
+
+        background.BackgroundColor3 = ROBLOX_WHITE
+        mainPage.BackgroundColor3 = ROBLOX_WHITE
+        settingsPage.BackgroundColor3 = ROBLOX_WHITE
+        toolsPage.BackgroundColor3 = ROBLOX_WHITE
+    end
+end
+
+function guiHandler.runPage(page)
+    for _, v in pairs(connections) do
+        v:Disconnect()
+    end
+    connections = {}
+
+    if page == mainPage then
+        connections['connectButton'] = connectButton.MouseButton1Click:Connect(connect)
+
+        connections['hostInput'] = hostInput:GetPropertyChangedSignal('Text'):Connect(function() filterInput(0) end)
+        connections['portInput'] = portInput:GetPropertyChangedSignal('Text'):Connect(function() filterInput(1) end)
+        connections['hostInput2'] = hostInput.FocusLost:Connect(function() setAddress(hostInput, true) end)
+        connections['portInput2'] = portInput.FocusLost:Connect(function() setAddress(portInput) end)
+
+        connections['settingsButton'] = settingsButton.MouseButton1Click:Connect(function() changePage(-1.05, settingsPage, toolsPage) end)
+        connections['toolsButton'] = toolsButton.MouseButton1Click:Connect(function() changePage(1.05, toolsPage, settingsPage) end)
+    elseif page == settingsPage then
+        connections['settingsBack'] = settingsBack.MouseButton1Click:Connect(function() changePage(0) end)
+
+        connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
+        connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
+        connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
+        connections['ignoredClassesButton'] = ignoredClassesButton.MouseButton1Click:Connect(function() expandSetting('IgnoredClasses') end)
+    elseif page == toolsPage then
+        connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)
+
+        connections['portToVSButton'] = portToVSButton.MouseButton1Click:Connect(portToVS)
+        connections['portToRobloxButton'] = portToRobloxButton.MouseButton1Click:Connect(portToRoblox)
+    end
+end
+
+function guiHandler.run(newPlugin, autoConnect)
+    if not RunService:IsEdit() then
+        overlay.Visible = true
+        return
     end
 
-    changePage(0)
     plugin = newPlugin
+    updateTheme()
+    changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
     local portSetting = plugin:GetSetting('Port')
@@ -385,28 +454,8 @@ function guiHandler.init(newPlugin)
 
         ignoredClassesFrame.Input.Text = text
     end
-end
 
-function guiHandler.run(autoConnect)
-    connections['connectButton'] = connectButton.MouseButton1Click:Connect(connect)
-
-    connections['hostInput'] = hostInput:GetPropertyChangedSignal('Text'):Connect(function() filterInput(0) end)
-    connections['portInput'] = portInput:GetPropertyChangedSignal('Text'):Connect(function() filterInput(1) end)
-    connections['hostInput2'] = hostInput.FocusLost:Connect(function() setAddress(hostInput, true) end)
-    connections['portInput2'] = portInput.FocusLost:Connect(function() setAddress(portInput) end)
-
-    connections['settingsButton'] = settingsButton.MouseButton1Click:Connect(function() changePage(-1.05, settingsPage, toolsPage) end)
-    connections['toolsButton'] = toolsButton.MouseButton1Click:Connect(function() changePage(1.05, toolsPage, settingsPage) end)
-    connections['settingsBack'] = settingsBack.MouseButton1Click:Connect(function() changePage(0) end)
-    connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)
-
-    connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
-    connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
-    connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
-    connections['ignoredClassesButton'] = ignoredClassesButton.MouseButton1Click:Connect(function() expandSetting('IgnoredClasses') end)
-
-    connections['portToVSButton'] = portToVSButton.MouseButton1Click:Connect(portToVS)
-    connections['portToRobloxButton'] = portToRobloxButton.MouseButton1Click:Connect(portToRoblox)
+    themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
 
     if autoConnect then
         connect()
@@ -417,8 +466,10 @@ function guiHandler.stop()
     for _, v in pairs(connections) do
         v:Disconnect()
     end
-
     connections = {}
+
+    themeConnection:Disconnect()
+    themeConnection = nil
 end
 
 return guiHandler

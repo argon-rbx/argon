@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+* Added whitelist system for instances and classes
+* Fixed unclickable buttons after play test
+* Fixed light theme
+* Fixed UI scaling
+* Updated UI buttons
+* Updated icons
+
 ## 0.1.4
 * Instances named same as parent's property no longer cause problems
 * Fixed some error messages
