@@ -2,9 +2,9 @@
   "publisher": "Dervex",
   "name": "argon",
   "displayName": "Argon",
-  "description": "Roblox Studio two-way live sync",
+  "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "images/Logo.png",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"

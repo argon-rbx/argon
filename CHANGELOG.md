@@ -2,11 +2,11 @@
 
 ## 0.2.0
 * Added whitelist system for instances and classes
-* Fixed unclickable buttons after play test
-* Fixed light theme
-* Fixed UI scaling
-* Updated UI buttons
-* Updated icons
+* Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
+* Fixed light theme and UI scaling
+* Tons of other UI optimizations and fixes
+* Updated some UI buttons
+* Updated VSC icons
 
 ## 0.1.4
 * Instances named same as parent's property no longer cause problems

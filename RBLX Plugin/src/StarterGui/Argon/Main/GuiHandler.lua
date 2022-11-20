@@ -29,6 +29,7 @@ local mainPage = background.Main
 local settingsPage = background.Settings
 local toolsPage = background.Tools
 
+local versionLabel = mainPage.Header.Version
 local inputFrame = mainPage.Body.Input
 local previewFrame = mainPage.Body.Preview
 
@@ -38,9 +39,9 @@ local portInput = inputFrame.Port
 local settingsButton = mainPage.Body.Settings
 local toolsButton = mainPage.Body.Tools
 
-local info = previewFrame.Info
-local loading = connectButton.Loading
-local action = connectButton.Action
+local infoLabel = previewFrame.Info
+local loadingImage = connectButton.Loading
+local actionLabel = connectButton.Action
 
 local settingsBack = settingsPage.Header.Back
 local toolsBack = toolsPage.Header.Back
@@ -74,8 +75,8 @@ local connect
 local guiHandler = {}
 
 local function fail(response)
-    action.Text = 'PROCEED'
-    info.Text = response
+    actionLabel.Text = 'PROCEED'
+    infoLabel.Text = response
     state = 2
     debounce = false
     stopped = false
@@ -95,25 +96,25 @@ function connect()
         debounce = true
 
         if state == 0 then
-            info.Text = 'Connecting...'
+            infoLabel.Text = 'Connecting...'
             inputFrame.Visible = false
             previewFrame.Visible = true
-            action.Visible = false
-            loading.Visible = true
+            actionLabel.Visible = false
+            loadingImage.Visible = true
 
-            local tween = TweenService:Create(loading, LOADING_TWEEN_INFO, {Rotation = -360})
+            local tween = TweenService:Create(loadingImage, LOADING_TWEEN_INFO, {Rotation = -360})
             tween:Play()
 
             local success, response = HttpHandler.connect(fail)
 
-            action.Visible = true
-            loading.Visible = false
-            loading.Rotation = 0
+            actionLabel.Visible = true
+            loadingImage.Visible = false
+            loadingImage.Rotation = 0
             tween:Cancel()
 
             if success then
-                action.Text = 'STOP'
-                info.Text = Data.host..':'..Data.port
+                actionLabel.Text = 'STOP'
+                infoLabel.Text = Data.host..':'..Data.port
                 state = 1
             else
                 fail(response)
@@ -124,8 +125,8 @@ function connect()
             end
 
             stopped = true
-            action.Text = 'CONNECT'
-            info.Text = 'Connecting...'
+            actionLabel.Text = 'CONNECT'
+            infoLabel.Text = 'Connecting...'
             inputFrame.Visible = true
             previewFrame.Visible = false
             state = 0
@@ -255,8 +256,9 @@ local function portToVS()
     if not isPorting then
         isPorting = true
 
-        local tween = TweenService:Create(portToVSButton, LOADING_TWEEN_INFO, {Rotation = -360})
-        portToVSButton.Image = LOADING_ICON
+        local tween = TweenService:Create(portToVSButton.Icon, LOADING_TWEEN_INFO, {Rotation = -360})
+        portToVSButton.Icon.Position = UDim2.fromScale(0.5, 0.5)
+        portToVSButton.Icon.Image = LOADING_ICON
         tween:Play()
 
         local success, response = HttpHandler.portInstances(FileHandler.portInstances())
@@ -272,8 +274,9 @@ local function portToVS()
         end
 
         tween:Cancel()
-        portToVSButton.Rotation = 0
-        portToVSButton.Image = START_ICON
+        portToVSButton.Icon.Rotation = 0
+        portToVSButton.Icon.Position = UDim2.fromScale(0.55, 0.5)
+        portToVSButton.Icon.Image = START_ICON
 
         isPorting = false
     end
@@ -283,8 +286,8 @@ local function portToRoblox()
     if not isPorting then
         isPorting = true
 
-        local tween = TweenService:Create(portToRobloxButton, LOADING_TWEEN_INFO, {Rotation = -360})
-        portToRobloxButton.Image = LOADING_ICON
+        local tween = TweenService:Create(portToRobloxButton.Icon, LOADING_TWEEN_INFO, {Rotation = -360})
+        portToRobloxButton.Icon.Image = LOADING_ICON
         tween:Play()
 
         local success, response = HttpHandler.portProject()
@@ -294,8 +297,8 @@ local function portToRoblox()
         end
 
         tween:Cancel()
-        portToRobloxButton.Rotation = 0
-        portToRobloxButton.Image = START_ICON
+        portToRobloxButton.Icon.Rotation = 0
+        portToRobloxButton.Icon.Image = START_ICON
 
         isPorting = false
     end
@@ -318,7 +321,7 @@ local function updateTheme()
                 if v:IsA('TextBox') then
                     v.BackgroundColor3 = WHITE
                 end
-            elseif v.Name == 'Icon' then
+            elseif v:IsA('ImageLabel') and v.Name ~= 'ClassIcon' and v.Name ~= 'Logo' then
                 v.ImageColor3 = LIGHT_WHITE
             elseif v:IsA('ScrollingFrame') then
                 v.ScrollBarImageColor3 = WHITE
@@ -329,6 +332,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_BLACK
         settingsPage.BackgroundColor3 = ROBLOX_BLACK
         toolsPage.BackgroundColor3 = ROBLOX_BLACK
+        overlay.BackgroundColor3 = LIGHT_BLACK
     elseif theme == 'Light' then
         for _, v in ipairs(background:GetDescendants()) do
             if v:IsA('Frame') or v:IsA('ImageButton') then
@@ -338,7 +342,7 @@ local function updateTheme()
                 if v:IsA('TextBox') then
                     v.BackgroundColor3 = BLACK
                 end
-            elseif v.Name == 'Icon' then
+            elseif v:IsA('ImageLabel') and v.Name ~= 'ClassIcon' and v.Name ~= 'Logo' then
                 v.ImageColor3 = LIGHT_BLACK
             elseif v:IsA('ScrollingFrame') then
                 v.ScrollBarImageColor3 = BLACK
@@ -349,6 +353,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_WHITE
         settingsPage.BackgroundColor3 = ROBLOX_WHITE
         toolsPage.BackgroundColor3 = ROBLOX_WHITE
+        overlay.BackgroundColor3 = LIGHT_WHITE
     end
 end
 
@@ -384,13 +389,16 @@ function guiHandler.runPage(page)
 end
 
 function guiHandler.run(newPlugin, autoConnect)
+    themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
+    versionLabel.Text = Data.argonVersion
+    updateTheme()
+
     if not RunService:IsEdit() then
         overlay.Visible = true
         return
     end
 
     plugin = newPlugin
-    updateTheme()
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
@@ -455,18 +463,18 @@ function guiHandler.run(newPlugin, autoConnect)
         ignoredClassesFrame.Input.Text = text
     end
 
-    themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
-
     if autoConnect then
         connect()
     end
 end
 
 function guiHandler.stop()
-    for _, v in pairs(connections) do
-        v:Disconnect()
+    if RunService:IsEdit() then
+        for _, v in pairs(connections) do
+            v:Disconnect()
+        end
+        connections = {}
     end
-    connections = {}
 
     themeConnection:Disconnect()
     themeConnection = nil

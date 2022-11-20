@@ -1,10 +1,12 @@
 local data = {}
 
+data.argonVersion = '0.2.0'
+
 data.host = 'localhost'
 data.port = '8000'
 
 data.syncedDirectories = {
-    ['Workspace'] = true,
+    ['Workspace'] = false,
     ['Players'] = false,
     ['Lighting'] = false,
     ['MaterialService'] = false,
