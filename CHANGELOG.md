@@ -1,8 +1,9 @@
 # Changelog
 
 ## 0.2.0
-* Added whitelist system for instances and classes
+* Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu/)
 * Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
+* Fixed README.md not displaying images on VS Marketplace
 * Fixed light theme and UI scaling
 * Tons of other UI optimizations and fixes
 * Updated some UI buttons

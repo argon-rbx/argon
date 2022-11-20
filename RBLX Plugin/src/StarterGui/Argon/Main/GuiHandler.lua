@@ -6,7 +6,7 @@ local HttpHandler = require(script.Parent.HttpHandler)
 local FileHandler = require(script.Parent.FileHandler)
 local Data = require(script.Parent.Data)
 
-local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 local SETTINGS_TWEEN_INFO = TweenInfo.new(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local LOADING_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
 
@@ -21,6 +21,8 @@ local ROBLOX_WHITE = Color3.fromRGB(255, 255, 255)
 
 local LOADING_ICON = 'rbxassetid://11234420895'
 local START_ICON = 'rbxassetid://11272872815'
+
+local AUTO_RECONNECT_DELAY = 3
 
 local background = script.Parent.Parent.ArgonGui.Root.Background
 local overlay = background.Overlay
@@ -49,16 +51,13 @@ local toolsBack = toolsPage.Header.Back
 local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
 local autoRunButton = settingsPage.Body.AutoRun.Button
 local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
-local ignoredClassesButton = settingsPage.Body.IgnoredClasses.Button
+local classFilteringButton = settingsPage.Body.ClassFiltering.Button
 
 local syncedDirectoriesFrame = settingsPage.SyncedDirectories
-local ignoredClassesFrame = settingsPage.IgnoredClasses
+local classFilteringFrame = settingsPage.ClassFiltering
 
 local portToVSButton = toolsPage.Body.PortToVS.Button
 local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
-
-local autoRun = false
-local autoReconnect = false
 
 local plugin = nil
 local connections = {}
@@ -81,8 +80,8 @@ local function fail(response)
     debounce = false
     stopped = false
 
-    if autoReconnect then
-        task.wait(2)
+    if Data.autoReconnect then
+        task.wait(AUTO_RECONNECT_DELAY)
 
         if not stopped then
             state = 0
@@ -146,7 +145,7 @@ local function filterInput(input)
             portInput.Text = portInput.Text:sub(0, -2)
         end
     else
-        ignoredClassesFrame.Input.Text = ignoredClassesFrame.Input.Text:gsub('[^%a%, ]', '')
+        classFilteringFrame.Input.Text = classFilteringFrame.Input.Text:gsub('[^%a%, ]', '')
     end
 end
 
@@ -195,19 +194,19 @@ end
 
 local function toggleSetting(setting, data)
     if setting == 0 then
-        autoRun = not autoRun
-        plugin:SetSetting('AutoRun', autoRun)
+        Data.autoRun = not Data.autoRun
+        plugin:SetSetting('AutoRun', Data.autoRun)
 
-        if autoRun then
+        if Data.autoRun then
             TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
             TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 1 then
-        autoReconnect = not autoReconnect
-        plugin:SetSetting('AutoReconnect', autoReconnect)
+        Data.autoReconnect = not Data.autoReconnect
+        plugin:SetSetting('AutoReconnect', Data.autoReconnect)
 
-        if autoReconnect then
+        if Data.autoReconnect then
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
@@ -216,8 +215,17 @@ local function toggleSetting(setting, data)
         data = data:gsub(' ', '')
         data = string.split(data, ',')
 
-        Data.ignoredClasses = data
-        plugin:SetSetting('IgnoredClasses', data)
+        Data.filteredClasses = data
+        plugin:SetSetting('FilteredClasses', data)
+    elseif setting == 3 then
+        Data.filteringMode = not Data.filteringMode
+        plugin:SetSetting('FilteringMode', Data.filteringMode)
+
+        if Data.filteringMode then
+            TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0.5, 0)}):Play()
+        else
+            TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
+        end
     else
         local syncState = not Data.syncedDirectories[setting]
         Data.syncedDirectories[setting] = syncState
@@ -238,9 +246,15 @@ local function expandSetting(setting)
 
     for _, v in ipairs(settingsPage[setting]:GetDescendants()) do
         if v:IsA('ImageButton') then
-            subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
-                toggleSetting(v.Parent.Name, v)
-            end)
+            if v.Name ~= 'Mode' then
+                subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
+                    toggleSetting(v.Parent.Name, v)
+                end)
+            else
+                subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
+                    toggleSetting(3, v)
+                end)
+            end
         elseif v:IsA('TextBox') then
             subConnections[v.Parent.Name] = v:GetPropertyChangedSignal('Text'):Connect(function()
                 filterInput(2)
@@ -379,7 +393,7 @@ function guiHandler.runPage(page)
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
-        connections['ignoredClassesButton'] = ignoredClassesButton.MouseButton1Click:Connect(function() expandSetting('IgnoredClasses') end)
+        connections['ClassFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
     elseif page == toolsPage then
         connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)
 
@@ -406,30 +420,31 @@ function guiHandler.run(newPlugin, autoConnect)
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
     local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
-    local ignoredClassesSetting = plugin:GetSetting('IgnoredClasses')
+    local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
+    local filteringMode = plugin:GetSetting('FilteringMode')
 
-    if hostSetting and hostSetting ~= Data.host then
+    if hostSetting ~= nil then
         hostInput.Text = hostSetting
         Data.host = hostSetting
     end
 
-    if portSetting and portSetting ~= Data.port then
+    if portSetting ~= nil then
         portInput.Text = portSetting
         Data.port = portSetting
     end
 
-    if autoRunSetting and autoRunSetting ~= autoRun then
-        autoRun = autoRunSetting
+    if autoRunSetting ~= nil then
+        Data.autoRun = autoRunSetting
 
-        if autoRun then
+        if autoRunSetting then
             autoRunButton.OnIcon.ImageTransparency = 0
         end
     end
 
-    if autoReconnectSetting and autoReconnectSetting ~= autoReconnect then
-        autoReconnect = autoReconnectSetting
+    if autoReconnectSetting ~= nil then
+        Data.autoReconnect = autoReconnectSetting
 
-        if autoReconnect then
+        if autoReconnectSetting then
             autoReconnectButton.OnIcon.ImageTransparency = 0
         end
     end
@@ -448,11 +463,11 @@ function guiHandler.run(newPlugin, autoConnect)
         end
     end
 
-    Data.ignoredClasses = ignoredClassesSetting or Data.ignoredClasses
-    if ignoredClassesSetting then
+    Data.filteredClasses = filteredClassesSetting or Data.filteredClasses
+    if filteredClassesSetting then
         local text = ''
 
-        for i, v in ipairs(Data.ignoredClasses) do
+        for i, v in ipairs(Data.filteredClasses) do
             if i ~= 1 then
                 text = text..', '..v
             else
@@ -460,7 +475,15 @@ function guiHandler.run(newPlugin, autoConnect)
             end
         end
 
-        ignoredClassesFrame.Input.Text = text
+        classFilteringFrame.Input.Text = text
+    end
+
+    if filteringMode ~= nil then
+        Data.filteringMode = filteringMode
+
+        if filteringMode then
+            classFilteringFrame.Mode.Selector.Position = UDim2.fromScale(0.5, 0)
+        end
     end
 
     if autoConnect then

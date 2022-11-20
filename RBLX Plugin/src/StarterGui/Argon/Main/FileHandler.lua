@@ -49,11 +49,13 @@ local function getChildren(dir)
     local children = {}
 
     for _, v in pairs(dir:GetChildren()) do
-        if not table.find(Data.ignoredClasses, v.ClassName) and v:GetAttribute(ARGON_IGNORE) == nil then
-            if #v:GetChildren() > 0 then
-                children[parse(v)] = getChildren(v)
-            else
-                children[parse(v)] = {}
+        if ((not table.find(Data.filteredClasses, v.ClassName) and not Data.filteringMode) or (table.find(Data.filteredClasses, v.ClassName) and Data.filteringMode)) then
+            if v:GetAttribute(ARGON_IGNORE) == nil then
+                if #v:GetChildren() > 0 then
+                    children[parse(v)] = getChildren(v)
+                else
+                    children[parse(v)] = {}
+                end
             end
         end
     end

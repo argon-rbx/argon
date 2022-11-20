@@ -2,6 +2,9 @@ local data = {}
 
 data.argonVersion = '0.2.0'
 
+data.autoRun = true
+data.autoReconnect = false
+
 data.host = 'localhost'
 data.port = '8000'
 
@@ -15,7 +18,7 @@ data.syncedDirectories = {
     ['ServerScriptService'] = true,
     ['ServerStorage'] = true,
     ['StarterGui'] = true,
-    ['StarterPack'] = false,
+    ['StarterPack'] = true,
     ['StarterPlayer'] = true,
     ['Teams'] = false,
     ['SoundService'] = false,
@@ -23,6 +26,8 @@ data.syncedDirectories = {
     ['LocalizationService'] = false,
     ['TestService'] = false
 }
-data.ignoredClasses = {}
+
+data.filteringMode = false
+data.filteredClasses = {}
 
 return data

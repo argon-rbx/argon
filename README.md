@@ -73,9 +73,13 @@ https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-
 [![Demo video](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/images/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 
 # Changelog
-## 0.1.4
-* Instances named same as parent's property no longer cause problems
-* Fixed some error messages
-* Added icon for .vsix files
+## 0.2.0
+* Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu/)
+* Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
+* Fixed README.md not displaying images on VS Marketplace
+* Fixed light theme and UI scaling
+* Tons of other UI optimizations and fixes
+* Updated some UI buttons
+* Updated VSC icons
 
 ## Previous changes can be found in [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/CHANGELOG.md)

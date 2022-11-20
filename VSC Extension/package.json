@@ -65,12 +65,12 @@
         },
         "argon.extension.autoRun": {
           "type": "boolean",
-          "default": "true",
+          "default": true,
           "description": "Whether Argon should start automatically"
         },
         "argon.extension.autoUpdate": {
           "type": "boolean",
-          "default": "false",
+          "default": false,
           "description": "Whether Argon should update class database automatically"
         },
         "argon.server.host": {
