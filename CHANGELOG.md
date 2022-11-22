@@ -1,1 +1,0 @@
-..//VSC Extension//CHANGELOG.md
