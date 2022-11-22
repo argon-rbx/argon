@@ -1,0 +1,1 @@
+..//VSC Extension//LICENSE.md
