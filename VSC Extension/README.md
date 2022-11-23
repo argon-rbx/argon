@@ -1,7 +1,7 @@
 ![Argon logo and name](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/images/LogoName.png 'Argon')
 
 # About
-Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only to sync code but every possible Roblox class with ease. Argon is an alternative for Rojo not its replacement!
+Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only sync code with ease, but any other instance as well. Argon is an alternative for Rojo not its replacement!
 
 # Links
 * Roblox [plugin](https://create.roblox.com/marketplace/asset/11263738833/)
@@ -14,8 +14,9 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 * Support for renaming, changing directory and classes
 * Instance syncing with differen options
 * Porting in both sides with just one button
-* Self updating class database
 * Customizable, expandable and flexible
+* Self updating class database
+* Integrated file icon theme
 * Very simple in use
 * Fast setup
 

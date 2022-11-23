@@ -1,6 +1,6 @@
 local ChangeHistoryService = game:GetService('ChangeHistoryService')
 
-local Data = require(script.Parent.Data)
+local Config = require(script.Parent.Config)
 
 local SEPARATOR = '|'
 local ARGON_IGNORE = 'ArgonIgnore'
@@ -49,7 +49,7 @@ local function getChildren(dir)
     local children = {}
 
     for _, v in pairs(dir:GetChildren()) do
-        if ((not table.find(Data.filteredClasses, v.ClassName) and not Data.filteringMode) or (table.find(Data.filteredClasses, v.ClassName) and Data.filteringMode)) then
+        if ((not table.find(Config.filteredClasses, v.ClassName) and not Config.filteringMode) or (table.find(Config.filteredClasses, v.ClassName) and Config.filteringMode)) then
             if v:GetAttribute(ARGON_IGNORE) == nil then
                 if #v:GetChildren() > 0 then
                     children[parse(v)] = getChildren(v)
@@ -239,7 +239,7 @@ end
 function fileHandler.portInstances()
     local instancesToSync = {}
 
-    for i, v in pairs(Data.syncedDirectories) do
+    for i, v in pairs(Config.syncedDirectories) do
         if v then
             instancesToSync[i] = getChildren(game:GetService(i))
         end
@@ -251,13 +251,27 @@ function fileHandler.portInstances()
         end
     end
 
+    if instancesToSync['StarterPlayer'] then
+        if len(instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']) == 0 then
+            instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
+        end
+
+        if len(instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']) == 0 then
+            instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
+        end
+
+        if len(instancesToSync['StarterPlayer']) == 0 then
+            instancesToSync['StarterPlayer'] = nil
+        end
+    end
+
     return instancesToSync
 end
 
 function fileHandler.portScripts()
     local scriptsToSync = {}
 
-    for i, v in pairs(Data.syncedDirectories) do
+    for i, v in pairs(Config.syncedDirectories) do
         if v then
             for _, w in ipairs(game:GetService(i):GetDescendants()) do
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then

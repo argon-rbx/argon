@@ -4,7 +4,7 @@ local RunService = game:GetService('RunService')
 
 local HttpHandler = require(script.Parent.HttpHandler)
 local FileHandler = require(script.Parent.FileHandler)
-local Data = require(script.Parent.Data)
+local Config = require(script.Parent.Config)
 
 local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 local SETTINGS_TWEEN_INFO = TweenInfo.new(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
@@ -50,6 +50,8 @@ local toolsBack = toolsPage.Header.Back
 
 local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
 local autoRunButton = settingsPage.Body.AutoRun.Button
+local onlyCodeButton = settingsPage.Body.OnlyCode.Button
+local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
 local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
 local classFilteringButton = settingsPage.Body.ClassFiltering.Button
 
@@ -59,7 +61,6 @@ local classFilteringFrame = settingsPage.ClassFiltering
 local portToVSButton = toolsPage.Body.PortToVS.Button
 local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
 
-local plugin = nil
 local connections = {}
 local subConnections = {}
 local themeConnection = nil
@@ -80,7 +81,7 @@ local function fail(response)
     debounce = false
     stopped = false
 
-    if Data.autoReconnect then
+    if Config.autoReconnect then
         task.wait(AUTO_RECONNECT_DELAY)
 
         if not stopped then
@@ -113,7 +114,7 @@ function connect()
 
             if success then
                 actionLabel.Text = 'STOP'
-                infoLabel.Text = Data.host..':'..Data.port
+                infoLabel.Text = Config.host..':'..Config.port
                 state = 1
             else
                 fail(response)
@@ -151,21 +152,21 @@ end
 
 local function setAddress(input, isHost)
     if isHost then
-        Data.host = input.Text
+        Config.host = input.Text
 
-        if Data.host == '' then
-            Data.host = 'localhost'
+        if Config.host == '' then
+            Config.host = 'localhost'
         end
 
-        plugin:SetSetting('Host', Data.host)
+        plugin:SetSetting('Host', Config.host)
     else
-        Data.port = input.Text
+        Config.port = input.Text
 
-        if Data.port == '' then
-            Data.port =  '8000'
+        if Config.port == '' then
+            Config.port =  '8000'
         end
 
-        plugin:SetSetting('Port', Data.port)
+        plugin:SetSetting('Port', Config.port)
     end
 end
 
@@ -194,19 +195,19 @@ end
 
 local function toggleSetting(setting, data)
     if setting == 0 then
-        Data.autoRun = not Data.autoRun
-        plugin:SetSetting('AutoRun', Data.autoRun)
+        Config.autoRun = not Config.autoRun
+        plugin:SetSetting('AutoRun', Config.autoRun)
 
-        if Data.autoRun then
+        if Config.autoRun then
             TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
             TweenService:Create(autoRunButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 1 then
-        Data.autoReconnect = not Data.autoReconnect
-        plugin:SetSetting('AutoReconnect', Data.autoReconnect)
+        Config.autoReconnect = not Config.autoReconnect
+        plugin:SetSetting('AutoReconnect', Config.autoReconnect)
 
-        if Data.autoReconnect then
+        if Config.autoReconnect then
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
@@ -215,21 +216,21 @@ local function toggleSetting(setting, data)
         data = data:gsub(' ', '')
         data = string.split(data, ',')
 
-        Data.filteredClasses = data
+        Config.filteredClasses = data
         plugin:SetSetting('FilteredClasses', data)
     elseif setting == 3 then
-        Data.filteringMode = not Data.filteringMode
-        plugin:SetSetting('FilteringMode', Data.filteringMode)
+        Config.filteringMode = not Config.filteringMode
+        plugin:SetSetting('FilteringMode', Config.filteringMode)
 
-        if Data.filteringMode then
+        if Config.filteringMode then
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0.5, 0)}):Play()
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
     else
-        local syncState = not Data.syncedDirectories[setting]
-        Data.syncedDirectories[setting] = syncState
-        plugin:SetSetting('SyncedDirectories', Data.syncedDirectories)
+        local syncState = not Config.syncedDirectories[setting]
+        Config.syncedDirectories[setting] = syncState
+        plugin:SetSetting('SyncedDirectories', Config.syncedDirectories)
 
         if syncState then
             TweenService:Create(data.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
@@ -328,7 +329,7 @@ local function updateTheme()
 
     if theme == 'Dark' then
         for _, v in ipairs(background:GetDescendants()) do
-            if v:IsA('Frame') or v:IsA('ImageButton') then
+            if (v:IsA('Frame') and v.Name ~= 'Selector') or v:IsA('ImageButton') then
                 v.BackgroundColor3 = WHITE
             elseif v:IsA('TextBox') or v:IsA('TextLabel') then
                 v.TextColor3 = LIGHT_WHITE
@@ -349,7 +350,7 @@ local function updateTheme()
         overlay.BackgroundColor3 = LIGHT_BLACK
     elseif theme == 'Light' then
         for _, v in ipairs(background:GetDescendants()) do
-            if v:IsA('Frame') or v:IsA('ImageButton') then
+            if (v:IsA('Frame') and v.Name ~= 'Selector') or v:IsA('ImageButton') then
                 v.BackgroundColor3 = BLACK
             elseif v:IsA('TextBox') or v:IsA('TextLabel') then
                 v.TextColor3 = LIGHT_BLACK
@@ -392,8 +393,10 @@ function guiHandler.runPage(page)
 
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
+        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() end) --TODO
+        connections['twoWaySync'] = twoWaySyncButton.MouseButton1Click:Connect(function() end) --TODO
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
-        connections['ClassFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
+        connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
     elseif page == toolsPage then
         connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)
 
@@ -404,53 +407,75 @@ end
 
 function guiHandler.run(newPlugin, autoConnect)
     themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
-    versionLabel.Text = Data.argonVersion
-    updateTheme()
 
-    if not RunService:IsEdit() then
-        overlay.Visible = true
-        return
+    if newPlugin then
+        versionLabel.Text = Config.argonVersion
+        updateTheme()
+
+        if not RunService:IsEdit() then
+            overlay.Visible = true
+            return
+        end
+
+        plugin = newPlugin
     end
 
-    plugin = newPlugin
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
     local portSetting = plugin:GetSetting('Port')
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
+    local onlyCodeSetting = plugin:GetSetting('OnlyCode')
+    local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
     local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
     local filteringMode = plugin:GetSetting('FilteringMode')
 
     if hostSetting ~= nil then
         hostInput.Text = hostSetting
-        Data.host = hostSetting
+        Config.host = hostSetting
     end
 
     if portSetting ~= nil then
         portInput.Text = portSetting
-        Data.port = portSetting
+        Config.port = portSetting
     end
 
     if autoRunSetting ~= nil then
-        Data.autoRun = autoRunSetting
+        Config.autoRun = autoRunSetting
 
-        if autoRunSetting then
-            autoRunButton.OnIcon.ImageTransparency = 0
+        if not autoRunSetting then
+            autoRunButton.OnIcon.ImageTransparency = 1
         end
     end
 
     if autoReconnectSetting ~= nil then
-        Data.autoReconnect = autoReconnectSetting
+        Config.autoReconnect = autoReconnectSetting
 
         if autoReconnectSetting then
             autoReconnectButton.OnIcon.ImageTransparency = 0
         end
     end
 
-    Data.syncedDirectories = syncedDirectoriesSetting or Data.syncedDirectories
-    for i, v in pairs(Data.syncedDirectories) do
+    if onlyCodeSetting ~= nil then
+        Config.onlyCode = onlyCodeSetting
+
+        if not onlyCodeSetting then
+            onlyCodeButton.OnIcon.ImageTransparency = 1
+        end
+    end
+
+    if twoWaySyncSetting ~= nil then
+        Config.twoWaySync = twoWaySyncSetting
+
+        if twoWaySyncSetting then
+            twoWaySyncButton.OnIcon.ImageTransparency = 0
+        end
+    end
+
+    Config.syncedDirectories = syncedDirectoriesSetting or Config.syncedDirectories
+    for i, v in pairs(Config.syncedDirectories) do
         local properties = StudioService:GetClassIcon(i)
         local icon = syncedDirectoriesFrame[i].ClassIcon
 
@@ -463,11 +488,11 @@ function guiHandler.run(newPlugin, autoConnect)
         end
     end
 
-    Data.filteredClasses = filteredClassesSetting or Data.filteredClasses
+    Config.filteredClasses = filteredClassesSetting or Config.filteredClasses
     if filteredClassesSetting then
         local text = ''
 
-        for i, v in ipairs(Data.filteredClasses) do
+        for i, v in ipairs(Config.filteredClasses) do
             if i ~= 1 then
                 text = text..', '..v
             else
@@ -479,7 +504,7 @@ function guiHandler.run(newPlugin, autoConnect)
     end
 
     if filteringMode ~= nil then
-        Data.filteringMode = filteringMode
+        Config.filteringMode = filteringMode
 
         if filteringMode then
             classFilteringFrame.Mode.Selector.Position = UDim2.fromScale(0.5, 0)

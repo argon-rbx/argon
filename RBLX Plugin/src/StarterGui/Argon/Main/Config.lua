@@ -1,14 +1,16 @@
-local data = {}
+local config = {}
 
-data.argonVersion = '0.2.0'
+config.argonVersion = '0.3.0'
 
-data.autoRun = true
-data.autoReconnect = false
+config.autoRun = true
+config.autoReconnect = false
+config.twoWaySync = false
+config.onlyCode = true
 
-data.host = 'localhost'
-data.port = '8000'
+config.host = 'localhost'
+config.port = '8000'
 
-data.syncedDirectories = {
+config.syncedDirectories = {
     ['Workspace'] = false,
     ['Players'] = false,
     ['Lighting'] = false,
@@ -27,7 +29,7 @@ data.syncedDirectories = {
     ['TestService'] = false
 }
 
-data.filteringMode = false
-data.filteredClasses = {}
+config.filteringMode = false
+config.filteredClasses = {}
 
-return data
+return config

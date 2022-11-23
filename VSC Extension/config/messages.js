@@ -13,6 +13,5 @@ module.exports = {
 
     //Errors
     error: 'Something went wrong!',
-    serverConnection: 'Could not connect to Roblox servers!',
-    fileFail: 'Failed to save the file'
+    serverConnection: 'Could not connect to Roblox servers!'
 }

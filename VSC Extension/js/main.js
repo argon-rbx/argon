@@ -10,10 +10,17 @@ let isRunning = false
 function run() {
     if (isRunning == false) {
         if (vscode.workspace.name !== undefined) {
-            messageHandler.showMessage('argonRunning')
-            files.run()
-            server.run()
-            isRunning = true
+            server.run(function(canConnect) {
+                if (canConnect) {
+                    files.run()
+                    messageHandler.showMessage('argonRunning')
+                    isRunning = true
+                }
+                else {
+                    messageHandler.showMessage('alreadyRunning', 2)
+                }
+            })
+
         }
         else {
             messageHandler.showMessage('openWorkspace', 1)

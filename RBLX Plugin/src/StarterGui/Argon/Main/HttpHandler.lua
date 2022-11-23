@@ -1,9 +1,10 @@
 local HttpService = game:GetService('HttpService')
 
 local FileHandler = require(script.Parent.FileHandler)
-local Data = require(script.Parent.Data)
+local Config = require(script.Parent.Config)
 
 local URL = 'http://%s:%s/'
+local SYNC_INTERVAL = 0.2
 
 local thread = nil
 local func = nil
@@ -34,7 +35,7 @@ local function startSyncing(url)
 
     thread = task.spawn(function()
         local success, response = pcall(function()
-            while task.wait(0.2) do
+            while task.wait(SYNC_INTERVAL) do
                 local queue = HttpService:JSONDecode(HttpService:GetAsync(url, false, headers))
 
                 for _, v in ipairs(queue) do
@@ -62,13 +63,15 @@ local function startSyncing(url)
 end
 
 function httpHandler.connect(fail)
-    local url = string.format(URL, Data.host, Data.port)
+    local url = string.format(URL, Config.host, Config.port)
     local headers = {
         action = 'init'
     }
 
     local success, response = pcall(function()
-        HttpService:GetAsync(url, false, headers)
+        if HttpService:GetAsync(url, false, headers) == 'true' then
+            error('Argon is already connected!', 0)
+        end
     end)
 
     func = func or fail
@@ -88,7 +91,7 @@ function httpHandler.stop()
 end
 
 function httpHandler.portInstances(instancesToSync)
-    local url = string.format(URL, Data.host, Data.port)
+    local url = string.format(URL, Config.host, Config.port)
     local headers = {
         action = 'portInstances'
     }
@@ -105,7 +108,7 @@ function httpHandler.portScripts(scriptsToSync)
         return true
     end
 
-    local url = string.format(URL, Data.host, Data.port)
+    local url = string.format(URL, Config.host, Config.port)
     local headers = {
         action = 'portScripts'
     }
@@ -137,7 +140,7 @@ function httpHandler.portScripts(scriptsToSync)
 end
 
 function httpHandler.portProject()
-    local url = string.format(URL, Data.host, Data.port)
+    local url = string.format(URL, Config.host, Config.port)
     local headers = {
         action = 'portProject'
     }
@@ -150,7 +153,7 @@ function httpHandler.portProject()
             FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
         end
 
-        repeat
+        while length > 0 do
             local chunk
             json = HttpService:JSONDecode(HttpService:GetAsync(url, false, {action = 'portProjectSource'}))
             chunk, length = json.Chunk, json.Length
@@ -158,7 +161,7 @@ function httpHandler.portProject()
             for _, v in ipairs(chunk) do
                 FileHandler.update(v.Object, v.Source)
             end
-        until length <= 0
+        end
     end)
 
     return success, response
