@@ -220,8 +220,8 @@ function run() {
 }
 
 function stop() {
-    for (let i = 0; i < watchers.length; i++) {
-        watchers[i].dispose()
+    for (let watcher of watchers) {
+        watcher.dispose()
     }
 
     watchers.length = 0
@@ -258,12 +258,12 @@ function updateClasses() {
                 let newTypes = []
                 let newJson = {}
             
-                for (let i = 0; i < classes.length; i++) {
-                    if (classes[i].Tags == undefined) {
-                        newTypes.push(classes[i].Name)
+                for (let type of classes) {
+                    if (type.Tags == undefined) {
+                        newTypes.push(type.Name)
                     }
-                    else if (classes[i].Tags.includes('NotCreatable') == false) {
-                        newTypes.push(classes[i].Name)
+                    else if (type.Tags.includes('NotCreatable') == false) {
+                        newTypes.push(type.Name)
                     }
                 }
 
@@ -359,10 +359,32 @@ function createInstances(dir, instances) {
     lastUnix = Date.now()
 }
 
-function portInstances(instances) {
+function portInstances(data) {
+    data = JSON.parse(data)
+
     let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
-    instances = new Map(Object.entries(JSON.parse(instances)))
-    createInstances(dir, instances)
+    let instances = data.instances
+    let mode = data.mode
+
+    if (mode) {
+        instances = new Map(Object.entries(instances))
+        for (let [key, value] of instances) {
+            let folder = path.join(dir, key)
+
+            if (fs.existsSync(folder) == false) {
+                fs.mkdirSync(folder)
+            }
+
+            for (let instance of value) {
+                instance = new Map(Object.entries(instance))
+                createInstances(folder, instance)
+            }
+        }
+    }
+    else {
+        instances = new Map(Object.entries(instances))
+        createInstances(dir, instances)
+    }
 }
 
 function portScripts(scripts) {

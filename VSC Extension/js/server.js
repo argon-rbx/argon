@@ -125,7 +125,7 @@ function run(callback) {
 }
 
 function stop() {
-    for (const socket of sockets) {
+    for (let socket of sockets) {
         socket.destroy();
         sockets.delete(socket);
     }

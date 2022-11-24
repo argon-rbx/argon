@@ -4,8 +4,8 @@ config.argonVersion = '0.3.0'
 
 config.autoRun = true
 config.autoReconnect = false
-config.twoWaySync = false
 config.onlyCode = true
+config.twoWaySync = false
 
 config.host = 'localhost'
 config.port = '8000'

@@ -96,8 +96,13 @@ function httpHandler.portInstances(instancesToSync)
         action = 'portInstances'
     }
 
+    local body = {
+        mode = Config.onlyCode,
+        instances = instancesToSync
+    }
+
     local success, response = pcall(function()
-        HttpService:PostAsync(url, HttpService:JSONEncode(instancesToSync), Enum.HttpContentType.ApplicationJson, false, headers)
+        HttpService:PostAsync(url, HttpService:JSONEncode(body), Enum.HttpContentType.ApplicationJson, false, headers)
     end)
 
     return success, response

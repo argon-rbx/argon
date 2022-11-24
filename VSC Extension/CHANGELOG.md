@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.4
+## 0.3.0
 * Added releases on Github
 * Added restore to defaults button
 * Added local website with Argon stats

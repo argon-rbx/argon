@@ -213,11 +213,14 @@ local function toggleSetting(setting, data)
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 2 then
-        data = data:gsub(' ', '')
-        data = string.split(data, ',')
+        Config.onlyCode = not Config.onlyCode
+        plugin:SetSetting('OnlyCode', Config.onlyCode)
 
-        Config.filteredClasses = data
-        plugin:SetSetting('FilteredClasses', data)
+        if Config.onlyCode then
+            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+        else
+            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+        end
     elseif setting == 3 then
         Config.filteringMode = not Config.filteringMode
         plugin:SetSetting('FilteringMode', Config.filteringMode)
@@ -227,6 +230,12 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
+    elseif setting == 4 then
+        data = data:gsub(' ', '')
+        data = string.split(data, ',')
+
+        Config.filteredClasses = data
+        plugin:SetSetting('FilteredClasses', data)
     else
         local syncState = not Config.syncedDirectories[setting]
         Config.syncedDirectories[setting] = syncState
@@ -261,7 +270,7 @@ local function expandSetting(setting)
                 filterInput(2)
             end)
             subConnections[v.Parent.Name..2] = v.FocusLost:Connect(function()
-                toggleSetting(2, v.Text)
+                toggleSetting(4, v.Text)
             end)
         end
     end
@@ -393,7 +402,7 @@ function guiHandler.runPage(page)
 
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
-        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() end) --TODO
+        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
         connections['twoWaySync'] = twoWaySyncButton.MouseButton1Click:Connect(function() end) --TODO
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
@@ -407,19 +416,15 @@ end
 
 function guiHandler.run(newPlugin, autoConnect)
     themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
+    versionLabel.Text = Config.argonVersion
+    updateTheme()
 
-    if newPlugin then
-        versionLabel.Text = Config.argonVersion
-        updateTheme()
-
-        if not RunService:IsEdit() then
-            overlay.Visible = true
-            return
-        end
-
-        plugin = newPlugin
+    if not RunService:IsEdit() then
+        overlay.Visible = true
+        return
     end
 
+    plugin = newPlugin
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')

@@ -45,16 +45,39 @@ local function parse(instance)
     return name..className
 end
 
+local function getParent(instance, root)
+    local parent = {}
+
+    while instance ~= root do
+        parent = {[parse(instance)] = parent}
+        instance = instance.Parent
+    end
+
+    return parent
+end
+
 local function getChildren(dir)
     local children = {}
 
-    for _, v in pairs(dir:GetChildren()) do
-        if ((not table.find(Config.filteredClasses, v.ClassName) and not Config.filteringMode) or (table.find(Config.filteredClasses, v.ClassName) and Config.filteringMode)) then
-            if v:GetAttribute(ARGON_IGNORE) == nil then
-                if #v:GetChildren() > 0 then
-                    children[parse(v)] = getChildren(v)
-                else
-                    children[parse(v)] = {}
+    if Config.onlyCode then
+        for _, v in ipairs(dir:GetDescendants()) do
+            if v:IsA('LuaSourceContainer') then
+                if ((not Config.filteringMode and not table.find(Config.filteredClasses, v.ClassName)) or (Config.filteringMode and table.find(Config.filteredClasses, v.ClassName))) then
+                    if v:GetAttribute(ARGON_IGNORE) == nil then
+                        table.insert(children, getParent(v, dir))
+                    end
+                end
+            end
+        end
+    else
+        for _, v in pairs(dir:GetChildren()) do
+            if ((not Config.filteringMode and not table.find(Config.filteredClasses, v.ClassName)) or (Config.filteringMode and table.find(Config.filteredClasses, v.ClassName))) then
+                if v:GetAttribute(ARGON_IGNORE) == nil then
+                    if #v:GetChildren() > 0 then
+                        children[parse(v)] = getChildren(v)
+                    else
+                        children[parse(v)] = {}
+                    end
                 end
             end
         end
@@ -63,7 +86,7 @@ local function getChildren(dir)
     return children
 end
 
-local function getParent(instance, class, recursive)
+local function getPath(instance, class, recursive)
     local parent = instance.Parent
     local dir = ''
 
@@ -92,7 +115,7 @@ local function getParent(instance, class, recursive)
             name = instance.Name..'.'..instance.ClassName
         end
 
-        dir = getParent(parent, class, true)..'\\'..name
+        dir = getPath(parent, class, true)..'\\'..name
     else
         dir = instance.ClassName
     end
@@ -217,8 +240,7 @@ function fileHandler.changeType(object, class, name)
             v.Parent = newObject
         end
 
-        ---@diagnostic disable-next-line: invalid-class-name
-        if SCRIPT_TYPES[class] and object:IsA('LuaSourceContainer') then --why the hell Roblox LSP thinks that this is invalid enum?!
+        if SCRIPT_TYPES[class] and object:IsA('LuaSourceContainer') then
             newObject.Source = object.Source
         end
 
@@ -275,7 +297,7 @@ function fileHandler.portScripts()
         if v then
             for _, w in ipairs(game:GetService(i):GetDescendants()) do
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
-                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = getParent(w, i), Source = w.Source})
+                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = getPath(w, i), Source = w.Source})
                 end
             end
         end
