@@ -10,6 +10,9 @@ config.twoWaySync = false
 config.host = 'localhost'
 config.port = '8000'
 
+config.filteringMode = false
+config.filteredClasses = {}
+
 config.syncedDirectories = {
     ['Workspace'] = false,
     ['Players'] = false,
@@ -28,8 +31,5 @@ config.syncedDirectories = {
     ['LocalizationService'] = false,
     ['TestService'] = false
 }
-
-config.filteringMode = false
-config.filteredClasses = {}
 
 return config

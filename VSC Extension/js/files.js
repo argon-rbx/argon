@@ -310,41 +310,54 @@ function createInstances(dir, instances) {
         let folder = path.join(dir, key)
         value = new Map(Object.entries(value))
 
-        if (fs.existsSync(folder) == false) {
-            if (key.endsWith('.Script')) {
-                folder = folder.slice(0, -7)
+        if (key == 'forceSubScript') {
+            continue
+        }
 
-                if (value.size == 0) {
-                    fs.writeFileSync(folder + '.server' + config.extension, '')
-                }
-                else {
-                    fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source.server' + config.extension), '')
-                }
-            }
-            else if (key.endsWith('.LocalScript')) {
-                folder = folder.slice(0, -12)
+        if (key.endsWith('.Script')) {
+            folder = folder.slice(0, -7)
 
-                if (value.size == 0) {
-                    fs.writeFileSync(folder + '.client' + config.extension, '')
-                }
-                else {
-                    fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source.client' + config.extension), '')
-                }
-            }
-            else if (key.endsWith('.ModuleScript')) {
-                folder = folder.slice(0, -13)
-
-                if (value.size == 0) {
-                    fs.writeFileSync(folder + config.extension, '')
-                }
-                else {
-                    fs.mkdirSync(folder)
-                    fs.writeFileSync(path.join(folder, '.source' + config.extension), '')
-                }
+            if (value.size == 0) {
+                fs.writeFileSync(folder + '.server' + config.extension, '')
             }
             else {
+                if (fs.existsSync(folder) == false) {
+                    fs.mkdirSync(folder)
+                }
+
+                fs.writeFileSync(path.join(folder, '.source.server' + config.extension), '')
+            }
+        }
+        else if (key.endsWith('.LocalScript')) {
+            folder = folder.slice(0, -12)
+
+            if (value.size == 0) {
+                fs.writeFileSync(folder + '.client' + config.extension, '')
+            }
+            else {
+                if (fs.existsSync(folder) == false) {
+                    fs.mkdirSync(folder)
+                }
+
+                fs.writeFileSync(path.join(folder, '.source.client' + config.extension), '')
+            }
+        }
+        else if (key.endsWith('.ModuleScript')) {
+            folder = folder.slice(0, -13)
+
+            if (value.size == 0) {
+                fs.writeFileSync(folder + config.extension, '')
+            }
+            else {
+                if (fs.existsSync(folder) == false) {
+                    fs.mkdirSync(folder)
+                }
+
+                fs.writeFileSync(path.join(folder, '.source' + config.extension), '')
+            }
+        }
+        else {
+            if (fs.existsSync(folder) == false) {
                 fs.mkdirSync(folder)
             }
         }

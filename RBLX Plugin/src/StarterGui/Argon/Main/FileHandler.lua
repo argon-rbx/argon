@@ -48,6 +48,10 @@ end
 local function getParent(instance, root)
     local parent = {}
 
+    if #instance:GetChildren() > 0 and instance:FindFirstChildWhichIsA('LuaSourceContainer') then
+        parent = {forceSubScript = {}}
+    end
+
     while instance ~= root do
         parent = {[parse(instance)] = parent}
         instance = instance.Parent

@@ -52,11 +52,11 @@ local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
 local autoRunButton = settingsPage.Body.AutoRun.Button
 local onlyCodeButton = settingsPage.Body.OnlyCode.Button
 local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
-local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
 local classFilteringButton = settingsPage.Body.ClassFiltering.Button
+local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
 
-local syncedDirectoriesFrame = settingsPage.SyncedDirectories
 local classFilteringFrame = settingsPage.ClassFiltering
+local syncedDirectoriesFrame = settingsPage.SyncedDirectories
 
 local portToVSButton = toolsPage.Body.PortToVS.Button
 local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
@@ -397,20 +397,26 @@ function guiHandler.runPage(page)
 
         connections['settingsButton'] = settingsButton.MouseButton1Click:Connect(function() changePage(-1.05, settingsPage, toolsPage) end)
         connections['toolsButton'] = toolsButton.MouseButton1Click:Connect(function() changePage(1.05, toolsPage, settingsPage) end)
+
+        settingsPage.Body.ScrollingEnabled = false
     elseif page == settingsPage then
         connections['settingsBack'] = settingsBack.MouseButton1Click:Connect(function() changePage(0) end)
 
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
         connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
-        connections['twoWaySync'] = twoWaySyncButton.MouseButton1Click:Connect(function() end) --TODO
-        connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
+        connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() end) --TODO
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
+        connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
+
+        settingsPage.Body.ScrollingEnabled = true
     elseif page == toolsPage then
         connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)
 
         connections['portToVSButton'] = portToVSButton.MouseButton1Click:Connect(portToVS)
         connections['portToRobloxButton'] = portToRobloxButton.MouseButton1Click:Connect(portToRoblox)
+
+        settingsPage.Body.ScrollingEnabled = false
     end
 end
 
@@ -433,9 +439,9 @@ function guiHandler.run(newPlugin, autoConnect)
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
-    local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
-    local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
     local filteringMode = plugin:GetSetting('FilteringMode')
+    local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
+    local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
 
     if hostSetting ~= nil then
         hostInput.Text = hostSetting
@@ -479,17 +485,11 @@ function guiHandler.run(newPlugin, autoConnect)
         end
     end
 
-    Config.syncedDirectories = syncedDirectoriesSetting or Config.syncedDirectories
-    for i, v in pairs(Config.syncedDirectories) do
-        local properties = StudioService:GetClassIcon(i)
-        local icon = syncedDirectoriesFrame[i].ClassIcon
+    if filteringMode ~= nil then
+        Config.filteringMode = filteringMode
 
-        for j, w in pairs(properties) do
-            icon[j] = w
-        end
-
-        if v then
-            syncedDirectoriesFrame[i].Button.OnIcon.ImageTransparency = 0
+        if filteringMode then
+            classFilteringFrame.Mode.Selector.Position = UDim2.fromScale(0.5, 0)
         end
     end
 
@@ -508,11 +508,17 @@ function guiHandler.run(newPlugin, autoConnect)
         classFilteringFrame.Input.Text = text
     end
 
-    if filteringMode ~= nil then
-        Config.filteringMode = filteringMode
+    Config.syncedDirectories = syncedDirectoriesSetting or Config.syncedDirectories
+    for i, v in pairs(Config.syncedDirectories) do
+        local properties = StudioService:GetClassIcon(i)
+        local icon = syncedDirectoriesFrame[i].ClassIcon
 
-        if filteringMode then
-            classFilteringFrame.Mode.Selector.Position = UDim2.fromScale(0.5, 0)
+        for j, w in pairs(properties) do
+            icon[j] = w
+        end
+
+        if v then
+            syncedDirectoriesFrame[i].Button.OnIcon.ImageTransparency = 0
         end
     end
 

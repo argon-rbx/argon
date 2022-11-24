@@ -2,20 +2,19 @@
 
 ## 0.3.0
 * Added releases on Github
-* Added restore to defaults button
 * Added local website with Argon stats
 * Added option to sync only code (exclude empty instances)
 * Added option for VSC extension to suppress notifications
 * Connecting multiple clients to one Argon server is no longer possible
 * StarterPlayer no longer ports to VSC if StarterPlayerScripts and StarterCharacterScripts are empty
-* Fixed extension not stopping when plugin was still sending requests (temp fix by destroying web sockets, this method will change once Electron add support for node.js 18.2.0+)
-* Fixed notifications diplaying twice when Argon got enabled with command
-* Fixed class filtering selector going black on light mode
+* Fixed extension not stopping when plugin was still sending requests (temp fix by destroying websockets, this method will change when Electron adds support for node.js 18.2.0+))
+* Fixed notifications displaying twice when Argon got enabled with command
+* Fixed class filtering selector color on light mode
 * Fixed plugin auto run option
-* Varius code optimizations
+* Various code optimizations
 
 ## 0.2.1 - 0.2.3
-* Small repository and marketplace modifications
+* Repository and marketplace modifications
 
 ## 0.2.0
 * Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu/)
