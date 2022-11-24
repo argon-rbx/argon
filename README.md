@@ -12,8 +12,8 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 # Features
 * Two-way sync (currently only from VS Code to Roblox is supported)
 * Support for renaming, changing directory and classes
-* Instance syncing with differen options
 * Porting in both sides with just one button
+* Instance syncing with various options
 * Customizable, expandable and flexible
 * Self updating class database
 * Integrated file icon theme
@@ -74,13 +74,17 @@ https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-
 [![Demo video](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/images/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 
 # Changelog
-## 0.2.0
-* Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu/)
-* Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
-* Fixed README.md not displaying images on VS Marketplace
-* Fixed light theme and UI scaling
-* Tons of other UI optimizations and fixes
-* Updated some UI buttons
-* Updated VSC icons
+## 0.3.0
+* Added releases on Github
+* Added local website with Argon stats
+* Added option to sync only code (exclude empty instances)
+* Added option for VSC extension to suppress notifications
+* Connecting multiple clients to one Argon server is no longer possible
+* StarterPlayer no longer ports to VSC if StarterPlayerScripts and StarterCharacterScripts are empty
+* Fixed extension not stopping when plugin was still sending requests (temp fix by destroying websockets, this method will change when Electron adds support for node.js 18.2.0+))
+* Fixed notifications displaying twice when Argon got enabled with command
+* Fixed class filtering selector color on light mode
+* Fixed plugin auto run option
+* Various code optimizations
 
 ## Previous changes can be found in [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/CHANGELOG.md)
