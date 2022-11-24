@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.1
+* Removed node_modules from VSC extension
+
 ## 0.3.0
 * Added releases on Github
 * Added local website with Argon stats
