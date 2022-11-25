@@ -82,8 +82,14 @@
         "3d": {
             "iconPath": "./icons/material/3d.svg"
         },
+        "css": {
+            "iconPath": "./icons/material/css.svg"
+        },
         "csv": {
             "iconPath": "./icons/material/csv.svg"
+        },
+        "html": {
+            "iconPath": "./icons/material/html.svg"
         },
         "js": {
             "iconPath": "./icons/material/js.svg"
@@ -150,7 +156,9 @@
         "vscodeignore": "vscodeignore",
         "fbx": "3d",
         "obj": "3d",
+        "css": "css",
         "csv": "csv",
+        "html": "html",
         "js": "js",
         "json": "json",
         "md": "md",
@@ -162,10 +170,14 @@
         "xaml": "xml",
         "yaml": "yaml",
         "yml": "yaml",
-        "png": "image",
-        "jpg": "image",
+
+        "ai": "image",
+        "gif": "image",
         "jpeg": "image",
-        "gif": "image"
+        "jpg": "image",
+        "png": "image",
+        "psd": "image",
+        "svg": "image"
     },
     "folderNames": {
         "Workspace": "workspace",

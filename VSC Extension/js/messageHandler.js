@@ -6,7 +6,7 @@ function showMessage(message, mode) {
     if (config.hideNotifications == false) {
         message = messages[message]
 
-        if (message.toLowerCase().includes('Argon') == false) {
+        if (message.toLowerCase().includes('argon') == false) {
             message = 'Argon: ' + message
         }
     

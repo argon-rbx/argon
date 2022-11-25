@@ -2,16 +2,16 @@ module.exports = {
     //Informations
     argonRunning: 'Argon is now running!',
     argonStopped: 'Argon stopped!',
-    alreadyRunning: 'Argon is already running!',
-    notRunning : 'Argon is not running!',
     databaseUpdated: 'Successfully updated class database',
     databaseUpToDate: 'Class database is already up to date!',
-
+    
     //Warnings
+    notRunning : 'Argon is not running!',
     openWorkspace: 'Please open workspace!',
+    alreadyRunning: 'Argon is already running!',
     updatingDatabase: 'Please wait database is updating!',
+    outdatedVersion: 'You are running outdated version, please install latest update!',
 
     //Errors
-    error: 'Something went wrong!',
     serverConnection: 'Could not connect to Roblox servers!'
 }

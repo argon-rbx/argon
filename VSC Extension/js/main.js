@@ -1,8 +1,11 @@
 const vscode = require('vscode')
+const https = require('https')
 const files = require('./files')
 const server = require('./server')
 const config = require('../config/settings.js')
 const messageHandler = require('./messageHandler')
+
+const URL = 'https://dervexhero.github.io/Argon/'
 
 let activated = false
 let isRunning = false
@@ -65,6 +68,20 @@ async function activate(context) {
         if (config.autoRun) {
             run()
         }
+
+        https.get(URL, (response) => {
+            let body = ''
+        
+            response.on('data', (data) => {
+                body += data
+            })
+    
+            response.on('end', () => {
+                if (body != context.extension.packageJSON.version) {
+                    messageHandler.showMessage('outdatedVersion', 1)
+                }
+            })
+        })
     }
 }
 
