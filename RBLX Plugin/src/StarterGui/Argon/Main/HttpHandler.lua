@@ -3,6 +3,7 @@ local HttpService = game:GetService('HttpService')
 local FileHandler = require(script.Parent.FileHandler)
 local Config = require(script.Parent.Config)
 
+local API_URL = 'https://dervexhero.github.io/Argon/'
 local URL = 'http://%s:%s/'
 local SYNC_INTERVAL = 0.2
 
@@ -60,6 +61,20 @@ local function startSyncing(url)
             func(response)
         end
     end)
+end
+
+function httpHandler.checkForUpdates()
+    local update = nil
+
+    pcall(function()
+        local json = HttpService:JSONDecode(HttpService:GetAsync(API_URL))
+
+        if json.extension ~= Config.argonVersion then
+            update = json.extension
+        end
+    end)
+
+    return update
 end
 
 function httpHandler.connect(fail)

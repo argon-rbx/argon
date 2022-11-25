@@ -7,8 +7,8 @@ module.exports = {
     
     //Warnings
     notRunning : 'Argon is not running!',
-    openWorkspace: 'Please open workspace!',
     alreadyRunning: 'Argon is already running!',
+    openWorkspace: 'Please open workspace first!',
     updatingDatabase: 'Please wait database is updating!',
     outdatedVersion: 'You are running outdated version, please install latest update!',
 

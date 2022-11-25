@@ -4,8 +4,6 @@ const website = require('../config/website.js')
 const events = require('./events')
 const files = require('./files')
 
-const PORT = config.port
-const HOST = config.host
 const URL = 'http://$host:$port/'
 
 let server = http.createServer(requestListener)
@@ -111,13 +109,13 @@ function requestListener(request, response) {
 function run(callback) {
     let canConnect = true
 
-    http.get(URL.replace('$host', HOST).replace('$port', PORT), () => {
+    http.get(URL.replace('$host', config.host).replace('$port', config.port), () => {
         canConnect = false
     })
 
     setTimeout(() => {
         if (canConnect) {
-            server.listen(PORT, HOST);
+            server.listen(config.port, config.host);
             uptime = Date.now()
         }
         callback(canConnect)

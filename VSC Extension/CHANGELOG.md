@@ -1,7 +1,10 @@
 # Changelog
 
 ## 0.3.2
-* Added auto check updates in both Roblox plugon and VSC extension
+* Added auto check for updates in both Roblox plugin and VSC extension
+* Added option to not create root (src by default) folder automatically (VSC)
+* Fixed some bugs which were caused by the lack of an open workspace (VSC)
+* Updating Argon settings no longer requires window reload (VSC)
 * Added more VSC icons
 
 ## 0.3.1

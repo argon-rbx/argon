@@ -9,6 +9,7 @@ module.exports = {
     extension: directories.get('extension'),
     autoRun: extension.get('autoRun'),
     autoUpdate: extension.get('autoUpdate'),
+    autoCreateFolder: extension.get('autoCreateFolder'),
     hideNotifications: extension.get('hideNotifications'),
     host: server.get('host'),
     port: server.get('port')

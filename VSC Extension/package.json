@@ -73,6 +73,11 @@
           "default": false,
           "description": "Whether Argon should update class database automatically"
         },
+        "argon.extension.autoCreateFolder": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Argon should create root folder automatically"
+        },
         "argon.extension.hideNotifications": {
           "type": "boolean",
           "default": false,

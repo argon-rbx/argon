@@ -9,7 +9,6 @@ const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
-const ROOT_NAME = config.rootName
 const SEPARATOR = '|'
 
 let watchers = []
@@ -23,7 +22,7 @@ function verify(parent) {
 }
 
 function getParent(root) {
-    if (root.includes(ROOT_NAME) == false) {
+    if (root.includes(config.rootName) == false) {
         return null
     }
 
@@ -48,7 +47,7 @@ function getParent(root) {
             parent = dir[i]
         }
 
-        if (dir[i] == ROOT_NAME) {
+        if (dir[i] == config.rootName) {
             let len = root.split(dir[i]).length - 1
 
             if (len > 1 && similarName == 0)  {
@@ -63,7 +62,7 @@ function getParent(root) {
         }
     }
 
-    parent = parent.slice(ROOT_NAME.length + 1)
+    parent = parent.slice(config.rootName.length + 1)
     return parent
 }
 
@@ -194,7 +193,7 @@ function run() {
     let gameDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
     let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
 
-    if (fs.existsSync(gameDir) == false) {
+    if (fs.existsSync(gameDir) == false && config.autoCreateFolder) {
         fs.mkdirSync(gameDir)
     }
 

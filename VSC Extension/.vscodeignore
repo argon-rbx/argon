@@ -1,6 +1,5 @@
 .vscode/**
-test/**
-node_modules
 .gitignore
+node_modules
 **/.eslintrc.json
 **/jsconfig.json

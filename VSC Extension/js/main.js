@@ -10,7 +10,7 @@ const URL = 'https://dervexhero.github.io/Argon/'
 let activated = false
 let isRunning = false
 
-function run() {
+function run(autoRun) {
     if (isRunning == false) {
         if (vscode.workspace.name !== undefined) {
             server.run(function(canConnect) {
@@ -29,7 +29,7 @@ function run() {
             messageHandler.showMessage('openWorkspace', 1)
         }
     }
-    else {
+    else if (autoRun != false) {
         messageHandler.showMessage('alreadyRunning', 1)
     }
 }
@@ -47,11 +47,11 @@ function stop() {
 }
 
 function update() {
-    if (isRunning) {
+    if (vscode.workspace.name !== undefined) {
         files.updateClasses()
     }
     else {
-        messageHandler.showMessage('notRunning', 1)
+        messageHandler.showMessage('openWorkspace', 1)
     }
 }
 
@@ -62,11 +62,11 @@ async function activate(context) {
         let runCommand = vscode.commands.registerCommand('argon.run', run)
         let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
         let updateCommand = vscode.commands.registerCommand('argon.update', update)
-    
+
         context.subscriptions.push(runCommand, stopCommand, updateCommand)
-    
+
         if (config.autoRun) {
-            run()
+            run(true)
         }
 
         https.get(URL, (response) => {
@@ -77,10 +77,31 @@ async function activate(context) {
             })
     
             response.on('end', () => {
-                if (body != context.extension.packageJSON.version) {
+                if (JSON.parse(body).plugin != context.extension.packageJSON.version) {
                     messageHandler.showMessage('outdatedVersion', 1)
                 }
             })
+        })
+
+        vscode.workspace.onDidChangeConfiguration(function() {
+            const directories = vscode.workspace.getConfiguration('argon.directories')
+            const extension = vscode.workspace.getConfiguration('argon.extension')
+            const server = vscode.workspace.getConfiguration('argon.server')
+        
+            let settings = {
+                rootName: directories.get('rootFolder'),
+                extension: directories.get('extension'),
+                autoRun: extension.get('autoRun'),
+                autoUpdate: extension.get('autoUpdate'),
+                autoCreateFolder: extension.get('autoCreateFolder'),
+                hideNotifications: extension.get('hideNotifications'),
+                host: server.get('host'),
+                port: server.get('port')
+            }
+
+            for (let key in settings) {
+                config[key] = settings[key]
+            }
         })
     }
 }

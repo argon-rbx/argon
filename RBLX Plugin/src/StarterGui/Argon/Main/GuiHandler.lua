@@ -25,7 +25,9 @@ local START_ICON = 'rbxassetid://11272872815'
 local AUTO_RECONNECT_DELAY = 3
 
 local background = script.Parent.Parent.ArgonGui.Root.Background
-local overlay = background.Overlay
+
+local overlayFrame = background.Overlay
+local updateFrame = background.Update
 
 local mainPage = background.Main
 local settingsPage = background.Settings
@@ -356,7 +358,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_BLACK
         settingsPage.BackgroundColor3 = ROBLOX_BLACK
         toolsPage.BackgroundColor3 = ROBLOX_BLACK
-        overlay.BackgroundColor3 = LIGHT_BLACK
+        overlayFrame.BackgroundColor3 = LIGHT_BLACK
     elseif theme == 'Light' then
         for _, v in ipairs(background:GetDescendants()) do
             if (v:IsA('Frame') and v.Name ~= 'Selector') or v:IsA('ImageButton') then
@@ -377,7 +379,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_WHITE
         settingsPage.BackgroundColor3 = ROBLOX_WHITE
         toolsPage.BackgroundColor3 = ROBLOX_WHITE
-        overlay.BackgroundColor3 = LIGHT_WHITE
+        overlayFrame.BackgroundColor3 = LIGHT_WHITE
     end
 end
 
@@ -426,7 +428,7 @@ function guiHandler.run(newPlugin, autoConnect)
     updateTheme()
 
     if not RunService:IsEdit() then
-        overlay.Visible = true
+        overlayFrame.Visible = true
         return
     end
 
@@ -520,6 +522,16 @@ function guiHandler.run(newPlugin, autoConnect)
         if v then
             syncedDirectoriesFrame[i].Button.OnIcon.ImageTransparency = 0
         end
+    end
+
+    local update = HttpHandler.checkForUpdates()
+    if typeof(update) == 'string' then
+        updateFrame.Title.Text = 'Argon '..update
+        updateFrame.Visible = true
+
+        updateFrame.Button.MouseButton1Click:Once(function()
+            updateFrame.Visible = false
+        end)
     end
 
     if autoConnect then
