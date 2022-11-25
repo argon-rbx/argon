@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+* Added support for custom directories (inside .argon.json)
+* Fixed issue with root folder caused by 0.3.2 update
+
 ## 0.3.2
 * Added auto check for updates in both Roblox plugin and VSC extension
 * Added option to not create root (src by default) folder automatically (VSC)

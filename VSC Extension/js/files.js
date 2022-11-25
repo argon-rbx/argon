@@ -9,6 +9,7 @@ const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
+const ARGON_JSON = '.argon.json'
 const SEPARATOR = '|'
 
 let watchers = []
@@ -190,12 +191,7 @@ function onRename(uri) {
 }
 
 function run() {
-    let gameDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
-    let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
-
-    if (fs.existsSync(gameDir) == false && config.autoCreateFolder) {
-        fs.mkdirSync(gameDir)
-    }
+    let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
 
     if (fs.existsSync(dataDir)) {
         let json = JSON.parse(fs.readFileSync(dataDir).toString())
@@ -266,8 +262,16 @@ function updateClasses() {
                     }
                 }
 
-                newTypes.push('StarterPlayerScripts')
                 newTypes.push('StarterCharacterScripts')
+                newTypes.push('StarterPlayerScripts')
+
+                if (fs.existsSync(dir)) {
+                    let json = JSON.parse(fs.readFileSync(dir).toString())
+
+                    if (json.directory) {
+                        newJson.directory = json.directory
+                    }
+                }
             
                 newJson.version = version
                 newJson.classes = newTypes
@@ -282,7 +286,7 @@ function updateClasses() {
         })
     }
 
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.argon.json')
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
     messageHandler.showMessage('updatingDatabase', 1)
 
     if (fs.existsSync(dir)) {
@@ -371,10 +375,31 @@ function createInstances(dir, instances) {
     lastUnix = Date.now()
 }
 
+function getRootDir() {
+    let rootDir = vscode.workspace.workspaceFolders[0].uri.fsPath
+    let jsonDir = path.join(rootDir, ARGON_JSON)
+
+    if (fs.existsSync(jsonDir)) {
+        let json = JSON.parse(fs.readFileSync(jsonDir).toString())
+
+        if (json.directory) {
+            rootDir = path.join(rootDir, json.directory)
+        }
+    }
+
+    rootDir = path.join(rootDir, config.rootName)
+
+    if (fs.existsSync(rootDir) == false && config.autoCreateFolder) {
+        fs.mkdirSync(rootDir)
+    }
+
+    return rootDir
+}
+
 function portInstances(data) {
     data = JSON.parse(data)
 
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
+    let dir = getRootDir()
     let instances = data.instances
     let mode = data.mode
 
@@ -403,7 +428,7 @@ function portScripts(scripts) {
     scripts = JSON.parse(scripts)
 
     for (let script of scripts) {
-        let dir = path.join(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName), script.Instance)
+        let dir = path.join(getRootDir(), script.Instance)
 
         if (fs.existsSync(dir + config.extension)) {
             fs.writeFileSync(dir + config.extension, script.Source)
@@ -433,10 +458,6 @@ function portScripts(scripts) {
     }
 
     lastUnix = Date.now()
-}
-
-function getUnix() {
-    return lastUnix
 }
 
 function portCreate(uri) {
@@ -510,7 +531,7 @@ function getChunk(data, index) {
 }
 
 function portProject() {
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootName)
+    let dir = getRootDir()
     let chunks = []
     let index = 0
 
@@ -532,12 +553,16 @@ function portProject() {
     return chunks
 }
 
+function getUnix() {
+    return lastUnix
+}
+
 module.exports = {
     run,
     stop,
     updateClasses,
     portInstances,
     portScripts,
-    getUnix,
-    portProject
+    portProject,
+    getUnix
 }
