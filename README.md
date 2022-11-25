@@ -74,4 +74,4 @@ https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-
 [![Demo video](https://raw.githubusercontent.com/DervexHero/Argon/master/VSC%20Extension/images/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 
 # Changelog
-## can be found [here](https://github.com/DervexHero/Argon/blob/master/CHANGELOG.md)
+## Can be found [here](https://github.com/DervexHero/Argon/blob/main/VSC%20Extension/CHANGELOG.md).
