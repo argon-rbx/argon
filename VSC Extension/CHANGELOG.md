@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+* Added auto check updates in both Roblox plugon and VSC extension
+* Added more VSC icons
+
 ## 0.3.1
 * Removed node_modules from VSC extension
 
@@ -10,7 +14,7 @@
 * Added option for VSC extension to suppress notifications
 * Connecting multiple clients to one Argon server is no longer possible
 * StarterPlayer no longer ports to VSC if StarterPlayerScripts and StarterCharacterScripts are empty
-* Fixed extension not stopping when plugin was still sending requests (temp fix by destroying websockets, this method will change when Electron adds support for node.js 18.2.0+))
+* Fixed extension not stopping when plugin was still sending requests (temp fix by destroying websockets, this method will change when Electron adds support for node.js 18.2.0+)
 * Fixed notifications displaying twice when Argon got enabled with command
 * Fixed class filtering selector color on light mode
 * Fixed plugin auto run option
