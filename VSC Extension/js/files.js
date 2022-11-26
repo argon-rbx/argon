@@ -389,8 +389,13 @@ function getRootDir() {
 
     rootDir = path.join(rootDir, config.rootName)
 
-    if (fs.existsSync(rootDir) == false && config.autoCreateFolder) {
-        fs.mkdirSync(rootDir)
+    if (fs.existsSync(rootDir) == false) {
+        if (config.autoCreateFolder) {
+            fs.mkdirSync(rootDir)
+        }
+        else {
+            messageHandler.showMessage('noRootFolder', 2)
+        }
     }
 
     return rootDir

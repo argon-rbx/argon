@@ -1,6 +1,7 @@
 local StudioService = game:GetService('StudioService')
 local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
+local Studio = settings():GetService('Studio')
 
 local HttpHandler = require(script.Parent.HttpHandler)
 local FileHandler = require(script.Parent.FileHandler)
@@ -13,7 +14,7 @@ local LOADING_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.Easing
 local BLACK = Color3.fromRGB(0, 0, 0)
 local WHITE = Color3.fromRGB(255, 255, 255)
 
-local LIGHT_BLACK = Color3.fromRGB(50, 50, 50)
+local LIGHT_BLACK = Color3.fromRGB(40, 40, 40)
 local LIGHT_WHITE = Color3.fromRGB(240, 240, 240)
 
 local ROBLOX_BLACK = Color3.fromRGB(46, 46, 46)
@@ -293,10 +294,12 @@ local function portToVS()
             warn('Argon: '..response..' (ui1)')
         end
 
-        success, response = HttpHandler.portScripts(FileHandler.portScripts())
+        if success then
+            success, response = HttpHandler.portScripts(FileHandler.portScripts())
 
-        if not success then
-            warn('Argon: '..response..' (ui2)')
+            if not success then
+                warn('Argon: '..response..' (ui2)')
+            end
         end
 
         tween:Cancel()
@@ -331,7 +334,7 @@ local function portToRoblox()
 end
 
 local function updateTheme()
-    local theme = settings():GetService('Studio').Theme.Name
+    local theme = Studio.Theme.Name
 
     if theme == lastTheme then
         return
@@ -423,7 +426,7 @@ function guiHandler.runPage(page)
 end
 
 function guiHandler.run(newPlugin, autoConnect)
-    themeConnection = settings():GetService('Studio').ThemeChanged:Connect(updateTheme)
+    themeConnection = Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
     updateTheme()
 

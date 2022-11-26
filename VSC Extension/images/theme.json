@@ -1,5 +1,16 @@
 {
     "iconDefinitions": {
+        "argon": {
+            "iconPath": "./icons/Argon.png"
+        },
+
+        "root": {
+            "iconPath": "./icons/Root.png"
+        },
+        "folder": {
+            "iconPath": "./icons/Folder.png"
+        },
+
         "script": {
             "iconPath": "./icons/Script.png"
         },
@@ -8,13 +19,6 @@
         },
         "moduleScript": {
           "iconPath": "./icons/ModuleScript.png"
-        },
-
-        "root": {
-            "iconPath": "./icons/Root.png"
-        },
-        "folder": {
-            "iconPath": "./icons/Folder.png"
         },
 
         "workspace": {
@@ -206,6 +210,8 @@
         ".vscode": ".vscode"
     },
     "fileNames": {
+        ".argon.json": "argon",
+
         "CHANGELOG.md": "changelog",
         "LICENSE.md": "license",
         "README.md": "readme"

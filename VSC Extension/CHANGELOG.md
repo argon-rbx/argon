@@ -1,8 +1,10 @@
 # Changelog
 
 ## 0.3.3
+* Added icon for .argon.json
 * Added support for custom directories (inside .argon.json)
 * Fixed issue with root folder caused by 0.3.2 update
+* Fixed "cannot resume dead coroutine" error
 
 ## 0.3.2
 * Added auto check for updates in both Roblox plugin and VSC extension

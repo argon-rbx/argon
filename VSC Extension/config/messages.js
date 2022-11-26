@@ -13,5 +13,6 @@ module.exports = {
     outdatedVersion: 'You are running outdated version, please install latest update!',
 
     //Errors
+    noRootFolder: 'Root folder cannot be found!',
     serverConnection: 'Could not connect to Roblox servers!'
 }

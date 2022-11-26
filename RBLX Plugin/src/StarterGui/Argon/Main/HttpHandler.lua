@@ -99,10 +99,12 @@ function httpHandler.connect(fail)
 end
 
 function httpHandler.stop()
-    if thread then
-        task.cancel(thread)
-        thread = nil
-    end
+    pcall(function()
+        if thread then
+            task.cancel(thread)
+            thread = nil
+        end
+    end)
 end
 
 function httpHandler.portInstances(instancesToSync)
