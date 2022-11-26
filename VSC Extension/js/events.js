@@ -69,7 +69,7 @@ function create(ext, name, parent) {
         queue.push({Action: 'create', Type: ext, Name: name, Parent: parent})
     }
     else if (ext == '') {
-        queue.push({Action: 'create', Type: 'Folder', Name: name, Parent: parent}) //queue.push({Action: 'create', Type: 'Folder', Name: name + '.' + ext, Parent: parent})
+        queue.push({Action: 'create', Type: 'Folder', Name: name, Parent: parent})
     }
 }
 

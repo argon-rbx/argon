@@ -90,48 +90,11 @@ local function getChildren(dir)
     return children
 end
 
-local function getPath(instance, class, recursive)
-    local parent = instance.Parent
-    local dir = ''
-
-    if instance.ClassName ~= class then
-        local name
-
-        if instance:IsA('LuaSourceContainer') then
-		    if not recursive then
-                name = instance.Name
-
-                if #instance:GetChildren() == 0 then
-                    if instance.ClassName ~= 'ModuleScript' then
-                        name ..= '.'..SCRIPT_TYPES[instance.ClassName]
-                    else
-                        name = name
-                    end
-                else
-                    name = name
-                end
-            else
-                name = instance.Name
-		    end
-        elseif instance.ClassName == 'Folder' then
-            name = instance.Name
-        else
-            name = instance.Name..'.'..instance.ClassName
-        end
-
-        dir = getPath(parent, class, true)..'\\'..name
-    else
-        dir = instance.ClassName
-    end
-
-    return dir
-end
-
 local function getInstance(parent)
     local lastParent = game
     parent = parent:split(SEPARATOR)
 
-    for i, v in ipairs(parent) do
+    for _, v in ipairs(parent) do
         if lastParent == game then
             lastParent = game:GetService(v)
         else
@@ -262,6 +225,43 @@ function fileHandler.changeType(object, class, name)
     addWaypoint()
 end
 
+function fileHandler.getPath(instance, recursive)
+    local parent = instance.Parent
+    local dir = ''
+
+    if instance.Parent ~= game then
+        local name
+
+        if instance:IsA('LuaSourceContainer') then
+		    if not recursive then
+                name = instance.Name
+
+                if #instance:GetChildren() == 0 then
+                    if instance.ClassName ~= 'ModuleScript' then
+                        name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                    else
+                        name = name
+                    end
+                else
+                    name = name
+                end
+            else
+                name = instance.Name
+		    end
+        elseif instance.ClassName == 'Folder' then
+            name = instance.Name
+        else
+            name = instance.Name..'.'..instance.ClassName
+        end
+
+        dir = fileHandler.getPath(parent, true)..'\\'..name
+    else
+        dir = instance.ClassName
+    end
+
+    return dir
+end
+
 function fileHandler.portInstances()
     local instancesToSync = {}
 
@@ -301,7 +301,7 @@ function fileHandler.portScripts()
         if v then
             for _, w in ipairs(game:GetService(i):GetDescendants()) do
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
-                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = getPath(w, i), Source = w.Source})
+                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = fileHandler.getPath(w), Source = w.Source})
                 end
             end
         end

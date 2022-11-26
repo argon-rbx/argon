@@ -1,6 +1,7 @@
 local HttpService = game:GetService('HttpService')
 
 local FileHandler = require(script.Parent.FileHandler)
+local TwoWaySync = require(script.Parent.TwoWaySync)
 local Config = require(script.Parent.Config)
 
 local API_URL = 'https://dervexhero.github.io/Argon/'
@@ -40,10 +41,10 @@ local function startSyncing(url)
                 local queue = HttpService:JSONDecode(HttpService:GetAsync(url, false, headers))
 
                 for _, v in ipairs(queue) do
-                    if v.Action == 'create' then
-                        FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
-                    elseif v.Action == 'update' then
+                    if v.Action == 'update' then
                         FileHandler.update(v.Object, v.Source)
+                    elseif v.Action == 'create' then
+                        FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
                     elseif v.Action == 'delete' then
                         FileHandler.delete(v.Object)
                     elseif v.Action == 'rename' then

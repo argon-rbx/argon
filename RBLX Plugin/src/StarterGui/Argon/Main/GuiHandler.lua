@@ -5,6 +5,7 @@ local Studio = settings():GetService('Studio')
 
 local HttpHandler = require(script.Parent.HttpHandler)
 local FileHandler = require(script.Parent.FileHandler)
+local TwoWaySync = require(script.Parent.TwoWaySync)
 local Config = require(script.Parent.Config)
 
 local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
@@ -225,6 +226,17 @@ local function toggleSetting(setting, data)
             TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 3 then
+        Config.twoWaySync = not Config.twoWaySync
+        plugin:SetSetting('TwoWaySync', Config.twoWaySync)
+
+        if Config.twoWaySync then
+            TweenService:Create(twoWaySyncButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+            TwoWaySync.run()
+        else
+            TweenService:Create(twoWaySyncButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+            TwoWaySync.stop()
+        end
+    elseif setting == 4 then
         Config.filteringMode = not Config.filteringMode
         plugin:SetSetting('FilteringMode', Config.filteringMode)
 
@@ -233,7 +245,7 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
-    elseif setting == 4 then
+    elseif setting == 5 then
         data = data:gsub(' ', '')
         data = string.split(data, ',')
 
@@ -249,6 +261,8 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
+
+        TwoWaySync.update()
     end
 end
 
@@ -265,7 +279,7 @@ local function expandSetting(setting)
                 end)
             else
                 subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
-                    toggleSetting(3, v)
+                    toggleSetting(4, v)
                 end)
             end
         elseif v:IsA('TextBox') then
@@ -273,7 +287,7 @@ local function expandSetting(setting)
                 filterInput(2)
             end)
             subConnections[v.Parent.Name..2] = v.FocusLost:Connect(function()
-                toggleSetting(4, v.Text)
+                toggleSetting(5, v.Text)
             end)
         end
     end
@@ -410,7 +424,7 @@ function guiHandler.runPage(page)
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
         connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
-        connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() end) --TODO
+        connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
 
@@ -539,6 +553,10 @@ function guiHandler.run(newPlugin, autoConnect)
 
     if autoConnect then
         connect()
+    end
+
+    if twoWaySyncSetting then
+        TwoWaySync.run()
     end
 end
 

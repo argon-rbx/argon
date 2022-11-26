@@ -192,6 +192,7 @@ function onRename(uri) {
 
 function run() {
     let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
+    getRootDir()
 
     if (fs.existsSync(dataDir)) {
         let json = JSON.parse(fs.readFileSync(dataDir).toString())
