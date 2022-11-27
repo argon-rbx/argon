@@ -1,6 +1,6 @@
 local config = {}
 
-config.argonVersion = '0.3.3'
+config.argonVersion = '0.3.4'
 
 config.autoRun = true
 config.autoReconnect = false

@@ -54,6 +54,7 @@ function requestListener(request, response) {
             data = JSON.stringify(isConnected)
 
             if (isConnected == false) {
+                lastSync = Date.now()
                 isConnected = true
             }
             break
@@ -83,6 +84,7 @@ function requestListener(request, response) {
             })
             break
         case 'portProject':
+            events.queue.length = 0
             chunks = files.portProject()
             requestsLeft = chunks.length
             data = JSON.stringify({Project: events.queue, Length: requestsLeft})

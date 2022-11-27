@@ -200,6 +200,8 @@
         "Chat": "chat",
         "LocalizationService": "localizationService",
         "TestService": "testService",
+        "StarterPlayerScripts": "starterPlayerScripts",
+        "StarterCharacterScripts": "starterPlayerScripts",
         "StarterPlayerScripts.StarterPlayerScripts": "starterPlayerScripts",
         "StarterCharacterScripts.StarterCharacterScripts": "starterPlayerScripts",
 
