@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.4
+* Fixed bug reported by [@Plasmanode](https://devforum.roblox.com/u/plasma_node) that caused errors when porting "StarterPlayer" to VSC
+* Fixed bug reported by [@Plasmanode](https://devforum.roblox.com/u/plasma_node) that caused descendants of the scripts being overwritten
+* Fixed source code being ported twice (from VSC to Roblox)
+* Fixed script source not porting in some cases
+* Porting source code takes less time
+* All plugin icons are now preloaded
+* Minor UI changes
+
 ## 0.3.3
 * Added icon for .argon.json
 * Added support for custom directories (inside .argon.json)
@@ -33,7 +42,7 @@
 * Repository and marketplace modifications
 
 ## 0.2.0
-* Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu/)
+* Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu)
 * Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
 * Fixed default values of VSC extension settings
 * Fixed light theme and UI scaling

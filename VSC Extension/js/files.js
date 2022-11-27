@@ -516,12 +516,11 @@ function getSubDirs(uri) {
 }
 
 function getChunk(data, index) {
-    let chunk, lastChunk
-    chunk = lastChunk = []
+    let lastChunk = []
+    let chunk = []
 
     for (let i = index; i < data.length; i++) {
         index = i
-
         chunk.push(data[i])
 
         if (JSON.stringify(chunk).length / 1000 < 1020) {
@@ -540,8 +539,6 @@ function portProject() {
     let chunks = []
     let index = 0
 
-    filesToSync.length = 0
-
     fs.readdirSync(dir).forEach(file => {
         let uri = path.join(dir, file)
 
@@ -549,12 +546,13 @@ function portProject() {
         getSubDirs(uri)
     })
 
-    while (index != filesToSync.length - 1) {
+    do {
         let chunk
         [chunk, index] = getChunk(filesToSync, index)
         chunks.push(chunk)
-    }
+    } while (index != filesToSync.length - 1);
 
+    filesToSync.length = 0
     return chunks
 }
 

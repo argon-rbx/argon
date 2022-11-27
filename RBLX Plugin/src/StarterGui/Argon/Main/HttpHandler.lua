@@ -136,25 +136,25 @@ function httpHandler.portScripts(scriptsToSync)
     }
 
     local success, response = pcall(function()
-        repeat
-            task.wait(0.5)
-        until tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) > 500
+        while tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) < 200 do
+            task.wait(0.2)
+        end
 
         local chunks = {}
         local index = 1
 
-        while index ~= #scriptsToSync do
+        repeat
             local chunk
             chunk, index = getChunk(scriptsToSync, index)
             table.insert(chunks, chunk)
-        end
+        until index == #scriptsToSync
 
         for _, v in ipairs(chunks) do
             HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, headers)
 
-            repeat
-                task.wait(0.5)
-            until tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) > 500
+            while tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) < 200 do
+                task.wait(0.2)
+            end
         end
     end)
 
@@ -175,7 +175,7 @@ function httpHandler.portProject()
             FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
         end
 
-        while length > 0 do
+        repeat
             local chunk
             json = HttpService:JSONDecode(HttpService:GetAsync(url, false, {action = 'portProjectSource'}))
             chunk, length = json.Chunk, json.Length
@@ -183,7 +183,7 @@ function httpHandler.portProject()
             for _, v in ipairs(chunk) do
                 FileHandler.update(v.Object, v.Source)
             end
-        end
+        until length <= 0
     end)
 
     return success, response

@@ -414,6 +414,7 @@ function guiHandler.runPage(page)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
 
+        settingsPage.Body.CanvasPosition = Vector2.new(0, 0)
         settingsPage.Body.ScrollingEnabled = true
     elseif page == toolsPage then
         connections['toolsBack'] = toolsBack.MouseButton1Click:Connect(function() changePage(0) end)

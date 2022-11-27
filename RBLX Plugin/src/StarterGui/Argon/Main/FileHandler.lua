@@ -16,6 +16,7 @@ local function addWaypoint()
     ChangeHistoryService:SetWaypoint('ArgonSync')
 end
 
+--Yep, I know that # exists, but this function is required for counting non-numeric arrays
 local function len(array)
     local index = 0
 
@@ -48,14 +49,14 @@ end
 local function getParent(instance, root)
     local parent = {}
 
-    if #instance:GetChildren() > 0 and instance:FindFirstChildWhichIsA('LuaSourceContainer') then
+    if #instance:GetChildren() > 0 then
         parent = {forceSubScript = {}}
     end
 
-    while instance ~= root do
+    repeat
         parent = {[parse(instance)] = parent}
         instance = instance.Parent
-    end
+    until instance == root
 
     return parent
 end
@@ -153,6 +154,10 @@ function fileHandler.create(class, name, parent, delete)
         parent = getInstance(parent)
 
         if delete and parent:FindFirstChild(name) then
+            for _, v in ipairs(parent[name]:GetChildren()) do
+                v.Parent = object
+            end
+
             parent[name]:Destroy()
         elseif parent:FindFirstChild(name) then
             return
@@ -278,12 +283,16 @@ function fileHandler.portInstances()
     end
 
     if instancesToSync['StarterPlayer'] then
-        if len(instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']) == 0 then
-            instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
+        if instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] then
+            if len(instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']) == 0 then
+                instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
+            end
         end
 
-        if len(instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']) == 0 then
-            instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
+        if instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] then
+            if len(instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']) == 0 then
+                instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
+            end
         end
 
         if len(instancesToSync['StarterPlayer']) == 0 then
