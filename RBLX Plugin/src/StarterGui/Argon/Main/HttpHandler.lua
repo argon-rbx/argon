@@ -34,7 +34,6 @@ end
 local function startSyncing(url)
     local getHeader = {action = 'getSync'}
     local setHeader = {action = 'setSync'}
-    local ratio = 0
 
     thread = task.spawn(function()
         local success, response = pcall(function()
@@ -57,14 +56,9 @@ local function startSyncing(url)
                     end
                 end
 
-                if Config.twoWaySync then
-                    ratio += 1
-
-                    if #TwoWaySync.queue ~= 0 and ratio >= TWO_WAY_SYNC_RATIO then
-                        HttpService:PostAsync(url, HttpService:JSONEncode(TwoWaySync.queue), Enum.HttpContentType.ApplicationJson, false, setHeader)
-                        TwoWaySync.queue = {}
-                        ratio = 0
-                    end
+                if Config.twoWaySync and #TwoWaySync.queue ~= 0 then
+                    HttpService:PostAsync(url, HttpService:JSONEncode(TwoWaySync.queue), Enum.HttpContentType.ApplicationJson, false, setHeader)
+                    TwoWaySync.queue = {}
                 end
             end
         end)

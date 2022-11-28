@@ -191,11 +191,11 @@ function onRename(uri) {
 }
 
 function run() {
-    let dataDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
+    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
     getRootDir()
 
-    if (fs.existsSync(dataDir)) {
-        let json = JSON.parse(fs.readFileSync(dataDir).toString())
+    if (fs.existsSync(dir)) {
+        let json = JSON.parse(fs.readFileSync(dir).toString())
 
         if (json.classes) {
             events.setTypes(json.classes)
@@ -568,5 +568,6 @@ module.exports = {
     portInstances,
     portScripts,
     portProject,
+    getRootDir,
     getUnix
 }

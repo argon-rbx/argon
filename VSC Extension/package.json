@@ -75,7 +75,7 @@
         },
         "argon.extension.autoCreateFolder": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Whether Argon should create root folder automatically"
         },
         "argon.extension.hideNotifications": {

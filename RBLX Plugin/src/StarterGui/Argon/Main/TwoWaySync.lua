@@ -12,7 +12,7 @@ local twoWaySync = {}
 
 twoWaySync.queue = {}
 
-local function pathChanged(instance, parent)
+local function pathChanged(instance, parent, new)
     if instance.Parent then
         local name = string.split(instance:GetFullName(), '.')[1]
 
@@ -25,13 +25,23 @@ local function pathChanged(instance, parent)
             return
         end
 
-        if parent and instance.Parent:IsA('LuaSourceContainer') and not matrix[instance.Parent].ScriptParent then
-            table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance].Path, NewPath = FileHandler.getPath(instance.Parent)})
+        local path = FileHandler.getPath(instance)
+
+        if parent  then
+            if instance.Parent:IsA('LuaSourceContainer') and not matrix[instance.Parent].ScriptParent then
+                table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance.Parent].Path, NewPath = FileHandler.getPath(instance.Parent), Type = instance.Parent.ClassName})
+                path = FileHandler.getPath(instance)
+            end
+
+            if new then
+                table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Source = instance.Source})
+                matrix[instance].Path = path
+                return
+            end
         end
 
-        local path = FileHandler.getPath(instance)
-        table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path})
-        matrix[instance] = path
+        table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Children = #instance:GetChildren()})
+        matrix[instance].Path = path
     else
         table.insert(twoWaySync.queue, {Action = 'remove', Path = matrix[instance].Path})
         for _, v in pairs(connections[instance]) do
@@ -49,11 +59,10 @@ local function sourceChanged(instance)
         end
     end
 
-    print('source')
-    table.insert(twoWaySync.queue, {Action = 'update', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
+    table.insert(twoWaySync.queue, {Action = 'sync', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
 end
 
-local function handleInstance(instance)
+local function handleInstance(instance, new)
     if instance:FindFirstChildWhichIsA('LuaSourceContainer') then
         matrix[instance] = {Path = FileHandler.getPath(instance), {ScriptParent = true}}
     else
@@ -67,7 +76,7 @@ local function handleInstance(instance)
     end))
 
     table.insert(connections[instance], instance:GetPropertyChangedSignal('Parent'):Connect(function()
-        pathChanged(instance, true)
+        pathChanged(instance, true, new)
     end))
 end
 
@@ -86,7 +95,7 @@ function twoWaySync.run()
                 connections[i] = game:GetService(i).DescendantAdded:Connect(function(descendant)
                     if descendant:IsA('LuaSourceContainer') then
                         if not matrix[descendant] then
-                            handleInstance(descendant)
+                            handleInstance(descendant, true)
                         end
                     end
                 end)
@@ -118,7 +127,13 @@ end
 function twoWaySync.stop()
     if isSyncing then
         for _, v in pairs(connections) do
-            v:Disconnect()
+            if typeof(v) == 'table' then
+                for _, w in ipairs(v) do
+                    w:Disconnect()
+                end
+            else
+                v:Disconnect()
+            end
         end
 
         isSyncing = false

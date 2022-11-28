@@ -3,6 +3,7 @@ const config = require('../config/settings.js')
 const website = require('../config/website.js')
 const events = require('./events')
 const files = require('./files')
+const twoWaySync = require('./twoWaySync')
 
 const URL = 'http://$host:$port/'
 
@@ -45,6 +46,17 @@ function requestListener(request, response) {
             }
 
             lastSync = Date.now()
+            break
+        case 'setSync':
+            var body = ''
+        
+            request.on('data', (chunk) => {
+                body += chunk
+            })
+
+            request.on('end', () => {
+                twoWaySync.sync(body)
+            })
             break
         case 'init':
             if (Date.now() - lastSync > 500) {
