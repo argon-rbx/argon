@@ -7,6 +7,7 @@ local Config = require(script.Parent.Config)
 local API_URL = 'https://dervexhero.github.io/Argon/'
 local URL = 'http://%s:%s/'
 local SYNC_INTERVAL = 0.2
+local TWO_WAY_SYNC_RATIO = 4
 
 local thread = nil
 local func = nil
@@ -31,14 +32,14 @@ local function getChunk(data, index)
 end
 
 local function startSyncing(url)
-    local headers = {
-        action = 'getSync'
-    }
+    local getHeader = {action = 'getSync'}
+    local setHeader = {action = 'setSync'}
+    local ratio = 0
 
     thread = task.spawn(function()
         local success, response = pcall(function()
             while task.wait(SYNC_INTERVAL) do
-                local queue = HttpService:JSONDecode(HttpService:GetAsync(url, false, headers))
+                local queue = HttpService:JSONDecode(HttpService:GetAsync(url, false, getHeader))
 
                 for _, v in ipairs(queue) do
                     if v.Action == 'update' then
@@ -53,6 +54,16 @@ local function startSyncing(url)
                         FileHandler.changeParent(v.Object, v.Parent)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
+                    end
+                end
+
+                if Config.twoWaySync then
+                    ratio += 1
+
+                    if #TwoWaySync.queue ~= 0 and ratio >= TWO_WAY_SYNC_RATIO then
+                        HttpService:PostAsync(url, HttpService:JSONEncode(TwoWaySync.queue), Enum.HttpContentType.ApplicationJson, false, setHeader)
+                        TwoWaySync.queue = {}
+                        ratio = 0
                     end
                 end
             end
@@ -80,12 +91,10 @@ end
 
 function httpHandler.connect(fail)
     local url = string.format(URL, Config.host, Config.port)
-    local headers = {
-        action = 'init'
-    }
+    local header = {action = 'init'}
 
     local success, response = pcall(function()
-        if HttpService:GetAsync(url, false, headers) == 'true' then
+        if HttpService:GetAsync(url, false, header) == 'true' then
             error('Argon is already connected!', 0)
         end
     end)
@@ -110,9 +119,7 @@ end
 
 function httpHandler.portInstances(instancesToSync)
     local url = string.format(URL, Config.host, Config.port)
-    local headers = {
-        action = 'portInstances'
-    }
+    local header = {action = 'portInstances'}
 
     local body = {
         mode = Config.onlyCode,
@@ -120,7 +127,7 @@ function httpHandler.portInstances(instancesToSync)
     }
 
     local success, response = pcall(function()
-        HttpService:PostAsync(url, HttpService:JSONEncode(body), Enum.HttpContentType.ApplicationJson, false, headers)
+        HttpService:PostAsync(url, HttpService:JSONEncode(body), Enum.HttpContentType.ApplicationJson, false, header)
     end)
 
     return success, response
@@ -132,12 +139,11 @@ function httpHandler.portScripts(scriptsToSync)
     end
 
     local url = string.format(URL, Config.host, Config.port)
-    local headers = {
-        action = 'portScripts'
-    }
+    local portHeader = {action = 'portScripts'}
+    local stateHeader = {action = 'getState'}
 
     local success, response = pcall(function()
-        while tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) < 200 do
+        while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 200 do
             task.wait(0.2)
         end
 
@@ -151,9 +157,9 @@ function httpHandler.portScripts(scriptsToSync)
         until index == #scriptsToSync
 
         for _, v in ipairs(chunks) do
-            HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, headers)
+            HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, portHeader)
 
-            while tonumber(HttpService:GetAsync(url, false, {action = 'getState'})) < 200 do
+            while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 200 do
                 task.wait(0.2)
             end
         end
@@ -164,12 +170,11 @@ end
 
 function httpHandler.portProject()
     local url = string.format(URL, Config.host, Config.port)
-    local headers = {
-        action = 'portProject'
-    }
+    local projectHeader = {action = 'portProject'}
+    local sourceHeader = {action = 'portProjectSource'}
 
     local success, response = pcall(function()
-        local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, headers))
+        local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, projectHeader))
         local project, length = json.Project, json.Length
 
         for _, v in ipairs(project) do
@@ -178,7 +183,7 @@ function httpHandler.portProject()
 
         repeat
             local chunk
-            json = HttpService:JSONDecode(HttpService:GetAsync(url, false, {action = 'portProjectSource'}))
+            json = HttpService:JSONDecode(HttpService:GetAsync(url, false, sourceHeader))
             chunk, length = json.Chunk, json.Length
 
             for _, v in ipairs(chunk) do

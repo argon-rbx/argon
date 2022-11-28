@@ -3,47 +3,54 @@ local StudioService = game:GetService('StudioService')
 local FileHandler = require(script.Parent.FileHandler)
 local Config = require(script.Parent.Config)
 
-local connections = {}
 local matrix = {}
-local queue = {}
+local connections = {}
 local isSyncing = false
+local sourceConnection = nil
 
 local twoWaySync = {}
+
+twoWaySync.queue = {}
 
 local function pathChanged(instance, parent)
     if instance.Parent then
         local name = string.split(instance:GetFullName(), '.')[1]
 
         if Config.syncedDirectories[name] ~= nil and not Config.syncedDirectories[name] then
-            connections[instance]:Disconnect()
+            for _, v in pairs(connections[instance]) do
+                v:Disconnect()
+            end
             connections[instance] = nil
             matrix[instance] = nil
             return
         end
 
         if parent and instance.Parent:IsA('LuaSourceContainer') and not matrix[instance.Parent].ScriptParent then
-            table.insert(queue, {Action = 'convert', OldPath = matrix[instance].Path, NewPath = FileHandler.getPath(instance.Parent)})
+            table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance].Path, NewPath = FileHandler.getPath(instance.Parent)})
         end
 
         local path = FileHandler.getPath(instance)
-        table.insert(queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path})
+        table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path})
         matrix[instance] = path
     else
-        table.insert(queue, {Action = 'remove', Path = matrix[instance].Path})
-        connections[instance]:Disconnect()
+        table.insert(twoWaySync.queue, {Action = 'remove', Path = matrix[instance].Path})
+        for _, v in pairs(connections[instance]) do
+            v:Disconnect()
+        end
         connections[instance] = nil
         matrix[instance] = nil
     end
 end
 
 local function sourceChanged(instance)
-    for i, v in ipairs(queue) do
+    for i, v in ipairs(twoWaySync.queue) do
         if v.Instance == instance then
-            queue[i] = nil
+            twoWaySync.queue[i] = nil
         end
     end
 
-    table.insert(queue, {Action = 'update', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
+    print('source')
+    table.insert(twoWaySync.queue, {Action = 'update', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
 end
 
 local function handleInstance(instance)
@@ -53,17 +60,15 @@ local function handleInstance(instance)
         matrix[instance] = {Path = FileHandler.getPath(instance), {ScriptParent = false}}
     end
 
-    connections[instance] = instance:GetPropertyChangedSignal('Name'):Connect(function()
+    connections[instance] = {}
+
+    table.insert(connections[instance], instance:GetPropertyChangedSignal('Name'):Connect(function()
         pathChanged(instance)
-    end)
+    end))
 
-    connections[instance] = instance:GetPropertyChangedSignal('Parent'):Connect(function()
+    table.insert(connections[instance], instance:GetPropertyChangedSignal('Parent'):Connect(function()
         pathChanged(instance, true)
-    end)
-
-    connections[instance] = instance:GetPropertyChangedSignal('Source'):Connect(function()
-        sourceChanged(instance)
-    end)
+    end))
 end
 
 function twoWaySync.run()
@@ -87,6 +92,26 @@ function twoWaySync.run()
                 end)
             end
         end
+
+        connections[StudioService] = StudioService.Changed:Connect(function(property)
+            if property == 'ActiveScript' then
+                local instance = StudioService.ActiveScript
+
+                if instance then
+                    if sourceConnection then
+                        sourceConnection:Disconnect()
+                        sourceConnection = nil
+                    end
+
+                    sourceConnection = instance:GetPropertyChangedSignal('Source'):Connect(function()
+                        sourceChanged(instance)
+                    end)
+                elseif sourceConnection then
+                    sourceConnection:Disconnect()
+                    sourceConnection = nil
+                end
+            end
+        end)
     end
 end
 
@@ -96,12 +121,10 @@ function twoWaySync.stop()
             v:Disconnect()
         end
 
-        print(queue)
-
         isSyncing = false
         connections = {}
         matrix = {}
-        queue = {}
+        twoWaySync.queue = {}
     end
 end
 
