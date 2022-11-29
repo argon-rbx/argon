@@ -30,6 +30,7 @@ local function pathChanged(instance, parent, new)
         if parent  then
             if instance.Parent:IsA('LuaSourceContainer') and not matrix[instance.Parent].ScriptParent then
                 table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance.Parent].Path, NewPath = FileHandler.getPath(instance.Parent), Type = instance.Parent.ClassName})
+                matrix[instance.Parent].Path = FileHandler.getPath(instance.Parent)
                 path = FileHandler.getPath(instance)
             end
 
@@ -59,7 +60,11 @@ local function sourceChanged(instance)
         end
     end
 
-    table.insert(twoWaySync.queue, {Action = 'sync', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
+    if #instance:GetChildren() == 0 then
+        table.insert(twoWaySync.queue, {Action = 'sync', Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
+    else
+        table.insert(twoWaySync.queue, {Action = 'sync', Type = instance.ClassName, Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
+    end
 end
 
 local function handleInstance(instance, new)

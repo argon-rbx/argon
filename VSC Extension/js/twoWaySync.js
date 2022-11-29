@@ -10,7 +10,28 @@ function sync(queue) {
     for (let data of queue) {
         switch (data.Action) {
             case 'sync':
-                var dir = path.join(rootDir, data.Path + config.extension)
+                if (data.Type) {
+                    let name
+
+                    switch (data.Type) {
+                        case 'Script':
+                            name = '.source.server'
+                            break
+                        case 'LocalScript':
+                            name = '.source.client'
+                            break
+                        case 'ModuleScript':
+                            name = '.source'
+                            break
+                    }
+
+                    var dir = path.join(rootDir, data.Path + '\\' + name + config.extension)
+                }
+                else {
+                    var dir = path.join(rootDir, data.Path + config.extension)
+                }
+
+                console.log(data, dir);
 
                 if (fs.existsSync(dir)) {
                     fs.writeFileSync(dir, data.Source)
@@ -18,19 +39,18 @@ function sync(queue) {
 
                 break
             case 'changePath':
-                console.log(data);
                 if (data.Children && data.Children != 0) {
-                    var oldDir = path.join(rootDir, data.OldPath)
+                    var dir = path.join(rootDir, data.OldPath)
 
-                    if (fs.existsSync(oldDir)) {
-                        fs.renameSync(oldDir, path.join(rootDir, data.NewPath))
+                    if (fs.existsSync(dir)) {
+                        fs.renameSync(dir, path.join(rootDir, data.NewPath))
                     }
                 }
                 else {
-                    var oldDir = path.join(rootDir, data.OldPath + config.extension)
+                    var dir = path.join(rootDir, data.OldPath + config.extension)
 
-                    if (fs.existsSync(oldDir)) {
-                        fs.renameSync(oldDir, path.join(rootDir, data.NewPath + config.extension))
+                    if (fs.existsSync(dir)) {
+                        fs.renameSync(dir, path.join(rootDir, data.NewPath + config.extension))
                     }
                     else if (data.Source) {
                         fs.writeFileSync(path.join(rootDir, data.NewPath + config.extension), data.Source)
@@ -39,10 +59,29 @@ function sync(queue) {
                 break
             case 'remove':
                 var dir = path.join(rootDir, data.Path + config.extension)
+                let splitted = dir.split('\\')
 
                 if (fs.existsSync(dir)) {
                     fs.rmSync(dir)
                 }
+
+                let parentName = splitted[splitted.length - 2]
+                let scriptDir = dir.replace(splitted[splitted.length - 1], '')
+                let parentDir = scriptDir.replace(parentName + '\\', '')
+
+                if (fs.existsSync(path.join(scriptDir, '.source.server' + config.extension))) {
+                    fs.renameSync(path.join(scriptDir, '.source.server' + config.extension), path.join(parentDir, parentName + '.server' + config.extension))
+                    fs.rmdirSync(path.join(parentDir, parentName))
+                }
+                else if (path.join(scriptDir, '.source.client' + config.extension)) {
+                    fs.renameSync(path.join(scriptDir, '.source.client' + config.extension), path.join(parentDir, parentName + '.client' + config.extension))
+                    fs.rmdirSync(path.join(parentDir, parentName))
+                }
+                else if (path.join(scriptDir, '.source' + config.extension)) {
+                    fs.renameSync(path.join(scriptDir, '.source' + config.extension), path.join(parentDir, parentName + config.extension))
+                    fs.rmdirSync(path.join(parentDir, parentName))
+                }
+
                 break
             case 'convert':
                 var oldDir = path.join(rootDir, data.OldPath + config.extension)

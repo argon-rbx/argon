@@ -99,11 +99,18 @@ local function getInstance(parent)
         if lastParent == game then
             lastParent = game:GetService(v)
         else
+            local didFind = false
+
             for _, w in ipairs(lastParent:GetChildren()) do
                 if w.Name == v then
                     lastParent = w
+                    didFind = true
                     break
                 end
+            end
+
+            if not didFind then
+                return nil
             end
         end
     end
