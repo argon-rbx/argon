@@ -57,8 +57,8 @@ function update() {
 }
 
 function launchRoblox() {
-    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe', function (err) {
-        if (err) {
+    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe', function (error) {
+        if (error) {
             messageHandler.showMessage('robloxStudioLaunch', 2)
         }
     })

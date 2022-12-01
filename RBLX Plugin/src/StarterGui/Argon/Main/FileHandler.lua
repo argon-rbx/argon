@@ -237,7 +237,19 @@ function fileHandler.changeType(object, class, name)
     addWaypoint()
 end
 
-function fileHandler.getPath(instance, recursive)
+function fileHandler.countChildren(instance)
+    local count = 0
+
+    for _, v in ipairs(instance:GetChildren()) do
+        if v:IsA('LuaSourceContainer') then
+            count += 1
+        end
+    end
+
+    return count
+end
+
+function fileHandler.getPath(instance, onlyCode, recursive)
     local parent = instance.Parent
     local dir = ''
 
@@ -248,14 +260,26 @@ function fileHandler.getPath(instance, recursive)
 		    if not recursive then
                 name = instance.Name
 
-                if #instance:GetChildren() == 0 then
-                    if instance.ClassName ~= 'ModuleScript' then
-                        name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                if Config.onlyCode or onlyCode then
+                    if fileHandler.countChildren(instance) == 0 then
+                        if instance.ClassName ~= 'ModuleScript' then
+                            name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                        else
+                            name = name
+                        end
                     else
                         name = name
                     end
                 else
-                    name = name
+                    if #instance:GetChildren() == 0 then
+                        if instance.ClassName ~= 'ModuleScript' then
+                            name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                        else
+                            name = name
+                        end
+                    else
+                        name = name
+                    end
                 end
             else
                 name = instance.Name
@@ -266,7 +290,7 @@ function fileHandler.getPath(instance, recursive)
             name = instance.Name..'.'..instance.ClassName
         end
 
-        dir = fileHandler.getPath(parent, true)..'\\'..name
+        dir = fileHandler.getPath(parent, onlyCode, true)..'\\'..name
     else
         dir = instance.ClassName
     end

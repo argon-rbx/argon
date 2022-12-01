@@ -204,7 +204,15 @@ local function handleActiveScript()
             connections['studioService'] = StudioService.Changed:Connect(function(property)
                 if property == 'ActiveScript' then
                     if StudioService.ActiveScript then
-                        HttpHandler.openFile(FileHandler.getPath(StudioService.ActiveScript))
+                        local file = {
+                            File = FileHandler.getPath(StudioService.ActiveScript)
+                        }
+
+                        if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
+                            file.Type = StudioService.ActiveScript.ClassName
+                        end
+
+                        HttpHandler.openFile(file)
                     end
                 end
             end)

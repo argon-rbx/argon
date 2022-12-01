@@ -11,21 +11,21 @@ function sync(queue) {
         switch (data.Action) {
             case 'sync':
                 if (data.Type) {
-                    let name
+                    let suffix
 
                     switch (data.Type) {
                         case 'Script':
-                            name = '.source.server'
+                            suffix = '.source.server'
                             break
                         case 'LocalScript':
-                            name = '.source.client'
+                            suffix = '.source.client'
                             break
                         case 'ModuleScript':
-                            name = '.source'
+                            suffix = '.source'
                             break
                     }
 
-                    var dir = path.join(rootDir, data.Path + '\\' + name + config.extension)
+                    var dir = path.join(rootDir, data.Path + '\\' + suffix + config.extension)
                 }
                 else {
                     var dir = path.join(rootDir, data.Path + config.extension)
@@ -67,10 +67,8 @@ function sync(queue) {
                 let scriptDir = dir.replace(splitted[splitted.length - 1], '')
                 let parentDir = scriptDir.replace(parentName + '\\', '')
 
-                if (fs.existsSync(scriptDir)) {
-                    if (fs.readdirSync(scriptDir).length != 1) {
-                        return
-                    }
+                if (data.Children != 0) {
+                    return
                 }
 
                 if (fs.existsSync(path.join(scriptDir, '.source.server' + config.extension))) {

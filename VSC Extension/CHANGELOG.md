@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+* Added two-way sync (only for code)
+* Added "Launch Roblox Studio" command (VSC)
+* Added "Open In Editor" option (Roblox)
+* Added open in preview option (VSC, settings)
+* Fixed code not syncing when only code mode was enabled and script instance had children
+* VSC extension now utilizes [node-ffi-napi](https://github.com/node-ffi-napi/node-ffi-napi) to communicate with user32.dll (required to bypass Windows limitation and force editor to open)
+* Many code optimizations
+
 ## 0.3.4
 * Fixed bug reported by [@Plasmanode](https://devforum.roblox.com/u/plasma_node) that caused errors when porting "StarterPlayer" to VSC
 * Fixed bug reported by [@Plasmanode](https://devforum.roblox.com/u/plasma_node) that caused descendants of the scripts being overwritten

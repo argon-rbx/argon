@@ -24,7 +24,7 @@ let sockets = new Set() //Temp fix for forcing server to stop (until Electron ad
 let isConnected = false
 let requestsLeft = 0
 let chunks = []
-let window = user32.GetForegroundWindow()
+let window
 
 let syncCount = 5
 let uptime = 0
@@ -169,24 +169,47 @@ function stop() {
     syncCount = 0
 }
 
-async function openFile(file) {
-    file = path.join(files.getRootDir(), JSON.parse(file) + config.extension) //TODO: .source file detection
-    file = await vscode.workspace.openTextDocument(file)
-    await vscode.window.showTextDocument(file, {preview: config.openInPreview})
+function openFile(file) {
+    file = JSON.parse(file)
+    let suffix = file.Type
 
-    let pressed = false
+    if (suffix) {
+        switch (suffix) {
+            case 'Script':
+                suffix = '.source.server'
+                break
+            case 'LocalScript':
+                suffix = '.source.client'
+                break
+            case 'ModuleScript':
+                suffix = '.source'
+                break
+        }
 
-    if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
-        pressed = true
-        user32.keybd_event(0x12, 0, 0x0001 | 0, 0)
+        file.File = file.File + '\\' + suffix
     }
 
-    user32.ShowWindow(window, 9)
-    user32.SetForegroundWindow(window)
+    file = path.join(files.getRootDir(), file.File + config.extension)
 
-    if (pressed) {
-        user32.keybd_event(0x12, 0, 0x0001 | 0x0002, 0)
-    }
+    vscode.workspace.openTextDocument(file).then(file => {
+        vscode.window.showTextDocument(file, {preview: config.openInPreview})
+
+        if (window) {
+            let pressed = false
+
+            if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
+                pressed = true
+                user32.keybd_event(0x12, 0, 0x0001 | 0, 0)
+            }
+    
+            user32.ShowWindow(window, 3)
+            user32.SetForegroundWindow(window)
+
+            if (pressed) {
+                user32.keybd_event(0x12, 0, 0x0001 | 0x0002, 0)
+            }
+        }
+    }).then(undefined, () => {})
 }
 
 module.exports = {

@@ -89,12 +89,10 @@ function httpHandler.connect(fail)
 end
 
 function httpHandler.disconnect()
-    pcall(function()
-        if thread then
-            task.cancel(thread)
-            thread = nil
-        end
-    end)
+    if thread then
+        task.cancel(thread)
+        thread = nil
+    end
 end
 
 function httpHandler.checkForUpdates()
@@ -118,7 +116,6 @@ function httpHandler.openFile(file)
     pcall(function()
         HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
     end)
-
 end
 
 function httpHandler.portInstances(instancesToSync)
