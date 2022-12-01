@@ -1,5 +1,6 @@
 const vscode = require('vscode')
 const https = require('https')
+const childProcess = require('child_process')
 const files = require('./files')
 const server = require('./server')
 const config = require('../config/settings.js')
@@ -55,6 +56,14 @@ function update() {
     }
 }
 
+function launchRoblox() {
+    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe', function (err) {
+        if (err) {
+            messageHandler.showMessage('robloxStudioLaunch', 2)
+        }
+    })
+}
+
 async function activate(context) {
     if (activated == false) {
         activated = true
@@ -62,8 +71,9 @@ async function activate(context) {
         let runCommand = vscode.commands.registerCommand('argon.run', run)
         let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
         let updateCommand = vscode.commands.registerCommand('argon.update', update)
+        let launchRobloxCommand = vscode.commands.registerCommand('argon.launchRoblox', launchRoblox)
 
-        context.subscriptions.push(runCommand, stopCommand, updateCommand)
+        context.subscriptions.push(runCommand, stopCommand, updateCommand, launchRobloxCommand)
 
         if (config.autoRun) {
             run(true)
@@ -95,6 +105,7 @@ async function activate(context) {
                 autoUpdate: extension.get('autoUpdate'),
                 autoCreateFolder: extension.get('autoCreateFolder'),
                 hideNotifications: extension.get('hideNotifications'),
+                openInPreview: extension.get('openInPreview'),
                 host: server.get('host'),
                 port: server.get('port')
             }

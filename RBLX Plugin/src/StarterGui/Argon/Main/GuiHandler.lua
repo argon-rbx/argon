@@ -52,8 +52,9 @@ local actionLabel = connectButton.Action
 local settingsBack = settingsPage.Header.Back
 local toolsBack = toolsPage.Header.Back
 
-local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
 local autoRunButton = settingsPage.Body.AutoRun.Button
+local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
+local openInEditorButton = settingsPage.Body.OpenInEditor.Button
 local onlyCodeButton = settingsPage.Body.OnlyCode.Button
 local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
 local classFilteringButton = settingsPage.Body.ClassFiltering.Button
@@ -125,7 +126,7 @@ function connect()
             end
         else
             if state == 1 then
-                HttpHandler.stop()
+                HttpHandler.disconnect()
             end
 
             stopped = true
@@ -197,6 +198,23 @@ local function changePage(position, page1, page2)
     end
 end
 
+local function handleActiveScript()
+    if Config.openInEditor then
+        if not connections.studioService then
+            connections['studioService'] = StudioService.Changed:Connect(function(property)
+                if property == 'ActiveScript' then
+                    if StudioService.ActiveScript then
+                        HttpHandler.openFile(FileHandler.getPath(StudioService.ActiveScript))
+                    end
+                end
+            end)
+        end
+    elseif connections.studioService then
+        connections.studioService:Disconnect()
+        connections.studioService = nil
+    end
+end
+
 local function toggleSetting(setting, data)
     if setting == 0 then
         Config.autoRun = not Config.autoRun
@@ -217,6 +235,16 @@ local function toggleSetting(setting, data)
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 2 then
+        Config.openInEditor = not Config.openInEditor
+        plugin:SetSetting('OpenInEditor', Config.openInEditor)
+        handleActiveScript()
+
+        if Config.openInEditor then
+            TweenService:Create(openInEditorButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+        else
+            TweenService:Create(openInEditorButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+        end
+    elseif setting == 3 then
         Config.onlyCode = not Config.onlyCode
         plugin:SetSetting('OnlyCode', Config.onlyCode)
 
@@ -225,7 +253,7 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
-    elseif setting == 3 then
+    elseif setting == 4 then
         Config.twoWaySync = not Config.twoWaySync
         plugin:SetSetting('TwoWaySync', Config.twoWaySync)
 
@@ -236,7 +264,7 @@ local function toggleSetting(setting, data)
             TweenService:Create(twoWaySyncButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
             TwoWaySync.stop()
         end
-    elseif setting == 4 then
+    elseif setting == 5 then
         Config.filteringMode = not Config.filteringMode
         plugin:SetSetting('FilteringMode', Config.filteringMode)
 
@@ -245,7 +273,7 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
-    elseif setting == 5 then
+    elseif setting == 6 then
         data = data:gsub(' ', '')
         data = string.split(data, ',')
 
@@ -279,7 +307,7 @@ local function expandSetting(setting)
                 end)
             else
                 subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
-                    toggleSetting(4, v)
+                    toggleSetting(5, v)
                 end)
             end
         elseif v:IsA('TextBox') then
@@ -287,7 +315,7 @@ local function expandSetting(setting)
                 filterInput(2)
             end)
             subConnections[v.Parent.Name..2] = v.FocusLost:Connect(function()
-                toggleSetting(5, v.Text)
+                toggleSetting(6, v.Text)
             end)
         end
     end
@@ -423,8 +451,9 @@ function guiHandler.runPage(page)
 
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
-        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
-        connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
+        connections['openInEditorButton'] = openInEditorButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
+        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
+        connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(4) end)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
 
@@ -457,6 +486,7 @@ function guiHandler.run(newPlugin, autoConnect)
     local portSetting = plugin:GetSetting('Port')
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
+    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local filteringMode = plugin:GetSetting('FilteringMode')
@@ -486,6 +516,15 @@ function guiHandler.run(newPlugin, autoConnect)
 
         if autoReconnectSetting then
             autoReconnectButton.OnIcon.ImageTransparency = 0
+        end
+    end
+
+    if openInEditorSetting ~= nil then
+        Config.openInEditor = openInEditorSetting
+
+        if openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 0
+            handleActiveScript()
         end
     end
 

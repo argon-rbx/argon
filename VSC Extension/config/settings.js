@@ -11,6 +11,7 @@ module.exports = {
     autoUpdate: extension.get('autoUpdate'),
     autoCreateFolder: extension.get('autoCreateFolder'),
     hideNotifications: extension.get('hideNotifications'),
+    openInPreview: extension.get('openInPreview'),
     host: server.get('host'),
     port: server.get('port')
 }

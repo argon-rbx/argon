@@ -23,7 +23,8 @@
     "onLanguage:luau",
     "onCommand:argon.run",
     "onCommand:argon.stop",
-    "onCommand:argon.update"
+    "onCommand:argon.update",
+    "onCommand:argon.launchRoblox"
   ],
   "main": "./js/main.js",
   "contributes": {
@@ -41,6 +42,11 @@
       {
         "command": "argon.update",
         "title": "Update class database",
+        "category": "Argon"
+      },
+      {
+        "command": "argon.launchRoblox",
+        "title": "Launch Roblox Studio",
         "category": "Argon"
       }
     ],
@@ -82,6 +88,11 @@
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should hide notifications in the bottom right corner"
+        },
+        "argon.extension.openInPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Argon should open files in preview mode by default"
         },
         "argon.server.host": {
           "type": "string",
@@ -126,5 +137,8 @@
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
     "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "ffi-napi": "^4.0.3"
   }
 }

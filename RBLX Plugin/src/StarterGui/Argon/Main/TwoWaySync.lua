@@ -27,24 +27,43 @@ local function pathChanged(instance, parent, new)
 
         local path = FileHandler.getPath(instance)
 
-        if parent  then
-            if instance.Parent:IsA('LuaSourceContainer') and not matrix[instance.Parent].ScriptParent then
-                table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance.Parent].Path, NewPath = FileHandler.getPath(instance.Parent), Type = instance.Parent.ClassName})
-                matrix[instance.Parent].Path = FileHandler.getPath(instance.Parent)
-                path = FileHandler.getPath(instance)
+        if parent then
+            if instance.Parent:IsA('LuaSourceContainer') then
+                local newPath = FileHandler.getPath(instance.Parent)
+                table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[instance.Parent].Path, NewPath = newPath, Type = instance.Parent.ClassName})
+                matrix[instance.Parent].Path = newPath
+            end
+
+            if matrix[instance].Parent:IsA('LuaSourceContainer') and #matrix[instance].Parent:GetChildren() == 0 then
+                local newPath = FileHandler.getPath(matrix[instance].Parent)
+                table.insert(twoWaySync.queue, {Action = 'convert', OldPath = matrix[matrix[instance].Parent].Path, NewPath = newPath, Type = matrix[instance].Parent.ClassName, Undo = true})
+                matrix[matrix[instance].Parent].Path = newPath
             end
 
             if new then
                 table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Source = instance.Source})
+                matrix[instance].Parent = instance.Parent
                 matrix[instance].Path = path
                 return
             end
         end
 
+        for _, v in ipairs(instance:GetDescendants()) do
+            if v:IsA('LuaSourceContainer') then
+                matrix[v].Path = FileHandler.getPath(v)
+            end
+        end
+
         table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Children = #instance:GetChildren()})
+        matrix[instance].Parent = instance.Parent
         matrix[instance].Path = path
     else
         table.insert(twoWaySync.queue, {Action = 'remove', Path = matrix[instance].Path})
+
+        if matrix[instance].Parent:IsA('LuaSourceContainer') then
+            matrix[matrix[instance].Parent].Path = FileHandler.getPath(matrix[instance].Parent)
+        end
+
         for _, v in pairs(connections[instance]) do
             v:Disconnect()
         end
@@ -54,12 +73,6 @@ local function pathChanged(instance, parent, new)
 end
 
 local function sourceChanged(instance)
-    for i, v in ipairs(twoWaySync.queue) do
-        if v.Instance == instance then
-            twoWaySync.queue[i] = nil
-        end
-    end
-
     if #instance:GetChildren() == 0 then
         table.insert(twoWaySync.queue, {Action = 'sync', Path = FileHandler.getPath(instance), Source = instance.Source, Instance = instance})
     else
@@ -68,12 +81,7 @@ local function sourceChanged(instance)
 end
 
 local function handleInstance(instance, new)
-    if instance:FindFirstChildWhichIsA('LuaSourceContainer') then
-        matrix[instance] = {Path = FileHandler.getPath(instance), {ScriptParent = true}}
-    else
-        matrix[instance] = {Path = FileHandler.getPath(instance), {ScriptParent = false}}
-    end
-
+    matrix[instance] = {Path = FileHandler.getPath(instance), Parent = instance.Parent}
     connections[instance] = {}
 
     table.insert(connections[instance], instance:GetPropertyChangedSignal('Name'):Connect(function()
@@ -82,6 +90,7 @@ local function handleInstance(instance, new)
 
     table.insert(connections[instance], instance:GetPropertyChangedSignal('Parent'):Connect(function()
         pathChanged(instance, true, new)
+        new = false
     end))
 end
 

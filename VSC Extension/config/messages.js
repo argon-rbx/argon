@@ -14,5 +14,6 @@ module.exports = {
 
     //Errors
     noRootFolder: 'Root folder cannot be found!',
+    robloxStudioLaunch: 'Could not launch Roblox Studio',
     serverConnection: 'Could not connect to Roblox servers!'
 }

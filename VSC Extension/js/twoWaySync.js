@@ -31,8 +31,6 @@ function sync(queue) {
                     var dir = path.join(rootDir, data.Path + config.extension)
                 }
 
-                console.log(data, dir);
-
                 if (fs.existsSync(dir)) {
                     fs.writeFileSync(dir, data.Source)
                 }
@@ -69,44 +67,87 @@ function sync(queue) {
                 let scriptDir = dir.replace(splitted[splitted.length - 1], '')
                 let parentDir = scriptDir.replace(parentName + '\\', '')
 
+                if (fs.existsSync(scriptDir)) {
+                    if (fs.readdirSync(scriptDir).length != 1) {
+                        return
+                    }
+                }
+
                 if (fs.existsSync(path.join(scriptDir, '.source.server' + config.extension))) {
                     fs.renameSync(path.join(scriptDir, '.source.server' + config.extension), path.join(parentDir, parentName + '.server' + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
-                else if (path.join(scriptDir, '.source.client' + config.extension)) {
+                else if (fs.existsSync(path.join(scriptDir, '.source.client' + config.extension))) {
                     fs.renameSync(path.join(scriptDir, '.source.client' + config.extension), path.join(parentDir, parentName + '.client' + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
-                else if (path.join(scriptDir, '.source' + config.extension)) {
+                else if (fs.existsSync(path.join(scriptDir, '.source' + config.extension))) {
                     fs.renameSync(path.join(scriptDir, '.source' + config.extension), path.join(parentDir, parentName + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
 
                 break
             case 'convert':
-                var oldDir = path.join(rootDir, data.OldPath + config.extension)
                 let newDir = path.join(rootDir, data.NewPath)
 
-                if (fs.existsSync(newDir) == false) {
-                    fs.mkdirSync(newDir)
-                }
+                if (!data.Undo) {
+                    let oldDir = path.join(rootDir, data.OldPath + config.extension)
 
-                if (fs.existsSync(oldDir)) {
-                    let suffix = data.Type
-
-                    switch (suffix) {
-                        case 'Script':
-                            suffix = '.source.server' + config.extension
-                            break
-                        case 'LocalScript':
-                            suffix = '.source.client' + config.extension
-                            break
-                        case 'ModuleScript':
-                            suffix = '.source' + config.extension
-                            break
+                    if (fs.existsSync(newDir) == false) {
+                        fs.mkdirSync(newDir)
                     }
+    
+                    if (fs.existsSync(oldDir)) {
+                        let oldDir = path.join(rootDir, data.OldPath + config.extension)
+                        let suffix = data.Type
+    
+                        switch (suffix) {
+                            case 'Script':
+                                suffix = '.source.server'
+                                break
+                            case 'LocalScript':
+                                suffix = '.source.client'
+                                break
+                            case 'ModuleScript':
+                                suffix = '.source'
+                                break
+                        }
 
-                    fs.renameSync(oldDir, path.join(newDir, suffix))
+                        newDir = path.join(newDir, suffix + config.extension)
+                        fs.renameSync(oldDir, newDir)
+                    }
+                }
+                else {
+                    let oldDir = path.join(rootDir, data.OldPath)
+
+                    if (fs.existsSync(oldDir)) {
+                        let suffix = data.Type
+                        let parentDir = oldDir
+
+                        switch (suffix) {
+                            case 'Script':
+                                suffix = '.source.server'
+                                break
+                            case 'LocalScript':
+                                suffix = '.source.client'
+                                break
+                            case 'ModuleScript':
+                                suffix = '.source'
+                                break
+                        }
+
+                        oldDir = path.join(oldDir, suffix + config.extension)
+
+                        if (fs.existsSync(oldDir)) {
+                            fs.renameSync(oldDir, newDir + config.extension)
+                        }
+
+                        if (fs.existsSync(parentDir)) {
+                            setTimeout(() => {
+                                fs.rmdirSync(parentDir)
+                            }, 100);
+                        }
+                    }
                 }
                 break
 

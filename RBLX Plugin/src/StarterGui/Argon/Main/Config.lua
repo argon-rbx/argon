@@ -4,6 +4,7 @@ config.argonVersion = '0.3.4'
 
 config.autoRun = true
 config.autoReconnect = false
+config.openInEditor = false
 config.onlyCode = true
 config.twoWaySync = false
 

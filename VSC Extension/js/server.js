@@ -1,4 +1,7 @@
 const http = require('http')
+const vscode = require('vscode')
+const path = require('path')
+const ffi = require('ffi-napi')
 const config = require('../config/settings.js')
 const website = require('../config/website.js')
 const events = require('./events')
@@ -6,6 +9,14 @@ const files = require('./files')
 const twoWaySync = require('./twoWaySync')
 
 const URL = 'http://$host:$port/'
+const user32 = new ffi.Library('user32', {
+    'GetForegroundWindow': ['long', []],
+    'ShowWindow': ['bool', ['long', 'int']],
+    'SetForegroundWindow': ['bool', ['long']],
+
+    'GetAsyncKeyState': ['short', ['int']],
+    'keybd_event': ['void', ['long', 'long', 'long', 'long']]
+})
 
 let server = http.createServer(requestListener)
 let lastSync = Date.now()
@@ -13,6 +24,7 @@ let sockets = new Set() //Temp fix for forcing server to stop (until Electron ad
 let isConnected = false
 let requestsLeft = 0
 let chunks = []
+let window = user32.GetForegroundWindow()
 
 let syncCount = 5
 let uptime = 0
@@ -56,6 +68,17 @@ function requestListener(request, response) {
 
             request.on('end', () => {
                 twoWaySync.sync(body)
+            })
+            break
+        case 'openFile':
+            var body = ''
+        
+            request.on('data', (chunk) => {
+                body += chunk
+            })
+    
+            request.on('end', () => {
+                openFile(body)
             })
             break
         case 'init':
@@ -146,6 +169,26 @@ function stop() {
     syncCount = 0
 }
 
+async function openFile(file) {
+    file = path.join(files.getRootDir(), JSON.parse(file) + config.extension) //TODO: .source file detection
+    file = await vscode.workspace.openTextDocument(file)
+    await vscode.window.showTextDocument(file, {preview: config.openInPreview})
+
+    let pressed = false
+
+    if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
+        pressed = true
+        user32.keybd_event(0x12, 0, 0x0001 | 0, 0)
+    }
+
+    user32.ShowWindow(window, 9)
+    user32.SetForegroundWindow(window)
+
+    if (pressed) {
+        user32.keybd_event(0x12, 0, 0x0001 | 0x0002, 0)
+    }
+}
+
 module.exports = {
     run,
     stop
@@ -158,3 +201,15 @@ server.on('connection', (socket) => {
         sockets.delete(socket);
     })
 })
+
+if (vscode.window.state.focused) {
+    window = user32.GetForegroundWindow()
+}
+else {
+    let watcher = vscode.window.onDidChangeWindowState((state) => {
+        if (state.focused) {
+            window = user32.GetForegroundWindow()
+            watcher.dispose()
+        }
+    })
+}

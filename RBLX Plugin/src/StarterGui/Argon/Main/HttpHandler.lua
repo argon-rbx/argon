@@ -69,20 +69,6 @@ local function startSyncing(url)
     end)
 end
 
-function httpHandler.checkForUpdates()
-    local update = nil
-
-    pcall(function()
-        local json = HttpService:JSONDecode(HttpService:GetAsync(API_URL))
-
-        if json.extension ~= Config.argonVersion then
-            update = json.extension
-        end
-    end)
-
-    return update
-end
-
 function httpHandler.connect(fail)
     local url = string.format(URL, Config.host, Config.port)
     local header = {action = 'init'}
@@ -102,13 +88,37 @@ function httpHandler.connect(fail)
     return success, response
 end
 
-function httpHandler.stop()
+function httpHandler.disconnect()
     pcall(function()
         if thread then
             task.cancel(thread)
             thread = nil
         end
     end)
+end
+
+function httpHandler.checkForUpdates()
+    local update = nil
+
+    pcall(function()
+        local json = HttpService:JSONDecode(HttpService:GetAsync(API_URL))
+
+        if json.extension ~= Config.argonVersion then
+            update = json.extension
+        end
+    end)
+
+    return update
+end
+
+function httpHandler.openFile(file)
+    local url = string.format(URL, Config.host, Config.port)
+    local header = {action = 'openFile'}
+
+    pcall(function()
+        HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
+    end)
+
 end
 
 function httpHandler.portInstances(instancesToSync)
