@@ -1,5 +1,14 @@
 .vscode/**
 .gitignore
 node_modules
+!node_modules/ffi-napi
+!node_modules/debug
+!node_modules/ms
+!node_modules/get-uv-event-loop-napi-h
+!node_modules/get-symbol-from-current-process-h
+!node_modules/node-addon-api
+!node_modules/node-gyp-build
+!node_modules/ref-napi
+!node_modules/ref-struct-di
 **/.eslintrc.json
 **/jsconfig.json

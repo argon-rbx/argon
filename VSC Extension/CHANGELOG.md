@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+* Fixed critical VSC extension bug (excluded missing dependencies from .vscodeignore)
+
+## 0.4.1
+* Temporary hotfix for VSC extension (extension could not run)
+
 ## 0.4.0
 * Added two-way sync (only for code)
 * Added "Launch Roblox Studio" command (VSC)

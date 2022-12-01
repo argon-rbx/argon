@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "images/Logo.png",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
