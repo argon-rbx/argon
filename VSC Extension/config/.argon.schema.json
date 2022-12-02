@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": ["directory"],
+    "type": "object",
+    "properties": {
+        "directory": {
+            "type": "string",
+            "title": "Relative root folder directory, don't include 'src'",
+            "examples": ["folder\\subfolder"]
+        },
+        "version": {
+            "type": "string"
+        },
+        "classes": {
+            "type": "array"
+        }
+    }
+}

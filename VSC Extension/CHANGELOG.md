@@ -1,10 +1,13 @@
 # Changelog
 
 ## 0.4.3
-* Fixed instances not syncing from VSC when had dot in their name
+* Added new Argon menu (old commands won't work anymore!)
+* Added [JSON Schema](https://github.com/DervexHero/Argon/blob/release/VSC%20Extension/config/.argon.schema.json) file to make editing ".argon.json" easier
+* Fixed instances with special characters in their names not syncing from VSC to Roblox
 * Fixed Roblox Studio updating every time you use launch Roblox Studio command
-* Fixed Fixed open in editor option not working after leaving settings
-* Upgraded open in editor option - now scripts inside Studio will automatically close
+* Fixed open in editor option not working after leaving settings
+* Fixed version detection API (plugin and extension were getting wrong values)
+* Upgraded open in editor option - now scripts inside Studio will close automatically
 
 ## 0.4.2
 * Fixed critical VSC extension bug (excluded missing dependencies from .vscodeignore)
@@ -119,7 +122,7 @@
 * Moving .source file is no longer allowed
 
 ## 0.0.5
-* Fixed critcal issue
+* Fixed critical issue
 * Added changelog
 ## 0.0.4
 * Finished porting feature

@@ -129,6 +129,17 @@ function httpHandler.openFile(file)
             newScript.Source = activeScript.Source
             newScript.Name = activeScript.Name
 
+            for _, v in ipairs(activeScript:GetChildren()) do
+                v.Parent = newScript
+            end
+
+            if newScript:IsA('Script') then
+                newScript.Enabled = activeScript.Enabled
+                newScript.RunContext = activeScript.RunContext
+            elseif newScript:IsA('LocalScript') then
+                newScript.Enabled = activeScript.Enabled
+            end
+
             activeScript:Destroy()
             TwoWaySync.resume()
         end

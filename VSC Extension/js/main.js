@@ -7,6 +7,28 @@ const config = require('../config/settings.js')
 const messageHandler = require('./messageHandler')
 
 const URL = 'https://dervexhero.github.io/Argon/'
+const ITEMS = [
+    {
+        label: '$(debug-start) Run Argon',
+        action: 'run'
+    },
+    {
+        label: '$(debug-stop) Stop Argon',
+        action: 'stop'
+    },
+    {
+        label: '$(cloud-download) Update Classes',
+        action: 'updateClasses'
+    },
+    {
+        label: '$(settings-gear) Open Argon Settings',
+        action: 'openSettings'
+    },
+    {
+        label: '$(run-all) Launch Roblox Studio',
+        action: 'launchStudio'
+    }
+]
 
 let activated = false
 let isRunning = false
@@ -47,7 +69,7 @@ function stop() {
     }
 }
 
-function update() {
+function updateClasses() {
     if (vscode.workspace.name !== undefined) {
         files.updateClasses()
     }
@@ -56,7 +78,7 @@ function update() {
     }
 }
 
-function launchRoblox() {
+function launchStudio() {
     childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function (error) {
         if (error) {
             messageHandler.showMessage('robloxStudioLaunch', 2)
@@ -64,16 +86,47 @@ function launchRoblox() {
     })
 }
 
+function openMenu() {
+    let quickPick = vscode.window.createQuickPick()
+
+    quickPick.title = 'Argon'
+    quickPick.items = ITEMS
+
+    quickPick.onDidAccept(function() {
+        let item = quickPick.selectedItems[0]
+
+        switch (item.action) {
+            case 'run':
+                run()
+                quickPick.dispose()
+                break
+            case 'stop':
+                stop()
+                quickPick.dispose()
+                break
+            case 'updateClasses':
+                updateClasses()
+                quickPick.dispose()
+                break
+            case 'openSettings':
+                vscode.commands.executeCommand('workbench.action.openSettings', '@ext:dervex.argon')
+                quickPick.dispose()
+                break
+            case 'launchStudio':
+                launchStudio()
+                quickPick.dispose()
+                break
+        }
+    })
+
+    quickPick.show()
+}
+
 async function activate(context) {
     if (!activated) {
         activated = true
 
-        let runCommand = vscode.commands.registerCommand('argon.run', run)
-        let stopCommand = vscode.commands.registerCommand('argon.stop', stop)
-        let updateCommand = vscode.commands.registerCommand('argon.update', update)
-        let launchRobloxCommand = vscode.commands.registerCommand('argon.launchRoblox', launchRoblox)
-
-        context.subscriptions.push(runCommand, stopCommand, updateCommand, launchRobloxCommand)
+        context.subscriptions.push(vscode.commands.registerCommand('argon.openMenu', openMenu))
 
         if (config.autoRun) {
             run(true)

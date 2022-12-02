@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "images/Logo.png",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -21,32 +21,14 @@
   "activationEvents": [
     "onLanguage:lua",
     "onLanguage:luau",
-    "onCommand:argon.run",
-    "onCommand:argon.stop",
-    "onCommand:argon.update",
-    "onCommand:argon.launchRoblox"
+    "onCommand:argon.openMenu"
   ],
   "main": "./js/main.js",
   "contributes": {
     "commands": [
       {
-        "command": "argon.run",
-        "title": "Run Argon",
-        "category": "Argon"
-      },
-      {
-        "command": "argon.stop",
-        "title": "Stop Argon",
-        "category": "Argon"
-      },
-      {
-        "command": "argon.update",
-        "title": "Update class database",
-        "category": "Argon"
-      },
-      {
-        "command": "argon.launchRoblox",
-        "title": "Launch Roblox Studio",
+        "command": "argon.openMenu",
+        "title": "Open Menu",
         "category": "Argon"
       }
     ],
@@ -57,7 +39,7 @@
           "type": "string",
           "default": "src",
           "description": "The name of the root folder",
-          "pattern": "[^ ]",
+          "pattern": "[uri]",
           "patternErrorMessage": "This symbol is not allowed"
         },
         "argon.directories.extension": {
@@ -72,27 +54,32 @@
         "argon.extension.autoRun": {
           "type": "boolean",
           "default": true,
-          "description": "Whether Argon should start automatically"
+          "description": "Whether Argon should start automatically",
+          "order": 0
         },
         "argon.extension.autoUpdate": {
           "type": "boolean",
           "default": false,
-          "description": "Whether Argon should update class database automatically"
+          "description": "Whether Argon should update class database automatically",
+          "order": 1
         },
         "argon.extension.autoCreateFolder": {
           "type": "boolean",
           "default": true,
-          "description": "Whether Argon should create root folder automatically"
+          "description": "Whether Argon should create root folder automatically",
+          "order": 2
         },
         "argon.extension.hideNotifications": {
           "type": "boolean",
           "default": false,
-          "description": "Whether Argon should hide notifications in the bottom right corner"
+          "description": "Whether Argon should hide notifications in the bottom right corner",
+          "order": 3
         },
         "argon.extension.openInPreview": {
           "type": "boolean",
           "default": true,
-          "description": "Whether Argon should open files in preview mode by default"
+          "description": "Whether Argon should open files in preview mode by default",
+          "order": 4
         },
         "argon.server.host": {
           "type": "string",
@@ -115,6 +102,12 @@
         "id": "argon",
         "label": "Argon",
         "path": "./images/theme.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": ".argon.json",
+        "url": "./config/.argon.schema.json"
       }
     ]
   },

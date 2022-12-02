@@ -1,0 +1,6 @@
+{
+    "cSpell.enableFiletypes": [
+        "!elixir",
+        "cuda-cpp"
+    ]
+}
