@@ -12,7 +12,7 @@ let activated = false
 let isRunning = false
 
 function run(autoRun) {
-    if (isRunning == false) {
+    if (!isRunning) {
         if (vscode.workspace.name !== undefined) {
             server.run(function(canConnect) {
                 if (canConnect) {
@@ -57,7 +57,7 @@ function update() {
 }
 
 function launchRoblox() {
-    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe', function (error) {
+    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function (error) {
         if (error) {
             messageHandler.showMessage('robloxStudioLaunch', 2)
         }
@@ -65,7 +65,7 @@ function launchRoblox() {
 }
 
 async function activate(context) {
-    if (activated == false) {
+    if (!activated) {
         activated = true
 
         let runCommand = vscode.commands.registerCommand('argon.run', run)
@@ -87,7 +87,7 @@ async function activate(context) {
             })
     
             response.on('end', () => {
-                if (JSON.parse(body).plugin != context.extension.packageJSON.version) {
+                if (JSON.parse(body).extension != context.extension.packageJSON.version) {
                     messageHandler.showMessage('outdatedVersion', 1)
                 }
             })

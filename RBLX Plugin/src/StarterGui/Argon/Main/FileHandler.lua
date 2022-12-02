@@ -28,7 +28,7 @@ local function len(array)
 end
 
 local function parse(instance)
-    local name, num = instance.Name:gsub('[%:%*%?%"%<%>%|]', '')
+    local name, num = instance.Name:gsub('[%\\%/%:%*%?%"%<%>%|]', '')
     local className = ''
 
     if name:match('^/') or name:match('^\\') then

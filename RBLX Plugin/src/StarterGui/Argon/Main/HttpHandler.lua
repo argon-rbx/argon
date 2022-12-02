@@ -1,4 +1,5 @@
 local HttpService = game:GetService('HttpService')
+local StudioService = game:GetService('StudioService')
 
 local FileHandler = require(script.Parent.FileHandler)
 local TwoWaySync = require(script.Parent.TwoWaySync)
@@ -7,7 +8,6 @@ local Config = require(script.Parent.Config)
 local API_URL = 'https://dervexhero.github.io/Argon/'
 local URL = 'http://%s:%s/'
 local SYNC_INTERVAL = 0.2
-local TWO_WAY_SYNC_RATIO = 4
 
 local thread = nil
 local func = nil
@@ -53,6 +53,8 @@ local function startSyncing(url)
                         FileHandler.changeParent(v.Object, v.Parent)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
+                    elseif v.Action == 'closeFile' then
+                        httpHandler.openFile()
                     end
                 end
 
@@ -101,8 +103,8 @@ function httpHandler.checkForUpdates()
     pcall(function()
         local json = HttpService:JSONDecode(HttpService:GetAsync(API_URL))
 
-        if json.extension ~= Config.argonVersion then
-            update = json.extension
+        if json.plugin ~= Config.argonVersion then
+            update = json.plugin
         end
     end)
 
@@ -110,12 +112,27 @@ function httpHandler.checkForUpdates()
 end
 
 function httpHandler.openFile(file)
-    local url = string.format(URL, Config.host, Config.port)
-    local header = {action = 'openFile'}
+    if file then
+        local url = string.format(URL, Config.host, Config.port)
+        local header = {action = 'openFile'}
 
-    pcall(function()
-        HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
-    end)
+        pcall(function()
+            HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
+        end)
+    else
+        local activeScript = StudioService.ActiveScript
+
+        if activeScript then
+            TwoWaySync.pause()
+            local newScript = Instance.new(activeScript.ClassName, activeScript.Parent)
+
+            newScript.Source = activeScript.Source
+            newScript.Name = activeScript.Name
+
+            activeScript:Destroy()
+            TwoWaySync.resume()
+        end
+    end
 end
 
 function httpHandler.portInstances(instancesToSync)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3
+* Fixed instances not syncing from VSC when had dot in their name
+* Fixed Roblox Studio updating every time you use launch Roblox Studio command
+* Fixed Fixed open in editor option not working after leaving settings
+* Upgraded open in editor option - now scripts inside Studio will automatically close
+
 ## 0.4.2
 * Fixed critical VSC extension bug (excluded missing dependencies from .vscodeignore)
 

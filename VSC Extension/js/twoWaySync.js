@@ -91,7 +91,7 @@ function sync(queue) {
                 if (!data.Undo) {
                     let oldDir = path.join(rootDir, data.OldPath + config.extension)
 
-                    if (fs.existsSync(newDir) == false) {
+                    if (!fs.existsSync(newDir)) {
                         fs.mkdirSync(newDir)
                     }
     

@@ -62,14 +62,18 @@ function create(ext, name, parent) {
                 break
         }
     }
+    else {
+        ext = ext.substring(1)
 
-    ext = ext.substring(1)
-
-    if (types.includes(ext)) {
-        queue.push({Action: 'create', Type: ext, Name: name, Parent: parent})
-    }
-    else if (ext == '') {
-        queue.push({Action: 'create', Type: 'Folder', Name: name, Parent: parent})
+        if (types.includes(ext)) {
+            queue.push({Action: 'create', Type: ext, Name: name, Parent: parent})
+        }
+        else if (ext == '') {
+            queue.push({Action: 'create', Type: 'Folder', Name: name, Parent: parent})
+        }
+        else if (ext != 'lua' && ext != 'luau') {
+            queue.push({Action: 'create', Type: 'Folder', Name: name + '.' + ext, Parent: parent})
+        }
     }
 }
 
@@ -150,6 +154,7 @@ function portSource(object, source) {
 
 module.exports = {
     queue,
+    types,
     create,
     update,
     remove,

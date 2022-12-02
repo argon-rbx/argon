@@ -88,7 +88,7 @@ function requestListener(request, response) {
 
             data = JSON.stringify(isConnected)
 
-            if (isConnected == false) {
+            if (!isConnected) {
                 lastSync = Date.now()
                 isConnected = true
             }
@@ -196,6 +196,8 @@ function openFile(file) {
 
         if (window) {
             let pressed = false
+
+            events.queue.push({Action: 'closeFile'})
 
             if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
                 pressed = true

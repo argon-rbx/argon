@@ -165,4 +165,14 @@ function twoWaySync.update()
     end
 end
 
+function twoWaySync.pause()
+    twoWaySync.stop()
+end
+
+function twoWaySync.resume()
+    if Config.twoWaySync then
+        twoWaySync.run()
+    end
+end
+
 return twoWaySync

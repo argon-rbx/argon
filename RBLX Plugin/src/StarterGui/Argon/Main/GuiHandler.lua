@@ -69,6 +69,7 @@ local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
 local connections = {}
 local subConnections = {}
 local themeConnection = nil
+local activeScriptConnection = nil
 local expandedSetting = nil
 local lastTheme = 'Dark'
 local isPorting = false
@@ -199,27 +200,25 @@ local function changePage(position, page1, page2)
 end
 
 local function handleActiveScript()
-    if Config.openInEditor then
-        if not connections.studioService then
-            connections['studioService'] = StudioService.Changed:Connect(function(property)
-                if property == 'ActiveScript' then
-                    if StudioService.ActiveScript then
-                        local file = {
-                            File = FileHandler.getPath(StudioService.ActiveScript)
-                        }
+    if Config.openInEditor and not activeScriptConnection then
+        activeScriptConnection = StudioService.Changed:Connect(function(property)
+            if property == 'ActiveScript' then
+                if StudioService.ActiveScript then
+                    local file = {
+                        File = FileHandler.getPath(StudioService.ActiveScript)
+                    }
 
-                        if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
-                            file.Type = StudioService.ActiveScript.ClassName
-                        end
-
-                        HttpHandler.openFile(file)
+                    if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
+                        file.Type = StudioService.ActiveScript.ClassName
                     end
+
+                    HttpHandler.openFile(file)
                 end
-            end)
-        end
-    elseif connections.studioService then
-        connections.studioService:Disconnect()
-        connections.studioService = nil
+            end
+        end)
+    elseif activeScriptConnection then
+        activeScriptConnection:Disconnect()
+        activeScriptConnection = nil
     end
 end
 
@@ -364,6 +363,7 @@ end
 local function portToRoblox()
     if not isPorting then
         isPorting = true
+        TwoWaySync.pause()
 
         local tween = TweenService:Create(portToRobloxButton.Icon, LOADING_TWEEN_INFO, {Rotation = -360})
         portToRobloxButton.Icon.Image = LOADING_ICON
@@ -379,6 +379,7 @@ local function portToRoblox()
         portToRobloxButton.Icon.Rotation = 0
         portToRobloxButton.Icon.Image = START_ICON
 
+        TwoWaySync.resume()
         isPorting = false
     end
 end

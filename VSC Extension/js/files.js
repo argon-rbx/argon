@@ -23,7 +23,7 @@ function verify(parent) {
 }
 
 function getParent(root) {
-    if (root.includes(config.rootName) == false) {
+    if (!root.includes(config.rootName)) {
         return null
     }
 
@@ -78,7 +78,7 @@ function onCreate(uri) {
             return
         }
 
-        if (uri.name.startsWith('.source') && parent.includes(SEPARATOR) == false) {
+        if (uri.name.startsWith('.source') && !parent.includes(SEPARATOR)) {
             return
         }
     
@@ -123,7 +123,12 @@ function onDelete(uri) {
             }
         }
         else {
-            events.remove(parent + SEPARATOR + uri.name)
+            if (uri.ext == '.lua' || uri.ext == '.luau' || events.types.includes(uri.ext.substring(1))) {
+                events.remove(parent + SEPARATOR + uri.name)
+            }
+            else {
+                events.remove(parent + SEPARATOR + uri.name + uri.ext)
+            }
         }
     }
 }
@@ -141,7 +146,7 @@ function onRename(uri) {
             return
         }
 
-        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && (newParent.includes(SEPARATOR) == false || oldParent.includes(SEPARATOR) == false)) {
+        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && !(newParent.includes(SEPARATOR) || !oldParent.includes(SEPARATOR))) {
             return
         }
     
@@ -258,7 +263,7 @@ function updateClasses() {
                     if (type.Tags == undefined) {
                         newTypes.push(type.Name)
                     }
-                    else if (type.Tags.includes('NotCreatable') == false) {
+                    else if (!type.Tags.includes('NotCreatable')) {
                         newTypes.push(type.Name)
                     }
                 }
@@ -325,7 +330,7 @@ function createInstances(dir, instances) {
                 fs.writeFileSync(folder + '.server' + config.extension, '')
             }
             else {
-                if (fs.existsSync(folder) == false) {
+                if (!fs.existsSync(folder)) {
                     fs.mkdirSync(folder)
                 }
 
@@ -339,7 +344,7 @@ function createInstances(dir, instances) {
                 fs.writeFileSync(folder + '.client' + config.extension, '')
             }
             else {
-                if (fs.existsSync(folder) == false) {
+                if (!fs.existsSync(folder)) {
                     fs.mkdirSync(folder)
                 }
 
@@ -353,7 +358,7 @@ function createInstances(dir, instances) {
                 fs.writeFileSync(folder + config.extension, '')
             }
             else {
-                if (fs.existsSync(folder) == false) {
+                if (!fs.existsSync(folder)) {
                     fs.mkdirSync(folder)
                 }
 
@@ -361,7 +366,7 @@ function createInstances(dir, instances) {
             }
         }
         else {
-            if (fs.existsSync(folder) == false) {
+            if (!fs.existsSync(folder)) {
                 fs.mkdirSync(folder)
             }
         }
@@ -390,7 +395,7 @@ function getRootDir() {
 
     rootDir = path.join(rootDir, config.rootName)
 
-    if (fs.existsSync(rootDir) == false) {
+    if (!fs.existsSync(rootDir)) {
         if (config.autoCreateFolder) {
             fs.mkdirSync(rootDir)
         }
@@ -414,7 +419,7 @@ function portInstances(data) {
         for (let [key, value] of instances) {
             let folder = path.join(dir, key)
 
-            if (fs.existsSync(folder) == false) {
+            if (!fs.existsSync(folder)) {
                 fs.mkdirSync(folder)
             }
 
@@ -474,7 +479,7 @@ function portCreate(uri) {
         return
     }
 
-    if (uri.name.startsWith('.source') && parent.includes(SEPARATOR) == false) {
+    if (uri.name.startsWith('.source') && !parent.includes(SEPARATOR)) {
         return
     }
 

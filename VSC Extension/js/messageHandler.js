@@ -5,10 +5,10 @@ const config = require('../config/settings.js')
 let lastMessage = Date.now()
 
 function showMessage(message, mode) {
-    if (config.hideNotifications == false) {
+    if (!config.hideNotifications) {
         message = messages[message]
 
-        if (message.toLowerCase().includes('argon') == false) {
+        if (!message.toLowerCase().includes('argon')) {
             message = 'Argon: ' + message
         }
     
