@@ -108,6 +108,10 @@
       {
         "fileMatch": ".argon.json",
         "url": "./config/.argon.schema.json"
+      },
+      {
+        "fileMatch": ".properties.json",
+        "url": "./config/.properties.schema.json"
       }
     ]
   },

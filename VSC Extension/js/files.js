@@ -4,7 +4,7 @@ const https = require('https')
 const vscode = require('vscode')
 const events = require('./events')
 const config = require('../config/settings.js')
-const types = require('../config/types.js')
+const types = require('../config/classes.js')
 const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
@@ -17,7 +17,7 @@ let filesToSync = []
 let lastUnix = Date.now()
 
 function verify(parent) {
-    if (parent == null || parent == '' || parent == 'StarterPlayer') {
+    if (!parent || parent == '' || parent == 'StarterPlayer') {
         return true
     }
 }
@@ -260,7 +260,7 @@ function updateClasses() {
                 let newJson = {}
             
                 for (let type of classes) {
-                    if (type.Tags == undefined) {
+                    if (!type.Tags) {
                         newTypes.push(type.Name)
                     }
                     else if (!type.Tags.includes('NotCreatable')) {

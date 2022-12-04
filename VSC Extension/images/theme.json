@@ -3,6 +3,9 @@
         "argon": {
             "iconPath": "./icons/Argon.png"
         },
+        "properties": {
+            "iconPath": "./icons/Properties.png"
+        },
 
         "root": {
             "iconPath": "./icons/Root.png"
@@ -213,6 +216,7 @@
     },
     "fileNames": {
         ".argon.json": "argon",
+        ".properties.json": "properties",
 
         "CHANGELOG.md": "changelog",
         "LICENSE.md": "license",

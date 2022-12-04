@@ -27,6 +27,10 @@ const ITEMS = [
     {
         label: '$(run-all) Launch Roblox Studio',
         action: 'launchStudio'
+    },
+    {
+        label: 'Temp',
+        action: 'temp'
     }
 ]
 
@@ -35,7 +39,7 @@ let isRunning = false
 
 function run(autoRun) {
     if (!isRunning) {
-        if (vscode.workspace.name !== undefined) {
+        if (vscode.workspace.name) {
             server.run(function(canConnect) {
                 if (canConnect) {
                     files.run()
@@ -70,7 +74,7 @@ function stop() {
 }
 
 function updateClasses() {
-    if (vscode.workspace.name !== undefined) {
+    if (vscode.workspace.name) {
         files.updateClasses()
     }
     else {
@@ -114,6 +118,10 @@ function openMenu() {
                 break
             case 'launchStudio':
                 launchStudio()
+                quickPick.dispose()
+                break
+            case 'temp':
+                require('../.vscode/utils').getProperties()
                 quickPick.dispose()
                 break
         }
