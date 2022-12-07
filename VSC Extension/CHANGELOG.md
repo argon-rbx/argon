@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+* Added property sync
+* Added auto open Roblox option
+* Clicking on output messages now opens its source in VSC
+* Changed StarterPlayer services name inside VSC
+* "directory" is not longer required in .argon.json
+* Fixed open in editor option not working after playtest
+* Fixed destroying non script instances not working
+
 ## 0.4.3
 * Added new Argon menu (old commands won't work anymore!)
 * Added [JSON Schema](https://github.com/DervexHero/Argon/blob/release/VSC%20Extension/config/.argon.schema.json) file to make editing ".argon.json" easier

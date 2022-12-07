@@ -121,7 +121,7 @@ function openMenu() {
                 quickPick.dispose()
                 break
             case 'temp':
-                require('../.vscode/utils').getProperties()
+                require('../.vscode/utils').generateSchema()
                 quickPick.dispose()
                 break
         }
@@ -138,6 +138,10 @@ async function activate(context) {
 
         if (config.autoRun) {
             run(true)
+        }
+
+        if (config.autoLaunchStudio) {
+            launchStudio()
         }
 
         https.get(URL, (response) => {
@@ -165,6 +169,7 @@ async function activate(context) {
                 autoRun: extension.get('autoRun'),
                 autoUpdate: extension.get('autoUpdate'),
                 autoCreateFolder: extension.get('autoCreateFolder'),
+                autoLaunchStudio: extension.get('autoLaunchStudio'),
                 hideNotifications: extension.get('hideNotifications'),
                 openInPreview: extension.get('openInPreview'),
                 host: server.get('host'),

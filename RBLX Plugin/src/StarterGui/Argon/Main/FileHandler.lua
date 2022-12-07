@@ -1,4 +1,5 @@
 local ChangeHistoryService = game:GetService('ChangeHistoryService')
+local HttpService = game:GetService('HttpService')
 
 local Config = require(script.Parent.Config)
 
@@ -151,7 +152,16 @@ end
 
 function fileHandler.update(object, source)
     local success, response = pcall(function()
-        getInstance(object).Source = source
+        object = getInstance(object)
+        object.Source = source
+
+        if not object:IsA('ModuleScript') then
+            if string.match(source, '^--disable') then
+                object.Enabled = false
+            else
+                object.Enabled = true
+            end
+        end
     end)
 
     if not success then
@@ -235,6 +245,23 @@ function fileHandler.changeType(object, class, name)
     end
 
     addWaypoint()
+end
+
+function fileHandler.setProperties(object, properties)
+    local success, response = pcall(function()
+        object = getInstance(object)
+
+        for i, v in pairs(HttpService:JSONDecode(properties)) do
+            object[i] = v
+        end
+    end)
+
+    if not success then
+        warn('Argon: '..response..' (fhSP)')
+        object = tostring(object)
+        properties = tostring(properties)
+        print('Object: '..object..', Properties: '..properties)
+    end
 end
 
 function fileHandler.countChildren(instance)

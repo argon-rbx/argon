@@ -53,6 +53,8 @@ local function startSyncing(url)
                         FileHandler.changeParent(v.Object, v.Parent)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
+                    elseif v.Action == 'setProperties' then
+                        FileHandler.setProperties(v.Object, v.Properties)
                     elseif v.Action == 'closeFile' then
                         httpHandler.openFile()
                     end

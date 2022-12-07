@@ -10,6 +10,7 @@ module.exports = {
     autoRun: extension.get('autoRun'),
     autoUpdate: extension.get('autoUpdate'),
     autoCreateFolder: extension.get('autoCreateFolder'),
+    autoLaunchStudio: extension.get('autoLaunchStudio'),
     hideNotifications: extension.get('hideNotifications'),
     openInPreview: extension.get('openInPreview'),
     host: server.get('host'),

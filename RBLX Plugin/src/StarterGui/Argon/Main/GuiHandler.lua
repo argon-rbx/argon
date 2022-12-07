@@ -200,22 +200,24 @@ local function changePage(position, page1, page2)
 end
 
 local function handleActiveScript()
-    if Config.openInEditor and not activeScriptConnection then
-        activeScriptConnection = StudioService.Changed:Connect(function(property)
-            if property == 'ActiveScript' then
-                if StudioService.ActiveScript then
-                    local file = {
-                        File = FileHandler.getPath(StudioService.ActiveScript)
-                    }
+    if Config.openInEditor then
+        if not activeScriptConnection then
+            activeScriptConnection = StudioService.Changed:Connect(function(property)
+                if property == 'ActiveScript' then
+                    if StudioService.ActiveScript then
+                        local file = {
+                            File = FileHandler.getPath(StudioService.ActiveScript)
+                        }
 
-                    if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
-                        file.Type = StudioService.ActiveScript.ClassName
+                        if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
+                            file.Type = StudioService.ActiveScript.ClassName
+                        end
+
+                        HttpHandler.openFile(file)
                     end
-
-                    HttpHandler.openFile(file)
                 end
-            end
-        end)
+            end)
+        end
     elseif activeScriptConnection then
         activeScriptConnection:Disconnect()
         activeScriptConnection = nil

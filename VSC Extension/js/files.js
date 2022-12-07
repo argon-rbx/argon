@@ -74,7 +74,7 @@ function onCreate(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir)
 
-        if (verify(parent)) {
+        if (verify(parent) || uri.ext == '.json') {
             return
         }
 
@@ -95,13 +95,18 @@ function onSave(uri) {
         return
     }
 
-    if (uri.name.startsWith('.source')) {
-        if (parent.includes(SEPARATOR)) {
-            events.update(parent, source)
+    if (uri.ext != '.json') {
+        if (uri.name.startsWith('.source')) {
+            if (parent.includes(SEPARATOR)) {
+                events.update(parent, source)
+            }
+        }
+        else {
+            events.update(parent + SEPARATOR + uri.name, source)
         }
     }
-    else {
-        events.update(parent + SEPARATOR + uri.name, source)
+    else if (uri.name == '.properties') {
+        events.setProperties(parent, source)
     }
 }
 
@@ -112,7 +117,7 @@ function onDelete(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir)
     
-        if (verify(parent)) {
+        if (verify(parent) || uri.ext == '.json') {
             return
         }
     
@@ -123,7 +128,7 @@ function onDelete(uri) {
             }
         }
         else {
-            if (uri.ext == '.lua' || uri.ext == '.luau' || events.types.includes(uri.ext.substring(1))) {
+            if (uri.ext == '.lua' || uri.ext == '.luau' || events.getTypes().includes(uri.ext.substring(1))) {
                 events.remove(parent + SEPARATOR + uri.name)
             }
             else {
@@ -142,7 +147,7 @@ function onRename(uri) {
         let newParent = getParent(newUri.dir)
         let oldParent = getParent(oldUri.dir)
         
-        if (verify(newParent) || verify(oldParent)) {
+        if (verify(newParent) || verify(oldParent) || newUri.ext == '.json' || oldUri.ext == '.json') {
             return
         }
 

@@ -139,17 +139,22 @@ function changeParent(object, parent) {
     queue.push({Action: 'changeParent', Object: object, Parent: parent})
 }
 
+function setProperties(object, properties) {
+    object = parse(object)
+    queue.push({Action: 'setProperties', Object: object, Properties: properties})
+}
+
+function portSource(object, source) {
+    object = parse(object)
+    return {Action: 'update', Object: object, Source: source}
+}
+
 function setTypes(newTypes) {
     types = newTypes
 }
 
 function getTypes() {
     return types
-}
-
-function portSource(object, source) {
-    object = parse(object)
-    return {Action: 'update', Object: object, Source: source}
 }
 
 module.exports = {
@@ -161,7 +166,8 @@ module.exports = {
     rename,
     changeType,
     changeParent,
+    setProperties,
+    portSource,
     setTypes,
-    getTypes,
-    portSource
+    getTypes
 }

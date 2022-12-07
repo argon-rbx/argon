@@ -69,17 +69,23 @@
           "description": "Whether Argon should create root folder automatically",
           "order": 2
         },
+        "argon.extension.autoLaunchStudio": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Argon should launch Roblox Studio automatically",
+          "order": 3
+        },
         "argon.extension.hideNotifications": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should hide notifications in the bottom right corner",
-          "order": 3
+          "order": 4
         },
         "argon.extension.openInPreview": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should open files in preview mode by default",
-          "order": 4
+          "order": 5
         },
         "argon.server.host": {
           "type": "string",

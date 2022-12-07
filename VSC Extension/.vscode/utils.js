@@ -24,7 +24,7 @@ function getVersion(callback) {
     })
 }
 
-function getClasses() {
+function generateClasses() {
     getVersion((version) => {
         https.get(API_URL.replace('$version', version), (response) => {
             let body = ''
@@ -49,7 +49,7 @@ function getClasses() {
                 newTypes.push('StarterCharacterScripts')
                 newTypes.push('StarterPlayerScripts')
 
-                console.log(newTypes);
+                fs.writeFileSync(DIR, JSON.stringify(newTypes, null, '\t'))
             })
         
         }).on('error', () => {
@@ -58,16 +58,16 @@ function getClasses() {
     })
 }
 
-function getProperties() {
+function generateSchema() {
     getVersion((version) => {
         https.get(API_URL.replace('$version', version), (response) => {
             let body
             body = ''
-        
+
             response.on('data', (data) => {
                 body += data
             })
-    
+
             response.on('end', () => {
                 body = JSON.parse(body)
 
@@ -76,10 +76,17 @@ function getProperties() {
 
                 let properties = new Map()
                 let schema = {}
+
+                schema['$schema'] = 'http://json-schema.org/draft-07/schema#'
+                schema['type'] = 'object'
+                schema['properties'] = {}
             
                 for (let type of classes) {
                     if (type.length != 0 && (!type.Tags || !type.Tags.includes('NotCreatable'))) {
                         for (let member of type.Members) {
+                            if (member.Name == 'CastShadow') {
+                                console.log(member.Name);
+                            }
                             if (member.MemberType == 'Property' && !properties.get(member.Name)) {
                                 if (!member.Tags || (!member.Tags.includes('ReadOnly') && !member.Tags.includes('NotScriptable') && !member.Tags.includes('Deprecated') && !member.Tags.includes('Hidden'))) {
                                     properties.set(member.Name, {
@@ -104,14 +111,14 @@ function getProperties() {
 
                 function addSchema(name, type, enumName) {
                     if (!enumName) {
-                        schema[name] = {
+                        schema.properties[name] = {
                             type: type
                         }
                     }
                     else {
                         for (let robloxEnum of enums) {
                             if (robloxEnum.Name == enumName) {
-                                schema[name] = {
+                                schema.properties[name] = {
                                     type: type,
                                     enum: getEnumValues(name, robloxEnum.Items)
                                 }
@@ -143,33 +150,33 @@ function getProperties() {
                                     break
                             }
                             break
+                        case 'DataType':
+                            if (!temp.includes(value.Name)) {
+                                temp.push(value.Name)
+                            }
+                            addSchema(key, 'string')
+                            break
                         case 'Enum':
                             addSchema(key, 'string', value.Name)
                             break
                         case 'Class':
                             addSchema(key, 'string')
                             break
-                        default:
-                            if (!temp.includes(value.Name)) {
-                                temp.push(value.Name)
-                            }
-                            break
                     }
                 }
 
                 console.log(temp);
 
-                //console.log(schema);
-                //fs.writeFileSync(DIR, JSON.stringify(schema, null, '\t'))
+                fs.writeFileSync(DIR, JSON.stringify(schema, null, '\t'))
             })
         
         }).on('error', () => {
-            console.log('ERROR: getProperties');
+            console.log('ERROR: generateSchema');
         })
     })
 }
 
 module.exports = {
-    getProperties,
-    getClasses
+    generateClasses,
+    generateSchema
 }
