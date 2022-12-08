@@ -89,27 +89,36 @@ function generateSchema() {
                                 for (let member of type.Members) {
                                     if (member.MemberType == 'Property') {
                                         if (!member.Tags || (!member.Tags.includes('ReadOnly') && !member.Tags.includes('NotScriptable') && !member.Tags.includes('Deprecated') && !member.Tags.includes('Hidden'))) {
-                                            if (!properties.get(member.Name)) {
+                                            if (!properties.has(member.Name)) {
                                                 properties.set(member.Name, {
                                                     Name: member.ValueType.Name,
                                                     Category: member.ValueType.Category
                                                 })
                                             }
                                             else {
-                                                if (Array.isArray(properties.get(member.Name))) {
-                                                    if (!properties.get(member.Name).Name.includes(member.ValueType.Name)) {
+                                                if (properties.get(member.Name).Types) {
+                                                    if (!properties.get(member.Name).Types.has(member.ValueType.Name)) {
+                                                        let types = properties.get(member.Name).Types
+                                                        types.set(member.ValueType.Name, member.ValueType.Category)
                                                         properties.set(member.Name, {
-                                                            Name: properties.get(member.Name).Name.concat(member.ValueType.Name),
+                                                            Types: types,
                                                             Category: 'Misc'
                                                         })
+
+                                                        console.log(1);
                                                     }
                                                 }
                                                 else {
-                                                    if (!properties.get(member.Name).Name != member.ValueType.Name) {
+                                                    if (properties.get(member.Name).Name != member.ValueType.Name) {
+                                                        let types = new Map()
+                                                        types.set(properties.get(member.Name).Name, properties.get(member.Name).Category)
+                                                        types.set(member.ValueType.Name, member.ValueType.Category)
                                                         properties.set(member.Name, {
-                                                            Name : [properties.get(member.Name).Name, member.ValueType.Name],
+                                                            Types: types,
                                                             Category: 'Misc'
                                                         })
+
+                                                        console.log(2);
                                                     }
                                                 }
                                             }
@@ -125,7 +134,7 @@ function generateSchema() {
                                     break
                                 }
                             }
-                        } while (type.Superclass != '<<<ROOT>>>');
+                        } while (type.Superclass != '<<<ROOT>>>')
                     }
                 }
 
@@ -193,7 +202,56 @@ function generateSchema() {
                             addSchema(key, 'string')
                             break
                         case 'Misc':
-                            console.log(value.Name);
+                            let types = []
+
+                            for (let [name, category] of value.Types) {
+                                switch (category) {
+                                    case 'Primitive':
+                                        switch (name) {
+                                            case 'bool':
+                                                if (!types.includes('boolean')) {
+                                                    types.push('boolean')
+                                                }
+                                                break
+                                            case 'string':
+                                                if (!types.includes('string')) {
+                                                    types.push('string')
+                                                }
+                                                break
+                                            case 'int':
+                                            case 'int64':
+                                                if (!types.includes('integer')) {
+                                                    types.push('integer')
+                                                }
+                                                break
+                                            case 'float':
+                                            case 'double':
+                                                if (!types.includes('number')) {
+                                                    types.push('number')
+                                                }
+                                                break
+                                        }
+                                        break
+                                    case 'DataType':
+                                        if (!types.includes('array')) {
+                                            types.push('array')
+                                        }
+                                        break
+                                    default:
+                                        if (!types.includes('string')) {
+                                            types.push('string')
+                                        }
+                                        break
+                                }
+                            }
+
+                            if (types.length != 1) {
+                                addSchema(key, types)
+                            }
+                            else {
+                                addSchema(key, types[0])
+                            }
+                            break
                     }
                 }
 

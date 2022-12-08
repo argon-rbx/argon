@@ -52,6 +52,15 @@
 		"AnimationId": {
 			"type": "array"
 		},
+		"Loop": {
+			"type": "boolean"
+		},
+		"Priority": {
+			"type": [
+				"string",
+				"integer"
+			]
+		},
 		"PreferLodEnabled": {
 			"type": "boolean"
 		},
@@ -71,7 +80,10 @@
 			"type": "number"
 		},
 		"Offset": {
-			"type": "number"
+			"type": [
+				"number",
+				"array"
+			]
 		},
 		"Axis": {
 			"type": "array"
@@ -80,7 +92,10 @@
 			"type": "array"
 		},
 		"Orientation": {
-			"type": "array"
+			"type": [
+				"array",
+				"string"
+			]
 		},
 		"Position": {
 			"type": "array"
@@ -121,6 +136,9 @@
 				"Enum.BinType.Clone",
 				"Enum.BinType.Hammer"
 			]
+		},
+		"TextureId": {
+			"type": "array"
 		},
 		"CanBeDropped": {
 			"type": "boolean"
@@ -181,6 +199,15 @@
 		"ShrinkFactor": {
 			"type": "number"
 		},
+		"CageMeshId": {
+			"type": "array"
+		},
+		"CageOrigin": {
+			"type": "array"
+		},
+		"ImportOrigin": {
+			"type": "array"
+		},
 		"Stiffness": {
 			"type": "number"
 		},
@@ -229,7 +256,10 @@
 			"type": "number"
 		},
 		"Transparency": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"Width0": {
 			"type": "number"
@@ -241,10 +271,16 @@
 			"type": "number"
 		},
 		"AngularVelocity": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"MaxTorque": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"P": {
 			"type": "number"
@@ -256,13 +292,19 @@
 			"type": "number"
 		},
 		"MaxForce": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"Location": {
 			"type": "array"
 		},
 		"Velocity": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"CartoonFactor": {
 			"type": "number"
@@ -387,7 +429,10 @@
 			]
 		},
 		"MeshId": {
-			"type": "integer"
+			"type": [
+				"integer",
+				"array"
+			]
 		},
 		"OverlayTextureId": {
 			"type": "integer"
@@ -395,10 +440,10 @@
 		"PantsTemplate": {
 			"type": "array"
 		},
-		"ShirtTemplate": {
+		"Color3": {
 			"type": "array"
 		},
-		"Color3": {
+		"ShirtTemplate": {
 			"type": "array"
 		},
 		"Graphic": {
@@ -427,11 +472,7 @@
 			"type": "number"
 		},
 		"Mode": {
-			"type": "string",
-			"enum": [
-				"Enum.OrientationAlignmentMode.OneAttachment",
-				"Enum.OrientationAlignmentMode.TwoAttachment"
-			]
+			"type": "string"
 		},
 		"PrimaryAxis": {
 			"type": "array"
@@ -600,6 +641,36 @@
 		"RotationAxisVisible": {
 			"type": "boolean"
 		},
+		"LinearResponsiveness": {
+			"type": "number"
+		},
+		"LowerLimit": {
+			"type": "number"
+		},
+		"MotorMaxForce": {
+			"type": "number"
+		},
+		"ServoMaxForce": {
+			"type": "number"
+		},
+		"Size": {
+			"type": [
+				"number",
+				"array"
+			]
+		},
+		"Speed": {
+			"type": [
+				"number",
+				"array"
+			]
+		},
+		"TargetPosition": {
+			"type": "number"
+		},
+		"UpperLimit": {
+			"type": "number"
+		},
 		"Coils": {
 			"type": "number"
 		},
@@ -616,7 +687,10 @@
 			"type": "number"
 		},
 		"Torque": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"MaxAngle": {
 			"type": "number"
@@ -641,6 +715,9 @@
 		},
 		"VectorForce": {
 			"type": "array"
+		},
+		"MoveSpeedFactor": {
+			"type": "number"
 		},
 		"AccelerationTime": {
 			"type": "number"
@@ -700,9 +777,18 @@
 			"type": "array"
 		},
 		"Source": {
-			"type": "string"
+			"type": [
+				"string",
+				"array"
+			]
 		},
-		"TextureId": {
+		"Scale": {
+			"type": [
+				"array",
+				"number"
+			]
+		},
+		"VertexColor": {
 			"type": "array"
 		},
 		"MeshType": {
@@ -973,6 +1059,12 @@
 		"ZIndex": {
 			"type": "integer"
 		},
+		"Face": {
+			"type": [
+				"string",
+				"integer"
+			]
+		},
 		"OffsetStudsU": {
 			"type": "number"
 		},
@@ -985,14 +1077,46 @@
 		"StudsPerTileV": {
 			"type": "number"
 		},
+		"FaceId": {
+			"type": "string",
+			"enum": [
+				"Enum.NormalId.Top",
+				"Enum.NormalId.Bottom",
+				"Enum.NormalId.Back",
+				"Enum.NormalId.Front",
+				"Enum.NormalId.Right",
+				"Enum.NormalId.Left"
+			]
+		},
+		"InOut": {
+			"type": "string",
+			"enum": [
+				"Enum.InOut.Edge",
+				"Enum.InOut.Inset",
+				"Enum.InOut.Center"
+			]
+		},
+		"LeftRight": {
+			"type": "string",
+			"enum": [
+				"Enum.LeftRight.Left",
+				"Enum.LeftRight.Center",
+				"Enum.LeftRight.Right"
+			]
+		},
+		"TopBottom": {
+			"type": "string",
+			"enum": [
+				"Enum.TopBottom.Top",
+				"Enum.TopBottom.Center",
+				"Enum.TopBottom.Bottom"
+			]
+		},
 		"Heat": {
 			"type": "number"
 		},
 		"SecondaryColor": {
 			"type": "array"
-		},
-		"Size": {
-			"type": "number"
 		},
 		"Description": {
 			"type": "string"
@@ -1012,17 +1136,118 @@
 		"GroupTransparency": {
 			"type": "number"
 		},
-		"Style": {
+		"AnchorPoint": {
+			"type": "array"
+		},
+		"AutomaticSize": {
 			"type": "string",
 			"enum": [
-				"Enum.FrameStyle.Custom",
-				"Enum.FrameStyle.ChatBlue",
-				"Enum.FrameStyle.RobloxSquare",
-				"Enum.FrameStyle.RobloxRound",
-				"Enum.FrameStyle.ChatGreen",
-				"Enum.FrameStyle.ChatRed",
-				"Enum.FrameStyle.DropShadow"
+				"Enum.AutomaticSize.None",
+				"Enum.AutomaticSize.X",
+				"Enum.AutomaticSize.Y",
+				"Enum.AutomaticSize.XY"
 			]
+		},
+		"BackgroundColor3": {
+			"type": "array"
+		},
+		"BackgroundTransparency": {
+			"type": "number"
+		},
+		"BorderColor3": {
+			"type": "array"
+		},
+		"BorderMode": {
+			"type": "string",
+			"enum": [
+				"Enum.BorderMode.Outline",
+				"Enum.BorderMode.Middle",
+				"Enum.BorderMode.Inset"
+			]
+		},
+		"BorderSizePixel": {
+			"type": "integer"
+		},
+		"ClipsDescendants": {
+			"type": "boolean"
+		},
+		"LayoutOrder": {
+			"type": "integer"
+		},
+		"NextSelectionDown": {
+			"type": "string"
+		},
+		"NextSelectionLeft": {
+			"type": "string"
+		},
+		"NextSelectionRight": {
+			"type": "string"
+		},
+		"NextSelectionUp": {
+			"type": "string"
+		},
+		"Rotation": {
+			"type": [
+				"number",
+				"array"
+			]
+		},
+		"Selectable": {
+			"type": "boolean"
+		},
+		"SelectionImageObject": {
+			"type": "string"
+		},
+		"SelectionOrder": {
+			"type": "integer"
+		},
+		"SizeConstraint": {
+			"type": "string",
+			"enum": [
+				"Enum.SizeConstraint.RelativeXY",
+				"Enum.SizeConstraint.RelativeXX",
+				"Enum.SizeConstraint.RelativeYY"
+			]
+		},
+		"AutoLocalize": {
+			"type": "boolean"
+		},
+		"RootLocalizationTable": {
+			"type": "string"
+		},
+		"SelectionBehaviorDown": {
+			"type": "string",
+			"enum": [
+				"Enum.SelectionBehavior.Escape",
+				"Enum.SelectionBehavior.Stop"
+			]
+		},
+		"SelectionBehaviorLeft": {
+			"type": "string",
+			"enum": [
+				"Enum.SelectionBehavior.Escape",
+				"Enum.SelectionBehavior.Stop"
+			]
+		},
+		"SelectionBehaviorRight": {
+			"type": "string",
+			"enum": [
+				"Enum.SelectionBehavior.Escape",
+				"Enum.SelectionBehavior.Stop"
+			]
+		},
+		"SelectionBehaviorUp": {
+			"type": "string",
+			"enum": [
+				"Enum.SelectionBehavior.Escape",
+				"Enum.SelectionBehavior.Stop"
+			]
+		},
+		"SelectionGroup": {
+			"type": "boolean"
+		},
+		"Style": {
+			"type": "string"
 		},
 		"HoverImage": {
 			"type": "array"
@@ -1070,6 +1295,15 @@
 		},
 		"TileSize": {
 			"type": "array"
+		},
+		"AutoButtonColor": {
+			"type": "boolean"
+		},
+		"Modal": {
+			"type": "boolean"
+		},
+		"Selected": {
+			"type": "boolean"
 		},
 		"FontFace": {
 			"type": "array"
@@ -1259,9 +1493,6 @@
 		"AlwaysOnTop": {
 			"type": "boolean"
 		},
-		"ClipsDescendants": {
-			"type": "boolean"
-		},
 		"DistanceLowerLimit": {
 			"type": "number"
 		},
@@ -1291,6 +1522,16 @@
 		},
 		"StudsOffsetWorldSpace": {
 			"type": "array"
+		},
+		"ResetOnSpawn": {
+			"type": "boolean"
+		},
+		"ZIndexBehavior": {
+			"type": "string",
+			"enum": [
+				"Enum.ZIndexBehavior.Global",
+				"Enum.ZIndexBehavior.Sibling"
+			]
 		},
 		"ClipToDeviceSafeArea": {
 			"type": "boolean"
@@ -1362,6 +1603,16 @@
 		"SurfaceTransparency": {
 			"type": "number"
 		},
+		"AdornCullingMode": {
+			"type": "string",
+			"enum": [
+				"Enum.AdornCullingMode.Automatic",
+				"Enum.AdornCullingMode.Never"
+			]
+		},
+		"SizeRelativeOffset": {
+			"type": "array"
+		},
 		"Height": {
 			"type": "number"
 		},
@@ -1389,6 +1640,9 @@
 			]
 		},
 		"Part": {
+			"type": "string"
+		},
+		"Humanoid": {
 			"type": "string"
 		},
 		"Point": {
@@ -1528,9 +1782,6 @@
 		"DepthScale": {
 			"type": "number"
 		},
-		"Face": {
-			"type": "integer"
-		},
 		"FaceAccessory": {
 			"type": "string"
 		},
@@ -1607,7 +1858,10 @@
 			"type": "integer"
 		},
 		"WidthScale": {
-			"type": "number"
+			"type": [
+				"number",
+				"array"
+			]
 		},
 		"ChainRoot": {
 			"type": "string"
@@ -1621,9 +1875,6 @@
 		"Pole": {
 			"type": "string"
 		},
-		"Priority": {
-			"type": "integer"
-		},
 		"Type": {
 			"type": "string",
 			"enum": [
@@ -1635,6 +1886,21 @@
 		},
 		"Weight": {
 			"type": "number"
+		},
+		"BaseAngle": {
+			"type": "number"
+		},
+		"C0": {
+			"type": "array"
+		},
+		"C1": {
+			"type": "array"
+		},
+		"Part0": {
+			"type": "string"
+		},
+		"Part1": {
+			"type": "string"
 		},
 		"F0": {
 			"type": "array"
@@ -1661,16 +1927,37 @@
 			"type": "number"
 		},
 		"Value": {
-			"type": "string"
+			"type": [
+				"string",
+				"number",
+				"boolean",
+				"array",
+				"integer"
+			]
 		},
 		"Range": {
 			"type": "number"
 		},
+		"Shadows": {
+			"type": "boolean"
+		},
 		"SourceLocaleId": {
 			"type": "string"
 		},
+		"Disabled": {
+			"type": "boolean"
+		},
 		"LinkedSource": {
 			"type": "array"
+		},
+		"RunContext": {
+			"type": "string",
+			"enum": [
+				"Enum.RunContext.Legacy",
+				"Enum.RunContext.Server",
+				"Enum.RunContext.Client",
+				"Enum.RunContext.Plugin"
+			]
 		},
 		"BaseMaterial": {
 			"type": "string",
@@ -1739,22 +2026,188 @@
 		"StudsPerTile": {
 			"type": "number"
 		},
-		"Part0": {
-			"type": "string"
+		"Anchored": {
+			"type": "boolean"
 		},
-		"Part1": {
-			"type": "string"
+		"AssemblyAngularVelocity": {
+			"type": "array"
 		},
-		"Shape": {
+		"AssemblyLinearVelocity": {
+			"type": "array"
+		},
+		"BackSurface": {
 			"type": "string",
 			"enum": [
-				"Enum.PartType.Ball",
-				"Enum.PartType.Block",
-				"Enum.PartType.Cylinder"
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
 			]
 		},
-		"Disabled": {
+		"BottomSurface": {
+			"type": "string",
+			"enum": [
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
+			]
+		},
+		"BrickColor": {
+			"type": "array"
+		},
+		"CanCollide": {
 			"type": "boolean"
+		},
+		"CanQuery": {
+			"type": "boolean"
+		},
+		"CanTouch": {
+			"type": "boolean"
+		},
+		"CastShadow": {
+			"type": "boolean"
+		},
+		"CollisionGroup": {
+			"type": "string"
+		},
+		"CollisionGroupId": {
+			"type": "integer"
+		},
+		"FrontSurface": {
+			"type": "string",
+			"enum": [
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
+			]
+		},
+		"LeftSurface": {
+			"type": "string",
+			"enum": [
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
+			]
+		},
+		"Locked": {
+			"type": "boolean"
+		},
+		"Massless": {
+			"type": "boolean"
+		},
+		"Material": {
+			"type": "string",
+			"enum": [
+				"Enum.Material.Plastic",
+				"Enum.Material.Wood",
+				"Enum.Material.Slate",
+				"Enum.Material.Concrete",
+				"Enum.Material.CorrodedMetal",
+				"Enum.Material.DiamondPlate",
+				"Enum.Material.Foil",
+				"Enum.Material.Grass",
+				"Enum.Material.Ice",
+				"Enum.Material.Marble",
+				"Enum.Material.Granite",
+				"Enum.Material.Brick",
+				"Enum.Material.Pebble",
+				"Enum.Material.Sand",
+				"Enum.Material.Fabric",
+				"Enum.Material.SmoothPlastic",
+				"Enum.Material.Metal",
+				"Enum.Material.WoodPlanks",
+				"Enum.Material.Cobblestone",
+				"Enum.Material.Air",
+				"Enum.Material.Water",
+				"Enum.Material.Rock",
+				"Enum.Material.Glacier",
+				"Enum.Material.Snow",
+				"Enum.Material.Sandstone",
+				"Enum.Material.Mud",
+				"Enum.Material.Basalt",
+				"Enum.Material.Ground",
+				"Enum.Material.CrackedLava",
+				"Enum.Material.Neon",
+				"Enum.Material.Glass",
+				"Enum.Material.Asphalt",
+				"Enum.Material.LeafyGrass",
+				"Enum.Material.Salt",
+				"Enum.Material.Limestone",
+				"Enum.Material.Pavement",
+				"Enum.Material.ForceField"
+			]
+		},
+		"MaterialVariant": {
+			"type": "string"
+		},
+		"PivotOffset": {
+			"type": "array"
+		},
+		"Reflectance": {
+			"type": "number"
+		},
+		"RightSurface": {
+			"type": "string",
+			"enum": [
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
+			]
+		},
+		"RootPriority": {
+			"type": "integer"
+		},
+		"TopSurface": {
+			"type": "string",
+			"enum": [
+				"Enum.SurfaceType.Smooth",
+				"Enum.SurfaceType.Glue",
+				"Enum.SurfaceType.Weld",
+				"Enum.SurfaceType.Studs",
+				"Enum.SurfaceType.Inlet",
+				"Enum.SurfaceType.Universal",
+				"Enum.SurfaceType.Hinge",
+				"Enum.SurfaceType.Motor",
+				"Enum.SurfaceType.SteppingMotor",
+				"Enum.SurfaceType.SmoothNoOutlines"
+			]
+		},
+		"Shape": {
+			"type": "string"
 		},
 		"Steer": {
 			"type": "integer"
@@ -1787,6 +2240,16 @@
 		},
 		"TextureID": {
 			"type": "array"
+		},
+		"CollisionFidelity": {
+			"type": "string",
+			"enum": [
+				"Enum.CollisionFidelity.Default",
+				"Enum.CollisionFidelity.Hull",
+				"Enum.CollisionFidelity.Box",
+				"Enum.CollisionFidelity.PreciseConvexDecomposition",
+				"Enum.CollisionFidelity.DynamicPreciseConvexDecomposition"
+			]
 		},
 		"SmoothingAngle": {
 			"type": "number"
@@ -1873,7 +2336,10 @@
 			"type": "boolean"
 		},
 		"Lifetime": {
-			"type": "array"
+			"type": [
+				"array",
+				"number"
+			]
 		},
 		"LockedToPart": {
 			"type": "boolean"
@@ -1882,9 +2348,6 @@
 			"type": "number"
 		},
 		"RotSpeed": {
-			"type": "array"
-		},
-		"Rotation": {
 			"type": "array"
 		},
 		"ShapeInOut": {
@@ -1904,9 +2367,6 @@
 				"Enum.ParticleEmitterShapeStyle.Volume",
 				"Enum.ParticleEmitterShapeStyle.Surface"
 			]
-		},
-		"Speed": {
-			"type": "array"
 		},
 		"SpreadAngle": {
 			"type": "array"
@@ -2016,6 +2476,12 @@
 		"UserId": {
 			"type": "integer"
 		},
+		"EasingDirection": {
+			"type": "string"
+		},
+		"EasingStyle": {
+			"type": "string"
+		},
 		"Intensity": {
 			"type": "number"
 		},
@@ -2048,9 +2514,6 @@
 		},
 		"ActionText": {
 			"type": "string"
-		},
-		"AutoLocalize": {
-			"type": "boolean"
 		},
 		"ClickablePrompt": {
 			"type": "boolean"
@@ -2590,9 +3053,6 @@
 		"RequiresLineOfSight": {
 			"type": "boolean"
 		},
-		"RootLocalizationTable": {
-			"type": "string"
-		},
 		"UIOffset": {
 			"type": "array"
 		},
@@ -2610,6 +3070,54 @@
 		},
 		"PreferredParent": {
 			"type": "string"
+		},
+		"Browsable": {
+			"type": "boolean"
+		},
+		"ClassCategory": {
+			"type": "string"
+		},
+		"ClientOnly": {
+			"type": "boolean"
+		},
+		"Constraint": {
+			"type": "string"
+		},
+		"Deprecated": {
+			"type": "boolean"
+		},
+		"EditingDisabled": {
+			"type": "boolean"
+		},
+		"EditorType": {
+			"type": "string"
+		},
+		"FFlag": {
+			"type": "string"
+		},
+		"IsBackend": {
+			"type": "boolean"
+		},
+		"PropertyOrder": {
+			"type": "integer"
+		},
+		"ScriptContext": {
+			"type": "string"
+		},
+		"ServerOnly": {
+			"type": "boolean"
+		},
+		"SliderScaling": {
+			"type": "string"
+		},
+		"UIMaximum": {
+			"type": "number"
+		},
+		"UIMinimum": {
+			"type": "number"
+		},
+		"UINumTicks": {
+			"type": "number"
 		},
 		"ComparisonDiffThreshold": {
 			"type": "integer"
@@ -2882,6 +3390,37 @@
 				"Enum.StartCorner.BottomRight"
 			]
 		},
+		"FillDirection": {
+			"type": "string",
+			"enum": [
+				"Enum.FillDirection.Horizontal",
+				"Enum.FillDirection.Vertical"
+			]
+		},
+		"HorizontalAlignment": {
+			"type": "string",
+			"enum": [
+				"Enum.HorizontalAlignment.Center",
+				"Enum.HorizontalAlignment.Left",
+				"Enum.HorizontalAlignment.Right"
+			]
+		},
+		"SortOrder": {
+			"type": "string",
+			"enum": [
+				"Enum.SortOrder.LayoutOrder",
+				"Enum.SortOrder.Name",
+				"Enum.SortOrder.Custom"
+			]
+		},
+		"VerticalAlignment": {
+			"type": "string",
+			"enum": [
+				"Enum.VerticalAlignment.Center",
+				"Enum.VerticalAlignment.Top",
+				"Enum.VerticalAlignment.Bottom"
+			]
+		},
 		"Padding": {
 			"type": "array"
 		},
@@ -2890,30 +3429,6 @@
 		},
 		"Circular": {
 			"type": "boolean"
-		},
-		"EasingDirection": {
-			"type": "string",
-			"enum": [
-				"Enum.EasingDirection.In",
-				"Enum.EasingDirection.Out",
-				"Enum.EasingDirection.InOut"
-			]
-		},
-		"EasingStyle": {
-			"type": "string",
-			"enum": [
-				"Enum.EasingStyle.Linear",
-				"Enum.EasingStyle.Sine",
-				"Enum.EasingStyle.Back",
-				"Enum.EasingStyle.Quad",
-				"Enum.EasingStyle.Quart",
-				"Enum.EasingStyle.Quint",
-				"Enum.EasingStyle.Bounce",
-				"Enum.EasingStyle.Elastic",
-				"Enum.EasingStyle.Exponential",
-				"Enum.EasingStyle.Circular",
-				"Enum.EasingStyle.Cubic"
-			]
 		},
 		"GamepadInputEnabled": {
 			"type": "boolean"
@@ -2952,9 +3467,6 @@
 		"PaddingTop": {
 			"type": "array"
 		},
-		"Scale": {
-			"type": "number"
-		},
 		"ApplyStrokeMode": {
 			"type": "string",
 			"enum": [
@@ -2971,10 +3483,16 @@
 			]
 		},
 		"MaxValue": {
-			"type": "number"
+			"type": [
+				"number",
+				"integer"
+			]
 		},
 		"MinValue": {
-			"type": "number"
+			"type": [
+				"number",
+				"integer"
+			]
 		}
 	}
 }
