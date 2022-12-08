@@ -76,6 +76,7 @@ function generateSchema() {
 
                 let properties = new Map()
                 let schema = {}
+                let types = []
 
                 schema['$schema'] = 'http://json-schema.org/draft-07/schema#'
                 schema['type'] = 'object'
@@ -83,19 +84,48 @@ function generateSchema() {
             
                 for (let type of classes) {
                     if (type.length != 0 && (!type.Tags || !type.Tags.includes('NotCreatable'))) {
-                        for (let member of type.Members) {
-                            if (member.Name == 'CastShadow') {
-                                console.log(member.Name);
-                            }
-                            if (member.MemberType == 'Property' && !properties.get(member.Name)) {
-                                if (!member.Tags || (!member.Tags.includes('ReadOnly') && !member.Tags.includes('NotScriptable') && !member.Tags.includes('Deprecated') && !member.Tags.includes('Hidden'))) {
-                                    properties.set(member.Name, {
-                                        Name: member.ValueType.Name,
-                                        Category: member.ValueType.Category
-                                    })
+                        do {
+                            if (!types.includes(type.Name)) {
+                                for (let member of type.Members) {
+                                    if (member.MemberType == 'Property') {
+                                        if (!member.Tags || (!member.Tags.includes('ReadOnly') && !member.Tags.includes('NotScriptable') && !member.Tags.includes('Deprecated') && !member.Tags.includes('Hidden'))) {
+                                            if (!properties.get(member.Name)) {
+                                                properties.set(member.Name, {
+                                                    Name: member.ValueType.Name,
+                                                    Category: member.ValueType.Category
+                                                })
+                                            }
+                                            else {
+                                                if (Array.isArray(properties.get(member.Name))) {
+                                                    if (!properties.get(member.Name).Name.includes(member.ValueType.Name)) {
+                                                        properties.set(member.Name, {
+                                                            Name: properties.get(member.Name).Name.concat(member.ValueType.Name),
+                                                            Category: 'Misc'
+                                                        })
+                                                    }
+                                                }
+                                                else {
+                                                    if (!properties.get(member.Name).Name != member.ValueType.Name) {
+                                                        properties.set(member.Name, {
+                                                            Name : [properties.get(member.Name).Name, member.ValueType.Name],
+                                                            Category: 'Misc'
+                                                        })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }
+
+                            for (let superclass of classes) {
+                                if (superclass.Name == type.Superclass) {
+                                    types.push(type.Name)
+                                    type = superclass
+                                    break
+                                }
+                            }
+                        } while (type.Superclass != '<<<ROOT>>>');
                     }
                 }
 
@@ -120,7 +150,7 @@ function generateSchema() {
                             if (robloxEnum.Name == enumName) {
                                 schema.properties[name] = {
                                     type: type,
-                                    enum: getEnumValues(name, robloxEnum.Items)
+                                    enum: getEnumValues(enumName, robloxEnum.Items)
                                 }
                                 break
                             }
@@ -154,7 +184,7 @@ function generateSchema() {
                             if (!temp.includes(value.Name)) {
                                 temp.push(value.Name)
                             }
-                            addSchema(key, 'string')
+                            addSchema(key, 'array')
                             break
                         case 'Enum':
                             addSchema(key, 'string', value.Name)
@@ -162,6 +192,8 @@ function generateSchema() {
                         case 'Class':
                             addSchema(key, 'string')
                             break
+                        case 'Misc':
+                            console.log(value.Name);
                     }
                 }
 

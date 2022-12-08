@@ -2,6 +2,7 @@ local ChangeHistoryService = game:GetService('ChangeHistoryService')
 local HttpService = game:GetService('HttpService')
 
 local Config = require(script.Parent.Config)
+local DataTypes = require(script.Parent.DataTypes)
 
 local SEPARATOR = '|'
 local ARGON_IGNORE = 'ArgonIgnore'
@@ -252,7 +253,7 @@ function fileHandler.setProperties(object, properties)
         object = getInstance(object)
 
         for i, v in pairs(HttpService:JSONDecode(properties)) do
-            object[i] = v
+            object[i] = DataTypes.cast(v, i, object)
         end
     end)
 

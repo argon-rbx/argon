@@ -3,19 +3,19 @@
 	"type": "object",
 	"properties": {
 		"AttachmentForward": {
-			"type": "string"
+			"type": "array"
 		},
 		"AttachmentPoint": {
-			"type": "string"
+			"type": "array"
 		},
 		"AttachmentPos": {
-			"type": "string"
+			"type": "array"
 		},
 		"AttachmentRight": {
-			"type": "string"
+			"type": "array"
 		},
 		"AttachmentUp": {
-			"type": "string"
+			"type": "array"
 		},
 		"AccessoryType": {
 			"type": "string",
@@ -45,21 +45,21 @@
 		"PortalType": {
 			"type": "string",
 			"enum": [
-				"Enum.PortalType.Forward",
-				"Enum.PortalType.Return"
+				"Enum.AdPortalType.Forward",
+				"Enum.AdPortalType.Return"
 			]
 		},
 		"AnimationId": {
-			"type": "string"
+			"type": "array"
 		},
 		"PreferLodEnabled": {
 			"type": "boolean"
 		},
 		"Color": {
-			"type": "string"
+			"type": "array"
 		},
 		"Decay": {
-			"type": "string"
+			"type": "array"
 		},
 		"Density": {
 			"type": "number"
@@ -74,40 +74,40 @@
 			"type": "number"
 		},
 		"Axis": {
-			"type": "string"
+			"type": "array"
 		},
 		"CFrame": {
-			"type": "string"
+			"type": "array"
 		},
 		"Orientation": {
-			"type": "string"
+			"type": "array"
 		},
 		"Position": {
-			"type": "string"
+			"type": "array"
 		},
 		"SecondaryAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"Visible": {
 			"type": "boolean"
 		},
 		"WorldAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"WorldCFrame": {
-			"type": "string"
+			"type": "array"
 		},
 		"WorldOrientation": {
-			"type": "string"
+			"type": "array"
 		},
 		"WorldPosition": {
-			"type": "string"
+			"type": "array"
 		},
 		"WorldSecondaryAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"Transform": {
-			"type": "string"
+			"type": "array"
 		},
 		"Active": {
 			"type": "boolean"
@@ -129,19 +129,19 @@
 			"type": "boolean"
 		},
 		"Grip": {
-			"type": "string"
+			"type": "array"
 		},
 		"GripForward": {
-			"type": "string"
+			"type": "array"
 		},
 		"GripPos": {
-			"type": "string"
+			"type": "array"
 		},
 		"GripRight": {
-			"type": "string"
+			"type": "array"
 		},
 		"GripUp": {
-			"type": "string"
+			"type": "array"
 		},
 		"ManualActivationOnly": {
 			"type": "boolean"
@@ -153,18 +153,18 @@
 			"type": "string"
 		},
 		"TeamColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"AutoSkin": {
 			"type": "string",
 			"enum": [
-				"Enum.AutoSkin.Disabled",
-				"Enum.AutoSkin.EnabledPreserve",
-				"Enum.AutoSkin.EnabledOverride"
+				"Enum.WrapLayerAutoSkin.Disabled",
+				"Enum.WrapLayerAutoSkin.EnabledPreserve",
+				"Enum.WrapLayerAutoSkin.EnabledOverride"
 			]
 		},
 		"BindOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"Order": {
 			"type": "integer"
@@ -173,10 +173,10 @@
 			"type": "number"
 		},
 		"ReferenceMeshId": {
-			"type": "string"
+			"type": "array"
 		},
 		"ReferenceOrigin": {
-			"type": "string"
+			"type": "array"
 		},
 		"ShrinkFactor": {
 			"type": "number"
@@ -212,7 +212,7 @@
 			"type": "integer"
 		},
 		"Texture": {
-			"type": "string"
+			"type": "array"
 		},
 		"TextureLength": {
 			"type": "number"
@@ -229,7 +229,7 @@
 			"type": "number"
 		},
 		"Transparency": {
-			"type": "string"
+			"type": "array"
 		},
 		"Width0": {
 			"type": "number"
@@ -241,28 +241,28 @@
 			"type": "number"
 		},
 		"AngularVelocity": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxTorque": {
-			"type": "string"
+			"type": "array"
 		},
 		"P": {
 			"type": "number"
 		},
 		"Force": {
-			"type": "string"
+			"type": "array"
 		},
 		"D": {
 			"type": "number"
 		},
 		"MaxForce": {
-			"type": "string"
+			"type": "array"
 		},
 		"Location": {
-			"type": "string"
+			"type": "array"
 		},
 		"Velocity": {
-			"type": "string"
+			"type": "array"
 		},
 		"CartoonFactor": {
 			"type": "number"
@@ -277,7 +277,7 @@
 			"type": "string"
 		},
 		"TargetOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"TargetRadius": {
 			"type": "number"
@@ -325,7 +325,7 @@
 			]
 		},
 		"Focus": {
-			"type": "string"
+			"type": "array"
 		},
 		"HeadLocked": {
 			"type": "boolean"
@@ -337,40 +337,40 @@
 			"type": "number"
 		},
 		"HeadColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"HeadColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"LeftArmColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"LeftArmColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"LeftLegColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"LeftLegColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"RightArmColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"RightArmColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"RightLegColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"RightLegColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"TorsoColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"TorsoColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"BaseTextureId": {
 			"type": "integer"
@@ -393,22 +393,22 @@
 			"type": "integer"
 		},
 		"PantsTemplate": {
-			"type": "string"
+			"type": "array"
 		},
 		"ShirtTemplate": {
-			"type": "string"
+			"type": "array"
 		},
 		"Color3": {
-			"type": "string"
+			"type": "array"
 		},
 		"Graphic": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkinColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"CursorIcon": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxActivationDistance": {
 			"type": "number"
@@ -429,12 +429,12 @@
 		"Mode": {
 			"type": "string",
 			"enum": [
-				"Enum.Mode.OneAttachment",
-				"Enum.Mode.TwoAttachment"
+				"Enum.OrientationAlignmentMode.OneAttachment",
+				"Enum.OrientationAlignmentMode.TwoAttachment"
 			]
 		},
 		"PrimaryAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"PrimaryAxisOnly": {
 			"type": "boolean"
@@ -460,9 +460,9 @@
 		"RelativeTo": {
 			"type": "string",
 			"enum": [
-				"Enum.RelativeTo.Attachment0",
-				"Enum.RelativeTo.Attachment1",
-				"Enum.RelativeTo.World"
+				"Enum.ActuatorRelativeTo.Attachment0",
+				"Enum.ActuatorRelativeTo.Attachment1",
+				"Enum.ActuatorRelativeTo.World"
 			]
 		},
 		"LimitsEnabled": {
@@ -525,22 +525,22 @@
 			"type": "number"
 		},
 		"LineDirection": {
-			"type": "string"
+			"type": "array"
 		},
 		"LineVelocity": {
 			"type": "number"
 		},
 		"PlaneVelocity": {
-			"type": "string"
+			"type": "array"
 		},
 		"PrimaryTangentAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"SecondaryTangentAxis": {
-			"type": "string"
+			"type": "array"
 		},
 		"VectorVelocity": {
-			"type": "string"
+			"type": "array"
 		},
 		"VelocityConstraintMode": {
 			"type": "string",
@@ -580,9 +580,9 @@
 		"AngularActuatorType": {
 			"type": "string",
 			"enum": [
-				"Enum.AngularActuatorType.None",
-				"Enum.AngularActuatorType.Motor",
-				"Enum.AngularActuatorType.Servo"
+				"Enum.ActuatorType.None",
+				"Enum.ActuatorType.Motor",
+				"Enum.ActuatorType.Servo"
 			]
 		},
 		"AngularLimitsEnabled": {
@@ -616,7 +616,7 @@
 			"type": "number"
 		},
 		"Torque": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxAngle": {
 			"type": "number"
@@ -640,7 +640,7 @@
 			"type": "number"
 		},
 		"VectorForce": {
-			"type": "string"
+			"type": "array"
 		},
 		"AccelerationTime": {
 			"type": "number"
@@ -694,16 +694,16 @@
 			"type": "number"
 		},
 		"FacingDirection": {
-			"type": "string"
+			"type": "array"
 		},
 		"MovingDirection": {
-			"type": "string"
+			"type": "array"
 		},
 		"Source": {
 			"type": "string"
 		},
 		"TextureId": {
-			"type": "string"
+			"type": "array"
 		},
 		"MeshType": {
 			"type": "string",
@@ -731,8 +731,8 @@
 		"BehaviorType": {
 			"type": "string",
 			"enum": [
-				"Enum.BehaviorType.SinglePlayer",
-				"Enum.BehaviorType.MultiplePlayers"
+				"Enum.DialogBehaviorType.SinglePlayer",
+				"Enum.DialogBehaviorType.MultiplePlayers"
 			]
 		},
 		"ConversationDistance": {
@@ -753,24 +753,24 @@
 		"Purpose": {
 			"type": "string",
 			"enum": [
-				"Enum.Purpose.Quest",
-				"Enum.Purpose.Help",
-				"Enum.Purpose.Shop"
+				"Enum.DialogPurpose.Quest",
+				"Enum.DialogPurpose.Help",
+				"Enum.DialogPurpose.Shop"
 			]
 		},
 		"Tone": {
 			"type": "string",
 			"enum": [
-				"Enum.Tone.Neutral",
-				"Enum.Tone.Friendly",
-				"Enum.Tone.Enemy"
+				"Enum.DialogTone.Neutral",
+				"Enum.DialogTone.Friendly",
+				"Enum.DialogTone.Enemy"
 			]
 		},
 		"TriggerDistance": {
 			"type": "number"
 		},
 		"TriggerOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"ResponseDialog": {
 			"type": "string"
@@ -989,7 +989,7 @@
 			"type": "number"
 		},
 		"SecondaryColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"Size": {
 			"type": "number"
@@ -998,7 +998,7 @@
 			"type": "string"
 		},
 		"Font": {
-			"type": "string"
+			"type": "array"
 		},
 		"Text": {
 			"type": "string"
@@ -1007,7 +1007,7 @@
 			"type": "number"
 		},
 		"GroupColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"GroupTransparency": {
 			"type": "number"
@@ -1015,41 +1015,41 @@
 		"Style": {
 			"type": "string",
 			"enum": [
-				"Enum.Style.Custom",
-				"Enum.Style.ChatBlue",
-				"Enum.Style.RobloxSquare",
-				"Enum.Style.RobloxRound",
-				"Enum.Style.ChatGreen",
-				"Enum.Style.ChatRed",
-				"Enum.Style.DropShadow"
+				"Enum.FrameStyle.Custom",
+				"Enum.FrameStyle.ChatBlue",
+				"Enum.FrameStyle.RobloxSquare",
+				"Enum.FrameStyle.RobloxRound",
+				"Enum.FrameStyle.ChatGreen",
+				"Enum.FrameStyle.ChatRed",
+				"Enum.FrameStyle.DropShadow"
 			]
 		},
 		"HoverImage": {
-			"type": "string"
+			"type": "array"
 		},
 		"Image": {
-			"type": "string"
+			"type": "array"
 		},
 		"ImageColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"ImageRectOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"ImageRectSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"ImageTransparency": {
 			"type": "number"
 		},
 		"PressedImage": {
-			"type": "string"
+			"type": "array"
 		},
 		"ResampleMode": {
 			"type": "string",
 			"enum": [
-				"Enum.ResampleMode.Default",
-				"Enum.ResampleMode.Pixelated"
+				"Enum.ResamplerMode.Default",
+				"Enum.ResamplerMode.Pixelated"
 			]
 		},
 		"ScaleType": {
@@ -1063,16 +1063,16 @@
 			]
 		},
 		"SliceCenter": {
-			"type": "string"
+			"type": "array"
 		},
 		"SliceScale": {
 			"type": "number"
 		},
 		"TileSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"FontFace": {
-			"type": "string"
+			"type": "array"
 		},
 		"LineHeight": {
 			"type": "number"
@@ -1084,7 +1084,7 @@
 			"type": "boolean"
 		},
 		"TextColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"TextScaled": {
 			"type": "boolean"
@@ -1093,7 +1093,7 @@
 			"type": "number"
 		},
 		"TextStrokeColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"TextStrokeTransparency": {
 			"type": "number"
@@ -1130,20 +1130,20 @@
 		"AutomaticCanvasSize": {
 			"type": "string",
 			"enum": [
-				"Enum.AutomaticCanvasSize.None",
-				"Enum.AutomaticCanvasSize.X",
-				"Enum.AutomaticCanvasSize.Y",
-				"Enum.AutomaticCanvasSize.XY"
+				"Enum.AutomaticSize.None",
+				"Enum.AutomaticSize.X",
+				"Enum.AutomaticSize.Y",
+				"Enum.AutomaticSize.XY"
 			]
 		},
 		"BottomImage": {
-			"type": "string"
+			"type": "array"
 		},
 		"CanvasPosition": {
-			"type": "string"
+			"type": "array"
 		},
 		"CanvasSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"ElasticBehavior": {
 			"type": "string",
@@ -1156,16 +1156,16 @@
 		"HorizontalScrollBarInset": {
 			"type": "string",
 			"enum": [
-				"Enum.HorizontalScrollBarInset.None",
-				"Enum.HorizontalScrollBarInset.ScrollBar",
-				"Enum.HorizontalScrollBarInset.Always"
+				"Enum.ScrollBarInset.None",
+				"Enum.ScrollBarInset.ScrollBar",
+				"Enum.ScrollBarInset.Always"
 			]
 		},
 		"MidImage": {
-			"type": "string"
+			"type": "array"
 		},
 		"ScrollBarImageColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"ScrollBarImageTransparency": {
 			"type": "number"
@@ -1185,14 +1185,14 @@
 			"type": "boolean"
 		},
 		"TopImage": {
-			"type": "string"
+			"type": "array"
 		},
 		"VerticalScrollBarInset": {
 			"type": "string",
 			"enum": [
-				"Enum.VerticalScrollBarInset.None",
-				"Enum.VerticalScrollBarInset.ScrollBar",
-				"Enum.VerticalScrollBarInset.Always"
+				"Enum.ScrollBarInset.None",
+				"Enum.ScrollBarInset.ScrollBar",
+				"Enum.ScrollBarInset.Always"
 			]
 		},
 		"VerticalScrollBarPosition": {
@@ -1212,7 +1212,7 @@
 			"type": "boolean"
 		},
 		"PlaceholderColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"PlaceholderText": {
 			"type": "string"
@@ -1236,22 +1236,22 @@
 			"type": "number"
 		},
 		"Video": {
-			"type": "string"
+			"type": "array"
 		},
 		"Volume": {
 			"type": "number"
 		},
 		"Ambient": {
-			"type": "string"
+			"type": "array"
 		},
 		"CurrentCamera": {
 			"type": "string"
 		},
 		"LightColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"LightDirection": {
-			"type": "string"
+			"type": "array"
 		},
 		"Adornee": {
 			"type": "string"
@@ -1272,10 +1272,10 @@
 			"type": "number"
 		},
 		"ExtentsOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"ExtentsOffsetWorldSpace": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxDistance": {
 			"type": "number"
@@ -1284,13 +1284,13 @@
 			"type": "string"
 		},
 		"SizeOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"StudsOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"StudsOffsetWorldSpace": {
-			"type": "string"
+			"type": "array"
 		},
 		"ClipToDeviceSafeArea": {
 			"type": "boolean"
@@ -1328,8 +1328,8 @@
 		"SizingMode": {
 			"type": "string",
 			"enum": [
-				"Enum.SizingMode.FixedSize",
-				"Enum.SizingMode.PixelsPerStud"
+				"Enum.SurfaceGuiSizingMode.FixedSize",
+				"Enum.SurfaceGuiSizingMode.PixelsPerStud"
 			]
 		},
 		"ToolPunchThroughDistance": {
@@ -1345,7 +1345,7 @@
 			"type": "number"
 		},
 		"TextureSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"To": {
 			"type": "string"
@@ -1357,7 +1357,7 @@
 			"type": "number"
 		},
 		"SurfaceColor3": {
-			"type": "string"
+			"type": "array"
 		},
 		"SurfaceTransparency": {
 			"type": "number"
@@ -1372,43 +1372,43 @@
 			"type": "number"
 		},
 		"Axes": {
-			"type": "string"
+			"type": "array"
 		},
 		"Faces": {
-			"type": "string"
+			"type": "array"
 		},
 		"TargetSurface": {
 			"type": "string",
 			"enum": [
-				"Enum.TargetSurface.Top",
-				"Enum.TargetSurface.Bottom",
-				"Enum.TargetSurface.Back",
-				"Enum.TargetSurface.Front",
-				"Enum.TargetSurface.Right",
-				"Enum.TargetSurface.Left"
+				"Enum.NormalId.Top",
+				"Enum.NormalId.Bottom",
+				"Enum.NormalId.Back",
+				"Enum.NormalId.Front",
+				"Enum.NormalId.Right",
+				"Enum.NormalId.Left"
 			]
 		},
 		"Part": {
 			"type": "string"
 		},
 		"Point": {
-			"type": "string"
+			"type": "array"
 		},
 		"DepthMode": {
 			"type": "string",
 			"enum": [
-				"Enum.DepthMode.AlwaysOnTop",
-				"Enum.DepthMode.Occluded"
+				"Enum.HighlightDepthMode.AlwaysOnTop",
+				"Enum.HighlightDepthMode.Occluded"
 			]
 		},
 		"FillColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"FillTransparency": {
 			"type": "number"
 		},
 		"OutlineColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"OutlineTransparency": {
 			"type": "number"
@@ -1426,14 +1426,14 @@
 			"type": "boolean"
 		},
 		"CameraOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"DisplayDistanceType": {
 			"type": "string",
 			"enum": [
-				"Enum.DisplayDistanceType.Viewer",
-				"Enum.DisplayDistanceType.Subject",
-				"Enum.DisplayDistanceType.None"
+				"Enum.HumanoidDisplayDistanceType.Viewer",
+				"Enum.HumanoidDisplayDistanceType.Subject",
+				"Enum.HumanoidDisplayDistanceType.None"
 			]
 		},
 		"DisplayName": {
@@ -1451,9 +1451,9 @@
 		"HealthDisplayType": {
 			"type": "string",
 			"enum": [
-				"Enum.HealthDisplayType.DisplayWhenDamaged",
-				"Enum.HealthDisplayType.AlwaysOn",
-				"Enum.HealthDisplayType.AlwaysOff"
+				"Enum.HumanoidHealthDisplayType.DisplayWhenDamaged",
+				"Enum.HumanoidHealthDisplayType.AlwaysOn",
+				"Enum.HumanoidHealthDisplayType.AlwaysOff"
 			]
 		},
 		"HipHeight": {
@@ -1494,15 +1494,15 @@
 		"RigType": {
 			"type": "string",
 			"enum": [
-				"Enum.RigType.R6",
-				"Enum.RigType.R15"
+				"Enum.HumanoidRigType.R6",
+				"Enum.HumanoidRigType.R15"
 			]
 		},
 		"Sit": {
 			"type": "boolean"
 		},
 		"TargetPoint": {
-			"type": "string"
+			"type": "array"
 		},
 		"UseJumpPower": {
 			"type": "boolean"
@@ -1514,7 +1514,7 @@
 			"type": "string"
 		},
 		"WalkToPoint": {
-			"type": "string"
+			"type": "array"
 		},
 		"BackAccessory": {
 			"type": "string"
@@ -1616,7 +1616,7 @@
 			"type": "string"
 		},
 		"EndEffectorOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"Pole": {
 			"type": "string"
@@ -1627,26 +1627,26 @@
 		"Type": {
 			"type": "string",
 			"enum": [
-				"Enum.Type.Transform",
-				"Enum.Type.Position",
-				"Enum.Type.Rotation",
-				"Enum.Type.LookAt"
+				"Enum.IKControlType.Transform",
+				"Enum.IKControlType.Position",
+				"Enum.IKControlType.Rotation",
+				"Enum.IKControlType.LookAt"
 			]
 		},
 		"Weight": {
 			"type": "number"
 		},
 		"F0": {
-			"type": "string"
+			"type": "array"
 		},
 		"F1": {
-			"type": "string"
+			"type": "array"
 		},
 		"F2": {
-			"type": "string"
+			"type": "array"
 		},
 		"F3": {
-			"type": "string"
+			"type": "array"
 		},
 		"CurrentAngle": {
 			"type": "number"
@@ -1670,55 +1670,55 @@
 			"type": "string"
 		},
 		"LinkedSource": {
-			"type": "string"
+			"type": "array"
 		},
 		"BaseMaterial": {
 			"type": "string",
 			"enum": [
-				"Enum.BaseMaterial.Plastic",
-				"Enum.BaseMaterial.Wood",
-				"Enum.BaseMaterial.Slate",
-				"Enum.BaseMaterial.Concrete",
-				"Enum.BaseMaterial.CorrodedMetal",
-				"Enum.BaseMaterial.DiamondPlate",
-				"Enum.BaseMaterial.Foil",
-				"Enum.BaseMaterial.Grass",
-				"Enum.BaseMaterial.Ice",
-				"Enum.BaseMaterial.Marble",
-				"Enum.BaseMaterial.Granite",
-				"Enum.BaseMaterial.Brick",
-				"Enum.BaseMaterial.Pebble",
-				"Enum.BaseMaterial.Sand",
-				"Enum.BaseMaterial.Fabric",
-				"Enum.BaseMaterial.SmoothPlastic",
-				"Enum.BaseMaterial.Metal",
-				"Enum.BaseMaterial.WoodPlanks",
-				"Enum.BaseMaterial.Cobblestone",
-				"Enum.BaseMaterial.Air",
-				"Enum.BaseMaterial.Water",
-				"Enum.BaseMaterial.Rock",
-				"Enum.BaseMaterial.Glacier",
-				"Enum.BaseMaterial.Snow",
-				"Enum.BaseMaterial.Sandstone",
-				"Enum.BaseMaterial.Mud",
-				"Enum.BaseMaterial.Basalt",
-				"Enum.BaseMaterial.Ground",
-				"Enum.BaseMaterial.CrackedLava",
-				"Enum.BaseMaterial.Neon",
-				"Enum.BaseMaterial.Glass",
-				"Enum.BaseMaterial.Asphalt",
-				"Enum.BaseMaterial.LeafyGrass",
-				"Enum.BaseMaterial.Salt",
-				"Enum.BaseMaterial.Limestone",
-				"Enum.BaseMaterial.Pavement",
-				"Enum.BaseMaterial.ForceField"
+				"Enum.Material.Plastic",
+				"Enum.Material.Wood",
+				"Enum.Material.Slate",
+				"Enum.Material.Concrete",
+				"Enum.Material.CorrodedMetal",
+				"Enum.Material.DiamondPlate",
+				"Enum.Material.Foil",
+				"Enum.Material.Grass",
+				"Enum.Material.Ice",
+				"Enum.Material.Marble",
+				"Enum.Material.Granite",
+				"Enum.Material.Brick",
+				"Enum.Material.Pebble",
+				"Enum.Material.Sand",
+				"Enum.Material.Fabric",
+				"Enum.Material.SmoothPlastic",
+				"Enum.Material.Metal",
+				"Enum.Material.WoodPlanks",
+				"Enum.Material.Cobblestone",
+				"Enum.Material.Air",
+				"Enum.Material.Water",
+				"Enum.Material.Rock",
+				"Enum.Material.Glacier",
+				"Enum.Material.Snow",
+				"Enum.Material.Sandstone",
+				"Enum.Material.Mud",
+				"Enum.Material.Basalt",
+				"Enum.Material.Ground",
+				"Enum.Material.CrackedLava",
+				"Enum.Material.Neon",
+				"Enum.Material.Glass",
+				"Enum.Material.Asphalt",
+				"Enum.Material.LeafyGrass",
+				"Enum.Material.Salt",
+				"Enum.Material.Limestone",
+				"Enum.Material.Pavement",
+				"Enum.Material.ForceField"
 			]
 		},
 		"ColorMap": {
-			"type": "string"
+			"type": "array"
 		},
 		"CustomPhysicalProperties": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaterialPattern": {
 			"type": "string",
@@ -1728,13 +1728,13 @@
 			]
 		},
 		"MetalnessMap": {
-			"type": "string"
+			"type": "array"
 		},
 		"NormalMap": {
-			"type": "string"
+			"type": "array"
 		},
 		"RoughnessMap": {
-			"type": "string"
+			"type": "array"
 		},
 		"StudsPerTile": {
 			"type": "number"
@@ -1748,9 +1748,9 @@
 		"Shape": {
 			"type": "string",
 			"enum": [
-				"Enum.Shape.Ball",
-				"Enum.Shape.Block",
-				"Enum.Shape.Cylinder"
+				"Enum.PartType.Ball",
+				"Enum.PartType.Block",
+				"Enum.PartType.Cylinder"
 			]
 		},
 		"Disabled": {
@@ -1786,7 +1786,7 @@
 			]
 		},
 		"TextureID": {
-			"type": "string"
+			"type": "array"
 		},
 		"SmoothingAngle": {
 			"type": "number"
@@ -1809,9 +1809,9 @@
 		"LevelOfDetail": {
 			"type": "string",
 			"enum": [
-				"Enum.LevelOfDetail.Automatic",
-				"Enum.LevelOfDetail.StreamingMesh",
-				"Enum.LevelOfDetail.Disabled"
+				"Enum.ModelLevelOfDetail.Automatic",
+				"Enum.ModelLevelOfDetail.StreamingMesh",
+				"Enum.ModelLevelOfDetail.Disabled"
 			]
 		},
 		"ModelStreamingMode": {
@@ -1826,10 +1826,10 @@
 			"type": "string"
 		},
 		"WorldPivot": {
-			"type": "string"
+			"type": "array"
 		},
 		"Acceleration": {
-			"type": "string"
+			"type": "array"
 		},
 		"Drag": {
 			"type": "number"
@@ -1837,16 +1837,16 @@
 		"EmissionDirection": {
 			"type": "string",
 			"enum": [
-				"Enum.EmissionDirection.Top",
-				"Enum.EmissionDirection.Bottom",
-				"Enum.EmissionDirection.Back",
-				"Enum.EmissionDirection.Front",
-				"Enum.EmissionDirection.Right",
-				"Enum.EmissionDirection.Left"
+				"Enum.NormalId.Top",
+				"Enum.NormalId.Bottom",
+				"Enum.NormalId.Back",
+				"Enum.NormalId.Front",
+				"Enum.NormalId.Right",
+				"Enum.NormalId.Left"
 			]
 		},
 		"FlipbookFramerate": {
-			"type": "string"
+			"type": "array"
 		},
 		"FlipbookIncompatible": {
 			"type": "string"
@@ -1854,26 +1854,26 @@
 		"FlipbookLayout": {
 			"type": "string",
 			"enum": [
-				"Enum.FlipbookLayout.None",
-				"Enum.FlipbookLayout.Grid2x2",
-				"Enum.FlipbookLayout.Grid4x4",
-				"Enum.FlipbookLayout.Grid8x8"
+				"Enum.ParticleFlipbookLayout.None",
+				"Enum.ParticleFlipbookLayout.Grid2x2",
+				"Enum.ParticleFlipbookLayout.Grid4x4",
+				"Enum.ParticleFlipbookLayout.Grid8x8"
 			]
 		},
 		"FlipbookMode": {
 			"type": "string",
 			"enum": [
-				"Enum.FlipbookMode.Loop",
-				"Enum.FlipbookMode.OneShot",
-				"Enum.FlipbookMode.PingPong",
-				"Enum.FlipbookMode.Random"
+				"Enum.ParticleFlipbookMode.Loop",
+				"Enum.ParticleFlipbookMode.OneShot",
+				"Enum.ParticleFlipbookMode.PingPong",
+				"Enum.ParticleFlipbookMode.Random"
 			]
 		},
 		"FlipbookStartRandom": {
 			"type": "boolean"
 		},
 		"Lifetime": {
-			"type": "string"
+			"type": "array"
 		},
 		"LockedToPart": {
 			"type": "boolean"
@@ -1882,17 +1882,17 @@
 			"type": "number"
 		},
 		"RotSpeed": {
-			"type": "string"
+			"type": "array"
 		},
 		"Rotation": {
-			"type": "string"
+			"type": "array"
 		},
 		"ShapeInOut": {
 			"type": "string",
 			"enum": [
-				"Enum.ShapeInOut.Outward",
-				"Enum.ShapeInOut.Inward",
-				"Enum.ShapeInOut.InAndOut"
+				"Enum.ParticleEmitterShapeInOut.Outward",
+				"Enum.ParticleEmitterShapeInOut.Inward",
+				"Enum.ParticleEmitterShapeInOut.InAndOut"
 			]
 		},
 		"ShapePartial": {
@@ -1901,18 +1901,18 @@
 		"ShapeStyle": {
 			"type": "string",
 			"enum": [
-				"Enum.ShapeStyle.Volume",
-				"Enum.ShapeStyle.Surface"
+				"Enum.ParticleEmitterShapeStyle.Volume",
+				"Enum.ParticleEmitterShapeStyle.Surface"
 			]
 		},
 		"Speed": {
-			"type": "string"
+			"type": "array"
 		},
 		"SpreadAngle": {
-			"type": "string"
+			"type": "array"
 		},
 		"Squash": {
-			"type": "string"
+			"type": "array"
 		},
 		"VelocityInheritance": {
 			"type": "number"
@@ -1958,11 +1958,11 @@
 		"DevComputerCameraMode": {
 			"type": "string",
 			"enum": [
-				"Enum.DevComputerCameraMode.UserChoice",
-				"Enum.DevComputerCameraMode.Classic",
-				"Enum.DevComputerCameraMode.Follow",
-				"Enum.DevComputerCameraMode.Orbital",
-				"Enum.DevComputerCameraMode.CameraToggle"
+				"Enum.DevComputerCameraMovementMode.UserChoice",
+				"Enum.DevComputerCameraMovementMode.Classic",
+				"Enum.DevComputerCameraMovementMode.Follow",
+				"Enum.DevComputerCameraMovementMode.Orbital",
+				"Enum.DevComputerCameraMovementMode.CameraToggle"
 			]
 		},
 		"DevComputerMovementMode": {
@@ -1980,10 +1980,10 @@
 		"DevTouchCameraMode": {
 			"type": "string",
 			"enum": [
-				"Enum.DevTouchCameraMode.UserChoice",
-				"Enum.DevTouchCameraMode.Classic",
-				"Enum.DevTouchCameraMode.Follow",
-				"Enum.DevTouchCameraMode.Orbital"
+				"Enum.DevTouchCameraMovementMode.UserChoice",
+				"Enum.DevTouchCameraMovementMode.Classic",
+				"Enum.DevTouchCameraMovementMode.Follow",
+				"Enum.DevTouchCameraMovementMode.Orbital"
 			]
 		},
 		"DevTouchMovementMode": {
@@ -2029,7 +2029,7 @@
 			"type": "number"
 		},
 		"TintColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"FarIntensity": {
 			"type": "number"
@@ -2058,268 +2058,268 @@
 		"Exclusivity": {
 			"type": "string",
 			"enum": [
-				"Enum.Exclusivity.OnePerButton",
-				"Enum.Exclusivity.OneGlobally",
-				"Enum.Exclusivity.AlwaysShow"
+				"Enum.ProximityPromptExclusivity.OnePerButton",
+				"Enum.ProximityPromptExclusivity.OneGlobally",
+				"Enum.ProximityPromptExclusivity.AlwaysShow"
 			]
 		},
 		"GamepadKeyCode": {
 			"type": "string",
 			"enum": [
-				"Enum.GamepadKeyCode.Unknown",
-				"Enum.GamepadKeyCode.Backspace",
-				"Enum.GamepadKeyCode.Tab",
-				"Enum.GamepadKeyCode.Clear",
-				"Enum.GamepadKeyCode.Return",
-				"Enum.GamepadKeyCode.Pause",
-				"Enum.GamepadKeyCode.Escape",
-				"Enum.GamepadKeyCode.Space",
-				"Enum.GamepadKeyCode.QuotedDouble",
-				"Enum.GamepadKeyCode.Hash",
-				"Enum.GamepadKeyCode.Dollar",
-				"Enum.GamepadKeyCode.Percent",
-				"Enum.GamepadKeyCode.Ampersand",
-				"Enum.GamepadKeyCode.Quote",
-				"Enum.GamepadKeyCode.LeftParenthesis",
-				"Enum.GamepadKeyCode.RightParenthesis",
-				"Enum.GamepadKeyCode.Asterisk",
-				"Enum.GamepadKeyCode.Plus",
-				"Enum.GamepadKeyCode.Comma",
-				"Enum.GamepadKeyCode.Minus",
-				"Enum.GamepadKeyCode.Period",
-				"Enum.GamepadKeyCode.Slash",
-				"Enum.GamepadKeyCode.Zero",
-				"Enum.GamepadKeyCode.One",
-				"Enum.GamepadKeyCode.Two",
-				"Enum.GamepadKeyCode.Three",
-				"Enum.GamepadKeyCode.Four",
-				"Enum.GamepadKeyCode.Five",
-				"Enum.GamepadKeyCode.Six",
-				"Enum.GamepadKeyCode.Seven",
-				"Enum.GamepadKeyCode.Eight",
-				"Enum.GamepadKeyCode.Nine",
-				"Enum.GamepadKeyCode.Colon",
-				"Enum.GamepadKeyCode.Semicolon",
-				"Enum.GamepadKeyCode.LessThan",
-				"Enum.GamepadKeyCode.Equals",
-				"Enum.GamepadKeyCode.GreaterThan",
-				"Enum.GamepadKeyCode.Question",
-				"Enum.GamepadKeyCode.At",
-				"Enum.GamepadKeyCode.LeftBracket",
-				"Enum.GamepadKeyCode.BackSlash",
-				"Enum.GamepadKeyCode.RightBracket",
-				"Enum.GamepadKeyCode.Caret",
-				"Enum.GamepadKeyCode.Underscore",
-				"Enum.GamepadKeyCode.Backquote",
-				"Enum.GamepadKeyCode.A",
-				"Enum.GamepadKeyCode.B",
-				"Enum.GamepadKeyCode.C",
-				"Enum.GamepadKeyCode.D",
-				"Enum.GamepadKeyCode.E",
-				"Enum.GamepadKeyCode.F",
-				"Enum.GamepadKeyCode.G",
-				"Enum.GamepadKeyCode.H",
-				"Enum.GamepadKeyCode.I",
-				"Enum.GamepadKeyCode.J",
-				"Enum.GamepadKeyCode.K",
-				"Enum.GamepadKeyCode.L",
-				"Enum.GamepadKeyCode.M",
-				"Enum.GamepadKeyCode.N",
-				"Enum.GamepadKeyCode.O",
-				"Enum.GamepadKeyCode.P",
-				"Enum.GamepadKeyCode.Q",
-				"Enum.GamepadKeyCode.R",
-				"Enum.GamepadKeyCode.S",
-				"Enum.GamepadKeyCode.T",
-				"Enum.GamepadKeyCode.U",
-				"Enum.GamepadKeyCode.V",
-				"Enum.GamepadKeyCode.W",
-				"Enum.GamepadKeyCode.X",
-				"Enum.GamepadKeyCode.Y",
-				"Enum.GamepadKeyCode.Z",
-				"Enum.GamepadKeyCode.LeftCurly",
-				"Enum.GamepadKeyCode.Pipe",
-				"Enum.GamepadKeyCode.RightCurly",
-				"Enum.GamepadKeyCode.Tilde",
-				"Enum.GamepadKeyCode.Delete",
-				"Enum.GamepadKeyCode.KeypadZero",
-				"Enum.GamepadKeyCode.KeypadOne",
-				"Enum.GamepadKeyCode.KeypadTwo",
-				"Enum.GamepadKeyCode.KeypadThree",
-				"Enum.GamepadKeyCode.KeypadFour",
-				"Enum.GamepadKeyCode.KeypadFive",
-				"Enum.GamepadKeyCode.KeypadSix",
-				"Enum.GamepadKeyCode.KeypadSeven",
-				"Enum.GamepadKeyCode.KeypadEight",
-				"Enum.GamepadKeyCode.KeypadNine",
-				"Enum.GamepadKeyCode.KeypadPeriod",
-				"Enum.GamepadKeyCode.KeypadDivide",
-				"Enum.GamepadKeyCode.KeypadMultiply",
-				"Enum.GamepadKeyCode.KeypadMinus",
-				"Enum.GamepadKeyCode.KeypadPlus",
-				"Enum.GamepadKeyCode.KeypadEnter",
-				"Enum.GamepadKeyCode.KeypadEquals",
-				"Enum.GamepadKeyCode.Up",
-				"Enum.GamepadKeyCode.Down",
-				"Enum.GamepadKeyCode.Right",
-				"Enum.GamepadKeyCode.Left",
-				"Enum.GamepadKeyCode.Insert",
-				"Enum.GamepadKeyCode.Home",
-				"Enum.GamepadKeyCode.End",
-				"Enum.GamepadKeyCode.PageUp",
-				"Enum.GamepadKeyCode.PageDown",
-				"Enum.GamepadKeyCode.LeftShift",
-				"Enum.GamepadKeyCode.RightShift",
-				"Enum.GamepadKeyCode.LeftMeta",
-				"Enum.GamepadKeyCode.RightMeta",
-				"Enum.GamepadKeyCode.LeftAlt",
-				"Enum.GamepadKeyCode.RightAlt",
-				"Enum.GamepadKeyCode.LeftControl",
-				"Enum.GamepadKeyCode.RightControl",
-				"Enum.GamepadKeyCode.CapsLock",
-				"Enum.GamepadKeyCode.NumLock",
-				"Enum.GamepadKeyCode.ScrollLock",
-				"Enum.GamepadKeyCode.LeftSuper",
-				"Enum.GamepadKeyCode.RightSuper",
-				"Enum.GamepadKeyCode.Mode",
-				"Enum.GamepadKeyCode.Compose",
-				"Enum.GamepadKeyCode.Help",
-				"Enum.GamepadKeyCode.Print",
-				"Enum.GamepadKeyCode.SysReq",
-				"Enum.GamepadKeyCode.Break",
-				"Enum.GamepadKeyCode.Menu",
-				"Enum.GamepadKeyCode.Power",
-				"Enum.GamepadKeyCode.Euro",
-				"Enum.GamepadKeyCode.Undo",
-				"Enum.GamepadKeyCode.F1",
-				"Enum.GamepadKeyCode.F2",
-				"Enum.GamepadKeyCode.F3",
-				"Enum.GamepadKeyCode.F4",
-				"Enum.GamepadKeyCode.F5",
-				"Enum.GamepadKeyCode.F6",
-				"Enum.GamepadKeyCode.F7",
-				"Enum.GamepadKeyCode.F8",
-				"Enum.GamepadKeyCode.F9",
-				"Enum.GamepadKeyCode.F10",
-				"Enum.GamepadKeyCode.F11",
-				"Enum.GamepadKeyCode.F12",
-				"Enum.GamepadKeyCode.F13",
-				"Enum.GamepadKeyCode.F14",
-				"Enum.GamepadKeyCode.F15",
-				"Enum.GamepadKeyCode.World0",
-				"Enum.GamepadKeyCode.World1",
-				"Enum.GamepadKeyCode.World2",
-				"Enum.GamepadKeyCode.World3",
-				"Enum.GamepadKeyCode.World4",
-				"Enum.GamepadKeyCode.World5",
-				"Enum.GamepadKeyCode.World6",
-				"Enum.GamepadKeyCode.World7",
-				"Enum.GamepadKeyCode.World8",
-				"Enum.GamepadKeyCode.World9",
-				"Enum.GamepadKeyCode.World10",
-				"Enum.GamepadKeyCode.World11",
-				"Enum.GamepadKeyCode.World12",
-				"Enum.GamepadKeyCode.World13",
-				"Enum.GamepadKeyCode.World14",
-				"Enum.GamepadKeyCode.World15",
-				"Enum.GamepadKeyCode.World16",
-				"Enum.GamepadKeyCode.World17",
-				"Enum.GamepadKeyCode.World18",
-				"Enum.GamepadKeyCode.World19",
-				"Enum.GamepadKeyCode.World20",
-				"Enum.GamepadKeyCode.World21",
-				"Enum.GamepadKeyCode.World22",
-				"Enum.GamepadKeyCode.World23",
-				"Enum.GamepadKeyCode.World24",
-				"Enum.GamepadKeyCode.World25",
-				"Enum.GamepadKeyCode.World26",
-				"Enum.GamepadKeyCode.World27",
-				"Enum.GamepadKeyCode.World28",
-				"Enum.GamepadKeyCode.World29",
-				"Enum.GamepadKeyCode.World30",
-				"Enum.GamepadKeyCode.World31",
-				"Enum.GamepadKeyCode.World32",
-				"Enum.GamepadKeyCode.World33",
-				"Enum.GamepadKeyCode.World34",
-				"Enum.GamepadKeyCode.World35",
-				"Enum.GamepadKeyCode.World36",
-				"Enum.GamepadKeyCode.World37",
-				"Enum.GamepadKeyCode.World38",
-				"Enum.GamepadKeyCode.World39",
-				"Enum.GamepadKeyCode.World40",
-				"Enum.GamepadKeyCode.World41",
-				"Enum.GamepadKeyCode.World42",
-				"Enum.GamepadKeyCode.World43",
-				"Enum.GamepadKeyCode.World44",
-				"Enum.GamepadKeyCode.World45",
-				"Enum.GamepadKeyCode.World46",
-				"Enum.GamepadKeyCode.World47",
-				"Enum.GamepadKeyCode.World48",
-				"Enum.GamepadKeyCode.World49",
-				"Enum.GamepadKeyCode.World50",
-				"Enum.GamepadKeyCode.World51",
-				"Enum.GamepadKeyCode.World52",
-				"Enum.GamepadKeyCode.World53",
-				"Enum.GamepadKeyCode.World54",
-				"Enum.GamepadKeyCode.World55",
-				"Enum.GamepadKeyCode.World56",
-				"Enum.GamepadKeyCode.World57",
-				"Enum.GamepadKeyCode.World58",
-				"Enum.GamepadKeyCode.World59",
-				"Enum.GamepadKeyCode.World60",
-				"Enum.GamepadKeyCode.World61",
-				"Enum.GamepadKeyCode.World62",
-				"Enum.GamepadKeyCode.World63",
-				"Enum.GamepadKeyCode.World64",
-				"Enum.GamepadKeyCode.World65",
-				"Enum.GamepadKeyCode.World66",
-				"Enum.GamepadKeyCode.World67",
-				"Enum.GamepadKeyCode.World68",
-				"Enum.GamepadKeyCode.World69",
-				"Enum.GamepadKeyCode.World70",
-				"Enum.GamepadKeyCode.World71",
-				"Enum.GamepadKeyCode.World72",
-				"Enum.GamepadKeyCode.World73",
-				"Enum.GamepadKeyCode.World74",
-				"Enum.GamepadKeyCode.World75",
-				"Enum.GamepadKeyCode.World76",
-				"Enum.GamepadKeyCode.World77",
-				"Enum.GamepadKeyCode.World78",
-				"Enum.GamepadKeyCode.World79",
-				"Enum.GamepadKeyCode.World80",
-				"Enum.GamepadKeyCode.World81",
-				"Enum.GamepadKeyCode.World82",
-				"Enum.GamepadKeyCode.World83",
-				"Enum.GamepadKeyCode.World84",
-				"Enum.GamepadKeyCode.World85",
-				"Enum.GamepadKeyCode.World86",
-				"Enum.GamepadKeyCode.World87",
-				"Enum.GamepadKeyCode.World88",
-				"Enum.GamepadKeyCode.World89",
-				"Enum.GamepadKeyCode.World90",
-				"Enum.GamepadKeyCode.World91",
-				"Enum.GamepadKeyCode.World92",
-				"Enum.GamepadKeyCode.World93",
-				"Enum.GamepadKeyCode.World94",
-				"Enum.GamepadKeyCode.World95",
-				"Enum.GamepadKeyCode.ButtonX",
-				"Enum.GamepadKeyCode.ButtonY",
-				"Enum.GamepadKeyCode.ButtonA",
-				"Enum.GamepadKeyCode.ButtonB",
-				"Enum.GamepadKeyCode.ButtonR1",
-				"Enum.GamepadKeyCode.ButtonL1",
-				"Enum.GamepadKeyCode.ButtonR2",
-				"Enum.GamepadKeyCode.ButtonL2",
-				"Enum.GamepadKeyCode.ButtonR3",
-				"Enum.GamepadKeyCode.ButtonL3",
-				"Enum.GamepadKeyCode.ButtonStart",
-				"Enum.GamepadKeyCode.ButtonSelect",
-				"Enum.GamepadKeyCode.DPadLeft",
-				"Enum.GamepadKeyCode.DPadRight",
-				"Enum.GamepadKeyCode.DPadUp",
-				"Enum.GamepadKeyCode.DPadDown",
-				"Enum.GamepadKeyCode.Thumbstick1",
-				"Enum.GamepadKeyCode.Thumbstick2"
+				"Enum.KeyCode.Unknown",
+				"Enum.KeyCode.Backspace",
+				"Enum.KeyCode.Tab",
+				"Enum.KeyCode.Clear",
+				"Enum.KeyCode.Return",
+				"Enum.KeyCode.Pause",
+				"Enum.KeyCode.Escape",
+				"Enum.KeyCode.Space",
+				"Enum.KeyCode.QuotedDouble",
+				"Enum.KeyCode.Hash",
+				"Enum.KeyCode.Dollar",
+				"Enum.KeyCode.Percent",
+				"Enum.KeyCode.Ampersand",
+				"Enum.KeyCode.Quote",
+				"Enum.KeyCode.LeftParenthesis",
+				"Enum.KeyCode.RightParenthesis",
+				"Enum.KeyCode.Asterisk",
+				"Enum.KeyCode.Plus",
+				"Enum.KeyCode.Comma",
+				"Enum.KeyCode.Minus",
+				"Enum.KeyCode.Period",
+				"Enum.KeyCode.Slash",
+				"Enum.KeyCode.Zero",
+				"Enum.KeyCode.One",
+				"Enum.KeyCode.Two",
+				"Enum.KeyCode.Three",
+				"Enum.KeyCode.Four",
+				"Enum.KeyCode.Five",
+				"Enum.KeyCode.Six",
+				"Enum.KeyCode.Seven",
+				"Enum.KeyCode.Eight",
+				"Enum.KeyCode.Nine",
+				"Enum.KeyCode.Colon",
+				"Enum.KeyCode.Semicolon",
+				"Enum.KeyCode.LessThan",
+				"Enum.KeyCode.Equals",
+				"Enum.KeyCode.GreaterThan",
+				"Enum.KeyCode.Question",
+				"Enum.KeyCode.At",
+				"Enum.KeyCode.LeftBracket",
+				"Enum.KeyCode.BackSlash",
+				"Enum.KeyCode.RightBracket",
+				"Enum.KeyCode.Caret",
+				"Enum.KeyCode.Underscore",
+				"Enum.KeyCode.Backquote",
+				"Enum.KeyCode.A",
+				"Enum.KeyCode.B",
+				"Enum.KeyCode.C",
+				"Enum.KeyCode.D",
+				"Enum.KeyCode.E",
+				"Enum.KeyCode.F",
+				"Enum.KeyCode.G",
+				"Enum.KeyCode.H",
+				"Enum.KeyCode.I",
+				"Enum.KeyCode.J",
+				"Enum.KeyCode.K",
+				"Enum.KeyCode.L",
+				"Enum.KeyCode.M",
+				"Enum.KeyCode.N",
+				"Enum.KeyCode.O",
+				"Enum.KeyCode.P",
+				"Enum.KeyCode.Q",
+				"Enum.KeyCode.R",
+				"Enum.KeyCode.S",
+				"Enum.KeyCode.T",
+				"Enum.KeyCode.U",
+				"Enum.KeyCode.V",
+				"Enum.KeyCode.W",
+				"Enum.KeyCode.X",
+				"Enum.KeyCode.Y",
+				"Enum.KeyCode.Z",
+				"Enum.KeyCode.LeftCurly",
+				"Enum.KeyCode.Pipe",
+				"Enum.KeyCode.RightCurly",
+				"Enum.KeyCode.Tilde",
+				"Enum.KeyCode.Delete",
+				"Enum.KeyCode.KeypadZero",
+				"Enum.KeyCode.KeypadOne",
+				"Enum.KeyCode.KeypadTwo",
+				"Enum.KeyCode.KeypadThree",
+				"Enum.KeyCode.KeypadFour",
+				"Enum.KeyCode.KeypadFive",
+				"Enum.KeyCode.KeypadSix",
+				"Enum.KeyCode.KeypadSeven",
+				"Enum.KeyCode.KeypadEight",
+				"Enum.KeyCode.KeypadNine",
+				"Enum.KeyCode.KeypadPeriod",
+				"Enum.KeyCode.KeypadDivide",
+				"Enum.KeyCode.KeypadMultiply",
+				"Enum.KeyCode.KeypadMinus",
+				"Enum.KeyCode.KeypadPlus",
+				"Enum.KeyCode.KeypadEnter",
+				"Enum.KeyCode.KeypadEquals",
+				"Enum.KeyCode.Up",
+				"Enum.KeyCode.Down",
+				"Enum.KeyCode.Right",
+				"Enum.KeyCode.Left",
+				"Enum.KeyCode.Insert",
+				"Enum.KeyCode.Home",
+				"Enum.KeyCode.End",
+				"Enum.KeyCode.PageUp",
+				"Enum.KeyCode.PageDown",
+				"Enum.KeyCode.LeftShift",
+				"Enum.KeyCode.RightShift",
+				"Enum.KeyCode.LeftMeta",
+				"Enum.KeyCode.RightMeta",
+				"Enum.KeyCode.LeftAlt",
+				"Enum.KeyCode.RightAlt",
+				"Enum.KeyCode.LeftControl",
+				"Enum.KeyCode.RightControl",
+				"Enum.KeyCode.CapsLock",
+				"Enum.KeyCode.NumLock",
+				"Enum.KeyCode.ScrollLock",
+				"Enum.KeyCode.LeftSuper",
+				"Enum.KeyCode.RightSuper",
+				"Enum.KeyCode.Mode",
+				"Enum.KeyCode.Compose",
+				"Enum.KeyCode.Help",
+				"Enum.KeyCode.Print",
+				"Enum.KeyCode.SysReq",
+				"Enum.KeyCode.Break",
+				"Enum.KeyCode.Menu",
+				"Enum.KeyCode.Power",
+				"Enum.KeyCode.Euro",
+				"Enum.KeyCode.Undo",
+				"Enum.KeyCode.F1",
+				"Enum.KeyCode.F2",
+				"Enum.KeyCode.F3",
+				"Enum.KeyCode.F4",
+				"Enum.KeyCode.F5",
+				"Enum.KeyCode.F6",
+				"Enum.KeyCode.F7",
+				"Enum.KeyCode.F8",
+				"Enum.KeyCode.F9",
+				"Enum.KeyCode.F10",
+				"Enum.KeyCode.F11",
+				"Enum.KeyCode.F12",
+				"Enum.KeyCode.F13",
+				"Enum.KeyCode.F14",
+				"Enum.KeyCode.F15",
+				"Enum.KeyCode.World0",
+				"Enum.KeyCode.World1",
+				"Enum.KeyCode.World2",
+				"Enum.KeyCode.World3",
+				"Enum.KeyCode.World4",
+				"Enum.KeyCode.World5",
+				"Enum.KeyCode.World6",
+				"Enum.KeyCode.World7",
+				"Enum.KeyCode.World8",
+				"Enum.KeyCode.World9",
+				"Enum.KeyCode.World10",
+				"Enum.KeyCode.World11",
+				"Enum.KeyCode.World12",
+				"Enum.KeyCode.World13",
+				"Enum.KeyCode.World14",
+				"Enum.KeyCode.World15",
+				"Enum.KeyCode.World16",
+				"Enum.KeyCode.World17",
+				"Enum.KeyCode.World18",
+				"Enum.KeyCode.World19",
+				"Enum.KeyCode.World20",
+				"Enum.KeyCode.World21",
+				"Enum.KeyCode.World22",
+				"Enum.KeyCode.World23",
+				"Enum.KeyCode.World24",
+				"Enum.KeyCode.World25",
+				"Enum.KeyCode.World26",
+				"Enum.KeyCode.World27",
+				"Enum.KeyCode.World28",
+				"Enum.KeyCode.World29",
+				"Enum.KeyCode.World30",
+				"Enum.KeyCode.World31",
+				"Enum.KeyCode.World32",
+				"Enum.KeyCode.World33",
+				"Enum.KeyCode.World34",
+				"Enum.KeyCode.World35",
+				"Enum.KeyCode.World36",
+				"Enum.KeyCode.World37",
+				"Enum.KeyCode.World38",
+				"Enum.KeyCode.World39",
+				"Enum.KeyCode.World40",
+				"Enum.KeyCode.World41",
+				"Enum.KeyCode.World42",
+				"Enum.KeyCode.World43",
+				"Enum.KeyCode.World44",
+				"Enum.KeyCode.World45",
+				"Enum.KeyCode.World46",
+				"Enum.KeyCode.World47",
+				"Enum.KeyCode.World48",
+				"Enum.KeyCode.World49",
+				"Enum.KeyCode.World50",
+				"Enum.KeyCode.World51",
+				"Enum.KeyCode.World52",
+				"Enum.KeyCode.World53",
+				"Enum.KeyCode.World54",
+				"Enum.KeyCode.World55",
+				"Enum.KeyCode.World56",
+				"Enum.KeyCode.World57",
+				"Enum.KeyCode.World58",
+				"Enum.KeyCode.World59",
+				"Enum.KeyCode.World60",
+				"Enum.KeyCode.World61",
+				"Enum.KeyCode.World62",
+				"Enum.KeyCode.World63",
+				"Enum.KeyCode.World64",
+				"Enum.KeyCode.World65",
+				"Enum.KeyCode.World66",
+				"Enum.KeyCode.World67",
+				"Enum.KeyCode.World68",
+				"Enum.KeyCode.World69",
+				"Enum.KeyCode.World70",
+				"Enum.KeyCode.World71",
+				"Enum.KeyCode.World72",
+				"Enum.KeyCode.World73",
+				"Enum.KeyCode.World74",
+				"Enum.KeyCode.World75",
+				"Enum.KeyCode.World76",
+				"Enum.KeyCode.World77",
+				"Enum.KeyCode.World78",
+				"Enum.KeyCode.World79",
+				"Enum.KeyCode.World80",
+				"Enum.KeyCode.World81",
+				"Enum.KeyCode.World82",
+				"Enum.KeyCode.World83",
+				"Enum.KeyCode.World84",
+				"Enum.KeyCode.World85",
+				"Enum.KeyCode.World86",
+				"Enum.KeyCode.World87",
+				"Enum.KeyCode.World88",
+				"Enum.KeyCode.World89",
+				"Enum.KeyCode.World90",
+				"Enum.KeyCode.World91",
+				"Enum.KeyCode.World92",
+				"Enum.KeyCode.World93",
+				"Enum.KeyCode.World94",
+				"Enum.KeyCode.World95",
+				"Enum.KeyCode.ButtonX",
+				"Enum.KeyCode.ButtonY",
+				"Enum.KeyCode.ButtonA",
+				"Enum.KeyCode.ButtonB",
+				"Enum.KeyCode.ButtonR1",
+				"Enum.KeyCode.ButtonL1",
+				"Enum.KeyCode.ButtonR2",
+				"Enum.KeyCode.ButtonL2",
+				"Enum.KeyCode.ButtonR3",
+				"Enum.KeyCode.ButtonL3",
+				"Enum.KeyCode.ButtonStart",
+				"Enum.KeyCode.ButtonSelect",
+				"Enum.KeyCode.DPadLeft",
+				"Enum.KeyCode.DPadRight",
+				"Enum.KeyCode.DPadUp",
+				"Enum.KeyCode.DPadDown",
+				"Enum.KeyCode.Thumbstick1",
+				"Enum.KeyCode.Thumbstick2"
 			]
 		},
 		"HoldDuration": {
@@ -2328,260 +2328,260 @@
 		"KeyboardKeyCode": {
 			"type": "string",
 			"enum": [
-				"Enum.KeyboardKeyCode.Unknown",
-				"Enum.KeyboardKeyCode.Backspace",
-				"Enum.KeyboardKeyCode.Tab",
-				"Enum.KeyboardKeyCode.Clear",
-				"Enum.KeyboardKeyCode.Return",
-				"Enum.KeyboardKeyCode.Pause",
-				"Enum.KeyboardKeyCode.Escape",
-				"Enum.KeyboardKeyCode.Space",
-				"Enum.KeyboardKeyCode.QuotedDouble",
-				"Enum.KeyboardKeyCode.Hash",
-				"Enum.KeyboardKeyCode.Dollar",
-				"Enum.KeyboardKeyCode.Percent",
-				"Enum.KeyboardKeyCode.Ampersand",
-				"Enum.KeyboardKeyCode.Quote",
-				"Enum.KeyboardKeyCode.LeftParenthesis",
-				"Enum.KeyboardKeyCode.RightParenthesis",
-				"Enum.KeyboardKeyCode.Asterisk",
-				"Enum.KeyboardKeyCode.Plus",
-				"Enum.KeyboardKeyCode.Comma",
-				"Enum.KeyboardKeyCode.Minus",
-				"Enum.KeyboardKeyCode.Period",
-				"Enum.KeyboardKeyCode.Slash",
-				"Enum.KeyboardKeyCode.Zero",
-				"Enum.KeyboardKeyCode.One",
-				"Enum.KeyboardKeyCode.Two",
-				"Enum.KeyboardKeyCode.Three",
-				"Enum.KeyboardKeyCode.Four",
-				"Enum.KeyboardKeyCode.Five",
-				"Enum.KeyboardKeyCode.Six",
-				"Enum.KeyboardKeyCode.Seven",
-				"Enum.KeyboardKeyCode.Eight",
-				"Enum.KeyboardKeyCode.Nine",
-				"Enum.KeyboardKeyCode.Colon",
-				"Enum.KeyboardKeyCode.Semicolon",
-				"Enum.KeyboardKeyCode.LessThan",
-				"Enum.KeyboardKeyCode.Equals",
-				"Enum.KeyboardKeyCode.GreaterThan",
-				"Enum.KeyboardKeyCode.Question",
-				"Enum.KeyboardKeyCode.At",
-				"Enum.KeyboardKeyCode.LeftBracket",
-				"Enum.KeyboardKeyCode.BackSlash",
-				"Enum.KeyboardKeyCode.RightBracket",
-				"Enum.KeyboardKeyCode.Caret",
-				"Enum.KeyboardKeyCode.Underscore",
-				"Enum.KeyboardKeyCode.Backquote",
-				"Enum.KeyboardKeyCode.A",
-				"Enum.KeyboardKeyCode.B",
-				"Enum.KeyboardKeyCode.C",
-				"Enum.KeyboardKeyCode.D",
-				"Enum.KeyboardKeyCode.E",
-				"Enum.KeyboardKeyCode.F",
-				"Enum.KeyboardKeyCode.G",
-				"Enum.KeyboardKeyCode.H",
-				"Enum.KeyboardKeyCode.I",
-				"Enum.KeyboardKeyCode.J",
-				"Enum.KeyboardKeyCode.K",
-				"Enum.KeyboardKeyCode.L",
-				"Enum.KeyboardKeyCode.M",
-				"Enum.KeyboardKeyCode.N",
-				"Enum.KeyboardKeyCode.O",
-				"Enum.KeyboardKeyCode.P",
-				"Enum.KeyboardKeyCode.Q",
-				"Enum.KeyboardKeyCode.R",
-				"Enum.KeyboardKeyCode.S",
-				"Enum.KeyboardKeyCode.T",
-				"Enum.KeyboardKeyCode.U",
-				"Enum.KeyboardKeyCode.V",
-				"Enum.KeyboardKeyCode.W",
-				"Enum.KeyboardKeyCode.X",
-				"Enum.KeyboardKeyCode.Y",
-				"Enum.KeyboardKeyCode.Z",
-				"Enum.KeyboardKeyCode.LeftCurly",
-				"Enum.KeyboardKeyCode.Pipe",
-				"Enum.KeyboardKeyCode.RightCurly",
-				"Enum.KeyboardKeyCode.Tilde",
-				"Enum.KeyboardKeyCode.Delete",
-				"Enum.KeyboardKeyCode.KeypadZero",
-				"Enum.KeyboardKeyCode.KeypadOne",
-				"Enum.KeyboardKeyCode.KeypadTwo",
-				"Enum.KeyboardKeyCode.KeypadThree",
-				"Enum.KeyboardKeyCode.KeypadFour",
-				"Enum.KeyboardKeyCode.KeypadFive",
-				"Enum.KeyboardKeyCode.KeypadSix",
-				"Enum.KeyboardKeyCode.KeypadSeven",
-				"Enum.KeyboardKeyCode.KeypadEight",
-				"Enum.KeyboardKeyCode.KeypadNine",
-				"Enum.KeyboardKeyCode.KeypadPeriod",
-				"Enum.KeyboardKeyCode.KeypadDivide",
-				"Enum.KeyboardKeyCode.KeypadMultiply",
-				"Enum.KeyboardKeyCode.KeypadMinus",
-				"Enum.KeyboardKeyCode.KeypadPlus",
-				"Enum.KeyboardKeyCode.KeypadEnter",
-				"Enum.KeyboardKeyCode.KeypadEquals",
-				"Enum.KeyboardKeyCode.Up",
-				"Enum.KeyboardKeyCode.Down",
-				"Enum.KeyboardKeyCode.Right",
-				"Enum.KeyboardKeyCode.Left",
-				"Enum.KeyboardKeyCode.Insert",
-				"Enum.KeyboardKeyCode.Home",
-				"Enum.KeyboardKeyCode.End",
-				"Enum.KeyboardKeyCode.PageUp",
-				"Enum.KeyboardKeyCode.PageDown",
-				"Enum.KeyboardKeyCode.LeftShift",
-				"Enum.KeyboardKeyCode.RightShift",
-				"Enum.KeyboardKeyCode.LeftMeta",
-				"Enum.KeyboardKeyCode.RightMeta",
-				"Enum.KeyboardKeyCode.LeftAlt",
-				"Enum.KeyboardKeyCode.RightAlt",
-				"Enum.KeyboardKeyCode.LeftControl",
-				"Enum.KeyboardKeyCode.RightControl",
-				"Enum.KeyboardKeyCode.CapsLock",
-				"Enum.KeyboardKeyCode.NumLock",
-				"Enum.KeyboardKeyCode.ScrollLock",
-				"Enum.KeyboardKeyCode.LeftSuper",
-				"Enum.KeyboardKeyCode.RightSuper",
-				"Enum.KeyboardKeyCode.Mode",
-				"Enum.KeyboardKeyCode.Compose",
-				"Enum.KeyboardKeyCode.Help",
-				"Enum.KeyboardKeyCode.Print",
-				"Enum.KeyboardKeyCode.SysReq",
-				"Enum.KeyboardKeyCode.Break",
-				"Enum.KeyboardKeyCode.Menu",
-				"Enum.KeyboardKeyCode.Power",
-				"Enum.KeyboardKeyCode.Euro",
-				"Enum.KeyboardKeyCode.Undo",
-				"Enum.KeyboardKeyCode.F1",
-				"Enum.KeyboardKeyCode.F2",
-				"Enum.KeyboardKeyCode.F3",
-				"Enum.KeyboardKeyCode.F4",
-				"Enum.KeyboardKeyCode.F5",
-				"Enum.KeyboardKeyCode.F6",
-				"Enum.KeyboardKeyCode.F7",
-				"Enum.KeyboardKeyCode.F8",
-				"Enum.KeyboardKeyCode.F9",
-				"Enum.KeyboardKeyCode.F10",
-				"Enum.KeyboardKeyCode.F11",
-				"Enum.KeyboardKeyCode.F12",
-				"Enum.KeyboardKeyCode.F13",
-				"Enum.KeyboardKeyCode.F14",
-				"Enum.KeyboardKeyCode.F15",
-				"Enum.KeyboardKeyCode.World0",
-				"Enum.KeyboardKeyCode.World1",
-				"Enum.KeyboardKeyCode.World2",
-				"Enum.KeyboardKeyCode.World3",
-				"Enum.KeyboardKeyCode.World4",
-				"Enum.KeyboardKeyCode.World5",
-				"Enum.KeyboardKeyCode.World6",
-				"Enum.KeyboardKeyCode.World7",
-				"Enum.KeyboardKeyCode.World8",
-				"Enum.KeyboardKeyCode.World9",
-				"Enum.KeyboardKeyCode.World10",
-				"Enum.KeyboardKeyCode.World11",
-				"Enum.KeyboardKeyCode.World12",
-				"Enum.KeyboardKeyCode.World13",
-				"Enum.KeyboardKeyCode.World14",
-				"Enum.KeyboardKeyCode.World15",
-				"Enum.KeyboardKeyCode.World16",
-				"Enum.KeyboardKeyCode.World17",
-				"Enum.KeyboardKeyCode.World18",
-				"Enum.KeyboardKeyCode.World19",
-				"Enum.KeyboardKeyCode.World20",
-				"Enum.KeyboardKeyCode.World21",
-				"Enum.KeyboardKeyCode.World22",
-				"Enum.KeyboardKeyCode.World23",
-				"Enum.KeyboardKeyCode.World24",
-				"Enum.KeyboardKeyCode.World25",
-				"Enum.KeyboardKeyCode.World26",
-				"Enum.KeyboardKeyCode.World27",
-				"Enum.KeyboardKeyCode.World28",
-				"Enum.KeyboardKeyCode.World29",
-				"Enum.KeyboardKeyCode.World30",
-				"Enum.KeyboardKeyCode.World31",
-				"Enum.KeyboardKeyCode.World32",
-				"Enum.KeyboardKeyCode.World33",
-				"Enum.KeyboardKeyCode.World34",
-				"Enum.KeyboardKeyCode.World35",
-				"Enum.KeyboardKeyCode.World36",
-				"Enum.KeyboardKeyCode.World37",
-				"Enum.KeyboardKeyCode.World38",
-				"Enum.KeyboardKeyCode.World39",
-				"Enum.KeyboardKeyCode.World40",
-				"Enum.KeyboardKeyCode.World41",
-				"Enum.KeyboardKeyCode.World42",
-				"Enum.KeyboardKeyCode.World43",
-				"Enum.KeyboardKeyCode.World44",
-				"Enum.KeyboardKeyCode.World45",
-				"Enum.KeyboardKeyCode.World46",
-				"Enum.KeyboardKeyCode.World47",
-				"Enum.KeyboardKeyCode.World48",
-				"Enum.KeyboardKeyCode.World49",
-				"Enum.KeyboardKeyCode.World50",
-				"Enum.KeyboardKeyCode.World51",
-				"Enum.KeyboardKeyCode.World52",
-				"Enum.KeyboardKeyCode.World53",
-				"Enum.KeyboardKeyCode.World54",
-				"Enum.KeyboardKeyCode.World55",
-				"Enum.KeyboardKeyCode.World56",
-				"Enum.KeyboardKeyCode.World57",
-				"Enum.KeyboardKeyCode.World58",
-				"Enum.KeyboardKeyCode.World59",
-				"Enum.KeyboardKeyCode.World60",
-				"Enum.KeyboardKeyCode.World61",
-				"Enum.KeyboardKeyCode.World62",
-				"Enum.KeyboardKeyCode.World63",
-				"Enum.KeyboardKeyCode.World64",
-				"Enum.KeyboardKeyCode.World65",
-				"Enum.KeyboardKeyCode.World66",
-				"Enum.KeyboardKeyCode.World67",
-				"Enum.KeyboardKeyCode.World68",
-				"Enum.KeyboardKeyCode.World69",
-				"Enum.KeyboardKeyCode.World70",
-				"Enum.KeyboardKeyCode.World71",
-				"Enum.KeyboardKeyCode.World72",
-				"Enum.KeyboardKeyCode.World73",
-				"Enum.KeyboardKeyCode.World74",
-				"Enum.KeyboardKeyCode.World75",
-				"Enum.KeyboardKeyCode.World76",
-				"Enum.KeyboardKeyCode.World77",
-				"Enum.KeyboardKeyCode.World78",
-				"Enum.KeyboardKeyCode.World79",
-				"Enum.KeyboardKeyCode.World80",
-				"Enum.KeyboardKeyCode.World81",
-				"Enum.KeyboardKeyCode.World82",
-				"Enum.KeyboardKeyCode.World83",
-				"Enum.KeyboardKeyCode.World84",
-				"Enum.KeyboardKeyCode.World85",
-				"Enum.KeyboardKeyCode.World86",
-				"Enum.KeyboardKeyCode.World87",
-				"Enum.KeyboardKeyCode.World88",
-				"Enum.KeyboardKeyCode.World89",
-				"Enum.KeyboardKeyCode.World90",
-				"Enum.KeyboardKeyCode.World91",
-				"Enum.KeyboardKeyCode.World92",
-				"Enum.KeyboardKeyCode.World93",
-				"Enum.KeyboardKeyCode.World94",
-				"Enum.KeyboardKeyCode.World95",
-				"Enum.KeyboardKeyCode.ButtonX",
-				"Enum.KeyboardKeyCode.ButtonY",
-				"Enum.KeyboardKeyCode.ButtonA",
-				"Enum.KeyboardKeyCode.ButtonB",
-				"Enum.KeyboardKeyCode.ButtonR1",
-				"Enum.KeyboardKeyCode.ButtonL1",
-				"Enum.KeyboardKeyCode.ButtonR2",
-				"Enum.KeyboardKeyCode.ButtonL2",
-				"Enum.KeyboardKeyCode.ButtonR3",
-				"Enum.KeyboardKeyCode.ButtonL3",
-				"Enum.KeyboardKeyCode.ButtonStart",
-				"Enum.KeyboardKeyCode.ButtonSelect",
-				"Enum.KeyboardKeyCode.DPadLeft",
-				"Enum.KeyboardKeyCode.DPadRight",
-				"Enum.KeyboardKeyCode.DPadUp",
-				"Enum.KeyboardKeyCode.DPadDown",
-				"Enum.KeyboardKeyCode.Thumbstick1",
-				"Enum.KeyboardKeyCode.Thumbstick2"
+				"Enum.KeyCode.Unknown",
+				"Enum.KeyCode.Backspace",
+				"Enum.KeyCode.Tab",
+				"Enum.KeyCode.Clear",
+				"Enum.KeyCode.Return",
+				"Enum.KeyCode.Pause",
+				"Enum.KeyCode.Escape",
+				"Enum.KeyCode.Space",
+				"Enum.KeyCode.QuotedDouble",
+				"Enum.KeyCode.Hash",
+				"Enum.KeyCode.Dollar",
+				"Enum.KeyCode.Percent",
+				"Enum.KeyCode.Ampersand",
+				"Enum.KeyCode.Quote",
+				"Enum.KeyCode.LeftParenthesis",
+				"Enum.KeyCode.RightParenthesis",
+				"Enum.KeyCode.Asterisk",
+				"Enum.KeyCode.Plus",
+				"Enum.KeyCode.Comma",
+				"Enum.KeyCode.Minus",
+				"Enum.KeyCode.Period",
+				"Enum.KeyCode.Slash",
+				"Enum.KeyCode.Zero",
+				"Enum.KeyCode.One",
+				"Enum.KeyCode.Two",
+				"Enum.KeyCode.Three",
+				"Enum.KeyCode.Four",
+				"Enum.KeyCode.Five",
+				"Enum.KeyCode.Six",
+				"Enum.KeyCode.Seven",
+				"Enum.KeyCode.Eight",
+				"Enum.KeyCode.Nine",
+				"Enum.KeyCode.Colon",
+				"Enum.KeyCode.Semicolon",
+				"Enum.KeyCode.LessThan",
+				"Enum.KeyCode.Equals",
+				"Enum.KeyCode.GreaterThan",
+				"Enum.KeyCode.Question",
+				"Enum.KeyCode.At",
+				"Enum.KeyCode.LeftBracket",
+				"Enum.KeyCode.BackSlash",
+				"Enum.KeyCode.RightBracket",
+				"Enum.KeyCode.Caret",
+				"Enum.KeyCode.Underscore",
+				"Enum.KeyCode.Backquote",
+				"Enum.KeyCode.A",
+				"Enum.KeyCode.B",
+				"Enum.KeyCode.C",
+				"Enum.KeyCode.D",
+				"Enum.KeyCode.E",
+				"Enum.KeyCode.F",
+				"Enum.KeyCode.G",
+				"Enum.KeyCode.H",
+				"Enum.KeyCode.I",
+				"Enum.KeyCode.J",
+				"Enum.KeyCode.K",
+				"Enum.KeyCode.L",
+				"Enum.KeyCode.M",
+				"Enum.KeyCode.N",
+				"Enum.KeyCode.O",
+				"Enum.KeyCode.P",
+				"Enum.KeyCode.Q",
+				"Enum.KeyCode.R",
+				"Enum.KeyCode.S",
+				"Enum.KeyCode.T",
+				"Enum.KeyCode.U",
+				"Enum.KeyCode.V",
+				"Enum.KeyCode.W",
+				"Enum.KeyCode.X",
+				"Enum.KeyCode.Y",
+				"Enum.KeyCode.Z",
+				"Enum.KeyCode.LeftCurly",
+				"Enum.KeyCode.Pipe",
+				"Enum.KeyCode.RightCurly",
+				"Enum.KeyCode.Tilde",
+				"Enum.KeyCode.Delete",
+				"Enum.KeyCode.KeypadZero",
+				"Enum.KeyCode.KeypadOne",
+				"Enum.KeyCode.KeypadTwo",
+				"Enum.KeyCode.KeypadThree",
+				"Enum.KeyCode.KeypadFour",
+				"Enum.KeyCode.KeypadFive",
+				"Enum.KeyCode.KeypadSix",
+				"Enum.KeyCode.KeypadSeven",
+				"Enum.KeyCode.KeypadEight",
+				"Enum.KeyCode.KeypadNine",
+				"Enum.KeyCode.KeypadPeriod",
+				"Enum.KeyCode.KeypadDivide",
+				"Enum.KeyCode.KeypadMultiply",
+				"Enum.KeyCode.KeypadMinus",
+				"Enum.KeyCode.KeypadPlus",
+				"Enum.KeyCode.KeypadEnter",
+				"Enum.KeyCode.KeypadEquals",
+				"Enum.KeyCode.Up",
+				"Enum.KeyCode.Down",
+				"Enum.KeyCode.Right",
+				"Enum.KeyCode.Left",
+				"Enum.KeyCode.Insert",
+				"Enum.KeyCode.Home",
+				"Enum.KeyCode.End",
+				"Enum.KeyCode.PageUp",
+				"Enum.KeyCode.PageDown",
+				"Enum.KeyCode.LeftShift",
+				"Enum.KeyCode.RightShift",
+				"Enum.KeyCode.LeftMeta",
+				"Enum.KeyCode.RightMeta",
+				"Enum.KeyCode.LeftAlt",
+				"Enum.KeyCode.RightAlt",
+				"Enum.KeyCode.LeftControl",
+				"Enum.KeyCode.RightControl",
+				"Enum.KeyCode.CapsLock",
+				"Enum.KeyCode.NumLock",
+				"Enum.KeyCode.ScrollLock",
+				"Enum.KeyCode.LeftSuper",
+				"Enum.KeyCode.RightSuper",
+				"Enum.KeyCode.Mode",
+				"Enum.KeyCode.Compose",
+				"Enum.KeyCode.Help",
+				"Enum.KeyCode.Print",
+				"Enum.KeyCode.SysReq",
+				"Enum.KeyCode.Break",
+				"Enum.KeyCode.Menu",
+				"Enum.KeyCode.Power",
+				"Enum.KeyCode.Euro",
+				"Enum.KeyCode.Undo",
+				"Enum.KeyCode.F1",
+				"Enum.KeyCode.F2",
+				"Enum.KeyCode.F3",
+				"Enum.KeyCode.F4",
+				"Enum.KeyCode.F5",
+				"Enum.KeyCode.F6",
+				"Enum.KeyCode.F7",
+				"Enum.KeyCode.F8",
+				"Enum.KeyCode.F9",
+				"Enum.KeyCode.F10",
+				"Enum.KeyCode.F11",
+				"Enum.KeyCode.F12",
+				"Enum.KeyCode.F13",
+				"Enum.KeyCode.F14",
+				"Enum.KeyCode.F15",
+				"Enum.KeyCode.World0",
+				"Enum.KeyCode.World1",
+				"Enum.KeyCode.World2",
+				"Enum.KeyCode.World3",
+				"Enum.KeyCode.World4",
+				"Enum.KeyCode.World5",
+				"Enum.KeyCode.World6",
+				"Enum.KeyCode.World7",
+				"Enum.KeyCode.World8",
+				"Enum.KeyCode.World9",
+				"Enum.KeyCode.World10",
+				"Enum.KeyCode.World11",
+				"Enum.KeyCode.World12",
+				"Enum.KeyCode.World13",
+				"Enum.KeyCode.World14",
+				"Enum.KeyCode.World15",
+				"Enum.KeyCode.World16",
+				"Enum.KeyCode.World17",
+				"Enum.KeyCode.World18",
+				"Enum.KeyCode.World19",
+				"Enum.KeyCode.World20",
+				"Enum.KeyCode.World21",
+				"Enum.KeyCode.World22",
+				"Enum.KeyCode.World23",
+				"Enum.KeyCode.World24",
+				"Enum.KeyCode.World25",
+				"Enum.KeyCode.World26",
+				"Enum.KeyCode.World27",
+				"Enum.KeyCode.World28",
+				"Enum.KeyCode.World29",
+				"Enum.KeyCode.World30",
+				"Enum.KeyCode.World31",
+				"Enum.KeyCode.World32",
+				"Enum.KeyCode.World33",
+				"Enum.KeyCode.World34",
+				"Enum.KeyCode.World35",
+				"Enum.KeyCode.World36",
+				"Enum.KeyCode.World37",
+				"Enum.KeyCode.World38",
+				"Enum.KeyCode.World39",
+				"Enum.KeyCode.World40",
+				"Enum.KeyCode.World41",
+				"Enum.KeyCode.World42",
+				"Enum.KeyCode.World43",
+				"Enum.KeyCode.World44",
+				"Enum.KeyCode.World45",
+				"Enum.KeyCode.World46",
+				"Enum.KeyCode.World47",
+				"Enum.KeyCode.World48",
+				"Enum.KeyCode.World49",
+				"Enum.KeyCode.World50",
+				"Enum.KeyCode.World51",
+				"Enum.KeyCode.World52",
+				"Enum.KeyCode.World53",
+				"Enum.KeyCode.World54",
+				"Enum.KeyCode.World55",
+				"Enum.KeyCode.World56",
+				"Enum.KeyCode.World57",
+				"Enum.KeyCode.World58",
+				"Enum.KeyCode.World59",
+				"Enum.KeyCode.World60",
+				"Enum.KeyCode.World61",
+				"Enum.KeyCode.World62",
+				"Enum.KeyCode.World63",
+				"Enum.KeyCode.World64",
+				"Enum.KeyCode.World65",
+				"Enum.KeyCode.World66",
+				"Enum.KeyCode.World67",
+				"Enum.KeyCode.World68",
+				"Enum.KeyCode.World69",
+				"Enum.KeyCode.World70",
+				"Enum.KeyCode.World71",
+				"Enum.KeyCode.World72",
+				"Enum.KeyCode.World73",
+				"Enum.KeyCode.World74",
+				"Enum.KeyCode.World75",
+				"Enum.KeyCode.World76",
+				"Enum.KeyCode.World77",
+				"Enum.KeyCode.World78",
+				"Enum.KeyCode.World79",
+				"Enum.KeyCode.World80",
+				"Enum.KeyCode.World81",
+				"Enum.KeyCode.World82",
+				"Enum.KeyCode.World83",
+				"Enum.KeyCode.World84",
+				"Enum.KeyCode.World85",
+				"Enum.KeyCode.World86",
+				"Enum.KeyCode.World87",
+				"Enum.KeyCode.World88",
+				"Enum.KeyCode.World89",
+				"Enum.KeyCode.World90",
+				"Enum.KeyCode.World91",
+				"Enum.KeyCode.World92",
+				"Enum.KeyCode.World93",
+				"Enum.KeyCode.World94",
+				"Enum.KeyCode.World95",
+				"Enum.KeyCode.ButtonX",
+				"Enum.KeyCode.ButtonY",
+				"Enum.KeyCode.ButtonA",
+				"Enum.KeyCode.ButtonB",
+				"Enum.KeyCode.ButtonR1",
+				"Enum.KeyCode.ButtonL1",
+				"Enum.KeyCode.ButtonR2",
+				"Enum.KeyCode.ButtonL2",
+				"Enum.KeyCode.ButtonR3",
+				"Enum.KeyCode.ButtonL3",
+				"Enum.KeyCode.ButtonStart",
+				"Enum.KeyCode.ButtonSelect",
+				"Enum.KeyCode.DPadLeft",
+				"Enum.KeyCode.DPadRight",
+				"Enum.KeyCode.DPadUp",
+				"Enum.KeyCode.DPadDown",
+				"Enum.KeyCode.Thumbstick1",
+				"Enum.KeyCode.Thumbstick2"
 			]
 		},
 		"ObjectText": {
@@ -2594,7 +2594,7 @@
 			"type": "string"
 		},
 		"UIOffset": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxPromptsVisible": {
 			"type": "integer"
@@ -2617,8 +2617,8 @@
 		"ComparisonMethod": {
 			"type": "string",
 			"enum": [
-				"Enum.ComparisonMethod.psnr",
-				"Enum.ComparisonMethod.diff"
+				"Enum.RenderingTestComparisonMethod.psnr",
+				"Enum.RenderingTestComparisonMethod.diff"
 			]
 		},
 		"ComparisonPsnrThreshold": {
@@ -2640,25 +2640,25 @@
 			"type": "number"
 		},
 		"MoonTextureId": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxBk": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxDn": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxFt": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxLf": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxRt": {
-			"type": "string"
+			"type": "array"
 		},
 		"SkyboxUp": {
-			"type": "string"
+			"type": "array"
 		},
 		"StarCount": {
 			"type": "integer"
@@ -2667,7 +2667,7 @@
 			"type": "number"
 		},
 		"SunTextureId": {
-			"type": "string"
+			"type": "array"
 		},
 		"Opacity": {
 			"type": "number"
@@ -2676,13 +2676,13 @@
 			"type": "number"
 		},
 		"LoopRegion": {
-			"type": "string"
+			"type": "array"
 		},
 		"PlayOnRemove": {
 			"type": "boolean"
 		},
 		"PlaybackRegion": {
-			"type": "string"
+			"type": "array"
 		},
 		"PlaybackRegionsEnabled": {
 			"type": "boolean"
@@ -2709,7 +2709,7 @@
 			"type": "string"
 		},
 		"SoundId": {
-			"type": "string"
+			"type": "array"
 		},
 		"Depth": {
 			"type": "number"
@@ -2775,7 +2775,7 @@
 			"type": "number"
 		},
 		"SparkleColor": {
-			"type": "string"
+			"type": "array"
 		},
 		"AlphaMode": {
 			"type": "string",
@@ -2785,7 +2785,7 @@
 			]
 		},
 		"TexturePack": {
-			"type": "string"
+			"type": "array"
 		},
 		"AutoAssignable": {
 			"type": "boolean"
@@ -2850,10 +2850,10 @@
 			]
 		},
 		"MaxSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"MinSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"MaxTextSize": {
 			"type": "integer"
@@ -2862,13 +2862,13 @@
 			"type": "integer"
 		},
 		"CornerRadius": {
-			"type": "string"
+			"type": "array"
 		},
 		"CellPadding": {
-			"type": "string"
+			"type": "array"
 		},
 		"CellSize": {
-			"type": "string"
+			"type": "array"
 		},
 		"FillDirectionMaxCells": {
 			"type": "integer"
@@ -2883,7 +2883,7 @@
 			]
 		},
 		"Padding": {
-			"type": "string"
+			"type": "array"
 		},
 		"Animated": {
 			"type": "boolean"
@@ -2936,21 +2936,21 @@
 		"MajorAxis": {
 			"type": "string",
 			"enum": [
-				"Enum.MajorAxis.RowMajor",
-				"Enum.MajorAxis.ColumnMajor"
+				"Enum.TableMajorAxis.RowMajor",
+				"Enum.TableMajorAxis.ColumnMajor"
 			]
 		},
 		"PaddingBottom": {
-			"type": "string"
+			"type": "array"
 		},
 		"PaddingLeft": {
-			"type": "string"
+			"type": "array"
 		},
 		"PaddingRight": {
-			"type": "string"
+			"type": "array"
 		},
 		"PaddingTop": {
-			"type": "string"
+			"type": "array"
 		},
 		"Scale": {
 			"type": "number"
