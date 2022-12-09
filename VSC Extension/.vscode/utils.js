@@ -49,11 +49,11 @@ function generateClasses() {
                 newTypes.push('StarterCharacterScripts')
                 newTypes.push('StarterPlayerScripts')
 
-                fs.writeFileSync(DIR, JSON.stringify(newTypes, null, '\t'))
+                fs.writeFileSync(DIR, JSON.stringify(newTypes))
             })
         
         }).on('error', () => {
-            console.log('ERROR: getClasses');
+            console.log('ERROR: generateClasses');
         })
     })
 }
@@ -104,8 +104,6 @@ function generateSchema() {
                                                             Types: types,
                                                             Category: 'Misc'
                                                         })
-
-                                                        console.log(1);
                                                     }
                                                 }
                                                 else {
@@ -117,8 +115,6 @@ function generateSchema() {
                                                             Types: types,
                                                             Category: 'Misc'
                                                         })
-
-                                                        console.log(2);
                                                     }
                                                 }
                                             }
@@ -266,7 +262,56 @@ function generateSchema() {
     })
 }
 
+function generateDump() {
+    getVersion((version) => {
+        https.get(API_URL.replace('$version', version), (response) => {
+            let body = ''
+        
+            response.on('data', (data) => {
+                body += data
+            })
+    
+            response.on('end', () => {
+                let classes = JSON.parse(body).Classes
+                let api = {}
+            
+                for (let type of classes) {
+                    let properties = []
+                    let newType = type
+
+                    do {
+                        for (let member of newType.Members) {
+                            if (member.MemberType == 'Property') {
+                                if (!member.Tags || (!member.Tags.includes('ReadOnly') && !member.Tags.includes('NotScriptable') && !member.Tags.includes('Deprecated') && !member.Tags.includes('Hidden'))) {
+                                    if (!properties.includes(member.Name)) {
+                                        properties.push(member.Name)
+                                    }
+                                }
+                            }
+                        }
+
+                        for (let superclass of classes) {
+                            if (superclass.Name == newType.Superclass) {
+                                newType = superclass
+                                break
+                            }
+                        }
+                    } while (newType.Superclass != '<<<ROOT>>>')
+
+                    api[type.Name] = properties
+                }
+
+                fs.writeFileSync(DIR, JSON.stringify(api))
+            })
+        
+        }).on('error', () => {
+            console.log('ERROR: generateDump');
+        })
+    })
+}
+
 module.exports = {
     generateClasses,
-    generateSchema
+    generateSchema,
+    generateDump
 }

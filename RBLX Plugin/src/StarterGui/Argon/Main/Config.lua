@@ -7,6 +7,7 @@ config.autoReconnect = false
 config.openInEditor = false
 config.onlyCode = true
 config.twoWaySync = false
+config.propertySyncing = false
 
 config.host = 'localhost'
 config.port = '8000'

@@ -57,6 +57,7 @@ local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
 local openInEditorButton = settingsPage.Body.OpenInEditor.Button
 local onlyCodeButton = settingsPage.Body.OnlyCode.Button
 local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
+local propertySyncingButton = settingsPage.Body.PropertySyncing.Button
 local classFilteringButton = settingsPage.Body.ClassFiltering.Button
 local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
 
@@ -274,6 +275,15 @@ local function toggleSetting(setting, data)
             TwoWaySync.stop()
         end
     elseif setting == 5 then
+        Config.propertySyncing = not Config.propertySyncing
+        plugin:SetSetting('PropertySyncing', Config.propertySyncing)
+
+        if Config.propertySyncing then
+            TweenService:Create(propertySyncingButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+        else
+            TweenService:Create(propertySyncingButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+        end
+    elseif setting == 6 then
         Config.filteringMode = not Config.filteringMode
         plugin:SetSetting('FilteringMode', Config.filteringMode)
 
@@ -282,7 +292,7 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
-    elseif setting == 6 then
+    elseif setting == 7 then
         data = data:gsub(' ', '')
         data = string.split(data, ',')
 
@@ -316,7 +326,7 @@ local function expandSetting(setting)
                 end)
             else
                 subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
-                    toggleSetting(5, v)
+                    toggleSetting(6, v)
                 end)
             end
         elseif v:IsA('TextBox') then
@@ -324,7 +334,7 @@ local function expandSetting(setting)
                 filterInput(2)
             end)
             subConnections[v.Parent.Name..2] = v.FocusLost:Connect(function()
-                toggleSetting(6, v.Text)
+                toggleSetting(7, v.Text)
             end)
         end
     end
@@ -343,6 +353,7 @@ local function portToVS()
 
         if not success then
             warn('Argon: '..response..' (ui1)')
+            FileHandler.clear()
         end
 
         if success then
@@ -350,6 +361,14 @@ local function portToVS()
 
             if not success then
                 warn('Argon: '..response..' (ui2)')
+            end
+
+            if success and Config.propertySyncing then
+                success, response = HttpHandler.portProperties(FileHandler.portProperties())
+
+                if not success then
+                    warn('Argon: '..response..' (ui3)')
+                end
             end
         end
 
@@ -374,7 +393,7 @@ local function portToRoblox()
         local success, response = HttpHandler.portProject()
 
         if not success then
-            warn('Argon: '..response..' (ui3)')
+            warn('Argon: '..response..' (ui4)')
         end
 
         tween:Cancel()
@@ -465,6 +484,7 @@ function guiHandler.runPage(page)
         connections['openInEditorButton'] = openInEditorButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
         connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
         connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(4) end)
+        connections['propertySyncingButton'] = propertySyncingButton.MouseButton1Click:Connect(function() toggleSetting(5) end)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
 
@@ -500,6 +520,7 @@ function guiHandler.run(newPlugin, autoConnect)
     local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
+    local propertySyncingSetting = plugin:GetSetting('PropertySyncing')
     local filteringMode = plugin:GetSetting('FilteringMode')
     local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
     local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
@@ -552,6 +573,14 @@ function guiHandler.run(newPlugin, autoConnect)
 
         if twoWaySyncSetting then
             twoWaySyncButton.OnIcon.ImageTransparency = 0
+        end
+    end
+
+    if propertySyncingSetting ~= nil then
+        Config.propertySyncing = propertySyncingSetting
+
+        if propertySyncingSetting then
+            propertySyncingButton.OnIcon.ImageTransparency = 0
         end
     end
 

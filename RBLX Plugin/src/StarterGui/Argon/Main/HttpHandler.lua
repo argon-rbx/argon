@@ -199,6 +199,17 @@ function httpHandler.portScripts(scriptsToSync)
     return success, response
 end
 
+function httpHandler.portProperties(propertiesToSync)
+    local url = string.format(URL, Config.host, Config.port)
+    local header = {action = 'portProperties'}
+
+    local success, response = pcall(function()
+        HttpService:PostAsync(url, HttpService:JSONEncode(propertiesToSync), Enum.HttpContentType.ApplicationJson, false, header)
+    end)
+
+    return success, response
+end
+
 function httpHandler.portProject()
     local url = string.format(URL, Config.host, Config.port)
     local projectHeader = {action = 'portProject'}

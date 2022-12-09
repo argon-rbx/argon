@@ -9,6 +9,7 @@ const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
+const PROPERTIES = '.properties'
 const ARGON_JSON = '.argon.json'
 const SEPARATOR = '|'
 
@@ -105,7 +106,7 @@ function onSave(uri) {
             events.update(parent + SEPARATOR + uri.name, source)
         }
     }
-    else if (uri.name == '.properties') {
+    else if (uri.name == PROPERTIES) {
         events.setProperties(parent, source)
     }
 }
@@ -476,6 +477,19 @@ function portScripts(scripts) {
     lastUnix = Date.now()
 }
 
+function portProperties(properties) {
+    properties = new Map(Object.entries(JSON.parse(properties)))
+    let rootDir = getRootDir()
+
+    for (let [key, value] of properties) {
+        key = path.join(rootDir, key)
+        if (fs.existsSync(key)) {
+            value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']')
+            fs.writeFileSync(path.join(key, PROPERTIES + '.json'), value)
+        }
+    }
+}
+
 function portCreate(uri) {
     uri = path.parse(uri)
     let parent = getParent(uri.dir)
@@ -577,6 +591,7 @@ module.exports = {
     updateClasses,
     portInstances,
     portScripts,
+    portProperties,
     portProject,
     getRootDir,
     getUnix

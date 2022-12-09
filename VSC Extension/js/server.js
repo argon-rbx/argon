@@ -7,6 +7,7 @@ const website = require('../config/website.js')
 const events = require('./events')
 const files = require('./files')
 const twoWaySync = require('./twoWaySync')
+const apiDump = require('../config/apiDump')
 
 const URL = 'http://$host:$port/'
 const user32 = new ffi.Library('user32', {
@@ -118,6 +119,17 @@ function requestListener(request, response) {
                 files.portScripts(body)
             })
             break
+        case 'portProperties':
+            var body = ''
+        
+            request.on('data', (chunk) => {
+                body += chunk
+            })
+    
+            request.on('end', () => {
+                files.portProperties(body)
+            })
+            break
         case 'portProject':
             events.queue.length = 0
             chunks = files.portProject()
@@ -133,6 +145,9 @@ function requestListener(request, response) {
                 requestsLeft = 0
                 chunks.length = 0
             }
+            break
+        case 'getApiDump':
+            data = JSON.stringify(apiDump)
             break
         default:
             data = website.replace('$time', getTime()).replace('$synces', syncCount.toString())

@@ -5,12 +5,15 @@ local Config = require(script.Parent.Config)
 local DataTypes = require(script.Parent.DataTypes)
 
 local SEPARATOR = '|'
+local DISABLE_PREFIX = '--disable'
 local ARGON_IGNORE = 'ArgonIgnore'
 local SCRIPT_TYPES = {
     Script = 'server',
     LocalScript = 'client',
     ModuleScript = ''
 }
+
+local currentInstances = {}
 
 local fileHandler = {}
 
@@ -58,6 +61,11 @@ local function getParent(instance, root)
     repeat
         parent = {[parse(instance)] = parent}
         instance = instance.Parent
+
+        if Config.propertySyncing and not currentInstances[instance] and not instance:IsA('LuaSourceContainer') then
+            currentInstances[instance] = fileHandler.getPath(instance)
+        end
+
     until instance == root
 
     return parent
@@ -84,6 +92,10 @@ local function getChildren(dir)
                         children[parse(v)] = getChildren(v)
                     else
                         children[parse(v)] = {}
+                    end
+
+                    if Config.propertySyncing and not currentInstances[v] and not v:IsA('LuaSourceContainer') then
+                        currentInstances[v] = fileHandler.getPath(v)
                     end
                 end
             end
@@ -157,7 +169,7 @@ function fileHandler.update(object, source)
         object.Source = source
 
         if not object:IsA('ModuleScript') then
-            if string.match(source, '^--disable') then
+            if string.match(source, '^'..DISABLE_PREFIX) then
                 object.Enabled = false
             else
                 object.Enabled = true
@@ -345,11 +357,17 @@ function fileHandler.portInstances()
         if instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] then
             if len(instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']) == 0 then
                 instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
+            else
+                instancesToSync['StarterPlayer']['StarterCharacterScripts'] = instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']
+                instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
             end
         end
 
         if instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] then
             if len(instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']) == 0 then
+                instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
+            else
+                instancesToSync['StarterPlayer']['StarterPlayerScripts'] = instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']
                 instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
             end
         end
@@ -369,6 +387,12 @@ function fileHandler.portScripts()
         if v then
             for _, w in ipairs(game:GetService(i):GetDescendants()) do
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
+                    local source = w.Source
+
+                    if Config.propertySyncing and not w.Enabled then
+                        source = DISABLE_PREFIX..'\n'..source
+                    end
+
                     table.insert(scriptsToSync, {Type = w.ClassName, Instance = fileHandler.getPath(w), Source = w.Source})
                 end
             end
@@ -376,6 +400,22 @@ function fileHandler.portScripts()
     end
 
     return scriptsToSync
+end
+
+function fileHandler.portProperties()
+    local propertiesToSync = {}
+
+    for i, v in pairs(currentInstances) do
+        propertiesToSync[v] = DataTypes.getProperties(i)
+    end
+
+    currentInstances = {}
+
+    return propertiesToSync
+end
+
+function fileHandler.clear()
+    currentInstances = {}
 end
 
 return fileHandler
