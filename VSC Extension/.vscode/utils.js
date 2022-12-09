@@ -163,8 +163,6 @@ function generateSchema() {
                     }
                 }
 
-                let temp = []
-
                 for (let [key, value] of properties) {
                     switch(value.Category) {
                         case 'Primitive':
@@ -186,10 +184,12 @@ function generateSchema() {
                             }
                             break
                         case 'DataType':
-                            if (!temp.includes(value.Name)) {
-                                temp.push(value.Name)
+                            if (value.Name != 'Content' && value.Name != 'BrickColor') {
+                                addSchema(key, 'array')
                             }
-                            addSchema(key, 'array')
+                            else {
+                                addSchema(key, 'string')
+                            }
                             break
                         case 'Enum':
                             addSchema(key, 'string', value.Name)
@@ -229,8 +229,15 @@ function generateSchema() {
                                         }
                                         break
                                     case 'DataType':
-                                        if (!types.includes('array')) {
-                                            types.push('array')
+                                        if (value.Name != 'Content' && value.Name != 'BrickColor') {
+                                            if (!types.includes('array')) {
+                                                types.push('array')
+                                            }
+                                        }
+                                        else {
+                                            if (!types.includes('string')) {
+                                                types.push('string')
+                                            }
                                         }
                                         break
                                     default:
@@ -250,8 +257,6 @@ function generateSchema() {
                             break
                     }
                 }
-
-                console.log(temp);
 
                 fs.writeFileSync(DIR, JSON.stringify(schema, null, '\t'))
             })

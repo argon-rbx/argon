@@ -34,7 +34,7 @@ local function getApiDump()
     return success
 end
 
---TODO: font, axes, faces, number seq
+--TODO: number seq
 
 function dataTypes.cast(value, property, object)
     if typeof(value) == 'boolean' or typeof(value) == 'number' then
@@ -49,6 +49,18 @@ function dataTypes.cast(value, property, object)
         return DATA_TYPES[dataType].new(unpack(value))
     elseif dataType == 'BrickColor' then
         return BrickColor.new(value)
+    elseif dataType == 'Font' then
+        return Font.new(value[1], Enum.FontWeight[value[2]:split('.')[3]], Enum.FontStyle[value[3]:split('.')[3]])
+    elseif dataType == 'Faces' then
+        for i, v in ipairs(value) do
+            value[i] = Enum.NormalId[v]
+        end
+        return Faces.new(unpack(value))
+    elseif dataType == 'Axes' then
+        for i, v in ipairs(value) do
+            value[i] = Enum.Axis[v]
+        end
+        return Axes.new(unpack(value))
     elseif dataType == 'EnumItem' then
         value = value:split('.')
         return Enum[value[2]][value[3]]
@@ -91,8 +103,14 @@ function dataTypes.getProperties(object)
             elseif dataType == 'PhysicalProperties' then
                 properties[v] = {object[v].Density, object[v].Friction, object[v].Elasticity, object[v].FrictionWeight, object[v].ElasticityWeight}
             end
-        else
+        elseif dataType == 'Font' then
+            properties[v] = {object[v].Family, tostring(object[v].Weight), tostring(object[v].Style)}
+        elseif dataType == 'Faces' or dataType == 'Axes' then
+            properties[v] = tostring(object[v]):split(', ')
+        elseif dataType == 'EnumItem' then
             properties[v] = tostring(object[v])
+        else
+            properties[v] = 'nil'
         end
     end
 
