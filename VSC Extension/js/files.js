@@ -484,7 +484,7 @@ function portProperties(properties) {
     for (let [key, value] of properties) {
         key = path.join(rootDir, key)
         if (fs.existsSync(key)) {
-            value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']')
+            value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']').replace(/, \t/g, ', ').replace(/\[\t/g, '[').replace(/\n\t\t\]\]/g, ']]').replace(/\n\t\t\]/g, ']')
             fs.writeFileSync(path.join(key, PROPERTIES + '.json'), value)
         }
     }
