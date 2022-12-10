@@ -3,7 +3,7 @@ const https = require('https')
 const childProcess = require('child_process')
 const files = require('./files')
 const server = require('./server')
-const config = require('../config/settings.js')
+const config = require('./config/settings.js')
 const messageHandler = require('./messageHandler')
 
 const URL = 'https://dervexhero.github.io/Argon/'
@@ -121,7 +121,8 @@ function openMenu() {
                 quickPick.dispose()
                 break
             case 'temp':
-                require('../.vscode/utils').generateSchema()
+                server.debug()
+                //require('../.vscode/utils').generateSchema()
                 quickPick.dispose()
                 break
         }

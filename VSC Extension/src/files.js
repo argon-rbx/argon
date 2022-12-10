@@ -3,8 +3,8 @@ const path = require('path')
 const https = require('https')
 const vscode = require('vscode')
 const events = require('./events')
-const config = require('../config/settings.js')
-const types = require('../config/classes.js')
+const config = require('./config/settings.js')
+const types = require('./config/classes.js')
 const messageHandler = require('./messageHandler')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'

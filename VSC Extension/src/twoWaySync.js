@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const files = require('./files')
-const config = require('../config/settings.js')
+const config = require('./config/settings.js')
 
 function sync(queue) {
     queue = JSON.parse(queue)

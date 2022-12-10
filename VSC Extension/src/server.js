@@ -2,12 +2,13 @@ const http = require('http')
 const vscode = require('vscode')
 const path = require('path')
 const ffi = require('ffi-napi')
-const config = require('../config/settings.js')
-const website = require('../config/website.js')
+const config = require('./config/settings.js')
+const website = require('./config/website.js')
 const events = require('./events')
 const files = require('./files')
 const twoWaySync = require('./twoWaySync')
-const apiDump = require('../config/apiDump')
+const apiDump = require('./config/apiDump')
+const wcpp = require('wcpp')
 
 const URL = 'http://$host:$port/'
 const user32 = new ffi.Library('user32', {
@@ -25,7 +26,8 @@ let sockets = new Set() //Temp fix for forcing server to stop (until Electron ad
 let isConnected = false
 let requestsLeft = 0
 let chunks = []
-let window
+let vscWindow
+let studioWindow
 
 let syncCount = 5
 let uptime = 0
@@ -92,6 +94,10 @@ function requestListener(request, response) {
             if (!isConnected) {
                 lastSync = Date.now()
                 isConnected = true
+            }
+
+            if (!studioWindow) {
+                studioWindow = user32.GetForegroundWindow() //unreliable af, will change once I rewrite some of the code in C++
             }
             break
         case 'getState':
@@ -209,18 +215,18 @@ function openFile(file) {
     vscode.workspace.openTextDocument(file).then(file => {
         vscode.window.showTextDocument(file, {preview: config.openInPreview})
 
-        if (window) {
+        if (vscWindow) {
             let pressed = false
 
             events.queue.push({Action: 'closeFile'})
 
             if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
-                pressed = true
                 user32.keybd_event(0x12, 0, 0x0001 | 0, 0)
+                pressed = true
             }
-    
-            user32.ShowWindow(window, 3)
-            user32.SetForegroundWindow(window)
+
+            user32.ShowWindow(vscWindow, 3)
+            user32.SetForegroundWindow(vscWindow)
 
             if (pressed) {
                 user32.keybd_event(0x12, 0, 0x0001 | 0x0002, 0)
@@ -229,9 +235,35 @@ function openFile(file) {
     }).then(undefined, () => {})
 }
 
+function debug() {
+    if (studioWindow) {
+        let pressed = false
+
+        if ((user32.GetAsyncKeyState(0x12) & 0x8000) == 0) {
+            user32.keybd_event(0x12, 0, 0x0001 | 0, 0)
+            pressed = true
+        }
+
+        user32.ShowWindow(studioWindow, 3)
+        user32.SetForegroundWindow(studioWindow)
+
+        if (pressed) {
+            user32.keybd_event(0x12, 0, 0x0001 | 0x0002, 0)
+        }
+
+        setTimeout(() => {
+            user32.keybd_event(0x74, 0, 0x0001 | 0, 0)
+            setTimeout(() => {
+                user32.keybd_event(0x74, 0, 0x0001 | 0x0002, 0)
+            }, 100); 
+        }, 100);
+    }
+}
+
 module.exports = {
     run,
-    stop
+    stop,
+    debug
 }
 
 server.on('connection', (socket) => {
@@ -243,12 +275,12 @@ server.on('connection', (socket) => {
 })
 
 if (vscode.window.state.focused) {
-    window = user32.GetForegroundWindow()
+    vscWindow = user32.GetForegroundWindow()
 }
 else {
     let watcher = vscode.window.onDidChangeWindowState((state) => {
         if (state.focused) {
-            window = user32.GetForegroundWindow()
+            vscWindow = user32.GetForegroundWindow()
             watcher.dispose()
         }
     })

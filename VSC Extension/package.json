@@ -3,7 +3,7 @@
   "name": "argon",
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
-  "icon": "images/Logo.png",
+  "icon": "./assets/Logo.png",
   "version": "0.4.3",
   "preview": true,
   "engines": {
@@ -23,7 +23,7 @@
     "onLanguage:luau",
     "onCommand:argon.openMenu"
   ],
-  "main": "./js/main.js",
+  "main": "./src/main.js",
   "contributes": {
     "commands": [
       {
@@ -107,17 +107,17 @@
       {
         "id": "argon",
         "label": "Argon",
-        "path": "./images/theme.json"
+        "path": "./assets/.theme.json"
       }
     ],
     "jsonValidation": [
       {
         "fileMatch": ".argon.json",
-        "url": "./config/.argon.schema.json"
+        "url": "./assets/.argon.schema.json"
       },
       {
         "fileMatch": ".properties.json",
-        "url": "./config/.properties.schema.json"
+        "url": "./assets/.properties.schema.json"
       }
     ]
   },
@@ -142,6 +142,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "ffi-napi": "^4.0.3"
+    "ffi-napi": "^4.0.3",
+    "wcpp": "^1.2.0"
   }
 }
