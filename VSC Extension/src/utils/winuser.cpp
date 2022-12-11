@@ -5,9 +5,9 @@
 HWND vscWindow;
 HWND studioWindow;
 
-bool isVSC(char* title)
+bool isVSC(char* title, std::string window)
 {
-    return std::string(title).find("Visual Studio Code") != std::string::npos;
+    return std::string(title).find(window + " - Visual Studio Code") != std::string::npos;
 }
 
 bool isStudio(char* title)
@@ -15,7 +15,7 @@ bool isStudio(char* title)
     return std::string(title).find("Roblox Studio") != std::string::npos;
 }
 
-HWND getWindow(int window)
+HWND getWindow(std::string window)
 {
     for (HWND hwnd = GetTopWindow(NULL); hwnd != NULL; hwnd = GetNextWindow(hwnd, GW_HWNDNEXT))
     {
@@ -32,19 +32,29 @@ HWND getWindow(int window)
         GetWindowText(hwnd, title, length + 1);
 
         if (std::string(title) == "Program Manager")
-            continue;
-
-        switch (window)
         {
-        case 0:
-            if (isVSC(title))
-                return hwnd;
-            break;
-        case 1:
-            if (isStudio(title)) 
-                return hwnd;
-            break;
+            delete [] title;
+            continue;
         }
+
+        if (!window.empty())
+        {
+            if (isVSC(title, window))
+            {
+                delete [] title;
+                return hwnd;
+            }
+        }
+        else
+        {
+            if (isStudio(title)) 
+            {
+                delete [] title;
+                return hwnd;
+            }
+        }
+
+        delete [] title;
     }
 
     return NULL;
@@ -53,6 +63,7 @@ HWND getWindow(int window)
 namespace winuser {
     using v8::FunctionCallbackInfo;
     using v8::Integer;
+    using v8::String;
     using v8::Object;
     using v8::Value;
     using v8::Local;
@@ -60,7 +71,11 @@ namespace winuser {
     void showVSC(const FunctionCallbackInfo<Value>& args)
     {
         if (!vscWindow)
-            vscWindow = getWindow(0);
+        {
+            String::Utf8Value v8String(args.GetIsolate(), args[0]);
+            std::string stdString(*v8String);
+            vscWindow = getWindow(stdString);
+        }
 
         bool pressed = false;
 
@@ -80,7 +95,7 @@ namespace winuser {
     void showStudio(const FunctionCallbackInfo<Value>& args)
     {
         if (!studioWindow)
-            studioWindow = getWindow(1);
+            studioWindow = getWindow("");
 
         bool pressed = false;
 

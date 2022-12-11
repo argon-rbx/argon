@@ -1,10 +1,23 @@
 # Changelog
 
+## 0.5.1
+* Fixed StarterPlayer services not porting
+* Fixed open in editor option not working properly
+* Fixed .properties file behavior when porting to Roblox
+* Fixed properties of main services e.g. Workspace not syncing when only code mode was disabled
+* Fixed --disable flag inside scripts not working when porting to VSC
+* Argon now ignores and does not create empty .properties files
+* Lua files inside root folder no longer yield whole code
+* Local API dump no longer contains empty arrays
+* Removed memory leak inside C++ file
+* Other small fixes
+
 ## 0.5.0
 * Added property sync
 * Added start debugging option
 * Added auto open Roblox option
 * Added JSON schema for .properties file
+* Extension no longer uses node-ffi-napi library (used native C++ instead)
 * Changed StarterPlayer services name inside VSC
 * "directory" is not longer required in .argon.json
 * Fixed open in editor option not working after playtest

@@ -74,7 +74,7 @@ local function startSyncing(url)
 end
 
 function httpHandler.connect(fail)
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local header = {action = 'init'}
 
     local success, response = pcall(function()
@@ -115,7 +115,7 @@ end
 
 function httpHandler.openFile(file)
     if file then
-        local url = string.format(URL, Config.host, Config.port)
+        local url = URL:format(Config.host, Config.port)
         local header = {action = 'openFile'}
 
         pcall(function()
@@ -149,7 +149,7 @@ function httpHandler.openFile(file)
 end
 
 function httpHandler.portInstances(instancesToSync)
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local header = {action = 'portInstances'}
 
     local body = {
@@ -169,7 +169,7 @@ function httpHandler.portScripts(scriptsToSync)
         return true
     end
 
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local portHeader = {action = 'portScripts'}
     local stateHeader = {action = 'getState'}
 
@@ -200,7 +200,7 @@ function httpHandler.portScripts(scriptsToSync)
 end
 
 function httpHandler.portProperties(propertiesToSync)
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local header = {action = 'portProperties'}
 
     local success, response = pcall(function()
@@ -211,7 +211,7 @@ function httpHandler.portProperties(propertiesToSync)
 end
 
 function httpHandler.portProject()
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local projectHeader = {action = 'portProject'}
     local sourceHeader = {action = 'portProjectSource'}
 
@@ -220,7 +220,11 @@ function httpHandler.portProject()
         local project, length = json.Project, json.Length
 
         for _, v in ipairs(project) do
-            FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
+            if v.Action == 'create' then
+                FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
+            elseif v.Action == 'setProperties' then
+                FileHandler.setProperties(v.Object, v.Properties)
+            end
         end
 
         repeat

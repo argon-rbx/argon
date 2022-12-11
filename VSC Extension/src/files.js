@@ -92,11 +92,11 @@ function onSave(uri) {
     uri = path.parse(uri.fileName)
     let parent = getParent(uri.dir)
 
-    if (verify(parent)) {
-        return
-    }
-
     if (uri.ext != '.json') {
+        if (verify(parent)) {
+            return
+        }
+
         if (uri.name.startsWith('.source')) {
             if (parent.includes(SEPARATOR)) {
                 events.update(parent, source)
@@ -107,6 +107,10 @@ function onSave(uri) {
         }
     }
     else if (uri.name == PROPERTIES) {
+        if (!parent || parent == '') {
+            return
+        }
+
         events.setProperties(parent, source)
     }
 }
@@ -525,17 +529,34 @@ function portSave(uri) {
     }
 }
 
+function portUpdate(uri) {
+    let parsedUri = path.parse(uri)
+    let parent = getParent(parsedUri.dir)
+
+    if (!parent || parent == '') {
+        return
+    }
+
+    let source = fs.readFileSync(uri, 'utf-8')
+    events.setProperties(parent, source)
+}
+
 function getSubDirs(uri) {
     fs.readdirSync(uri, {withFileTypes: true}).forEach(file => {
         let subUri = path.join(uri, file.name)
 
-        portCreate(subUri)
+        if (file.name != PROPERTIES + '.json') {
+            portCreate(subUri)
 
-        if (file.isDirectory()) {
-            getSubDirs(subUri)
+            if (file.isDirectory()) {
+                getSubDirs(subUri)
+            }
+            else {
+                portSave(subUri)
+            }
         }
         else {
-            portSave(subUri)
+            portUpdate(subUri)
         }
     })
 }
@@ -564,11 +585,13 @@ function portProject() {
     let chunks = []
     let index = 0
 
-    fs.readdirSync(dir).forEach(file => {
-        let uri = path.join(dir, file)
+    fs.readdirSync(dir, {withFileTypes: true}).forEach(file => {
+        let uri = path.join(dir, file.name)
 
-        portCreate(uri)
-        getSubDirs(uri)
+        if (file.isDirectory()) {
+            portCreate(uri)
+            getSubDirs(uri)
+        }
     })
 
     do {

@@ -100,6 +100,10 @@ local function getChildren(dir)
                 end
             end
         end
+
+        if Config.propertySyncing and not currentInstances[dir] then
+            currentInstances[dir] = fileHandler.getPath(dir)
+        end
     end
 
     return children
@@ -134,10 +138,12 @@ end
 
 function fileHandler.create(class, name, parent, delete)
     local success, response = pcall(function()
-        local object = Instance.new(class)
+        local object
         parent = getInstance(parent)
 
         if delete and parent:FindFirstChild(name) then
+            object = Instance.new(class)
+
             for _, v in ipairs(parent[name]:GetChildren()) do
                 v.Parent = object
             end
@@ -145,6 +151,10 @@ function fileHandler.create(class, name, parent, delete)
             parent[name]:Destroy()
         elseif parent:FindFirstChild(name) then
             return
+        end
+
+        if not object then
+            object = Instance.new(class)
         end
 
         object.Name = name
@@ -166,15 +176,17 @@ end
 function fileHandler.update(object, source)
     local success, response = pcall(function()
         object = getInstance(object)
-        object.Source = source
 
         if not object:IsA('ModuleScript') then
-            if string.match(source, '^'..DISABLE_PREFIX) then
+            if source:match('^'..DISABLE_PREFIX) then
                 object.Enabled = false
+                source = source:gsub(DISABLE_PREFIX..'\n', '')
             else
                 object.Enabled = true
             end
         end
+
+        object.Source = source
     end)
 
     if not success then
@@ -324,7 +336,7 @@ function fileHandler.getPath(instance, onlyCode, recursive)
             else
                 name = instance.Name
 		    end
-        elseif instance.ClassName == 'Folder' then
+        elseif instance.ClassName == 'Folder' or instance.ClassName == 'StarterCharacterScripts' or instance.ClassName == 'StarterPlayerScripts' then
             name = instance.Name
         else
             name = instance.Name..'.'..instance.ClassName
@@ -389,11 +401,11 @@ function fileHandler.portScripts()
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
                     local source = w.Source
 
-                    if Config.propertySyncing and not w.Enabled then
+                    if Config.propertySyncing and not w:IsA('ModuleScript') and not w.Enabled and not source:match('^'..DISABLE_PREFIX) then
                         source = DISABLE_PREFIX..'\n'..source
                     end
 
-                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = fileHandler.getPath(w), Source = w.Source})
+                    table.insert(scriptsToSync, {Type = w.ClassName, Instance = fileHandler.getPath(w), Source = source})
                 end
             end
         end
@@ -406,7 +418,11 @@ function fileHandler.portProperties()
     local propertiesToSync = {}
 
     for i, v in pairs(currentInstances) do
-        propertiesToSync[v] = DataTypes.getProperties(i)
+        local properties = DataTypes.getProperties(i)
+
+        if properties then
+            propertiesToSync[v] = properties
+        end
     end
 
     currentInstances = {}

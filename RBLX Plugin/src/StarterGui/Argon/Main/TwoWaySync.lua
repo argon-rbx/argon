@@ -14,7 +14,7 @@ twoWaySync.queue = {}
 
 local function pathChanged(instance, parent, new)
     if instance.Parent then
-        local name = string.split(instance:GetFullName(), '.')[1]
+        local name = instance:GetFullName():split('.')[1]
 
         if Config.syncedDirectories[name] ~= nil and not Config.syncedDirectories[name] then
             for _, v in pairs(connections[instance]) do

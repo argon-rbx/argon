@@ -202,7 +202,7 @@ function openFile(file) {
     vscode.workspace.openTextDocument(file).then(file => {
         vscode.window.showTextDocument(file, {preview: config.openInPreview})
         events.queue.push({Action: 'closeFile'})
-        winuser.showVSC()
+        winuser.showVSC(vscode.workspace.name)
     }).then(undefined, () => {})
 }
 

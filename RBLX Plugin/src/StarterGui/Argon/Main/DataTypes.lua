@@ -20,7 +20,7 @@ local apiDump = nil
 local dataTypes = {}
 
 local function getApiDump()
-    local url = string.format(URL, Config.host, Config.port)
+    local url = URL:format(Config.host, Config.port)
     local header = {action = 'getApiDump'}
 
     local success, response = pcall(function()
@@ -90,6 +90,10 @@ function dataTypes.getProperties(object)
         if not getApiDump() then
             return
         end
+    end
+
+    if not apiDump[object.ClassName] then
+        return nil
     end
 
     local properties = {}

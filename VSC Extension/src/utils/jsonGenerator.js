@@ -46,6 +46,7 @@ function generateClasses() {
                     }
                 }
 
+                newTypes.push('Terrain')
                 newTypes.push('StarterCharacterScripts')
                 newTypes.push('StarterPlayerScripts')
 
@@ -303,7 +304,9 @@ function generateDump() {
                         }
                     } while (newType.Superclass != '<<<ROOT>>>')
 
-                    api[type.Name] = properties
+                    if (properties.length != 0) {
+                        api[type.Name] = properties
+                    }
                 }
 
                 fs.writeFileSync(DIR, JSON.stringify(api))

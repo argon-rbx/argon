@@ -294,7 +294,7 @@ local function toggleSetting(setting, data)
         end
     elseif setting == 7 then
         data = data:gsub(' ', '')
-        data = string.split(data, ',')
+        data = data:split(',')
 
         Config.filteredClasses = data
         plugin:SetSetting('FilteredClasses', data)
