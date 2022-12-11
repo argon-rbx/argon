@@ -6,31 +6,40 @@ const server = require('./server')
 const config = require('./config/settings.js')
 const messageHandler = require('./messageHandler')
 
+//@ts-ignore
+const winuser = require('./utils/winuser')
+
 const URL = 'https://dervexhero.github.io/Argon/'
 const ITEMS = [
     {
         label: '$(debug-start) Run Argon',
+        detail: "Run local server and listen for file changes",
         action: 'run'
     },
     {
         label: '$(debug-stop) Stop Argon',
+        detail: "Stop local server and stop listening for file changes",
         action: 'stop'
     },
     {
-        label: '$(cloud-download) Update Classes',
-        action: 'updateClasses'
-    },
-    {
         label: '$(settings-gear) Open Argon Settings',
+        detail: "Show all available extension settings",
         action: 'openSettings'
     },
     {
-        label: '$(run-all) Launch Roblox Studio',
-        action: 'launchStudio'
+        label: '$(cloud-download) Update Classes',
+        detail: "Download latest Roblox API",
+        action: 'updateClasses'
     },
     {
-        label: 'Temp',
-        action: 'temp'
+        label: '$(breakpoints-view-icon) Start Debugging',
+        detail: "Switch to Roblox Studio and start playtest (F5)",
+        action: 'startDebugging'
+    },
+    {
+        label: '$(run-all) Launch Roblox Studio',
+        detail: "Open new Roblox Studio instance",
+        action: 'launchStudio'
     }
 ]
 
@@ -90,6 +99,17 @@ function launchStudio() {
     })
 }
 
+function debug() {
+    switch (config.debugMode) {
+        case "Play":
+            winuser.showStudio(0x74)
+            break;
+        case "Run":
+            winuser.showStudio(0x77)
+            break
+    }
+}
+
 function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
@@ -108,21 +128,20 @@ function openMenu() {
                 stop()
                 quickPick.dispose()
                 break
-            case 'updateClasses':
-                updateClasses()
-                quickPick.dispose()
-                break
             case 'openSettings':
                 vscode.commands.executeCommand('workbench.action.openSettings', '@ext:dervex.argon')
                 quickPick.dispose()
                 break
-            case 'launchStudio':
-                launchStudio()
+            case 'updateClasses':
+                updateClasses()
                 quickPick.dispose()
                 break
-            case 'temp':
-                server.debug()
-                //require('../.vscode/utils').generateSchema()
+            case 'startDebugging':
+                debug()
+                quickPick.dispose()
+                break
+            case 'launchStudio':
+                launchStudio()
                 quickPick.dispose()
                 break
         }
@@ -135,7 +154,10 @@ async function activate(context) {
     if (!activated) {
         activated = true
 
-        context.subscriptions.push(vscode.commands.registerCommand('argon.openMenu', openMenu))
+        let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
+        let debugCommand = vscode.commands.registerCommand('argon.startDebugging', debug)
+
+        context.subscriptions.push(menuCommand, debugCommand)
 
         if (config.autoRun) {
             run(true)
@@ -173,6 +195,7 @@ async function activate(context) {
                 autoLaunchStudio: extension.get('autoLaunchStudio'),
                 hideNotifications: extension.get('hideNotifications'),
                 openInPreview: extension.get('openInPreview'),
+                debugMode: extension.get('debugMode'),
                 host: server.get('host'),
                 port: server.get('port')
             }

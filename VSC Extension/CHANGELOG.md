@@ -2,8 +2,9 @@
 
 ## 0.5.0
 * Added property sync
+* Added start debugging option
 * Added auto open Roblox option
-* Clicking on output messages now opens its source in VSC
+* Added JSON schema for .properties file
 * Changed StarterPlayer services name inside VSC
 * "directory" is not longer required in .argon.json
 * Fixed open in editor option not working after playtest

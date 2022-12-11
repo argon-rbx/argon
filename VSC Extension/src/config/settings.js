@@ -13,6 +13,7 @@ module.exports = {
     autoLaunchStudio: extension.get('autoLaunchStudio'),
     hideNotifications: extension.get('hideNotifications'),
     openInPreview: extension.get('openInPreview'),
+    debugMode: extension.get('debugMode'),
     host: server.get('host'),
     port: server.get('port')
 }
