@@ -54,13 +54,17 @@ end
 local function getParent(instance, root)
     local parent = {}
 
-    if #instance:GetChildren() > 0 then
+    if fileHandler.countChildren(instance) > 0 then
         parent = {forceSubScript = {}}
     end
 
     repeat
         parent = {[parse(instance)] = parent}
         instance = instance.Parent
+
+        if instance:GetAttribute(ARGON_IGNORE) ~= nil then
+            return nil
+        end
 
         if Config.propertySyncing and not currentInstances[instance] and not instance:IsA('LuaSourceContainer') then
             currentInstances[instance] = fileHandler.getPath(instance)
@@ -88,7 +92,7 @@ local function getChildren(dir)
         for _, v in pairs(dir:GetChildren()) do
             if ((not Config.filteringMode and not table.find(Config.filteredClasses, v.ClassName)) or (Config.filteringMode and table.find(Config.filteredClasses, v.ClassName))) then
                 if v:GetAttribute(ARGON_IGNORE) == nil then
-                    if #v:GetChildren() > 0 then
+                    if fileHandler.countChildren(v) > 0 then
                         children[parse(v)] = getChildren(v)
                     else
                         children[parse(v)] = {}
@@ -101,7 +105,7 @@ local function getChildren(dir)
             end
         end
 
-        if Config.propertySyncing and not currentInstances[dir] then
+        if Config.propertySyncing and not currentInstances[dir] and not dir:IsA('LuaSourceContainer') then
             currentInstances[dir] = fileHandler.getPath(dir)
         end
     end
@@ -292,10 +296,14 @@ end
 function fileHandler.countChildren(instance)
     local count = 0
 
-    for _, v in ipairs(instance:GetChildren()) do
-        if v:IsA('LuaSourceContainer') then
-            count += 1
+    if Config.onlyCode then
+        for _, v in ipairs(instance:GetChildren()) do
+            if v:IsA('LuaSourceContainer') then
+                count += 1
+            end
         end
+    else
+        count = #instance:GetChildren()
     end
 
     return count
@@ -323,7 +331,7 @@ function fileHandler.getPath(instance, onlyCode, recursive)
                         name = name
                     end
                 else
-                    if #instance:GetChildren() == 0 then
+                    if fileHandler.countChildren(instance) == 0 then
                         if instance.ClassName ~= 'ModuleScript' then
                             name ..= '.'..SCRIPT_TYPES[instance.ClassName]
                         else

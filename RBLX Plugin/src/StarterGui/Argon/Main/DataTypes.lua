@@ -114,9 +114,9 @@ function dataTypes.getProperties(object)
                 properties[v] = {value.X, value.Y}
             elseif dataType == 'Color3' then
                 properties[v] = {value.R, value.G, value.B}
-            elseif dataType == 'Udim2' then
+            elseif dataType == 'UDim2' then
                 properties[v] = {value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset}
-            elseif dataType == 'Udim' then
+            elseif dataType == 'UDim' then
                 properties[v] = {value.Scale, value.Offset}
             elseif dataType == 'Rect' then
                 properties[v] = {value.Min.X, value.Min.Y, value.Max.X, value.Max.Y}

@@ -174,8 +174,8 @@ function httpHandler.portScripts(scriptsToSync)
     local stateHeader = {action = 'getState'}
 
     local success, response = pcall(function()
-        while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 200 do
-            task.wait(0.2)
+        while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 100 do
+            task.wait(0.1)
         end
 
         local chunks = {}
@@ -190,8 +190,8 @@ function httpHandler.portScripts(scriptsToSync)
         for _, v in ipairs(chunks) do
             HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, portHeader)
 
-            while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 200 do
-                task.wait(0.2)
+            while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 100 do
+                task.wait(0.1)
             end
         end
     end)
@@ -201,10 +201,15 @@ end
 
 function httpHandler.portProperties(propertiesToSync)
     local url = URL:format(Config.host, Config.port)
-    local header = {action = 'portProperties'}
+    local portHeader = {action = 'portProperties'}
+    local stateHeader = {action = 'getState'}
 
     local success, response = pcall(function()
-        HttpService:PostAsync(url, HttpService:JSONEncode(propertiesToSync), Enum.HttpContentType.ApplicationJson, false, header)
+        while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 100 do
+            task.wait(0.1)
+        end
+
+        HttpService:PostAsync(url, HttpService:JSONEncode(propertiesToSync), Enum.HttpContentType.ApplicationJson, false, portHeader)
     end)
 
     return success, response

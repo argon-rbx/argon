@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.2
+* Fixed bug reported by [0MRob](https://devforum.roblox.com/u/0mrob) that blocked script source from porting when script had non-script children
+* Fixed properties not porting when instance has no children
+* Fixed ArgonIgnore attribute not working in only code mode
+* Fixed UDim and UDim2 properties not porting
+* Fixed Argon logo on local website
+* Now porting is even faster
+
 ## 0.5.1
 * Fixed StarterPlayer services not porting
 * Fixed open in editor option not working properly
@@ -9,7 +17,7 @@
 * Argon now ignores and does not create empty .properties files
 * Lua files inside root folder no longer yield whole code
 * Local API dump no longer contains empty arrays
-* Removed memory leak inside C++ file
+* Removed memory leak from winuser.cpp
 * Other small fixes
 
 ## 0.5.0

@@ -80,6 +80,10 @@
             "iconPath": "./icons/RobloxLock.png"
         },
 
+        "file": {
+            "iconPath": "./icons/material/file.svg"
+        },
+
         "gitignore": {
             "iconPath": "./icons/material/.gitignore.svg"
         },
@@ -144,6 +148,7 @@
             "iconPath": "./icons/material/readme.svg"
         }
     },
+    "file": "file",
     "folder": "folder",
     "fileExtensions": {
         "lua": "moduleScript",
