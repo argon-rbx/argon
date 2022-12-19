@@ -15,13 +15,13 @@ function sync(queue) {
 
                     switch (data.Type) {
                         case 'Script':
-                            suffix = '.source.server'
+                            suffix = config.source + '.server'
                             break
                         case 'LocalScript':
-                            suffix = '.source.client'
+                            suffix = config.source + '.client'
                             break
                         case 'ModuleScript':
-                            suffix = '.source'
+                            suffix = config.source
                             break
                     }
 
@@ -71,16 +71,16 @@ function sync(queue) {
                     return
                 }
 
-                if (fs.existsSync(path.join(scriptDir, '.source.server' + config.extension))) {
-                    fs.renameSync(path.join(scriptDir, '.source.server' + config.extension), path.join(parentDir, parentName + '.server' + config.extension))
+                if (fs.existsSync(path.join(scriptDir, config.source + '.server' + config.extension))) {
+                    fs.renameSync(path.join(scriptDir, config.source + '.server' + config.extension), path.join(parentDir, parentName + '.server' + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
-                else if (fs.existsSync(path.join(scriptDir, '.source.client' + config.extension))) {
-                    fs.renameSync(path.join(scriptDir, '.source.client' + config.extension), path.join(parentDir, parentName + '.client' + config.extension))
+                else if (fs.existsSync(path.join(scriptDir, config.source + '.client' + config.extension))) {
+                    fs.renameSync(path.join(scriptDir, config.source + '.client' + config.extension), path.join(parentDir, parentName + '.client' + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
-                else if (fs.existsSync(path.join(scriptDir, '.source' + config.extension))) {
-                    fs.renameSync(path.join(scriptDir, '.source' + config.extension), path.join(parentDir, parentName + config.extension))
+                else if (fs.existsSync(path.join(scriptDir, config.source + config.extension))) {
+                    fs.renameSync(path.join(scriptDir, config.source + config.extension), path.join(parentDir, parentName + config.extension))
                     fs.rmdirSync(path.join(parentDir, parentName))
                 }
 
@@ -101,13 +101,13 @@ function sync(queue) {
     
                         switch (suffix) {
                             case 'Script':
-                                suffix = '.source.server'
+                                suffix = config.source + '.server'
                                 break
                             case 'LocalScript':
-                                suffix = '.source.client'
+                                suffix = config.source + '.client'
                                 break
                             case 'ModuleScript':
-                                suffix = '.source'
+                                suffix = config.source
                                 break
                         }
 
@@ -124,13 +124,13 @@ function sync(queue) {
 
                         switch (suffix) {
                             case 'Script':
-                                suffix = '.source.server'
+                                suffix = config.source + '.server'
                                 break
                             case 'LocalScript':
-                                suffix = '.source.client'
+                                suffix = config.source + '.client'
                                 break
                             case 'ModuleScript':
-                                suffix = '.source'
+                                suffix = config.source
                                 break
                         }
 

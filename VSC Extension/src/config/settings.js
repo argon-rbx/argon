@@ -17,6 +17,8 @@ let settings = {
     host: server.get('host'),
     port: server.get('port'),
 
+    source: null,
+    properties: null,
     json: 'default.project.json',
     separator : '|'
 }

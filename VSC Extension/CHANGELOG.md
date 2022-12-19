@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0
+* Added support for external tooling
+* Roblox LSP is now natively supported
+* Added compatibility mode which replaces ".source" files with "init" and .properties files with "init.meta"
+* Instance classes are now stored in .properties.json only when property syncing option is enabled
+* Replaced .argon.json with default.project.json (required to for Roblox LSP and other tooling)
+* Removed update classes command and auto update option - no real use cases (still available in [jsonGenerator.js](https://github.com/DervexHero/Argon/blob/release/VSC%20Extension/src/utils/jsonGenerator.js))
+* Auto Studio launch now checks if Roblox is already running
+* Argon now utilizes new Roblox [ScriptEditorService](https://create.roblox.com/docs/reference/engine/classes/ScriptEditorService) API
+* Modified existing extension options (auto setup)
+* Tons of bug fixes and code optimizations
+* Redesigned quick pick menu
+
 ## 0.5.3
 * Fixed bug reported by [Loomiquu](https://github.com/Loomiquu) in [#6](https://github.com/DervexHero/Argon/issues/6)
 

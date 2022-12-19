@@ -10,33 +10,6 @@ const messageHandler = require('./messageHandler')
 const winuser = require('./utils/winuser')
 
 const URL = 'https://dervexhero.github.io/Argon/'
-const ITEMS = [
-    {
-        label: '$(debug-start) Run Argon',
-        detail: "Run local server and listen for file changes",
-        action: 'run'
-    },
-    {
-        label: '$(debug-stop) Stop Argon',
-        detail: "Stop local server and stop listening for file changes",
-        action: 'stop'
-    },
-    {
-        label: '$(settings-gear) Open Argon Settings',
-        detail: "Show all available extension settings",
-        action: 'openSettings'
-    },
-    {
-        label: '$(breakpoints-view-icon) Start Debugging',
-        detail: "Switch to Roblox Studio and start playtest (F5)",
-        action: 'startDebugging'
-    },
-    {
-        label: '$(run-all) Launch Roblox Studio',
-        detail: "Open new Roblox Studio instance",
-        action: 'launchStudio'
-    }
-]
 
 let activated = false
 let isRunning = false
@@ -100,18 +73,35 @@ function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
     quickPick.title = 'Argon'
-    quickPick.items = ITEMS
+    quickPick.items = [
+        {
+            label: !isRunning ? '$(debug-start) Run Argon' : '$(debug-stop) Stop Argon',
+            detail: !isRunning ? "Run local server and listen for file changes" : "Stop local server and stop listening for file changes",
+            action: 'runStop'
+        },
+        {
+            label: '$(settings-gear) Open Argon Settings',
+            detail: "Show all available extension settings",
+            action: 'openSettings'
+        },
+        {
+            label: '$(breakpoints-view-icon) Start Debugging',
+            detail: "Switch to Roblox Studio and start playtest (F5)",
+            action: 'startDebugging'
+        },
+        {
+            label: '$(run-all) Launch Roblox Studio',
+            detail: "Open new Roblox Studio instance",
+            action: 'launchStudio'
+        }
+    ]
 
     quickPick.onDidAccept(function() {
         let item = quickPick.selectedItems[0]
 
         switch (item.action) {
-            case 'run':
-                run()
-                quickPick.dispose()
-                break
-            case 'stop':
-                stop()
+            case 'runStop':
+                !isRunning ? run() : stop()
                 quickPick.dispose()
                 break
             case 'openSettings':
@@ -145,7 +135,7 @@ async function activate(context) {
             run(true)
         }
 
-        if (config.autoLaunchStudio) {
+        if (config.autoLaunchStudio && !winuser.isStudioRunning()) {
             launchStudio()
         }
 
@@ -180,8 +170,6 @@ async function activate(context) {
                 debugMode: extension.get('debugMode'),
                 host: server.get('host'),
                 port: server.get('port'),
-            
-                separator : '|'
             }
             
             if (!settings.compatibilityMode) {

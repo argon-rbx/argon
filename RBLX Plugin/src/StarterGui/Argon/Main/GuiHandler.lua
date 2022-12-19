@@ -1,3 +1,4 @@
+local ScriptEditorService = game:GetService('ScriptEditorService')
 local StudioService = game:GetService('StudioService')
 local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
@@ -203,20 +204,17 @@ end
 local function handleActiveScript()
     if Config.openInEditor then
         if not activeScriptConnection then
-            activeScriptConnection = StudioService.Changed:Connect(function(property)
-                if property == 'ActiveScript' then
-                    if StudioService.ActiveScript then
-                        local file = {
-                            File = FileHandler.getPath(StudioService.ActiveScript)
-                        }
+            activeScriptConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
+                HttpHandler.file = document
+                document = document:GetScript()
 
-                        if FileHandler.countChildren(StudioService.ActiveScript) ~= 0 then
-                            file.Type = StudioService.ActiveScript.ClassName
-                        end
+                local file = {File = FileHandler.getPath(document)}
 
-                        HttpHandler.openFile(file)
-                    end
+                if FileHandler.countChildren(document) ~= 0 then
+                    file.Type = document.ClassName
                 end
+
+                HttpHandler.openFile(file)
             end)
         end
     elseif activeScriptConnection then

@@ -22,7 +22,6 @@
     "onLanguage:lua",
     "onLanguage:luau",
     "onCommand:argon.openMenu",
-    "workspaceContains:.argon.json",
     "workspaceContains:default.project.json"
   ],
   "main": "./src/main.js",

@@ -95,7 +95,11 @@ namespace winuser {
     void showStudio(const FunctionCallbackInfo<Value>& args)
     {
         if (!studioWindow)
+        {
             studioWindow = getWindow("");
+            if (!studioWindow)
+                return;
+        }
 
         bool pressed = false;
 
@@ -115,10 +119,25 @@ namespace winuser {
         keybd_event(args[0].As<Integer>()->Value(), 0, 0x0001 | 0x0002, 0);
     }
 
+    void isStudioRunning(const FunctionCallbackInfo<Value>& args)
+    {
+        if (getWindow(""))
+            args.GetReturnValue().Set(true);
+        else
+            args.GetReturnValue().Set(false);
+    }
+
+    void resetWindow(const FunctionCallbackInfo<Value>& args)
+    {
+        studioWindow = NULL;
+    }
+
     void Initialize(Local<Object> exports)
     {
         NODE_SET_METHOD(exports, "showVSC", showVSC);
         NODE_SET_METHOD(exports, "showStudio", showStudio);
+        NODE_SET_METHOD(exports, "isStudioRunning", isStudioRunning);
+        NODE_SET_METHOD(exports, "resetWindow", resetWindow);
     }
 
     NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)

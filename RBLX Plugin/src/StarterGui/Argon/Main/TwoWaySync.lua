@@ -9,7 +9,6 @@ local isSyncing = false
 local sourceConnection = nil
 
 local twoWaySync = {}
-
 twoWaySync.queue = {}
 
 local function pathChanged(instance, parent, new)

@@ -1,5 +1,4 @@
 local HttpService = game:GetService('HttpService')
-local StudioService = game:GetService('StudioService')
 
 local FileHandler = require(script.Parent.FileHandler)
 local TwoWaySync = require(script.Parent.TwoWaySync)
@@ -13,6 +12,7 @@ local thread = nil
 local func = nil
 
 local httpHandler = {}
+httpHandler.file = nil
 
 local function getChunk(data, index)
     local chunk, lastChunk = {}, {}
@@ -121,30 +121,9 @@ function httpHandler.openFile(file)
         pcall(function()
             HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
         end)
-    else
-        local activeScript = StudioService.ActiveScript
-
-        if activeScript then
-            TwoWaySync.pause()
-            local newScript = Instance.new(activeScript.ClassName, activeScript.Parent)
-
-            newScript.Source = activeScript.Source
-            newScript.Name = activeScript.Name
-
-            for _, v in ipairs(activeScript:GetChildren()) do
-                v.Parent = newScript
-            end
-
-            if newScript:IsA('Script') then
-                newScript.Enabled = activeScript.Enabled
-                newScript.RunContext = activeScript.RunContext
-            elseif newScript:IsA('LocalScript') then
-                newScript.Enabled = activeScript.Enabled
-            end
-
-            activeScript:Destroy()
-            TwoWaySync.resume()
-        end
+    elseif httpHandler.file then
+        httpHandler.file:CloseAsync()
+        httpHandler.file = nil
     end
 end
 

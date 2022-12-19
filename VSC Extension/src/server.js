@@ -85,6 +85,7 @@ function requestListener(request, response) {
             if (!isConnected) {
                 lastSync = Date.now()
                 isConnected = true
+                winuser.resetWindow()
             }
             break
         case 'getState':
@@ -184,13 +185,13 @@ function openFile(file) {
     if (suffix) {
         switch (suffix) {
             case 'Script':
-                suffix = '.source.server'
+                suffix = config.source + '.server'
                 break
             case 'LocalScript':
-                suffix = '.source.client'
+                suffix = config.source + '.client'
                 break
             case 'ModuleScript':
-                suffix = '.source'
+                suffix = config.source
                 break
         }
 

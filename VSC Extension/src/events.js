@@ -23,7 +23,7 @@ function create(ext, name, parent) {
             case 'server':
                 name = name.replace('.server', '')
 
-                if (name != '.source') {
+                if (name != config.source) {
                     queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent})
                 }
                 else {
@@ -37,7 +37,7 @@ function create(ext, name, parent) {
             case 'client':
                 name = name.replace('.client', '')
 
-                if (name != '.source') {
+                if (name != config.source) {
                     queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent})
                 }
                 else {
@@ -49,7 +49,7 @@ function create(ext, name, parent) {
 
                 break
             default:
-                if (name != '.source') {
+                if (name != config.source) {
                     queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent})
                 }
                 else {
@@ -97,8 +97,8 @@ function changeType(object, type, name) {
     object = parse(object)
     type = type.replace('.', '')
 
-    if (object.endsWith(config.separator + '.source')) {
-        object = object.replace(config.separator + '.source', '')
+    if (object.endsWith(config.separator + config.source)) {
+        object = object.replace(config.separator + config.source, '')
         let splitted = object.split(config.separator)
         name = object.slice(-splitted[splitted.length - 1].length)
     }

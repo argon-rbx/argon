@@ -222,6 +222,7 @@
     "fileNames": {
         "default.project.json": "argon",
         ".properties.json": "properties",
+        "init.meta.json": "properties",
 
         "CHANGELOG.md": "changelog",
         "LICENSE.md": "license",

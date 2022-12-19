@@ -73,7 +73,7 @@ function onCreate(uri) {
             return
         }
 
-        if (uri.name.startsWith('.source') && !parent.includes(config.separator)) {
+        if (uri.name.startsWith(config.source) && !parent.includes(config.separator)) {
             return
         }
     
@@ -91,7 +91,7 @@ function onSave(uri) {
             return
         }
 
-        if (uri.name.startsWith('.source')) {
+        if (uri.name.startsWith(config.source)) {
             if (parent.includes(config.separator)) {
                 events.update(parent, source)
             }
@@ -120,7 +120,7 @@ function onDelete(uri) {
             return
         }
     
-        if (uri.name.startsWith('.source')) {
+        if (uri.name.startsWith(config.source)) {
             if (parent.includes(config.separator)) {
                 events.remove(parent)
                 fs.rmSync(uri.dir, {recursive: true})
@@ -150,7 +150,7 @@ function onRename(uri) {
             return
         }
 
-        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && !(newParent.includes(config.separator) || !oldParent.includes(config.separator))) {
+        if ((newUri.name.startsWith(config.source) || oldUri.name.startsWith(config.source)) && !(newParent.includes(config.separator) || !oldParent.includes(config.separator))) {
             return
         }
     
@@ -187,7 +187,7 @@ function onRename(uri) {
             events.changeType(newParent + config.separator + newUri.name, newUri.ext)
         }
         else {
-            if (newUri.name.startsWith('.source')) {
+            if (newUri.name.startsWith(config.source)) {
                 setTimeout(() => {
                     fs.renameSync(uri.newUri.fsPath, uri.oldUri.fsPath)
                 }, 100)
@@ -235,7 +235,7 @@ function createInstances(dir, instances) {
                     fs.mkdirSync(folder)
                 }
 
-                fs.writeFileSync(path.join(folder, '.source.server' + config.extension), '')
+                fs.writeFileSync(path.join(folder, config.source + '.server' + config.extension), '')
             }
         }
         else if (key.endsWith('.LocalScript')) {
@@ -249,7 +249,7 @@ function createInstances(dir, instances) {
                     fs.mkdirSync(folder)
                 }
 
-                fs.writeFileSync(path.join(folder, '.source.client' + config.extension), '')
+                fs.writeFileSync(path.join(folder, config.source + '.client' + config.extension), '')
             }
         }
         else if (key.endsWith('.ModuleScript')) {
@@ -263,7 +263,7 @@ function createInstances(dir, instances) {
                     fs.mkdirSync(folder)
                 }
 
-                fs.writeFileSync(path.join(folder, '.source' + config.extension), '')
+                fs.writeFileSync(path.join(folder, config.source + config.extension), '')
             }
         }
         else {
@@ -351,19 +351,19 @@ function portScripts(scripts) {
         else {
             switch (script.Type) {
                 case 'Script':
-                    var localDir = path.join(dir, '.source.server') + config.extension
+                    var localDir = path.join(dir, config.source + '.server') + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
                     }
                     break
                 case 'LocalScript':
-                    var localDir = path.join(dir, '.source.client') + config.extension
+                    var localDir = path.join(dir, config.source + '.client') + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
                     }
                     break
                 case 'ModuleScript':
-                    var localDir = path.join(dir, '.source') + config.extension
+                    var localDir = path.join(dir, config.source) + config.extension
                     if (fs.existsSync(localDir)) {
                         fs.writeFileSync(localDir, script.Source)
                     }
@@ -396,7 +396,7 @@ function portCreate(uri) {
         return
     }
 
-    if (uri.name.startsWith('.source') && !parent.includes(config.separator)) {
+    if (uri.name.startsWith(config.source) && !parent.includes(config.separator)) {
         return
     }
 
@@ -413,7 +413,7 @@ function portSave(uri) {
 
     let source = fs.readFileSync(uri, 'utf-8')
 
-    if (parsedUri.name.startsWith('.source')) {
+    if (parsedUri.name.startsWith(config.source)) {
         if (parent.includes(config.separator)) {
             filesToSync.push(events.portSource(parent, source))
         }
