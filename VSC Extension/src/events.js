@@ -1,7 +1,7 @@
-const SEPARATOR = '|'
+const types = require('./config/classes')
+const config = require('./config/settings')
 
 let queue = []
-let types = []
 
 function parse(string) {
     if (string.includes('.server')) {
@@ -27,7 +27,7 @@ function create(ext, name, parent) {
                     queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent})
                 }
                 else {
-                    let splitted = parent.split(SEPARATOR)
+                    let splitted = parent.split(config.separator)
                     name = parent.slice(-splitted[splitted.length - 1].length)
                     parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'Script', Name: name, Parent: parent, Delete: true})
@@ -41,7 +41,7 @@ function create(ext, name, parent) {
                     queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent})
                 }
                 else {
-                    let splitted = parent.split(SEPARATOR)
+                    let splitted = parent.split(config.separator)
                     name = parent.slice(-splitted[splitted.length - 1].length)
                     parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'LocalScript', Name: name, Parent: parent, Delete: true})
@@ -53,7 +53,7 @@ function create(ext, name, parent) {
                     queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent})
                 }
                 else {
-                    let splitted = parent.split(SEPARATOR)
+                    let splitted = parent.split(config.separator)
                     name = parent.slice(-splitted[splitted.length - 1].length)
                     parent = parent.slice(0, -(name.length + 1))
                     queue.push({Action: 'create', Type: 'ModuleScript', Name: name, Parent: parent, Delete: true})
@@ -97,9 +97,9 @@ function changeType(object, type, name) {
     object = parse(object)
     type = type.replace('.', '')
 
-    if (object.endsWith(SEPARATOR + '.source')) {
-        object = object.replace(SEPARATOR + '.source', '')
-        let splitted = object.split(SEPARATOR)
+    if (object.endsWith(config.separator + '.source')) {
+        object = object.replace(config.separator + '.source', '')
+        let splitted = object.split(config.separator)
         name = object.slice(-splitted[splitted.length - 1].length)
     }
 
@@ -149,17 +149,8 @@ function portSource(object, source) {
     return {Action: 'update', Object: object, Source: source}
 }
 
-function setTypes(newTypes) {
-    types = newTypes
-}
-
-function getTypes() {
-    return types
-}
-
 module.exports = {
     queue,
-    types,
     create,
     update,
     remove,
@@ -167,7 +158,5 @@ module.exports = {
     changeType,
     changeParent,
     setProperties,
-    portSource,
-    setTypes,
-    getTypes
+    portSource
 }

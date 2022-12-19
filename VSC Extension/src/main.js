@@ -3,7 +3,7 @@ const https = require('https')
 const childProcess = require('child_process')
 const files = require('./files')
 const server = require('./server')
-const config = require('./config/settings.js')
+const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
 
 //@ts-ignore
@@ -25,11 +25,6 @@ const ITEMS = [
         label: '$(settings-gear) Open Argon Settings',
         detail: "Show all available extension settings",
         action: 'openSettings'
-    },
-    {
-        label: '$(cloud-download) Update Classes',
-        detail: "Download latest Roblox API",
-        action: 'updateClasses'
     },
     {
         label: '$(breakpoints-view-icon) Start Debugging',
@@ -82,15 +77,6 @@ function stop() {
     }
 }
 
-function updateClasses() {
-    if (vscode.workspace.name) {
-        files.updateClasses()
-    }
-    else {
-        messageHandler.showMessage('openWorkspace', 1)
-    }
-}
-
 function launchStudio() {
     childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function (error) {
         if (error) {
@@ -130,10 +116,6 @@ function openMenu() {
                 break
             case 'openSettings':
                 vscode.commands.executeCommand('workbench.action.openSettings', '@ext:dervex.argon')
-                quickPick.dispose()
-                break
-            case 'updateClasses':
-                updateClasses()
                 quickPick.dispose()
                 break
             case 'startDebugging':
@@ -185,19 +167,30 @@ async function activate(context) {
             const directories = vscode.workspace.getConfiguration('argon.directories')
             const extension = vscode.workspace.getConfiguration('argon.extension')
             const server = vscode.workspace.getConfiguration('argon.server')
-        
+
             let settings = {
-                rootName: directories.get('rootFolder'),
+                rootFolder: directories.get('rootFolder'),
                 extension: directories.get('extension'),
+                compatibilityMode: directories.get('compatibilityMode'),
                 autoRun: extension.get('autoRun'),
-                autoUpdate: extension.get('autoUpdate'),
-                autoCreateFolder: extension.get('autoCreateFolder'),
+                autoSetup: extension.get('autoSetup'),
                 autoLaunchStudio: extension.get('autoLaunchStudio'),
                 hideNotifications: extension.get('hideNotifications'),
                 openInPreview: extension.get('openInPreview'),
                 debugMode: extension.get('debugMode'),
                 host: server.get('host'),
-                port: server.get('port')
+                port: server.get('port'),
+            
+                separator : '|'
+            }
+            
+            if (!settings.compatibilityMode) {
+                settings.source = '.source',
+                settings.properties = '.properties'
+            }
+            else {
+                settings.source = 'init',
+                settings.properties = 'init.meta'
             }
 
             for (let key in settings) {

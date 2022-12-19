@@ -1,17 +1,263 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
+	"type": "object",
+	"properties": {
         "directory": {
             "type": "string",
             "title": "Relative root folder directory, don't include 'src'",
             "examples": ["folder\\subfolder"]
         },
-        "version": {
-            "type": "string"
-        },
-        "classes": {
-            "type": "array"
-        }
-    }
+		"name": {
+			"type": "string"
+		},
+		"tree": {
+			"type": "object",
+			"properties": {
+				"$className": {
+					"type": "string"
+				},
+				"Chat": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"Lighting": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"LocalizationService": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"ReplicatedFirst": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"ReplicatedStorage": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"ServerScriptService": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"ServerStorage": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"SoundService": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"StarterGui": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"StarterPack": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"StarterPlayer": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"StarterCharacterScripts": {
+							"type": "object",
+							"properties": {
+								"$className": {
+									"type": "string"
+								},
+								"$path": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"$className",
+								"$path"
+							]
+						},
+						"StarterPlayerScripts": {
+							"type": "object",
+							"properties": {
+								"$className": {
+									"type": "string"
+								},
+								"$path": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"$className",
+								"$path"
+							]
+						}
+					},
+					"required": [
+						"$className",
+						"StarterCharacterScripts",
+						"StarterPlayerScripts"
+					]
+				},
+				"Teams": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"TestService": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				},
+				"Workspace": {
+					"type": "object",
+					"properties": {
+						"$className": {
+							"type": "string"
+						},
+						"$path": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"$className",
+						"$path"
+					]
+				}
+			},
+			"required": [
+				"$className"
+			]
+		}
+	}
 }

@@ -1,0 +1,69 @@
+{
+	"name": "Argon",
+	"tree": {
+		"$className": "DataModel",
+		"Chat": {
+			"$className": "Chat",
+			"$path": "src/Chat"
+		},
+		"Lighting": {
+			"$className": "Lighting",
+			"$path": "src/Lighting"
+		},
+		"LocalizationService": {
+			"$className": "LocalizationService",
+			"$path": "src/LocalizationService"
+		},
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"$path": "src/ReplicatedFirst"
+		},
+		"ReplicatedStorage": {
+			"$className": "ReplicatedStorage",
+			"$path": "src/ReplicatedStorage"
+		},
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"$path": "src/ServerScriptService"
+		},
+		"ServerStorage": {
+			"$className": "ServerStorage",
+			"$path": "src/ServerStorage"
+		},
+		"SoundService": {
+			"$className": "SoundService",
+			"$path": "src/SoundService"
+		},
+		"StarterGui": {
+			"$className": "StarterGui",
+			"$path": "src/StarterGui"
+		},
+		"StarterPack": {
+			"$className": "StarterPack",
+			"$path": "src/StarterPack"
+		},
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterCharacterScripts": {
+				"$className": "StarterCharacterScripts",
+				"$path": "src/StarterPlayer/StarterCharacterScripts"
+			},
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$path": "src/StarterPlayer/StarterPlayerScripts"
+			}
+		},
+		"Teams": {
+			"$className": "Teams",
+			"$path": "src/Teams"
+		},
+		"TestService": {
+			"$className": "TestService",
+			"$path": "src/TestService"
+		},
+		"Workspace": {
+			"$className": "Workspace",
+			"$path": "src/Workspace"
+		}
+	}
+}

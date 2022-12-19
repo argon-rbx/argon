@@ -1,8 +1,8 @@
 const http = require('http')
 const vscode = require('vscode')
 const path = require('path')
-const config = require('./config/settings.js')
-const website = require('./config/website.js')
+const config = require('./config/settings')
+const website = require('./config/website')
 const events = require('./events')
 const files = require('./files')
 const twoWaySync = require('./twoWaySync')
@@ -31,9 +31,9 @@ function getTime() {
     minutes = Math.floor((time / 1000 / 60 / 60 - hours) * 60)
     seconds = Math.floor(((time / 1000 / 60 / 60 - hours) * 60 - minutes) * 60)
 
-    hours < 10 ? hours = `0${hours}`: hours = `${hours}`
-    minutes < 10 ? minutes = `0${minutes}`: minutes = `${minutes}`
-    seconds < 10 ? seconds = `0${seconds}`: seconds = `${seconds}`
+    hours < 10 ? hours = `0${hours}` : hours = `${hours}`
+    minutes < 10 ? minutes = `0${minutes}` : minutes = `${minutes}`
+    seconds < 10 ? seconds = `0${seconds}` : seconds = `${seconds}`
 
     return hours + ':' + minutes + ':' + seconds
 }

@@ -1,17 +1,11 @@
 const fs = require('fs')
 const path = require('path')
-const https = require('https')
 const vscode = require('vscode')
 const events = require('./events')
-const config = require('./config/settings.js')
-const types = require('./config/classes.js')
+const types = require('./config/classes')
+const config = require('./config/settings')
+const project = require('./config/project')
 const messageHandler = require('./messageHandler')
-
-const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
-const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
-const PROPERTIES = '.properties'
-const ARGON_JSON = '.argon.json'
-const SEPARATOR = '|'
 
 let watchers = []
 let filesToSync = []
@@ -24,7 +18,7 @@ function verify(parent) {
 }
 
 function getParent(root) {
-    if (!root.includes(config.rootName)) {
+    if (!root.includes(config.rootFolder)) {
         return null
     }
 
@@ -37,19 +31,19 @@ function getParent(root) {
             let type = dir[i].split('.')
             type = type[type.length - 1]
 
-            if (events.getTypes().includes(type)) {
+            if (types.includes(type)) {
                 dir[i] = dir[i].replace('.' + type, '')
             }
         }
 
         if (i != dir.length - 1) {
-            parent = dir[i] + SEPARATOR + parent
+            parent = dir[i] + config.separator + parent
         }
         else {
             parent = dir[i]
         }
 
-        if (dir[i] == config.rootName) {
+        if (dir[i] == config.rootFolder) {
             let len = root.split(dir[i]).length - 1
 
             if (len > 1 && similarName == 0)  {
@@ -64,7 +58,7 @@ function getParent(root) {
         }
     }
 
-    parent = parent.slice(config.rootName.length + 1)
+    parent = parent.slice(config.rootFolder.length + 1)
     return parent
 }
 
@@ -79,7 +73,7 @@ function onCreate(uri) {
             return
         }
 
-        if (uri.name.startsWith('.source') && !parent.includes(SEPARATOR)) {
+        if (uri.name.startsWith('.source') && !parent.includes(config.separator)) {
             return
         }
     
@@ -98,15 +92,15 @@ function onSave(uri) {
         }
 
         if (uri.name.startsWith('.source')) {
-            if (parent.includes(SEPARATOR)) {
+            if (parent.includes(config.separator)) {
                 events.update(parent, source)
             }
         }
         else {
-            events.update(parent + SEPARATOR + uri.name, source)
+            events.update(parent + config.separator + uri.name, source)
         }
     }
-    else if (uri.name == PROPERTIES) {
+    else if (uri.name == config.properties) {
         if (!parent || parent == '') {
             return
         }
@@ -127,17 +121,17 @@ function onDelete(uri) {
         }
     
         if (uri.name.startsWith('.source')) {
-            if (parent.includes(SEPARATOR)) {
+            if (parent.includes(config.separator)) {
                 events.remove(parent)
                 fs.rmSync(uri.dir, {recursive: true})
             }
         }
         else {
-            if (uri.ext == '.lua' || uri.ext == '.luau' || events.getTypes().includes(uri.ext.substring(1))) {
-                events.remove(parent + SEPARATOR + uri.name)
+            if (uri.ext == '.lua' || uri.ext == '.luau' || types.includes(uri.ext.substring(1))) {
+                events.remove(parent + config.separator + uri.name)
             }
             else {
-                events.remove(parent + SEPARATOR + uri.name + uri.ext)
+                events.remove(parent + config.separator + uri.name + uri.ext)
             }
         }
     }
@@ -156,7 +150,7 @@ function onRename(uri) {
             return
         }
 
-        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && !(newParent.includes(SEPARATOR) || !oldParent.includes(SEPARATOR))) {
+        if ((newUri.name.startsWith('.source') || oldUri.name.startsWith('.source')) && !(newParent.includes(config.separator) || !oldParent.includes(config.separator))) {
             return
         }
     
@@ -166,7 +160,7 @@ function onRename(uri) {
                 let oldSplitted = oldUri.name.split('.')
                 
                 if (newSplitted.length != oldSplitted.length) {
-                    events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                    events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
                 else {
                     let newName = newSplitted[0]
@@ -175,22 +169,22 @@ function onRename(uri) {
                     let oldType = oldSplitted[newSplitted.length - 1]
                     
                     if (newName != oldName && newType == oldType) {
-                        events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
+                        events.rename(oldParent + config.separator + oldUri.name, newUri.name)
                     }
                     else if (newType != oldType && newName == oldName) {
-                        events.changeType(newParent + SEPARATOR + newUri.name, newType)
+                        events.changeType(newParent + config.separator + newUri.name, newType)
                     }
                     else {
-                        events.changeType(oldParent + SEPARATOR + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                        events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                     }
                 }
             }
             else {
-                events.rename(oldParent + SEPARATOR + oldUri.name, newUri.name)
+                events.rename(oldParent + config.separator + oldUri.name, newUri.name)
             }
         }
         else if (newUri.ext != oldUri.ext) {
-            events.changeType(newParent + SEPARATOR + newUri.name, newUri.ext)
+            events.changeType(newParent + config.separator + newUri.name, newUri.ext)
         }
         else {
             if (newUri.name.startsWith('.source')) {
@@ -199,31 +193,14 @@ function onRename(uri) {
                 }, 100)
             }
             else {
-                events.changeParent(oldParent + SEPARATOR + oldUri.name, newParent)
+                events.changeParent(oldParent + config.separator + oldUri.name, newParent)
             }
         }
     }
 }
 
 function run() {
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
     getRootDir()
-
-    if (fs.existsSync(dir)) {
-        let json = JSON.parse(fs.readFileSync(dir).toString())
-
-        if (json.classes) {
-            events.setTypes(json.classes)
-        }
-    }
-    else {
-        events.setTypes(types)
-    }
-
-    if (config.autoUpdate) {
-        updateClasses()
-    }
-
     watchers.push(vscode.workspace.onDidCreateFiles(onCreate))
     watchers.push(vscode.workspace.onDidSaveTextDocument(onSave))
     watchers.push(vscode.workspace.onDidDeleteFiles(onDelete))
@@ -236,92 +213,6 @@ function stop() {
     }
 
     watchers.length = 0
-}
-
-function updateClasses() {
-    function getVersion(callback) {
-        https.get(VERSION_URL, (response) => {
-            let body = ''
-        
-            response.on('data', (data) => {
-                body += data
-            })
-    
-            response.on('end', () => {
-                callback(body)
-            })
-        
-        }).on('error', () => {
-            messageHandler.showMessage('serverConnection', 2)
-        })
-    }
-
-    function getClasses(version, dir) {
-        https.get(API_URL.replace('$version', version), (response) => {
-            let body = ''
-        
-            response.on('data', (data) => {
-                body += data
-            })
-    
-            response.on('end', () => {
-                let classes = JSON.parse(body).Classes
-                let newTypes = []
-                let newJson = {}
-            
-                for (let type of classes) {
-                    if (!type.Tags) {
-                        newTypes.push(type.Name)
-                    }
-                    else if (!type.Tags.includes('NotCreatable')) {
-                        newTypes.push(type.Name)
-                    }
-                }
-
-                newTypes.push('StarterCharacterScripts')
-                newTypes.push('StarterPlayerScripts')
-
-                if (fs.existsSync(dir)) {
-                    let json = JSON.parse(fs.readFileSync(dir).toString())
-
-                    if (json.directory) {
-                        newJson.directory = json.directory
-                    }
-                }
-            
-                newJson.version = version
-                newJson.classes = newTypes
-            
-                events.setTypes(newTypes)
-                fs.writeFileSync(dir, JSON.stringify(newJson, null, '\t'))
-                messageHandler.showMessage('databaseUpdated')
-            })
-        
-        }).on('error', () => {
-            messageHandler.showMessage('serverConnection', 2)
-        })
-    }
-
-    let dir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ARGON_JSON)
-    messageHandler.showMessage('updatingDatabase', 1)
-
-    if (fs.existsSync(dir)) {
-        let json = JSON.parse(fs.readFileSync(dir).toString())
-
-        getVersion(function(version) {
-            if (json.version == version) {
-                messageHandler.showMessage('databaseUpToDate')
-            }
-            else {
-                getClasses(version, dir)
-            }
-        })
-    }
-    else {
-        getVersion(function(version) {
-            getClasses(version, dir)
-        })
-    }
 }
 
 function createInstances(dir, instances) {
@@ -393,7 +284,7 @@ function createInstances(dir, instances) {
 
 function getRootDir() {
     let rootDir = vscode.workspace.workspaceFolders[0].uri.fsPath
-    let jsonDir = path.join(rootDir, ARGON_JSON)
+    let jsonDir = path.join(rootDir, config.json)
 
     if (fs.existsSync(jsonDir)) {
         let json = JSON.parse(fs.readFileSync(jsonDir).toString())
@@ -402,11 +293,14 @@ function getRootDir() {
             rootDir = path.join(rootDir, json.directory)
         }
     }
+    else if (config.autoSetup) {
+        fs.writeFileSync(jsonDir, JSON.stringify(project, null, '\t'))
+    }
 
-    rootDir = path.join(rootDir, config.rootName)
+    rootDir = path.join(rootDir, config.rootFolder)
 
     if (!fs.existsSync(rootDir)) {
-        if (config.autoCreateFolder) {
+        if (config.autoSetup) {
             fs.mkdirSync(rootDir)
         }
         else {
@@ -489,7 +383,7 @@ function portProperties(properties) {
         key = path.join(rootDir, key)
         if (fs.existsSync(key)) {
             value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']').replace(/, \t/g, ', ').replace(/\[\t/g, '[').replace(/\n\t\t\]\]/g, ']]').replace(/\n\t\t\]/g, ']')
-            fs.writeFileSync(path.join(key, PROPERTIES + '.json'), value)
+            fs.writeFileSync(path.join(key, config.properties + '.json'), value)
         }
     }
 }
@@ -502,7 +396,7 @@ function portCreate(uri) {
         return
     }
 
-    if (uri.name.startsWith('.source') && !parent.includes(SEPARATOR)) {
+    if (uri.name.startsWith('.source') && !parent.includes(config.separator)) {
         return
     }
 
@@ -520,12 +414,12 @@ function portSave(uri) {
     let source = fs.readFileSync(uri, 'utf-8')
 
     if (parsedUri.name.startsWith('.source')) {
-        if (parent.includes(SEPARATOR)) {
+        if (parent.includes(config.separator)) {
             filesToSync.push(events.portSource(parent, source))
         }
     }
     else {
-        filesToSync.push(events.portSource(parent + SEPARATOR + parsedUri.name, source))
+        filesToSync.push(events.portSource(parent + config.separator + parsedUri.name, source))
     }
 }
 
@@ -545,7 +439,7 @@ function getSubDirs(uri) {
     fs.readdirSync(uri, {withFileTypes: true}).forEach(file => {
         let subUri = path.join(uri, file.name)
 
-        if (file.name != PROPERTIES + '.json') {
+        if (file.name != config.properties + '.json') {
             portCreate(subUri)
 
             if (file.isDirectory()) {
@@ -611,7 +505,6 @@ function getUnix() {
 module.exports = {
     run,
     stop,
-    updateClasses,
     portInstances,
     portScripts,
     portProperties,

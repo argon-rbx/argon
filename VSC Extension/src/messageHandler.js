@@ -1,6 +1,6 @@
 const vscode = require('vscode')
 const messages = require('./config/messages')
-const config = require('./config/settings.js')
+const config = require('./config/settings')
 
 let lastMessage = Date.now()
 
