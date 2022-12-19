@@ -1,7 +1,10 @@
 # Changelog
 
+## 0.5.3
+* Fixed bug reported by [Loomiquu](https://github.com/Loomiquu) in [#6](https://github.com/DervexHero/Argon/issues/6)
+
 ## 0.5.2
-* Fixed bug reported by [0MRob](https://devforum.roblox.com/u/0mrob) that blocked script source from porting when script had non-script children
+* Fixed bug reported by [0MRob](https://devforum.roblox.com/u/0mrob) that blocked script source from being ported when script had non-script children
 * Fixed properties not porting when instance has no children
 * Fixed ArgonIgnore attribute not working in only code mode
 * Fixed UDim and UDim2 properties not porting

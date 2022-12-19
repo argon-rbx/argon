@@ -40,7 +40,7 @@ local function parse(instance)
         name:sub(2)
     end
 
-    if instance.ClassName ~= 'Folder' then
+    if instance.ClassName ~= 'Folder' and instance.ClassName ~= 'StarterCharacterScripts' and instance.ClassName ~= 'StarterPlayerScripts' then
         className = '.'..instance.ClassName
     end
 
@@ -374,21 +374,15 @@ function fileHandler.portInstances()
     end
 
     if instancesToSync['StarterPlayer'] then
-        if instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] then
-            if len(instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']) == 0 then
-                instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
-            else
-                instancesToSync['StarterPlayer']['StarterCharacterScripts'] = instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts']
-                instancesToSync['StarterPlayer']['StarterCharacterScripts.StarterCharacterScripts'] = nil
+        if instancesToSync['StarterPlayer']['StarterCharacterScripts'] then
+            if len(instancesToSync['StarterPlayer']['StarterCharacterScripts']) == 0 then
+                instancesToSync['StarterPlayer']['StarterCharacterScripts'] = nil
             end
         end
 
-        if instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] then
-            if len(instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']) == 0 then
-                instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
-            else
-                instancesToSync['StarterPlayer']['StarterPlayerScripts'] = instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts']
-                instancesToSync['StarterPlayer']['StarterPlayerScripts.StarterPlayerScripts'] = nil
+        if instancesToSync['StarterPlayer']['StarterPlayerScripts'] then
+            if len(instancesToSync['StarterPlayer']['StarterPlayerScripts']) == 0 then
+                instancesToSync['StarterPlayer']['StarterPlayerScripts'] = nil
             end
         end
 
