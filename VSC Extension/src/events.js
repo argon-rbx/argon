@@ -1,4 +1,3 @@
-const types = require('./config/classes')
 const config = require('./config/settings')
 
 let queue = []
@@ -63,17 +62,7 @@ function create(ext, name, parent) {
         }
     }
     else {
-        ext = ext.substring(1)
-
-        if (types.includes(ext)) {
-            queue.push({Action: 'create', Type: ext, Name: name, Parent: parent})
-        }
-        else if (ext == '') {
-            queue.push({Action: 'create', Type: 'Folder', Name: name, Parent: parent})
-        }
-        else if (ext != 'lua' && ext != 'luau') {
-            queue.push({Action: 'create', Type: 'Folder', Name: name + '.' + ext, Parent: parent})
-        }
+        queue.push({Action: 'create', Type: 'Folder', Name: name + ext, Parent: parent})
     }
 }
 
@@ -124,11 +113,6 @@ function changeType(object, type, name) {
                 break
             case 'client':
                 queue.push({Action: 'changeType', Object: object, Type: 'LocalScript',})
-                break
-            default:
-                if (types.includes(type)) {
-                    queue.push({Action: 'changeType', Object: object, Type: type,})
-                }
                 break
         }
     }

@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 const vscode = require('vscode')
 const events = require('./events')
-const types = require('./config/classes')
 const config = require('./config/settings')
 const project = require('./config/project')
 const messageHandler = require('./messageHandler')
@@ -23,19 +22,10 @@ function getParent(root) {
     }
 
     let dir = root.split('\\')
-    let similarName = 0
+    let duplicates = 0
     let parent = ''
 
     for (let i = dir.length - 1; i >= 0; i--) {
-        if (dir[i].includes('.')) {
-            let type = dir[i].split('.')
-            type = type[type.length - 1]
-
-            if (types.includes(type)) {
-                dir[i] = dir[i].replace('.' + type, '')
-            }
-        }
-
         if (i != dir.length - 1) {
             parent = dir[i] + config.separator + parent
         }
@@ -46,11 +36,11 @@ function getParent(root) {
         if (dir[i] == config.rootFolder) {
             let len = root.split(dir[i]).length - 1
 
-            if (len > 1 && similarName == 0)  {
-                similarName = len - 1
+            if (len > 1 && duplicates == 0)  {
+                duplicates = len - 1
             }
-            else if (similarName > 1) {
-                similarName--
+            else if (duplicates > 1) {
+                duplicates--
             }
             else {
                 break
@@ -127,7 +117,7 @@ function onDelete(uri) {
             }
         }
         else {
-            if (uri.ext == '.lua' || uri.ext == '.luau' || types.includes(uri.ext.substring(1))) {
+            if (uri.ext == '.lua' || uri.ext == '.luau') {
                 events.remove(parent + config.separator + uri.name)
             }
             else {
@@ -141,6 +131,7 @@ function onRename(uri) {
     let files = uri.files
 
     for (uri of files) {
+        let isDirectory = fs.statSync(uri.newUri.fsPath).isDirectory()
         let newUri = path.parse(uri.newUri.fsPath)
         let oldUri = path.parse(uri.oldUri.fsPath)
         let newParent = getParent(newUri.dir)
@@ -160,6 +151,9 @@ function onRename(uri) {
                 let oldSplitted = oldUri.name.split('.')
                 
                 if (newSplitted.length != oldSplitted.length) {
+                    if (isDirectory) {
+                        return
+                    }
                     events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
                 else {
@@ -172,19 +166,22 @@ function onRename(uri) {
                         events.rename(oldParent + config.separator + oldUri.name, newUri.name)
                     }
                     else if (newType != oldType && newName == oldName) {
+                        if (isDirectory) {
+                            return
+                        }
                         events.changeType(newParent + config.separator + newUri.name, newType)
                     }
                     else {
+                        if (isDirectory) {
+                            return
+                        }
                         events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                     }
                 }
             }
-            else {
-                events.rename(oldParent + config.separator + oldUri.name, newUri.name)
-            }
         }
         else if (newUri.ext != oldUri.ext) {
-            events.changeType(newParent + config.separator + newUri.name, newUri.ext)
+            return
         }
         else {
             if (newUri.name.startsWith(config.source)) {

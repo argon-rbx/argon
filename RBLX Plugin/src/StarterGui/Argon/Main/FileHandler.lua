@@ -34,21 +34,16 @@ end
 
 local function parse(instance)
     local name, num = instance.Name:gsub('[%\\%/%:%*%?%"%<%>%|]', '')
-    local className = ''
 
     if name:match('^/') or name:match('^\\') then
         name:sub(2)
-    end
-
-    if instance.ClassName ~= 'Folder' and instance.ClassName ~= 'StarterCharacterScripts' and instance.ClassName ~= 'StarterPlayerScripts' then
-        className = '.'..instance.ClassName
     end
 
     if num ~= 0 then
         warn('Argon: '..instance:GetFullName()..' contains invalid symbols! (fhP)')
     end
 
-    return name..className
+    return name
 end
 
 local function getParent(instance, root)
@@ -344,10 +339,8 @@ function fileHandler.getPath(instance, onlyCode, recursive)
             else
                 name = instance.Name
 		    end
-        elseif instance.ClassName == 'Folder' or instance.ClassName == 'StarterCharacterScripts' or instance.ClassName == 'StarterPlayerScripts' then
-            name = instance.Name
         else
-            name = instance.Name..'.'..instance.ClassName
+            name = instance.Name
         end
 
         dir = fileHandler.getPath(parent, onlyCode, true)..'\\'..name
@@ -391,6 +384,8 @@ function fileHandler.portInstances()
         end
     end
 
+    print(instancesToSync)
+
     return instancesToSync
 end
 
@@ -412,6 +407,8 @@ function fileHandler.portScripts()
             end
         end
     end
+
+    print(scriptsToSync)
 
     return scriptsToSync
 end
