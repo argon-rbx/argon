@@ -151,10 +151,12 @@ function onRename(uri) {
                 let oldSplitted = oldUri.name.split('.')
                 
                 if (newSplitted.length != oldSplitted.length) {
-                    if (isDirectory) {
-                        return
+                    if (!isDirectory) {
+                        events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                     }
-                    events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                    else {
+                        events.rename(oldParent + config.separator + oldUri.name, newUri.name)
+                    }
                 }
                 else {
                     let newName = newSplitted[0]
@@ -166,16 +168,20 @@ function onRename(uri) {
                         events.rename(oldParent + config.separator + oldUri.name, newUri.name)
                     }
                     else if (newType != oldType && newName == oldName) {
-                        if (isDirectory) {
-                            return
+                        if (!isDirectory) {
+                            events.changeType(newParent + config.separator + newUri.name, newType)
                         }
-                        events.changeType(newParent + config.separator + newUri.name, newType)
+                        else {
+                            events.rename(oldParent + config.separator + oldUri.name, newUri.name)
+                        }
                     }
                     else {
-                        if (isDirectory) {
-                            return
+                        if (!isDirectory) {
+                            events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                         }
-                        events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
+                        else {
+                            events.rename(oldParent + config.separator + oldUri.name, newUri.name)
+                        }
                     }
                 }
             }

@@ -71,7 +71,7 @@ local portToRobloxButton = toolsPage.Body.PortToRoblox.Button
 local connections = {}
 local subConnections = {}
 local themeConnection = nil
-local activeScriptConnection = nil
+local documentConnection = nil
 local expandedSetting = nil
 local lastTheme = 'Dark'
 local isPorting = false
@@ -201,25 +201,33 @@ local function changePage(position, page1, page2)
     end
 end
 
-local function handleActiveScript()
+local function handleDocumentChange()
     if Config.openInEditor then
-        if not activeScriptConnection then
-            activeScriptConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
+        if not documentConnection then
+            documentConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
+                if document.Name == 'CommandBar' then
+                    return
+                end
+
                 HttpHandler.file = document
-                document = document:GetScript()
+                task.wait()
 
-                local file = {File = FileHandler.getPath(document)}
+                local container = document:GetScript()
+                local file = {
+                    File = FileHandler.getPath(container),
+                    Line = document:GetSelectionStart()
+                }
 
-                if FileHandler.countChildren(document) ~= 0 then
-                    file.Type = document.ClassName
+                if FileHandler.countChildren(container) ~= 0 then
+                    file.Type = container.ClassName
                 end
 
                 HttpHandler.openFile(file)
             end)
         end
-    elseif activeScriptConnection then
-        activeScriptConnection:Disconnect()
-        activeScriptConnection = nil
+    elseif documentConnection then
+        documentConnection:Disconnect()
+        documentConnection = nil
     end
 end
 
@@ -245,7 +253,7 @@ local function toggleSetting(setting, data)
     elseif setting == 2 then
         Config.openInEditor = not Config.openInEditor
         plugin:SetSetting('OpenInEditor', Config.openInEditor)
-        handleActiveScript()
+        handleDocumentChange()
 
         if Config.openInEditor then
             TweenService:Create(openInEditorButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
@@ -501,21 +509,29 @@ end
 function guiHandler.run(newPlugin, autoConnect)
     themeConnection = Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
+    plugin = newPlugin
     updateTheme()
+
+    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
+    if openInEditorSetting ~= nil then
+        Config.openInEditor = openInEditorSetting
+        if openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 0
+            handleDocumentChange()
+        end
+    end
 
     if not RunService:IsEdit() then
         overlayFrame.Visible = true
         return
     end
 
-    plugin = newPlugin
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
     local portSetting = plugin:GetSetting('Port')
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
-    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local propertySyncingSetting = plugin:GetSetting('PropertySyncing')
@@ -546,15 +562,6 @@ function guiHandler.run(newPlugin, autoConnect)
 
         if autoReconnectSetting then
             autoReconnectButton.OnIcon.ImageTransparency = 0
-        end
-    end
-
-    if openInEditorSetting ~= nil then
-        Config.openInEditor = openInEditorSetting
-
-        if openInEditorSetting then
-            openInEditorButton.OnIcon.ImageTransparency = 0
-            handleActiveScript()
         end
     end
 

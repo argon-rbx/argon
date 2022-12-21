@@ -181,6 +181,7 @@ function stop() {
 function openFile(file) {
     file = JSON.parse(file)
     let suffix = file.Type
+    let line = file.Line
 
     if (suffix) {
         switch (suffix) {
@@ -195,15 +196,23 @@ function openFile(file) {
                 break
         }
 
-        file.File = file.File + '\\' + suffix
+        file.File += '\\' + suffix
     }
 
     file = path.join(files.getRootDir(), file.File + config.extension)
 
     vscode.workspace.openTextDocument(file).then(file => {
-        vscode.window.showTextDocument(file, {preview: config.openInPreview})
-        events.queue.push({Action: 'closeFile'})
-        winuser.showVSC(vscode.workspace.name)
+        vscode.window.showTextDocument(file, {preview: config.openInPreview}).then(() => {
+            if (line != 1) {
+                let range = vscode.window.activeTextEditor.document.lineAt(line - 1).range
+                let selection = new vscode.Selection(range.start, range.end)
+                vscode.window.activeTextEditor.selection = selection
+                vscode.window.activeTextEditor.revealRange(range)
+            }
+
+            events.queue.push({Action: 'closeFile'})
+            winuser.showVSC(vscode.workspace.name)
+        })
     }).then(undefined, () => {})
 }
 
