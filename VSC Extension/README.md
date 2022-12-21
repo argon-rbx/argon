@@ -70,9 +70,6 @@ https://user-images.githubusercontent.com/78505208/198825627-06661154-c964-476e-
 https://user-images.githubusercontent.com/78505208/198825649-f064e6db-91a3-47d1-89d3-7674de206818.mp4
 </details>
 
-**You can find more detailed explanation in this [tutorial](https://devforum.roblox.com/t/2063712) by [@AridTheDev](https://devforum.roblox.com/u/AridTheDev)**
-*(Huge thanks!)*
-
 # Demo
 [![Demo video](https://raw.githubusercontent.com/DervexHero/Argon/release/VSC%20Extension/assets/Demo.png)](https://youtu.be/2_jgGdP_63M 'Demo')
 

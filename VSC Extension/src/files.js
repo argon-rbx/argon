@@ -151,12 +151,7 @@ function onRename(uri) {
                 let oldSplitted = oldUri.name.split('.')
                 
                 if (newSplitted.length != oldSplitted.length) {
-                    if (!isDirectory) {
-                        events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
-                    }
-                    else {
-                        events.rename(oldParent + config.separator + oldUri.name, newUri.name)
-                    }
+                    events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                 }
                 else {
                     let newName = newSplitted[0]
@@ -168,35 +163,37 @@ function onRename(uri) {
                         events.rename(oldParent + config.separator + oldUri.name, newUri.name)
                     }
                     else if (newType != oldType && newName == oldName) {
-                        if (!isDirectory) {
-                            events.changeType(newParent + config.separator + newUri.name, newType)
-                        }
-                        else {
-                            events.rename(oldParent + config.separator + oldUri.name, newUri.name)
-                        }
+                        events.changeType(newParent + config.separator + newUri.name, newType)
                     }
                     else {
-                        if (!isDirectory) {
-                            events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
-                        }
-                        else {
-                            events.rename(oldParent + config.separator + oldUri.name, newUri.name)
-                        }
+                        events.changeType(oldParent + config.separator + oldUri.name, newSplitted[newSplitted.length - 1], newUri.name)
                     }
                 }
             }
+            else {
+                events.rename(oldParent + config.separator + oldUri.name + oldUri.ext, newUri.name + newUri.ext)
+            }
         }
         else if (newUri.ext != oldUri.ext) {
-            return
+            if (isDirectory) {
+                events.rename(oldParent + config.separator + oldUri.name + oldUri.ext, newUri.name + newUri.ext)
+            }
         }
         else {
             if (newUri.name.startsWith(config.source)) {
-                setTimeout(() => {
-                    fs.renameSync(uri.newUri.fsPath, uri.oldUri.fsPath)
-                }, 100)
+                if (!isDirectory) {
+                    setTimeout(() => {
+                        fs.renameSync(uri.newUri.fsPath, uri.oldUri.fsPath)
+                    }, 100)
+                }
             }
             else {
-                events.changeParent(oldParent + config.separator + oldUri.name, newParent)
+                if (!isDirectory) {
+                    events.changeParent(oldParent + config.separator + oldUri.name, newParent)
+                }
+                else {
+                    events.changeParent(oldParent + config.separator + oldUri.name + oldUri.ext, newParent)
+                }
             }
         }
     }

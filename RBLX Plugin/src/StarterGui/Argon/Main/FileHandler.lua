@@ -34,16 +34,21 @@ end
 
 local function parse(instance)
     local name, num = instance.Name:gsub('[%\\%/%:%*%?%"%<%>%|]', '')
+    local className = ''
 
     if name:match('^/') or name:match('^\\') then
         name:sub(2)
+    end
+
+    if instance:IsA('LuaSourceContainer') then
+        className = '.'..instance.ClassName
     end
 
     if num ~= 0 then
         warn('Argon: '..instance:GetFullName()..' contains invalid symbols! (fhP)')
     end
 
-    return name
+    return name..className
 end
 
 local function getParent(instance, root)
@@ -292,7 +297,7 @@ function fileHandler.countChildren(instance)
     local count = 0
 
     if Config.onlyCode then
-        for _, v in ipairs(instance:GetChildren()) do
+        for _, v in ipairs(instance:GetDescendants()) do
             if v:IsA('LuaSourceContainer') then
                 count += 1
             end
@@ -384,8 +389,6 @@ function fileHandler.portInstances()
         end
     end
 
-    print(instancesToSync)
-
     return instancesToSync
 end
 
@@ -407,8 +410,6 @@ function fileHandler.portScripts()
             end
         end
     end
-
-    print(scriptsToSync)
 
     return scriptsToSync
 end

@@ -3,6 +3,7 @@
 ## 0.6.0
 * Added support for external tooling
 * Roblox LSP is now natively supported
+* Clicking on output prints/errors will now get you to the right line in VSC, only when open in editor is enabled (requested by [Plasmanode](https://devforum.roblox.com/u/plasma_node))
 * Added compatibility mode which replaces ".source" files with "init" and .properties files with "init.meta"
 * Instance classes are now stored in .properties.json only when property syncing option is enabled
 * Replaced .argon.json with default.project.json (required to for Roblox LSP and other tooling)
