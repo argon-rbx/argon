@@ -98,6 +98,8 @@ function dataTypes.getProperties(object)
 
     local properties = {}
 
+    properties.Class = object.ClassName
+
     for _, v in ipairs(apiDump[object.ClassName]) do
         local dataType = typeof(object[v])
         local value = object[v]

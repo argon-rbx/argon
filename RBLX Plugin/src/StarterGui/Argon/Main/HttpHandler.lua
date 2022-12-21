@@ -54,7 +54,7 @@ local function startSyncing(url)
                     elseif v.Action == 'changeType' then
                         FileHandler.changeType(v.Object, v.Type, v.Name)
                     elseif v.Action == 'setProperties' then
-                        FileHandler.setProperties(v.Object, v.Properties)
+                        FileHandler.setProperties(v.Object, HttpService:JSONDecode(v.Properties))
                     elseif v.Action == 'closeFile' then
                         httpHandler.openFile()
                     end
@@ -207,7 +207,7 @@ function httpHandler.portProject()
             if v.Action == 'create' then
                 FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
             elseif v.Action == 'setProperties' then
-                FileHandler.setProperties(v.Object, v.Properties)
+                FileHandler.setProperties(v.Object, HttpService:JSONDecode(v.Properties))
             end
         end
 

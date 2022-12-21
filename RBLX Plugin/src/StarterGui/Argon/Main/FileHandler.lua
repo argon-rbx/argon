@@ -1,5 +1,4 @@
 local ChangeHistoryService = game:GetService('ChangeHistoryService')
-local HttpService = game:GetService('HttpService')
 
 local Config = require(script.Parent.Config)
 local DataTypes = require(script.Parent.DataTypes)
@@ -250,8 +249,7 @@ function fileHandler.changeType(object, class, name)
     local success, response = pcall(function()
         object = getInstance(object)
 
-        local newObject = Instance.new(class)
-        newObject.Parent = object.Parent
+        local newObject = Instance.new(class, object.Parent)
         newObject.Name = name or object.Name
 
         for _, v in ipairs(object:GetChildren()) do
@@ -280,8 +278,22 @@ function fileHandler.setProperties(object, properties)
     local success, response = pcall(function()
         object = getInstance(object)
 
-        for i, v in pairs(HttpService:JSONDecode(properties)) do
-            object[i] = DataTypes.cast(v, i, object)
+        if properties.Class and properties.Class ~= object.ClassName then
+            local newObject = Instance.new(properties.Class, object.Parent)
+            newObject.Name = object.Name
+
+            for _, v in ipairs(object:GetChildren()) do
+                v.Parent = newObject
+            end
+
+            object:Destroy()
+            object = newObject
+        end
+
+        for i, v in pairs(properties) do
+            if i ~= 'Class' then
+                object[i] = DataTypes.cast(v, i, object)
+            end
         end
     end)
 
