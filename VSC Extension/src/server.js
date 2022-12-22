@@ -20,8 +20,9 @@ let isConnected = false
 let requestsLeft = 0
 let chunks = []
 
-let syncCount = 5
+let syncCount = 0
 let uptime = 0
+let title = ''
 
 function getTime() {
     let time = Date.now() - uptime
@@ -55,7 +56,7 @@ function requestListener(request, response) {
             break
         case 'setSync':
             var body = ''
-        
+
             request.on('data', (chunk) => {
                 body += chunk
             })
@@ -66,11 +67,11 @@ function requestListener(request, response) {
             break
         case 'openFile':
             var body = ''
-        
+
             request.on('data', (chunk) => {
                 body += chunk
             })
-    
+
             request.on('end', () => {
                 openFile(body)
             })
@@ -88,38 +89,53 @@ function requestListener(request, response) {
                 winuser.resetWindow()
             }
             break
+        case 'disconnect':
+            isConnected = false
+            title = ''
+            break
+        case 'setTitle':
+            var body = ''
+
+            request.on('data', (chunk) => {
+                body += chunk
+            })
+
+            request.on('end', () => {
+                title = body
+            })
+            break
         case 'getState':
             data = JSON.stringify(Date.now() - files.getUnix())
             break
         case 'portInstances':
             var body = ''
-        
+
             request.on('data', (chunk) => {
                 body += chunk
             })
-    
+
             request.on('end', () => {
                 files.portInstances(body)
             })
             break
         case 'portScripts':
             var body = ''
-        
+
             request.on('data', (chunk) => {
                 body += chunk
             })
-    
+
             request.on('end', () => {
                 files.portScripts(body)
             })
             break
         case 'portProperties':
             var body = ''
-        
+
             request.on('data', (chunk) => {
                 body += chunk
             })
-    
+
             request.on('end', () => {
                 files.portProperties(body)
             })
@@ -176,6 +192,7 @@ function stop() {
 
     server.close()
     syncCount = 0
+    title = ''
 }
 
 function openFile(file) {
@@ -216,9 +233,14 @@ function openFile(file) {
     }).then(undefined, () => {})
 }
 
+function getTitle() {
+    return title
+}
+
 module.exports = {
     run,
-    stop
+    stop,
+    getTitle
 }
 
 server.on('connection', (socket) => {

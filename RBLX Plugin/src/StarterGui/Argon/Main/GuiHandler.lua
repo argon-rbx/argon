@@ -77,6 +77,7 @@ local lastTheme = 'Dark'
 local isPorting = false
 local debounce = false
 local stopped = false
+local widget = nil
 local state = 0
 local connect
 
@@ -123,6 +124,7 @@ function connect()
             if success then
                 actionLabel.Text = 'STOP'
                 infoLabel.Text = Config.host..':'..Config.port
+                widget.Title = 'Argon'..response
                 state = 1
             else
                 fail(response)
@@ -134,6 +136,7 @@ function connect()
 
             stopped = true
             actionLabel.Text = 'CONNECT'
+            widget.Title = 'Argon'
             infoLabel.Text = 'Connecting...'
             inputFrame.Visible = true
             previewFrame.Visible = false
@@ -506,7 +509,7 @@ function guiHandler.runPage(page)
     end
 end
 
-function guiHandler.run(newPlugin, autoConnect)
+function guiHandler.run(newPlugin, newWidget, autoConnect)
     themeConnection = Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
     plugin = newPlugin
@@ -526,6 +529,7 @@ function guiHandler.run(newPlugin, autoConnect)
         return
     end
 
+    widget = newWidget
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
@@ -643,6 +647,10 @@ function guiHandler.run(newPlugin, autoConnect)
     if twoWaySyncSetting then
         TwoWaySync.run()
     end
+
+    game:BindToClose(function()
+        HttpHandler.disconnect()
+    end)
 end
 
 function guiHandler.stop()

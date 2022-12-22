@@ -24,42 +24,7 @@ function getVersion(callback) {
     })
 }
 
-function generateClasses() {
-    getVersion((version) => {
-        https.get(API_URL.replace('$version', version), (response) => {
-            let body = ''
-        
-            response.on('data', (data) => {
-                body += data
-            })
-    
-            response.on('end', () => {
-                let classes = JSON.parse(body).Classes
-                let newTypes = []
-            
-                for (let type of classes) {
-                    if (!type.Tags) {
-                        newTypes.push(type.Name)
-                    }
-                    else if (!type.Tags.includes('NotCreatable')) {
-                        newTypes.push(type.Name)
-                    }
-                }
-
-                newTypes.push('Terrain')
-                newTypes.push('StarterCharacterScripts')
-                newTypes.push('StarterPlayerScripts')
-
-                fs.writeFileSync(DIR, JSON.stringify(newTypes))
-            })
-        
-        }).on('error', () => {
-            console.log('ERROR: generateClasses');
-        })
-    })
-}
-
-function generateSchema() {
+function generateJsonSchema() {
     getVersion((version) => {
         https.get(API_URL.replace('$version', version), (response) => {
             let body
@@ -81,7 +46,7 @@ function generateSchema() {
 
                 schema['$schema'] = 'http://json-schema.org/draft-07/schema#'
                 schema['type'] = 'object'
-                schema['properties'] = {}
+                schema['properties'] = {Class: {type: 'string'}}
             
                 for (let type of classes) {
                     if (type.length != 0 && (!type.Tags || !type.Tags.includes('NotCreatable'))) {
@@ -263,12 +228,12 @@ function generateSchema() {
             })
         
         }).on('error', () => {
-            console.log('ERROR: generateSchema');
+            console.log('ERROR: generateJsonSchema');
         })
     })
 }
 
-function generateDump() {
+function generateApiDump() {
     getVersion((version) => {
         https.get(API_URL.replace('$version', version), (response) => {
             let body = ''
@@ -309,17 +274,16 @@ function generateDump() {
                     }
                 }
 
-                fs.writeFileSync(DIR, JSON.stringify(api))
+                fs.writeFileSync(DIR, JSON.stringify(api, null, '\t'))
             })
         
         }).on('error', () => {
-            console.log('ERROR: generateDump');
+            console.log('ERROR: generateApiDump');
         })
     })
 }
 
 module.exports = {
-    generateClasses,
-    generateSchema,
-    generateDump
+    generateJsonSchema,
+    generateApiDump
 }

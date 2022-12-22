@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -33,16 +33,26 @@
         "category": "Argon"
       },
       {
-        "command": "argon.startDebugging",
-        "title": "Start Debugging",
+        "command": "argon.playDebug",
+        "title": "Play",
+        "category": "Argon"
+      },
+      {
+        "command": "argon.runDebug",
+        "title": "Run",
         "category": "Argon"
       }
     ],
     "keybindings":[
       {
-        "command": "argon.startDebugging",
+        "command": "argon.playDebug",
         "when": "editorLangId == lua || editorLangId == luau",
         "key": "f5"
+      },
+      {
+        "command": "argon.runDebug",
+        "when": "editorLangId == lua || editorLangId == luau",
+        "key": "f8"
       }
     ],
     "configuration": {
@@ -98,13 +108,6 @@
           "default": true,
           "description": "Whether Argon should open files in preview mode by default",
           "order": 4
-        },
-        "argon.extension.debugMode": {
-          "type": "string",
-          "default": "Play",
-          "description": "Whether Argon should Play or Run playtest",
-          "enum": ["Play", "Run"],
-          "order": 5
         },
         "argon.server.host": {
           "type": "string",

@@ -62,7 +62,7 @@ local function getParent(instance, root)
         instance = instance.Parent
 
         if instance:GetAttribute(ARGON_IGNORE) ~= nil then
-            return nil
+            return
         end
 
         if Config.propertySyncing and not currentInstances[instance] and not instance:IsA('LuaSourceContainer') then
@@ -131,7 +131,7 @@ local function getInstance(parent)
             end
 
             if not didFind then
-                return nil
+                return
             end
         end
     end

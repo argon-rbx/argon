@@ -3,6 +3,7 @@ local HttpService = game:GetService('HttpService')
 local Config = require(script.Parent.Config)
 
 local URL = 'http://%s:%s/'
+local SEPARATOR = '\\'
 local DATA_TYPES = {
     ['Vector3'] = Vector3,
     ['Vector2'] = Vector2,
@@ -32,6 +33,45 @@ local function getApiDump()
     end
 
     return success
+end
+
+local function getPath(instance)
+    local path = ''
+
+    if instance.Parent ~= game then
+        path = getPath(instance.Parent)..SEPARATOR..instance.Name
+    else
+        path = instance.ClassName
+    end
+
+    return path
+end
+
+local function getInstance(path)
+    local instance = game
+    path = path:split(SEPARATOR)
+
+    for _, v in ipairs(path) do
+        if instance == game then
+            instance = game:GetService(v)
+        else
+            local didFind = false
+
+            for _, w in ipairs(instance:GetChildren()) do
+                if w.Name == v then
+                    instance = w
+                    didFind = true
+                    break
+                end
+            end
+
+            if not didFind then
+                return
+            end
+        end
+    end
+
+    return instance
 end
 
 function dataTypes.cast(value, property, object)
@@ -82,6 +122,9 @@ function dataTypes.cast(value, property, object)
             table.insert(keypoints, ColorSequenceKeypoint.new(v[1], Color3.new(v[2], v[3], v[4])))
         end
         return ColorSequence.new(keypoints)
+
+    else
+        return getInstance(value)
     end
 end
 
@@ -93,7 +136,7 @@ function dataTypes.getProperties(object)
     end
 
     if not apiDump[object.ClassName] then
-        return nil
+        return
     end
 
     local properties = {}
@@ -103,6 +146,10 @@ function dataTypes.getProperties(object)
     for _, v in ipairs(apiDump[object.ClassName]) do
         local dataType = typeof(object[v])
         local value = object[v]
+
+        if not value then
+            continue
+        end
 
         if dataType == 'boolean' or dataType == 'number' or dataType == 'string' then
             properties[v] = value
@@ -128,7 +175,7 @@ function dataTypes.getProperties(object)
                 properties[v] = {value.Density, value.Friction, value.Elasticity, value.FrictionWeight, value.ElasticityWeight}
             end
 
-        elseif dataType == 'EnumItem' then
+        elseif dataType == 'EnumItem' or dataType == 'BrickColor' then
             properties[v] = tostring(value)
 
         elseif dataType == 'Font' then
@@ -150,6 +197,9 @@ function dataTypes.getProperties(object)
                 table.insert(newValue, {w.Time, w.Value.R, w.Value.G, w.Value.B})
             end
             properties[v] = newValue
+
+        elseif dataType == 'Instance' then
+            properties[v] = getPath(value)
         end
     end
 

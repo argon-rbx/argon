@@ -13,6 +13,7 @@ const URL = 'https://dervexhero.github.io/Argon/'
 
 let activated = false
 let isRunning = false
+let func = null
 
 function run(autoRun) {
     if (!isRunning) {
@@ -22,6 +23,9 @@ function run(autoRun) {
                     files.run()
                     messageHandler.showMessage('argonRunning')
                     isRunning = true
+                    if (func) {
+                        func()
+                    }
                 }
                 else {
                     messageHandler.showMessage('alreadyRunning', 2)
@@ -58,21 +62,18 @@ function launchStudio() {
     })
 }
 
-function debug() {
-    switch (config.debugMode) {
-        case "Play":
-            winuser.showStudio(0x74)
-            break;
-        case "Run":
-            winuser.showStudio(0x77)
-            break
-    }
+function debugPlay() {
+    winuser.showStudio(0x74)
+}
+
+function debugRun() {
+    winuser.showStudio(0x77)
 }
 
 function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
-    quickPick.title = 'Argon'
+    quickPick.title = 'Argon' + server.getTitle()
     quickPick.items = [
         {
             label: !isRunning ? '$(debug-start) Run Argon' : '$(debug-stop) Stop Argon',
@@ -86,7 +87,7 @@ function openMenu() {
         },
         {
             label: '$(breakpoints-view-icon) Start Debugging',
-            detail: "Switch to Roblox Studio and start playtest (F5)",
+            detail: "Switch to Roblox Studio and start playtest (F5 or F8)",
             action: 'startDebugging'
         },
         {
@@ -109,7 +110,38 @@ function openMenu() {
                 quickPick.dispose()
                 break
             case 'startDebugging':
-                debug()
+                let subQuickPick = vscode.window.createQuickPick()
+                
+                subQuickPick.title = 'Select playtest mode:'
+                subQuickPick.items = [
+                    {
+                        label: '$(vm) Play',
+                        description: 'F5',
+                        action: 'play'
+                    },
+                    {
+                        label: '$(server) Run',
+                        description: 'F8',
+                        action: 'run'
+                    }
+                ]
+
+                subQuickPick.onDidAccept(function() {
+                    let subItem = subQuickPick.selectedItems[0]
+
+                    switch (subItem.action) {
+                        case 'play':
+                            debugPlay()
+                            subQuickPick.dispose()
+                            break
+                        case 'run':
+                            debugRun()
+                            subQuickPick.dispose()
+                            break
+                    }
+                })
+
+                subQuickPick.show()
                 quickPick.dispose()
                 break
             case 'launchStudio':
@@ -119,6 +151,19 @@ function openMenu() {
         }
     })
 
+    func = function() {
+        let items = [
+            {
+                label: !isRunning ? '$(debug-start) Run Argon' : '$(debug-stop) Stop Argon',
+                detail: !isRunning ? "Run local server and listen for file changes" : "Stop local server and stop listening for file changes",
+                action: 'runStop'
+            }
+        ]
+
+        // @ts-ignore
+        quickPick.items = items.concat(quickPick.items.slice(1))
+    }
+
     quickPick.show()
 }
 
@@ -127,9 +172,10 @@ async function activate(context) {
         activated = true
 
         let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
-        let debugCommand = vscode.commands.registerCommand('argon.startDebugging', debug)
+        let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
+        let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
 
-        context.subscriptions.push(menuCommand, debugCommand)
+        context.subscriptions.push(menuCommand, playCommand, runCommand)
 
         if (config.autoRun) {
             run(true)

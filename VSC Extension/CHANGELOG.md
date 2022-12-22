@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1
+* Added support for instance references (property type)
+* Added dynamic plugin and extension title (displays current project), suggested by [Plasmanode](https://devforum.roblox.com/u/plasma_node)
+* Added new debugging menu and removed debugging mode setting
+* You can now play or run playtest with different keybinds (F5 and F8) in VSC
+* Fixed BrickColor property not porting from VSC to Studio
+
 ## 0.6.0
 * Added support for external tooling
 * Roblox LSP is now natively supported
