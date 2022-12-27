@@ -79,10 +79,18 @@ function httpHandler.connect(fail)
     local url = URL:format(Config.host, Config.port)
     local initHeader = {action = 'init'}
     local titleHeader = {action = 'setTitle'}
+    local customTitle = false
 
     local success, response = pcall(function()
-        if HttpService:GetAsync(url, false, initHeader) == 'true' then
+        local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, initHeader))
+
+        if json.State == 'true' then
             error('Argon is already connected!', 0)
+        end
+
+        if json.Title ~= '' then
+            title = ' - '..json.Title
+            customTitle = true
         end
     end)
 
@@ -91,7 +99,7 @@ function httpHandler.connect(fail)
     if success then
         startSyncing(url)
 
-        if not title then
+        if not customTitle then
             if game.Name:find('.rbxl') or game.Name:find('.rbxlx') then
                 response = ' - '..game.Name
                 title = response

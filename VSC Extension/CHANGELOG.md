@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.6.2
-* Added support for name used in default.project.json (only, if ~= "Argon"), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Added support for name used in default.project.json (only if ~= "Argon"), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed bug reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev) that crashed VSC extension when trying to port empty folders
 * Fixed bug reported by [@ecndm70](https://devforum.roblox.com/u/ecndm70) was causing errors with BindToClose event
 * Fixed JSON schema not working in default.project.json

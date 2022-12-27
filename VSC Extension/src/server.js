@@ -81,13 +81,19 @@ function requestListener(request, response) {
                 isConnected = false
             }
 
-            data = JSON.stringify(isConnected)
-
             if (!isConnected) {
                 lastSync = Date.now()
                 isConnected = true
                 winuser.resetWindow()
             }
+
+            title = files.getTitle()
+
+            data = JSON.stringify({
+                State: isConnected,
+                Title: title
+            })
+
             break
         case 'disconnect':
             isConnected = false

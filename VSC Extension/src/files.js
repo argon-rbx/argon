@@ -502,6 +502,20 @@ function portProject() {
     return chunks
 }
 
+function getTitle() {
+    let project = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.json)
+
+    if (fs.existsSync(project)) {
+        let json = JSON.parse(fs.readFileSync(project).toString())
+
+        if (json.name && json.name != 'Argon') {
+            return json.name
+        }
+    }
+
+    return ''
+}
+
 function getUnix() {
     return lastUnix
 }
@@ -514,5 +528,6 @@ module.exports = {
     portProperties,
     portProject,
     getRootDir,
+    getTitle,
     getUnix
 }
