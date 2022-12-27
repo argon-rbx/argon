@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3
+* Added execute snippet command (quick pick menu and F6)
+* Added status bar icon, suggested by [@ecndm70](https://devforum.roblox.com/u/ecndm70)
+* Argon now uses HTML file as a local website
+* Fixed some networking issues
+
 ## 0.6.2
 * Added support for name used in default.project.json (only if ~= "Argon"), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed bug reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev) that crashed VSC extension when trying to port empty folders

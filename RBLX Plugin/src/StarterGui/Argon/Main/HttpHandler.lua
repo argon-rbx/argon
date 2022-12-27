@@ -10,11 +10,31 @@ local URL = 'http://%s:%s/'
 local SYNC_INTERVAL = 0.2
 
 local thread = nil
+local snippetThread = nil
 local func = nil
 local title = nil
 
 local httpHandler = {}
 httpHandler.file = nil
+
+local function executeSnippet(snippet)
+    if snippetThread then
+        task.cancel(snippetThread)
+        snippetThread = nil
+    end
+
+    snippetThread = task.spawn(function()
+        local success, response = pcall(function()
+            loadstring(snippet)()
+            snippetThread = nil
+        end)
+
+        if not success then
+            response = response:split('"]:')
+            warn(response[#response])
+        end
+    end)
+end
 
 local function getChunk(data, index)
     local chunk, lastChunk = {}, {}
@@ -59,6 +79,8 @@ local function startSyncing(url)
                         FileHandler.setProperties(v.Object, HttpService:JSONDecode(v.Properties))
                     elseif v.Action == 'closeFile' then
                         httpHandler.openFile()
+                    elseif v.Action == 'executeSnippet' then
+                        executeSnippet(v.Snippet)
                     end
                 end
 
@@ -84,7 +106,7 @@ function httpHandler.connect(fail)
     local success, response = pcall(function()
         local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, initHeader))
 
-        if json.State == 'true' then
+        if json.State then
             error('Argon is already connected!', 0)
         end
 

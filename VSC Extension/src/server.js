@@ -1,8 +1,8 @@
 const http = require('http')
 const vscode = require('vscode')
 const path = require('path')
+const fs = require('fs')
 const config = require('./config/settings')
-const website = require('./config/website')
 const events = require('./events')
 const files = require('./files')
 const twoWaySync = require('./twoWaySync')
@@ -14,7 +14,7 @@ const winuser = require('./utils/winuser')
 const URL = 'http://$host:$port/'
 
 let server = http.createServer(requestListener)
-let lastSync = Date.now()
+let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -69420)
 let sockets = new Set() //Temp fix for forcing server to stop (until Electron adds support for node.js 18.2.0+)
 let isConnected = false
 let requestsLeft = 0
@@ -24,7 +24,11 @@ let syncCount = 0
 let uptime = 0
 let title = ''
 
-function getTime() {
+function getUptime() {
+    if (uptime == 0) {
+        return '00:00:00'
+    }
+
     let time = Date.now() - uptime
     let hours, minutes, seconds
 
@@ -39,6 +43,13 @@ function getTime() {
     return hours + ':' + minutes + ':' + seconds
 }
 
+function updateStatusBar() {
+    statusBarItem.text = !isConnected ? '$(circle-large-outline) Argon' : '$(pass-filled) Argon'
+    statusBarItem.tooltip = 'Connected to: ' + title.replace(' - ', '') + '\nServer uptime: ' + getUptime() + '\nSync count: ' + syncCount
+    statusBarItem.command = 'argon.openMenu'
+    statusBarItem.name = 'Argon'
+}
+
 function requestListener(request, response) {
     let headers = request.headers
     let data = null;
@@ -50,9 +61,8 @@ function requestListener(request, response) {
             if (events.queue.length > 0) {
                 events.queue.length = 0
                 syncCount ++
+                updateStatusBar()   
             }
-
-            lastSync = Date.now()
             break
         case 'setSync':
             var body = ''
@@ -77,27 +87,23 @@ function requestListener(request, response) {
             })
             break
         case 'init':
-            if (Date.now() - lastSync > 500) {
-                isConnected = false
-            }
-
-            if (!isConnected) {
-                lastSync = Date.now()
-                isConnected = true
-                winuser.resetWindow()
-            }
-
             title = files.getTitle()
-
             data = JSON.stringify({
                 State: isConnected,
                 Title: title
             })
 
+            if (!isConnected) {
+                isConnected = true
+                winuser.resetWindow()
+                updateStatusBar()
+            }
+
             break
         case 'disconnect':
             isConnected = false
             title = ''
+            updateStatusBar()
             break
         case 'setTitle':
             var body = ''
@@ -108,6 +114,7 @@ function requestListener(request, response) {
 
             request.on('end', () => {
                 title = body
+                updateStatusBar()
             })
             break
         case 'getState':
@@ -166,7 +173,8 @@ function requestListener(request, response) {
             data = JSON.stringify(apiDump)
             break
         default:
-            data = website.replace('$time', getTime()).replace('$synces', syncCount.toString())
+            let website = fs.readFileSync(path.resolve(__dirname, './config/website.html')).toString()
+            data = website.replace('$time', getUptime()).replace('$synces', syncCount.toString())
             break
     }
 
@@ -197,8 +205,12 @@ function stop() {
     }
 
     server.close()
+    isConnected = false
     syncCount = 0
+    uptime = 0
     title = ''
+
+    updateStatusBar()
 }
 
 function openFile(file) {
@@ -248,6 +260,8 @@ module.exports = {
     stop,
     getTitle
 }
+
+statusBarItem.show()
 
 server.on('connection', (socket) => {
     sockets.add(socket);

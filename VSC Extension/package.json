@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -41,6 +41,11 @@
         "command": "argon.runDebug",
         "title": "Run",
         "category": "Argon"
+      },
+      {
+        "command": "argon.executeSnippet",
+        "title": "Execute Snippet",
+        "category": "Argon"
       }
     ],
     "keybindings":[
@@ -53,6 +58,11 @@
         "command": "argon.runDebug",
         "when": "editorLangId == lua || editorLangId == luau",
         "key": "f8"
+      },
+      {
+        "command": "argon.executeSnippet",
+        "when": "editorLangId == lua || editorLangId == luau",
+        "key": "f6"
       }
     ],
     "configuration": {

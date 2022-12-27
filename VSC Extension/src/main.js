@@ -2,6 +2,7 @@ const vscode = require('vscode')
 const https = require('https')
 const childProcess = require('child_process')
 const files = require('./files')
+const events = require('./events')
 const server = require('./server')
 const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
@@ -54,6 +55,17 @@ function stop() {
     }
 }
 
+function executeSnippet() {
+    let selection = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection)
+
+    if (selection) {
+        events.queue.push({Action: 'executeSnippet', Snippet: selection})
+    }
+    else {
+        events.queue.push({Action: 'executeSnippet', Snippet: vscode.window.activeTextEditor.document.getText()})
+    }
+}
+
 function launchStudio() {
     childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function (error) {
         if (error) {
@@ -86,6 +98,11 @@ function openMenu() {
             action: 'openSettings'
         },
         {
+            label: '$(layout-panel) Execute Snippet',
+            detail: "Switch to Roblox Studio and execute selected snippet in commad bar (F6)",
+            action: 'executeSnippet'
+        },
+        {
             label: '$(breakpoints-view-icon) Start Debugging',
             detail: "Switch to Roblox Studio and start playtest (F5 or F8)",
             action: 'startDebugging'
@@ -107,6 +124,10 @@ function openMenu() {
                 break
             case 'openSettings':
                 vscode.commands.executeCommand('workbench.action.openSettings', '@ext:dervex.argon')
+                quickPick.dispose()
+                break
+            case 'executeSnippet':
+                executeSnippet()
                 quickPick.dispose()
                 break
             case 'startDebugging':
@@ -174,8 +195,9 @@ async function activate(context) {
         let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
         let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
         let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
+        let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
 
-        context.subscriptions.push(menuCommand, playCommand, runCommand)
+        context.subscriptions.push(menuCommand, playCommand, runCommand, executeCommand)
 
         if (config.autoRun) {
             run(true)
