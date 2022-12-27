@@ -2,14 +2,14 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
 	"type": "object",
 	"properties": {
+		"name": {
+			"type": "string"
+		},
         "directory": {
             "type": "string",
             "title": "Relative root folder directory, don't include 'src'",
             "examples": ["folder\\subfolder"]
         },
-		"name": {
-			"type": "string"
-		},
 		"tree": {
 			"type": "object",
 			"properties": {

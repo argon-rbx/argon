@@ -1,8 +1,14 @@
 # Changelog
 
+## 0.6.2
+* Added support for name used in default.project.json (only, if ~= "Argon"), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Fixed bug reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev) that crashed VSC extension when trying to port empty folders
+* Fixed bug reported by [@ecndm70](https://devforum.roblox.com/u/ecndm70) was causing errors with BindToClose event
+* Fixed JSON schema not working in default.project.json
+
 ## 0.6.1
 * Added support for instance references (property type)
-* Added dynamic plugin and extension title (displays current project), suggested by [Plasmanode](https://devforum.roblox.com/u/plasma_node)
+* Added dynamic plugin and extension title (displays current project), suggested by [@Plasmanode](https://devforum.roblox.com/u/plasma_node)
 * Added new debugging menu and removed debugging mode setting
 * You can now play or run playtest with different keybinds (F5 and F8) in VSC
 * Fixed BrickColor property not porting from VSC to Studio
@@ -10,7 +16,7 @@
 ## 0.6.0
 * Added support for external tooling
 * Roblox LSP is now natively supported
-* Clicking on output prints/errors will now get you to the right line in VSC, only when open in editor is enabled (requested by [Plasmanode](https://devforum.roblox.com/u/plasma_node))
+* Clicking on output prints/errors will now get you to the right line in VSC, only when open in editor is enabled (requested by [@Plasmanode](https://devforum.roblox.com/u/plasma_node))
 * Added compatibility mode which replaces ".source" files with "init" and .properties files with "init.meta"
 * Instance classes are now stored in .properties.json only when property syncing option is enabled
 * Replaced .argon.json with default.project.json (required to for Roblox LSP and other tooling)
@@ -22,10 +28,10 @@
 * Redesigned quick pick menu
 
 ## 0.5.3
-* Fixed bug reported by [Loomiquu](https://github.com/Loomiquu) in [#6](https://github.com/DervexHero/Argon/issues/6)
+* Fixed bug reported by [@Loomiquu](https://github.com/Loomiquu) in [#6](https://github.com/DervexHero/Argon/issues/6)
 
 ## 0.5.2
-* Fixed bug reported by [0MRob](https://devforum.roblox.com/u/0mrob) that blocked script source from being ported when script had non-script children
+* Fixed bug reported by [@0MRob](https://devforum.roblox.com/u/0mrob) that blocked script source from being ported when script had non-script children
 * Fixed properties not porting when instance has no children
 * Fixed ArgonIgnore attribute not working in only code mode
 * Fixed UDim and UDim2 properties not porting
@@ -122,7 +128,7 @@
 
 ## 0.2.0
 * Added whitelist system for class filtering, suggested by [@Punctuation](https://devforum.roblox.com/u/loomiquu)
-* Fixed unclickable buttons after playtest, reported by [@Arid](https://devforum.roblox.com/u/aridthedev)
+* Fixed unclickable buttons after playtest, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed default values of VSC extension settings
 * Fixed light theme and UI scaling
 * Tons of other UI optimizations and fixes

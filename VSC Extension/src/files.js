@@ -488,6 +488,10 @@ function portProject() {
         }
     })
 
+    if (filesToSync.length == 0) {
+        return [[]]
+    }
+
     do {
         let chunk
         [chunk, index] = getChunk(filesToSync, index)

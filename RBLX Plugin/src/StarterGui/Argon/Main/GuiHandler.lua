@@ -75,6 +75,7 @@ local documentConnection = nil
 local expandedSetting = nil
 local lastTheme = 'Dark'
 local isPorting = false
+local didSetup = false
 local debounce = false
 local stopped = false
 local widget = nil
@@ -648,9 +649,13 @@ function guiHandler.run(newPlugin, newWidget, autoConnect)
         TwoWaySync.run()
     end
 
-    game:BindToClose(function()
-        HttpHandler.disconnect()
-    end)
+    if not didSetup then
+        didSetup = true
+
+        plugin.Unloading:Once(function()
+            HttpHandler.disconnect()
+        end)
+    end
 end
 
 function guiHandler.stop()

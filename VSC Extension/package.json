@@ -134,11 +134,15 @@
     ],
     "jsonValidation": [
       {
-        "fileMatch": ".argon.json",
-        "url": "./assets/.argon.schema.json"
+        "fileMatch": "default.project.json",
+        "url": "./assets/.project.schema.json"
       },
       {
         "fileMatch": ".properties.json",
+        "url": "./assets/.properties.schema.json"
+      },
+      {
+        "fileMatch": "init.meta.json",
         "url": "./assets/.properties.schema.json"
       }
     ]
