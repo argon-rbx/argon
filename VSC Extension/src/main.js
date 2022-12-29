@@ -64,10 +64,14 @@ function executeSnippet() {
     else {
         events.queue.push({Action: 'executeSnippet', Snippet: vscode.window.activeTextEditor.document.getText()})
     }
+
+    if (config.snippetExecutionMode) {
+        winuser.showStudio()
+    }
 }
 
 function launchStudio() {
-    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function (error) {
+    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function(error) {
         if (error) {
             messageHandler.showMessage('robloxStudioLaunch', 2)
         }
@@ -85,7 +89,7 @@ function debugRun() {
 function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
-    quickPick.title = 'Argon' + server.getTitle()
+    quickPick.title = 'Argon' + (server.getTitle() ? ' - ' + server.getTitle() : '')
     quickPick.items = [
         {
             label: !isRunning ? '$(debug-start) Run Argon' : '$(debug-stop) Stop Argon',
@@ -99,7 +103,7 @@ function openMenu() {
         },
         {
             label: '$(layout-panel) Execute Snippet',
-            detail: "Switch to Roblox Studio and execute selected snippet in commad bar (F6)",
+            detail: "Execute selected snippet in Roblox Studio's commad bar (F6)",
             action: 'executeSnippet'
         },
         {
@@ -230,12 +234,14 @@ async function activate(context) {
                 rootFolder: directories.get('rootFolder'),
                 extension: directories.get('extension'),
                 compatibilityMode: directories.get('compatibilityMode'),
+
                 autoRun: extension.get('autoRun'),
                 autoSetup: extension.get('autoSetup'),
                 autoLaunchStudio: extension.get('autoLaunchStudio'),
                 hideNotifications: extension.get('hideNotifications'),
                 openInPreview: extension.get('openInPreview'),
-                debugMode: extension.get('debugMode'),
+                snippetExecutionMode: extension.get('snippetExecutionMode'),
+
                 host: server.get('host'),
                 port: server.get('port'),
             }

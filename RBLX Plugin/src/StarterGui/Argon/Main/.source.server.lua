@@ -20,7 +20,7 @@ local function open(autoConnect)
     if not isOpen then
         isOpen = true
         button:SetActive(true)
-        GuiHandler.run(plugin, widget, autoConnect)
+        GuiHandler.run(plugin, widget, button, autoConnect)
         widget.Enabled = true
     end
 end

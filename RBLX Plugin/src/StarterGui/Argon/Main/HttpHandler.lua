@@ -12,7 +12,6 @@ local SYNC_INTERVAL = 0.2
 local thread = nil
 local snippetThread = nil
 local func = nil
-local title = nil
 
 local httpHandler = {}
 httpHandler.file = nil
@@ -101,7 +100,8 @@ function httpHandler.connect(fail)
     local url = URL:format(Config.host, Config.port)
     local initHeader = {action = 'init'}
     local titleHeader = {action = 'setTitle'}
-    local customTitle = false
+    local customTitle = ''
+    local title = ''
 
     local success, response = pcall(function()
         local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, initHeader))
@@ -110,10 +110,7 @@ function httpHandler.connect(fail)
             error('Argon is already connected!', 0)
         end
 
-        if json.Title ~= '' then
-            title = ' - '..json.Title
-            customTitle = true
-        end
+        customTitle = json.Title
     end)
 
     func = func or fail
@@ -121,26 +118,20 @@ function httpHandler.connect(fail)
     if success then
         startSyncing(url)
 
-        if not customTitle then
-            if game.Name:find('.rbxl') or game.Name:find('.rbxlx') then
-                response = ' - '..game.Name
-                title = response
-            else
-                success = pcall(function()
-                    response = ' - '..MarketPlaceService:GetProductInfo(game.PlaceId).Name
-                    title = response
-                end)
-
-                if not success then
-                    response = ''
-                end
-            end
+        if game.Name:find('.rbxl') or game.Name:find('.rbxlx') then
+            title = game.Name
         else
-            response = title
+            pcall(function()
+                title = MarketPlaceService:GetProductInfo(game.PlaceId).Name
+            end)
         end
 
-        if response ~= '' then
-            HttpService:PostAsync(url, response, Enum.HttpContentType.ApplicationJson, false, titleHeader)
+        HttpService:PostAsync(url, title, Enum.HttpContentType.ApplicationJson, false, titleHeader)
+
+        if customTitle == '' then
+            response = title
+        else
+            response = customTitle
         end
     end
 

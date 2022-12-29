@@ -25,6 +25,9 @@ local ROBLOX_WHITE = Color3.fromRGB(255, 255, 255)
 local LOADING_ICON = 'rbxassetid://11234420895'
 local START_ICON = 'rbxassetid://11272872815'
 
+local CONNECTED_ICON = 'rbxassetid://11964657306'
+local DISCONNECTED_ICON = 'rbxassetid://11230142853'
+
 local AUTO_RECONNECT_DELAY = 3
 
 local background = script.Parent.Parent.ArgonGui.Root.Background
@@ -79,6 +82,7 @@ local didSetup = false
 local debounce = false
 local stopped = false
 local widget = nil
+local button = nil
 local state = 0
 local connect
 
@@ -90,6 +94,11 @@ local function fail(response)
     state = 2
     debounce = false
     stopped = false
+
+    if widget.Title ~= 'Argon' then
+        widget.Title = 'Argon'
+        button.Icon = DISCONNECTED_ICON
+    end
 
     if Config.autoReconnect then
         task.wait(AUTO_RECONNECT_DELAY)
@@ -125,7 +134,8 @@ function connect()
             if success then
                 actionLabel.Text = 'STOP'
                 infoLabel.Text = Config.host..':'..Config.port
-                widget.Title = 'Argon'..response
+                widget.Title = 'Argon'..' - '..response
+                button.Icon = CONNECTED_ICON
                 state = 1
             else
                 fail(response)
@@ -138,6 +148,7 @@ function connect()
             stopped = true
             actionLabel.Text = 'CONNECT'
             widget.Title = 'Argon'
+            button.Icon = DISCONNECTED_ICON
             infoLabel.Text = 'Connecting...'
             inputFrame.Visible = true
             previewFrame.Visible = false
@@ -510,7 +521,7 @@ function guiHandler.runPage(page)
     end
 end
 
-function guiHandler.run(newPlugin, newWidget, autoConnect)
+function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
     themeConnection = Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
     plugin = newPlugin
@@ -531,6 +542,7 @@ function guiHandler.run(newPlugin, newWidget, autoConnect)
     end
 
     widget = newWidget
+    button = newButton
     changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')

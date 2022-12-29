@@ -8,12 +8,14 @@ let settings = {
     rootFolder: directories.get('rootFolder'),
     extension: directories.get('extension'),
     compatibilityMode: directories.get('compatibilityMode'),
+
     autoRun: extension.get('autoRun'),
     autoSetup: extension.get('autoSetup'),
     autoLaunchStudio: extension.get('autoLaunchStudio'),
     hideNotifications: extension.get('hideNotifications'),
     openInPreview: extension.get('openInPreview'),
-    debugMode: extension.get('debugMode'),
+    snippetExecutionMode: extension.get('snippetExecutionMode'),
+
     host: server.get('host'),
     port: server.get('port'),
 

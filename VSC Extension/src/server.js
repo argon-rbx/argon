@@ -17,6 +17,7 @@ let server = http.createServer(requestListener)
 let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -69420)
 let sockets = new Set() //Temp fix for forcing server to stop (until Electron adds support for node.js 18.2.0+)
 let isConnected = false
+let isRunning = false
 let requestsLeft = 0
 let chunks = []
 
@@ -44,8 +45,8 @@ function getUptime() {
 }
 
 function updateStatusBar() {
-    statusBarItem.text = !isConnected ? '$(circle-large-outline) Argon' : '$(pass-filled) Argon'
-    statusBarItem.tooltip = 'Connected to: ' + title.replace(' - ', '') + '\nServer uptime: ' + getUptime() + '\nSync count: ' + syncCount
+    statusBarItem.text = isRunning ? isConnected ? '$(pass-filled) Argon' : '$(pass) Argon' : '$(stop) Argon'
+    statusBarItem.tooltip = 'Connected to: ' + (title || 'NONE') + '\nServer uptime: ' + getUptime() + '\nSync count: ' + syncCount
     statusBarItem.command = 'argon.openMenu'
     statusBarItem.name = 'Argon'
 }
@@ -62,6 +63,11 @@ function requestListener(request, response) {
                 events.queue.length = 0
                 syncCount ++
                 updateStatusBar()   
+            }
+
+            if (!isConnected) {
+                isConnected = true
+                updateStatusBar()
             }
             break
         case 'setSync':
@@ -87,10 +93,9 @@ function requestListener(request, response) {
             })
             break
         case 'init':
-            title = files.getTitle()
             data = JSON.stringify({
                 State: isConnected,
-                Title: title
+                Title: files.getTitle()
             })
 
             if (!isConnected) {
@@ -192,7 +197,10 @@ function run(callback) {
     setTimeout(() => {
         if (canConnect) {
             server.listen(config.port, config.host);
+            isRunning = true
             uptime = Date.now()
+
+            updateStatusBar()
         }
         callback(canConnect)
     }, 100)
@@ -206,6 +214,7 @@ function stop() {
 
     server.close()
     isConnected = false
+    isRunning = false
     syncCount = 0
     uptime = 0
     title = ''

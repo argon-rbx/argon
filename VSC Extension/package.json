@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "preview": true,
   "engines": {
     "vscode": "^1.72.0"
@@ -118,6 +118,12 @@
           "default": true,
           "description": "Whether Argon should open files in preview mode by default",
           "order": 4
+        },
+        "argon.extension.snippetExecutionMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether Argon should automatically switch to Roblox Studio when executing snippets",
+          "order": 5
         },
         "argon.server.host": {
           "type": "string",

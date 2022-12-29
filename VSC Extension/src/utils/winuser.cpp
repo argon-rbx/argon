@@ -115,8 +115,11 @@ namespace winuser {
         if (pressed)
             keybd_event(0x12, 0, 0x0001 | 0x0002, 0);
 
-        keybd_event(args[0].As<Integer>()->Value(), 0, 0x0001 | 0, 0);
-        keybd_event(args[0].As<Integer>()->Value(), 0, 0x0001 | 0x0002, 0);
+        if (args.Length() > 0)
+        {
+            keybd_event(args[0].As<Integer>()->Value(), 0, 0x0001 | 0, 0);
+            keybd_event(args[0].As<Integer>()->Value(), 0, 0x0001 | 0x0002, 0);
+        }
     }
 
     void isStudioRunning(const FunctionCallbackInfo<Value>& args)

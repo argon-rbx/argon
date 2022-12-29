@@ -16,6 +16,12 @@ function verify(parent) {
     }
 }
 
+function isSourceFile(name) {
+    if (name == config.source || name == config.source + '.server' || name == config.source + '.client') {
+        return true
+    }
+}
+
 function getParent(root) {
     if (!root.includes(config.rootFolder)) {
         return null
@@ -63,7 +69,7 @@ function onCreate(uri) {
             return
         }
 
-        if (uri.name.startsWith(config.source) && !parent.includes(config.separator)) {
+        if (isSourceFile(uri.name) && !parent.includes(config.separator)) {
             return
         }
     
@@ -81,7 +87,7 @@ function onSave(uri) {
             return
         }
 
-        if (uri.name.startsWith(config.source)) {
+        if (isSourceFile(uri.name)) {
             if (parent.includes(config.separator)) {
                 events.update(parent, source)
             }
@@ -110,7 +116,7 @@ function onDelete(uri) {
             return
         }
     
-        if (uri.name.startsWith(config.source)) {
+        if (isSourceFile(uri.name)) {
             if (parent.includes(config.separator)) {
                 events.remove(parent)
                 fs.rmSync(uri.dir, {recursive: true})
@@ -141,7 +147,7 @@ function onRename(uri) {
             return
         }
 
-        if ((newUri.name.startsWith(config.source) || oldUri.name.startsWith(config.source)) && !(newParent.includes(config.separator) || !oldParent.includes(config.separator))) {
+        if ((isSourceFile(newUri.name) || isSourceFile(oldUri.name)) && !(newParent.includes(config.separator) || !oldParent.includes(config.separator))) {
             return
         }
     
@@ -180,7 +186,7 @@ function onRename(uri) {
             }
         }
         else {
-            if (newUri.name.startsWith(config.source)) {
+            if (isSourceFile(newUri.name)) {
                 if (!isDirectory) {
                     setTimeout(() => {
                         fs.renameSync(uri.newUri.fsPath, uri.oldUri.fsPath)
@@ -396,7 +402,7 @@ function portCreate(uri) {
         return
     }
 
-    if (uri.name.startsWith(config.source) && !parent.includes(config.separator)) {
+    if (isSourceFile(uri.name) && !parent.includes(config.separator)) {
         return
     }
 
@@ -413,7 +419,7 @@ function portSave(uri) {
 
     let source = fs.readFileSync(uri, 'utf-8')
 
-    if (parsedUri.name.startsWith(config.source)) {
+    if (isSourceFile(parsedUri.name)) {
         if (parent.includes(config.separator)) {
             filesToSync.push(events.portSource(parent, source))
         }

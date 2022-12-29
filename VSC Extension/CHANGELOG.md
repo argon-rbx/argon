@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.4
+* Added connection status to Roblox plugin icon
+* Added option to automatically switch to Studio when using execute snippet command
+* Added Argon [wiki](https://github.com/DervexHero/Argon/wiki) on GitHub (work in progress)
+* Improved script with children detection, thanks to [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Improved status bar icon
+
 ## 0.6.3
 * Added execute snippet command (quick pick menu and F6)
 * Added status bar icon, suggested by [@ecndm70](https://devforum.roblox.com/u/ecndm70)
