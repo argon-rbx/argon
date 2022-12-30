@@ -522,33 +522,24 @@ function guiHandler.runPage(page)
 end
 
 function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
-    themeConnection = Studio.ThemeChanged:Connect(updateTheme)
+    themeConnection = themeConnection or Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
-    plugin = newPlugin
     updateTheme()
-
-    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
-    if openInEditorSetting ~= nil then
-        Config.openInEditor = openInEditorSetting
-        if openInEditorSetting then
-            openInEditorButton.OnIcon.ImageTransparency = 0
-            handleDocumentChange()
-        end
-    end
 
     if not RunService:IsEdit() then
         overlayFrame.Visible = true
         return
     end
 
+    plugin = newPlugin
     widget = newWidget
     button = newButton
-    changePage(0)
 
     local hostSetting = plugin:GetSetting('Host')
     local portSetting = plugin:GetSetting('Port')
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
+    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local propertySyncingSetting = plugin:GetSetting('PropertySyncing')
@@ -579,6 +570,15 @@ function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
 
         if autoReconnectSetting then
             autoReconnectButton.OnIcon.ImageTransparency = 0
+        end
+    end
+
+    if openInEditorSetting ~= nil then
+        Config.openInEditor = openInEditorSetting
+
+        if openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 0
+            handleDocumentChange()
         end
     end
 
@@ -655,6 +655,8 @@ function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
 
     if autoConnect then
         connect()
+    else
+        changePage(0)
     end
 
     if twoWaySyncSetting then

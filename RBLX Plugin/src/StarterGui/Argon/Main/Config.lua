@@ -2,15 +2,15 @@ local config = {}
 
 config.argonVersion = '0.6.4'
 
+config.host = 'localhost'
+config.port = '8000'
+
 config.autoRun = true
-config.autoReconnect = false
-config.openInEditor = false
+config.autoReconnect = true
+config.openInEditor = true
 config.onlyCode = true
 config.twoWaySync = false
 config.propertySyncing = false
-
-config.host = 'localhost'
-config.port = '8000'
 
 config.filteringMode = false
 config.filteredClasses = {}
