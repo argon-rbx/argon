@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+* Finished Argon [wiki](https://github.com/DervexHero/Argon/wiki)
+* Updated plugin window behavior when playtesting and closing
+* Updated markdowns
+
 ## 0.6.4
 * Added connection status to Roblox plugin icon
 * Added option to automatically switch to Studio when using execute snippet command
@@ -33,7 +38,7 @@
 * Added compatibility mode which replaces ".source" files with "init" and .properties files with "init.meta"
 * Instance classes are now stored in .properties.json only when property syncing option is enabled
 * Replaced .argon.json with default.project.json (required to for Roblox LSP and other tooling)
-* Removed update classes command and auto update option - no real use cases (still available in [jsonGenerator.js](https://github.com/DervexHero/Argon/blob/release/VSC%20Extension/src/utils/jsonGenerator.js))
+* Removed update classes command and auto update option - no real use cases (still available in [jsonGenerator.js](https://github.com/DervexHero/Argon/blob/main/VSC%20Extension/src/utils/jsonGenerator.js))
 * Auto Studio launch now checks if Roblox is already running
 * Argon now utilizes new Roblox [ScriptEditorService](https://create.roblox.com/docs/reference/engine/classes/ScriptEditorService) API
 * Modified existing extension options (auto setup)
@@ -76,7 +81,7 @@
 
 ## 0.4.3
 * Added new Argon menu (old commands won't work anymore!)
-* Added [JSON Schema](https://github.com/DervexHero/Argon/blob/release/VSC%20Extension/config/.argon.schema.json) file to make editing ".argon.json" easier
+* Added [JSON Schema](https://github.com/DervexHero/Argon/blob/main/VSC%20Extension/config/.argon.schema.json) file to make editing ".argon.json" easier
 * Fixed instances with special characters in their names not syncing from VSC to Roblox
 * Fixed Roblox Studio updating every time you use launch Roblox Studio command
 * Fixed open in editor option not working after leaving settings
