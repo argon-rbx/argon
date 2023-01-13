@@ -10,7 +10,13 @@ const messageHandler = require('./messageHandler')
 //@ts-ignore
 const winuser = require('./utils/winuser')
 
-const URL = 'https://dervexhero.github.io/Argon/'
+const VERSION_URL = 'https://dervexhero.github.io/Argon/'
+const API_OPTIONS = {
+    hostname: 'argonstatsapi.web.app',
+    method: 'POST',
+    path: '/update',
+    headers: {'Content-Type': 'application/json'}
+}
 
 let activated = false
 let isRunning = false
@@ -86,6 +92,10 @@ function debugRun() {
     winuser.showStudio(0x77)
 }
 
+function debugStart() {
+    winuser.showStudio(0x76)
+}
+
 function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
@@ -108,7 +118,7 @@ function openMenu() {
         },
         {
             label: '$(breakpoints-view-icon) Start Debugging',
-            detail: "Switch to Roblox Studio and start playtest (F5 or F8)",
+            detail: "Switch to Roblox Studio and start playtest in selected mode (F5, F8, F7)",
             action: 'startDebugging'
         },
         {
@@ -145,10 +155,15 @@ function openMenu() {
                         action: 'play'
                     },
                     {
-                        label: '$(server) Run',
+                        label: '$(server-environment) Run',
                         description: 'F8',
                         action: 'run'
-                    }
+                    },
+                    {
+                        label: '$(server) Start',
+                        description: 'F7',
+                        action: 'start'
+                    },
                 ]
 
                 subQuickPick.onDidAccept(function() {
@@ -161,6 +176,10 @@ function openMenu() {
                             break
                         case 'run':
                             debugRun()
+                            subQuickPick.dispose()
+                            break
+                        case 'start':
+                            debugStart()
                             subQuickPick.dispose()
                             break
                     }
@@ -199,9 +218,10 @@ async function activate(context) {
         let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
         let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
         let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
+        let startCommand = vscode.commands.registerCommand('argon.startDebug', debugStart)
         let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
 
-        context.subscriptions.push(menuCommand, playCommand, runCommand, executeCommand)
+        context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
 
         if (config.autoRun) {
             run(true)
@@ -211,7 +231,7 @@ async function activate(context) {
             launchStudio()
         }
 
-        https.get(URL, (response) => {
+        https.get(VERSION_URL, (response) => {
             let body = ''
         
             response.on('data', (data) => {
@@ -233,6 +253,7 @@ async function activate(context) {
             let settings = {
                 rootFolder: directories.get('rootFolder'),
                 extension: directories.get('extension'),
+                projectFile: directories.get('projectFile'),
                 compatibilityMode: directories.get('compatibilityMode'),
 
                 autoRun: extension.get('autoRun'),
@@ -262,6 +283,26 @@ async function activate(context) {
     }
 }
 
+async function deactivate() {
+    let promise = new Promise(function(resolve, reject) {
+        let request = https.request(API_OPTIONS, (response) => {
+            response.on('end', () => {
+                resolve()
+            })
+    
+            response.on('error', () => {
+                reject()
+            })
+        })
+
+        request.write(JSON.stringify(server.updateStats()))
+        request.end()
+    })
+
+    return promise
+}
+
 module.exports = {
-	activate
+	activate,
+    deactivate
 }

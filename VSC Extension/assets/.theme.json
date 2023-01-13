@@ -220,8 +220,9 @@
         ".vscode": ".vscode"
     },
     "fileNames": {
-        "default.project.json": "argon",
+        ".argon.project.json": "argon",
         ".properties.json": "properties",
+        "default.project.json": "argon",
         "init.meta.json": "properties",
 
         "CHANGELOG.md": "changelog",

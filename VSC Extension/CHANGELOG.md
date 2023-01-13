@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0
+* Argon is no longer in beta
+* Added global stats
+* Added support for custom service directories
+* Improved websocket managing
+* Updated local website
+
 ## 0.6.5
 * Finished Argon [wiki](https://github.com/DervexHero/Argon/wiki)
 * Updated plugin window behavior when playtesting and closing

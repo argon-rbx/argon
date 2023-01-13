@@ -290,7 +290,7 @@ function createInstances(dir, instances) {
 
 function getRootDir() {
     let rootDir = vscode.workspace.workspaceFolders[0].uri.fsPath
-    let jsonDir = path.join(rootDir, config.json)
+    let jsonDir = path.join(rootDir, config.projectFile + '.project.json')
 
     if (fs.existsSync(jsonDir)) {
         let json = JSON.parse(fs.readFileSync(jsonDir).toString())
@@ -509,7 +509,7 @@ function portProject() {
 }
 
 function getTitle() {
-    let project = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.json)
+    let project = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.projectFile + '.project.json')
 
     if (fs.existsSync(project)) {
         let json = JSON.parse(fs.readFileSync(project).toString())

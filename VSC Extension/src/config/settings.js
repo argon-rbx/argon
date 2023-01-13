@@ -7,6 +7,7 @@ const server = vscode.workspace.getConfiguration('argon.server')
 let settings = {
     rootFolder: directories.get('rootFolder'),
     extension: directories.get('extension'),
+    projectFile: directories.get('projectFile'),
     compatibilityMode: directories.get('compatibilityMode'),
 
     autoRun: extension.get('autoRun'),
@@ -21,7 +22,6 @@ let settings = {
 
     source: null,
     properties: null,
-    json: 'default.project.json',
     separator : '|'
 }
 

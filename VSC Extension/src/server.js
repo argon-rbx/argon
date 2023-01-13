@@ -15,15 +15,26 @@ const URL = 'http://$host:$port/'
 
 let server = http.createServer(requestListener)
 let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, -69420)
-let sockets = new Set() //Temp fix for forcing server to stop (until Electron adds support for node.js 18.2.0+)
+let sockets = new Set()
 let isConnected = false
 let isRunning = false
 let requestsLeft = 0
 let chunks = []
-
-let syncCount = 0
-let uptime = 0
 let title = ''
+
+let uptime = 0
+let linesSynced = 0
+let filesSynced = 0
+let projectsPorted = 0
+let sessionsStarted = 0
+
+let stats = {
+    hoursUsed: 0,
+    linesSynced: 0,
+    filesSynced: 0,
+    projectsPorted: 0,
+    sessionsStarted: 0,
+}
 
 function getUptime() {
     if (uptime == 0) {
@@ -44,11 +55,35 @@ function getUptime() {
     return hours + ':' + minutes + ':' + seconds
 }
 
+function updateStats() {
+    stats.hoursUsed += Math.floor((Date.now() - uptime) / 100 / 60 / 60) / 10
+    stats.linesSynced += linesSynced
+    stats.filesSynced += filesSynced
+    stats.projectsPorted += projectsPorted
+    stats.sessionsStarted += sessionsStarted
+
+    return stats
+}
+
+function resetStats() {
+    updateStats()
+
+    uptime = 0
+    linesSynced = 0
+    filesSynced = 0
+    projectsPorted = 0
+    sessionsStarted = 0
+}
+
 function updateStatusBar() {
     statusBarItem.text = isRunning ? isConnected ? '$(pass-filled) Argon' : '$(pass) Argon' : '$(stop) Argon'
-    statusBarItem.tooltip = 'Connected to: ' + (title || 'NONE') + '\nServer uptime: ' + getUptime() + '\nSync count: ' + syncCount
+    statusBarItem.tooltip = 'Connected to: ' + (title || 'NONE') + '\nServer uptime: ' + getUptime() + '\nLines synced: ' + linesSynced + '\nFiles synced: ' + filesSynced
     statusBarItem.command = 'argon.openMenu'
     statusBarItem.name = 'Argon'
+}
+
+async function countLines(data) {
+    linesSynced += data.split('\\n').length - 1
 }
 
 function requestListener(request, response) {
@@ -61,8 +96,9 @@ function requestListener(request, response) {
 
             if (events.queue.length > 0) {
                 events.queue.length = 0
-                syncCount ++
-                updateStatusBar()   
+                filesSynced++
+                countLines(data)
+                updateStatusBar()
             }
 
             if (!isConnected) {
@@ -100,6 +136,7 @@ function requestListener(request, response) {
 
             if (!isConnected) {
                 isConnected = true
+                sessionsStarted++
                 winuser.resetWindow()
                 updateStatusBar()
             }
@@ -135,6 +172,8 @@ function requestListener(request, response) {
             request.on('end', () => {
                 files.portInstances(body)
             })
+
+            projectsPorted++
             break
         case 'portScripts':
             var body = ''
@@ -164,6 +203,7 @@ function requestListener(request, response) {
             requestsLeft = chunks.length
             data = JSON.stringify({Project: events.queue, Length: requestsLeft})
             events.queue.length = 0
+            projectsPorted++
             break
         case 'portProjectSource':
             data = JSON.stringify({Chunk: chunks[chunks.length - requestsLeft], Length: requestsLeft - 1})
@@ -179,7 +219,11 @@ function requestListener(request, response) {
             break
         default:
             let website = fs.readFileSync(path.resolve(__dirname, './config/website.html')).toString()
-            data = website.replace('$time', getUptime()).replace('$synces', syncCount.toString())
+            data = website.replace('$uptime', getUptime())
+            .replace('$linesSynced', linesSynced.toString())
+            .replace('$filesSynced', filesSynced.toString())
+            .replace('$projectsPorted', projectsPorted.toString())
+            .replace('$sessionsStarted', sessionsStarted.toString())
             break
     }
 
@@ -215,10 +259,9 @@ function stop() {
     server.close()
     isConnected = false
     isRunning = false
-    syncCount = 0
-    uptime = 0
     title = ''
 
+    resetStats()
     updateStatusBar()
 }
 
@@ -267,7 +310,8 @@ function getTitle() {
 module.exports = {
     run,
     stop,
-    getTitle
+    getTitle,
+    updateStats
 }
 
 statusBarItem.show()
@@ -275,7 +319,10 @@ statusBarItem.show()
 server.on('connection', (socket) => {
     sockets.add(socket);
 
-    server.once('close', () => {
-        sockets.delete(socket);
+    socket.on('close', () => {
+        sockets.delete(socket)
+        isConnected = false
+        title = ''
+        updateStatusBar()
     })
 })

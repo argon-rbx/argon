@@ -88,6 +88,18 @@ local connect
 
 local guiHandler = {}
 
+local function setStatusIcon(isConnected)
+    if isConnected then
+        if button.Icon ~= CONNECTED_ICON then
+            button.Icon = CONNECTED_ICON
+        end
+    else
+        if button.Icon ~= DISCONNECTED_ICON then
+            button.Icon = DISCONNECTED_ICON
+        end
+    end
+end
+
 local function fail(response)
     actionLabel.Text = 'PROCEED'
     infoLabel.Text = response
@@ -97,7 +109,7 @@ local function fail(response)
 
     if widget.Title ~= 'Argon' then
         widget.Title = 'Argon'
-        button.Icon = DISCONNECTED_ICON
+        setStatusIcon()
     end
 
     if Config.autoReconnect then
@@ -135,7 +147,7 @@ function connect()
                 actionLabel.Text = 'STOP'
                 infoLabel.Text = Config.host..':'..Config.port
                 widget.Title = 'Argon'..' - '..response
-                button.Icon = CONNECTED_ICON
+                setStatusIcon(true)
                 state = 1
             else
                 fail(response)
@@ -148,7 +160,7 @@ function connect()
             stopped = true
             actionLabel.Text = 'CONNECT'
             widget.Title = 'Argon'
-            button.Icon = DISCONNECTED_ICON
+            setStatusIcon()
             infoLabel.Text = 'Connecting...'
             inputFrame.Visible = true
             previewFrame.Visible = false

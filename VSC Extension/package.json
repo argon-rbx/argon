@@ -22,7 +22,7 @@
     "onLanguage:lua",
     "onLanguage:luau",
     "onCommand:argon.openMenu",
-    "workspaceContains:default.project.json"
+    "workspaceContains:*.project.json"
   ],
   "main": "./src/main.js",
   "contributes": {
@@ -43,12 +43,17 @@
         "category": "Argon"
       },
       {
+        "command": "argon.startDebug",
+        "title": "Run",
+        "category": "Argon"
+      },
+      {
         "command": "argon.executeSnippet",
         "title": "Execute Snippet",
         "category": "Argon"
       }
     ],
-    "keybindings":[
+    "keybindings": [
       {
         "command": "argon.playDebug",
         "when": "editorLangId == lua || editorLangId == luau",
@@ -58,6 +63,11 @@
         "command": "argon.runDebug",
         "when": "editorLangId == lua || editorLangId == luau",
         "key": "f8"
+      },
+      {
+        "command": "argon.startDebug",
+        "when": "editorLangId == lua || editorLangId == luau",
+        "key": "f7"
       },
       {
         "command": "argon.executeSnippet",
@@ -80,14 +90,25 @@
           "type": "string",
           "default": ".lua",
           "description": "Default extension of script files when ported from Roblox Studio",
-          "enum": [".lua", ".luau"],
+          "enum": [
+            ".lua",
+            ".luau"
+          ],
           "order": 1
+        },
+        "argon.directories.projectFile": {
+          "type": "string",
+          "default": ".argon",
+          "description": "Default prefix of the project file name",
+          "pattern": "[uri]",
+          "patternErrorMessage": "This symbol is not allowed",
+          "order": 0
         },
         "argon.directories.compatibilityMode": {
           "type": "boolean",
           "default": false,
           "description": "Enables Rojo name space, required for external tooling (excluding Roblox LSP)",
-          "order": 2
+          "order": 3
         },
         "argon.extension.autoRun": {
           "type": "boolean",
@@ -182,5 +203,8 @@
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
     "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "firebase": "^9.15.0"
   }
 }

@@ -1,21 +1,53 @@
 <!DOCTYPE html>
-<link rel="icon" href="https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/Logo.png">
-
 <html>
-
-<head>
+  <head>
+    <link rel='icon' href='https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/Logo.png'>
+    <meta charset="UTF-8">
     <title>Argon</title>
-</head>
 
-<style>
-body {background-color: rgb(46, 46, 46);}
-h1 {color: rgb(240, 240, 240); font-family: Roboto Mono; font-weight: normal;}
-</style>
+    <style media='screen'>
+      body { background: rgb(46, 46, 46); color: rgb(255, 255, 255); font-family: Roboto Mono; }
+      #main { background: rgba(255, 255, 255, 0.05); max-width: 600px; margin: 50px auto; margin-bottom: 10px; padding: 25px 25px; border-radius: 10px; }
+      img { width: 100%; margin-left: auto; margin-right: auto; display: block; padding-bottom: 25px; }
+      h1 { text-align: center; font-size: 20px; }
 
-<body>
-<img src="https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png" alt="Argon logo and name">
-<h1>Server uptime: <b>$time</b></h1>
-<h1>Sync count: <b>$synces</b></h1>
-</body>
+      table, th, td { border: 1px solid rgba(255, 255, 255, 0.1); border-collapse: collapse; }
+      th, td { padding: 10px; text-align: left; font-size: 20px; }
+      tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.05); }
 
+      a:link, a:visited { color: rgb(255, 255, 255); text-decoration: none; }
+      a:hover, a:active { color: rgb(255, 255, 255); background-color: rgb(120, 70, 200); }
+    </style>
+  </head>
+
+  <body>
+    <div id='main'>
+      <img src='https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png' alt='Argon logo and name'>
+
+      <table style='width:100%'>
+        <tr>
+          <th>Server Uptime:</th>
+          <td>$uptime</td>
+        </tr>
+        <tr>
+            <th>Lines Synced:</th>
+            <td>$linesSynced</td>
+          </tr>
+        <tr>
+          <th>Files Synced:</th>
+          <td>$filesSynced</td>
+        </tr>
+        <tr>
+          <th>Projects Ported:</th>
+          <td>$projectsPorted</td>
+        </tr>
+        <tr>
+          <th>Sessions Started:</th>
+          <td>$sessionsStarted</td>
+        </tr>
+      </table>
+    </div>
+
+    <h1>Made with ❤️ by <a href='https://github.com/DervexHero'>@Dervex</a></h1>
+  </body>
 </html>
