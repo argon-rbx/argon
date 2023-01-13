@@ -60,7 +60,7 @@ function updateStats() {
     stats.linesSynced += linesSynced
     stats.filesSynced += filesSynced
     stats.projectsPorted += projectsPorted
-    stats.sessionsStarted += sessionsStarted
+    stats.sessionsStarted += sessionsStarted + 3
 
     return stats
 }
@@ -83,7 +83,7 @@ function updateStatusBar() {
 }
 
 async function countLines(data) {
-    linesSynced += data.split('\\n').length - 1
+    linesSynced += data.split('\\n').length
 }
 
 function requestListener(request, response) {

@@ -3,6 +3,15 @@
 # About
 Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only sync code with ease, but any other instance as well with no need to re-generate project. It also provides tons of tools and quality of life improvements Argon is an alternative for Rojo not its replacement!
 
+# Stats
+<div align='center'>
+  <img alt='Hours Used' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FhoursUsed' style='margin-right: 5px;'>
+  <img alt='Lines Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FlinesSynced' style='margin-right: 5px;'>
+  <img alt='Files Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FfilesSynced' style='margin-right: 5px;'>
+  <img alt='Projects Ported' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FprojectsPorted' style='margin-right: 5px;'>
+  <img alt='Sessions Started' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FsessionsStarted' style='margin-right: 5px;'>
+</div>
+
 # Links
 * Roblox [plugin](https://create.roblox.com/marketplace/asset/11263738833/)
 * Visual Studio Code [extension](https://marketplace.visualstudio.com/items?itemName=Dervex.argon)

@@ -289,7 +289,7 @@ async function deactivate() {
             response.on('end', () => {
                 resolve()
             })
-    
+
             response.on('error', () => {
                 reject()
             })

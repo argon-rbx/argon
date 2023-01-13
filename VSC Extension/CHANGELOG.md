@@ -2,8 +2,9 @@
 
 ## 1.0.0
 * Argon is no longer in beta
-* Added global stats
+* Added global stats badges and website
 * Added support for custom service directories
+* Added support for "Start local server" option in playtest commands
 * Improved websocket managing
 * Updated local website
 
@@ -13,7 +14,7 @@
 * Updated markdowns
 
 ## 0.6.4
-* Added connection status to Roblox plugin icon
+* Added connection status to Roblox plugin icon, suggested by [@ecndm70](https://devforum.roblox.com/u/ecndm70)
 * Added option to automatically switch to Studio when using execute snippet command
 * Added Argon [wiki](https://github.com/DervexHero/Argon/wiki) on GitHub (work in progress)
 * Improved script with children detection, thanks to [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
