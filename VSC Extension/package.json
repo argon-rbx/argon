@@ -5,7 +5,6 @@
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
   "version": "0.6.5",
-  "preview": true,
   "engines": {
     "vscode": "^1.72.0"
   },

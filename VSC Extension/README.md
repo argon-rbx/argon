@@ -8,6 +8,9 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
   <img alt='Hours Used' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FhoursUsed' style='margin-right: 5px;'>
   <img alt='Lines Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FlinesSynced' style='margin-right: 5px;'>
   <img alt='Files Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FfilesSynced' style='margin-right: 5px;'>
+</div>
+
+<div align='center'>
   <img alt='Projects Ported' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FprojectsPorted' style='margin-right: 5px;'>
   <img alt='Sessions Started' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FsessionsStarted' style='margin-right: 5px;'>
 </div>
