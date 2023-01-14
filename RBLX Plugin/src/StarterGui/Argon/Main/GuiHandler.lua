@@ -32,7 +32,7 @@ local AUTO_RECONNECT_DELAY = 3
 
 local background = script.Parent.Parent.ArgonGui.Root.Background
 
-local overlayFrame = background.Overlay
+local playtestFrame = background.Playtest
 local updateFrame = background.Update
 
 local mainPage = background.Main
@@ -103,9 +103,9 @@ end
 local function fail(response)
     actionLabel.Text = 'PROCEED'
     infoLabel.Text = response
-    state = 2
     debounce = false
     stopped = false
+    state = 2
 
     if widget.Title ~= 'Argon' then
         widget.Title = 'Argon'
@@ -232,7 +232,7 @@ local function handleDocumentChange()
     if Config.openInEditor then
         if not documentConnection then
             documentConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
-                if document.Name == 'CommandBar' then
+                if document.Name == 'CommandBar' or state ~= 1 then
                     return
                 end
 
@@ -347,6 +347,10 @@ local function toggleSetting(setting, data)
 end
 
 local function expandSetting(setting)
+    if setting == 'SyncedDirectories' then
+        syncedDirectoriesFrame.CanvasPosition = Vector2.new(0, 0)
+    end
+
     expandedSetting = setting
     TweenService:Create(settingsPage[setting], TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
     TweenService:Create(settingsPage.Body, TWEEN_INFO, {Position = UDim2.fromScale(-1.05, 0)}):Play()
@@ -374,7 +378,7 @@ local function expandSetting(setting)
 end
 
 local function portToVS()
-    if not isPorting then
+    if not isPorting and state == 1 then
         isPorting = true
 
         local tween = TweenService:Create(portToVSButton.Icon, LOADING_TWEEN_INFO, {Rotation = -360})
@@ -415,7 +419,7 @@ local function portToVS()
 end
 
 local function portToRoblox()
-    if not isPorting then
+    if not isPorting and state == 1 then
         isPorting = true
         TwoWaySync.pause()
 
@@ -466,7 +470,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_BLACK
         settingsPage.BackgroundColor3 = ROBLOX_BLACK
         toolsPage.BackgroundColor3 = ROBLOX_BLACK
-        overlayFrame.BackgroundColor3 = LIGHT_BLACK
+        playtestFrame.BackgroundColor3 = LIGHT_BLACK
     elseif theme == 'Light' then
         for _, v in ipairs(background:GetDescendants()) do
             if (v:IsA('Frame') and v.Name ~= 'Selector') or v:IsA('ImageButton') then
@@ -487,7 +491,7 @@ local function updateTheme()
         mainPage.BackgroundColor3 = ROBLOX_WHITE
         settingsPage.BackgroundColor3 = ROBLOX_WHITE
         toolsPage.BackgroundColor3 = ROBLOX_WHITE
-        overlayFrame.BackgroundColor3 = LIGHT_WHITE
+        playtestFrame.BackgroundColor3 = LIGHT_WHITE
     end
 end
 
@@ -539,7 +543,7 @@ function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
     updateTheme()
 
     if not RunService:IsEdit() then
-        overlayFrame.Visible = true
+        playtestFrame.Visible = true
         return
     end
 

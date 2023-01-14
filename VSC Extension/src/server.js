@@ -60,7 +60,7 @@ function updateStats() {
     stats.linesSynced += linesSynced
     stats.filesSynced += filesSynced
     stats.projectsPorted += projectsPorted
-    stats.sessionsStarted += sessionsStarted + 3
+    stats.sessionsStarted += sessionsStarted
 
     return stats
 }

@@ -5,6 +5,7 @@
 * Added global stats badges and website
 * Added support for custom service directories
 * Added support for "Start local server" option in playtest commands
+* Improved Roblox plugin UI scaling
 * Improved websocket managing
 * Updated local website
 
