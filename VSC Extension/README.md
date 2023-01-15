@@ -1,9 +1,7 @@
-![Argon logo and name](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png 'Argon')
+<div align='center'>
+  <img alt="Argon Logo" src="https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png">
+</div>
 
-# About
-Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only sync code with ease, but any other instance as well with no need to re-generate project. It also provides tons of tools and quality of life improvements Argon is an alternative for Rojo not its replacement!
-
-# Stats
 <div align='center'>
   <img alt='Hours Used' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FhoursUsed' style='margin-right: 5px;'>
   <img alt='Lines Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FlinesSynced' style='margin-right: 5px;'>
@@ -14,6 +12,9 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
   <img alt='Projects Ported' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FprojectsPorted' style='margin-right: 5px;'>
   <img alt='Sessions Started' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FsessionsStarted' style='margin-right: 5px;'>
 </div>
+
+# About
+Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio Code allowing developers not only sync code with ease, but any other instance as well with no need to re-generate project. It also provides tons of tools and quality of life improvements Argon is an alternative for Rojo not its replacement!
 
 # Links
 * Roblox [plugin](https://create.roblox.com/marketplace/asset/11263738833/)
@@ -48,11 +49,11 @@ Argon is a simple two-way sync plugin for Roblox and extension for Visual Studio
 * **Usage**
   * [Managing instances](https://github.com/DervexHero/Argon/wiki/Managing-Instances)
   * [Syncing code](https://github.com/DervexHero/Argon/wiki/Syncing-Code)
-  * [Project Porting](https://github.com/DervexHero/Argon/wiki/Porting-Projects)
+  * [Porting projects](https://github.com/DervexHero/Argon/wiki/Porting-Projects)
   * [Filtering options](https://github.com/DervexHero/Argon/wiki/Filtering-Options)
 
 # Demo
-[![Demo video](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/Demo.png)](https://youtu.be/yvnleYgYaO0 'Demo')
+[![Demo Video](https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/Demo.png)](https://youtu.be/yvnleYgYaO0)
 
 # Changelog
 ### All changes are documented in this [CHANGELOG.md](https://github.com/DervexHero/Argon/blob/main/VSC%20Extension/CHANGELOG.md) file

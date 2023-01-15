@@ -8,11 +8,12 @@ const messageHandler = require('./messageHandler')
 
 let watchers = []
 let filesToSync = []
-let customPaths = []
+let customPaths = {}
+let useCustomPaths = false
 let lastUnix = Date.now()
 
 function verify(parent) {
-    if (!parent || parent == '' || parent == 'StarterPlayer') {
+    if (!parent || parent == 'StarterPlayer') {
         return true
     }
 }
@@ -23,7 +24,7 @@ function isSourceFile(name) {
     }
 }
 
-function getParent(root) {
+function getParent(root, name) {
     let dir = root.split('\\')
     let occurrenceCount = 0
     let parent = ''
@@ -48,8 +49,31 @@ function getParent(root) {
         }
     }
 
-    parent = parent.replace(vscode.workspace.name + '|' + config.rootFolder + '|', '')
-    console.log(parent);
+    parent = parent.replace(vscode.workspace.name + '|', '')
+
+    if (useCustomPaths) {
+        let key = parent + '|' + name
+
+        if (customPaths[key]) {
+            parent = customPaths[key].slice(0, -(name.length + 1))
+        }
+        else {
+            for (let [path, target] of Object.entries(customPaths)) {
+                if (parent.startsWith(path)) {
+                    parent = parent.replace(path, target)
+                    break
+                }
+            }
+        }
+    }
+
+    if (parent.startsWith(config.rootFolder + '|')) {
+        parent = parent.replace(config.rootFolder + '|', '')
+    }
+    else {
+        parent = null
+    }
+
     return parent
 }
 
@@ -79,15 +103,22 @@ function getRootDir() {
     return rootDir
 }
 
-function loadPaths(json) {
-    if (json.tree) {
-        for (let [service, path] of Object.entries(json.tree)) {
-            let defaultPath = config.rootFolder + '/' + service
-            path = path['$path']
+function loadPaths(tree, root) {
+    for (let [key, value] of Object.entries(tree)) {
+        if (key == '$path') {
+            let path = value.replaceAll('/', '|')
 
-            if (path && path != defaultPath) {
-                console.log(path);
+            if (path && path != root) {
+                customPaths[path] = root
+                useCustomPaths = true
+
+                if (path.split('|').length == 1) {
+                    customPaths[vscode.workspace.name + '|' + path] = root
+                }
             }
+        }
+        else {
+            loadPaths(value, root + '|' + key)
         }
     }
 }
@@ -97,7 +128,7 @@ function onCreate(uri) {
 
     for (uri of files) {
         uri = path.parse(uri.fsPath)
-        let parent = getParent(uri.dir)
+        let parent = getParent(uri.dir, uri.name)
 
         if (verify(parent) || uri.ext == '.json') {
             return
@@ -114,7 +145,7 @@ function onCreate(uri) {
 function onSave(uri) {
     let source = uri.getText()
     uri = path.parse(uri.fileName)
-    let parent = getParent(uri.dir)
+    let parent = getParent(uri.dir, uri.name)
 
     if (uri.ext != '.json') {
         if (verify(parent)) {
@@ -139,7 +170,13 @@ function onSave(uri) {
             events.setProperties(parent, source)
         }
         else if (uri.name == config.projectFile + '.project') {
-            loadPaths(JSON.parse(source))
+            let project = JSON.parse(source)
+
+            if (project.tree) {
+                customPaths = {}
+                useCustomPaths = false
+                loadPaths(project.tree, config.rootFolder)
+            }
         }
     }
 }
@@ -149,7 +186,7 @@ function onDelete(uri) {
 
     for (uri of files) {
         uri = path.parse(uri.fsPath)
-        let parent = getParent(uri.dir)
+        let parent = getParent(uri.dir, uri.name)
     
         if (verify(parent) || uri.ext == '.json') {
             return
@@ -179,8 +216,8 @@ function onRename(uri) {
         let isDirectory = fs.statSync(uri.newUri.fsPath).isDirectory()
         let newUri = path.parse(uri.newUri.fsPath)
         let oldUri = path.parse(uri.oldUri.fsPath)
-        let newParent = getParent(newUri.dir)
-        let oldParent = getParent(oldUri.dir)
+        let newParent = getParent(newUri.dir, newUri.name)
+        let oldParent = getParent(oldUri.dir, oldUri.name)
         
         if (verify(newParent) || verify(oldParent) || newUri.ext == '.json' || oldUri.ext == '.json') {
             return
@@ -246,6 +283,18 @@ function onRename(uri) {
 
 function run() {
     getRootDir()
+
+    let project = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.projectFile + '.project.json')
+    if (fs.existsSync(project)) {
+        let json = JSON.parse(fs.readFileSync(project).toString())
+
+        if (json.tree) {
+            customPaths = {}
+            useCustomPaths = false
+            loadPaths(json.tree, config.rootFolder)
+        }
+    }
+
     watchers.push(vscode.workspace.onDidCreateFiles(onCreate))
     watchers.push(vscode.workspace.onDidSaveTextDocument(onSave))
     watchers.push(vscode.workspace.onDidDeleteFiles(onDelete))
@@ -406,7 +455,7 @@ function portProperties(properties) {
 
 function portCreate(uri) {
     uri = path.parse(uri)
-    let parent = getParent(uri.dir)
+    let parent = getParent(uri.dir, uri.name)
 
     if (verify(parent)) {
         return
@@ -421,7 +470,7 @@ function portCreate(uri) {
 
 function portSave(uri) {
     let parsedUri = path.parse(uri)
-    let parent = getParent(parsedUri.dir)
+    let parent = getParent(parsedUri.dir, parsedUri.name)
 
     if (verify(parent)) {
         return
@@ -441,7 +490,7 @@ function portSave(uri) {
 
 function portUpdate(uri) {
     let parsedUri = path.parse(uri)
-    let parent = getParent(parsedUri.dir)
+    let parent = getParent(parsedUri.dir, parsedUri.name)
 
     if (!parent || parent == '') {
         return
