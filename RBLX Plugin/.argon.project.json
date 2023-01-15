@@ -12,7 +12,7 @@
 		},
 		"LocalizationService": {
 			"$className": "LocalizationService",
-			"$path": "src/LocalizationService"
+			"$path": "src/test"
 		},
 		"ReplicatedFirst": {
 			"$className": "ReplicatedFirst",

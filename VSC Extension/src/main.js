@@ -204,7 +204,7 @@ function openMenu() {
             }
         ]
 
-        // @ts-ignore
+        //@ts-ignore
         quickPick.items = items.concat(quickPick.items.slice(1))
     }
 
@@ -274,6 +274,10 @@ async function activate(context) {
             else {
                 settings.source = 'init',
                 settings.properties = 'init.meta'
+
+                if (settings.projectFile == '.argon') {
+                    settings.projectFile == 'default'
+                }
             }
 
             for (let key in settings) {
@@ -304,5 +308,5 @@ async function deactivate() {
 
 module.exports = {
 	activate,
-    deactivate
+    //deactivate
 }

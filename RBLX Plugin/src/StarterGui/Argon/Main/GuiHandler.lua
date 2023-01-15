@@ -9,7 +9,7 @@ local FileHandler = require(script.Parent.FileHandler)
 local TwoWaySync = require(script.Parent.TwoWaySync)
 local Config = require(script.Parent.Config)
 
-local TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+local PAGES_TWEEN_INFO = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 local SETTINGS_TWEEN_INFO = TweenInfo.new(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local LOADING_TWEEN_INFO = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
 
@@ -214,10 +214,10 @@ local function changePage(position, page1, page2)
 
         guiHandler.runPage(page1 or mainPage)
 
-        TweenService:Create(mainPage, TWEEN_INFO, {Position = UDim2.fromScale(position, 0)}):Play()
+        TweenService:Create(mainPage, PAGES_TWEEN_INFO, {Position = UDim2.fromScale(position, 0)}):Play()
     else
-        TweenService:Create(settingsPage[expandedSetting], TWEEN_INFO, {Position = UDim2.fromScale(1.05, 0)}):Play()
-        TweenService:Create(settingsPage.Body, TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
+        TweenService:Create(settingsPage[expandedSetting], PAGES_TWEEN_INFO, {Position = UDim2.fromScale(1.05, 0)}):Play()
+        TweenService:Create(settingsPage.Body, PAGES_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         expandedSetting = nil
 
         for _, v in pairs(subConnections) do
@@ -352,8 +352,8 @@ local function expandSetting(setting)
     end
 
     expandedSetting = setting
-    TweenService:Create(settingsPage[setting], TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
-    TweenService:Create(settingsPage.Body, TWEEN_INFO, {Position = UDim2.fromScale(-1.05, 0)}):Play()
+    TweenService:Create(settingsPage[setting], PAGES_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
+    TweenService:Create(settingsPage.Body, PAGES_TWEEN_INFO, {Position = UDim2.fromScale(-1.05, 0)}):Play()
 
     for _, v in ipairs(settingsPage[setting]:GetDescendants()) do
         if v:IsA('ImageButton') then

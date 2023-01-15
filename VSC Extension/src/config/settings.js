@@ -32,6 +32,10 @@ if (!settings.compatibilityMode) {
 else {
     settings.source = 'init',
     settings.properties = 'init.meta'
+
+    if (settings.projectFile == '.argon') {
+        settings.projectFile == 'default'
+    }
 }
 
 module.exports = settings

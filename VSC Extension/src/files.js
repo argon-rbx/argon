@@ -8,6 +8,7 @@ const messageHandler = require('./messageHandler')
 
 let watchers = []
 let filesToSync = []
+let customPaths = []
 let lastUnix = Date.now()
 
 function verify(parent) {
@@ -23,12 +24,8 @@ function isSourceFile(name) {
 }
 
 function getParent(root) {
-    if (!root.includes(config.rootFolder)) {
-        return null
-    }
-
     let dir = root.split('\\')
-    let duplicates = 0
+    let occurrenceCount = 0
     let parent = ''
 
     for (let i = dir.length - 1; i >= 0; i--) {
@@ -39,23 +36,60 @@ function getParent(root) {
             parent = dir[i]
         }
 
-        if (dir[i] == config.rootFolder) {
-            let len = root.split(dir[i]).length - 1
+        if (dir[i] == vscode.workspace.name) {
+            let occurrences = root.split(dir[i]).length - 1 - occurrenceCount
 
-            if (len > 1 && duplicates == 0)  {
-                duplicates = len - 1
-            }
-            else if (duplicates > 1) {
-                duplicates--
+            if (occurrences == 1) {
+                break
             }
             else {
-                break
+                occurrenceCount = occurrences - 1
             }
         }
     }
 
-    parent = parent.slice(config.rootFolder.length + 1)
+    parent = parent.replace(vscode.workspace.name + '|' + config.rootFolder + '|', '')
+    console.log(parent);
     return parent
+}
+
+function getRootDir() {
+    let rootDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.rootFolder)
+    let jsonDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, config.projectFile + '.project.json')
+
+    if (!fs.existsSync(rootDir)) {
+        if (config.autoSetup) {
+            fs.mkdirSync(rootDir)
+        }
+        else {
+            messageHandler.showMessage('noRootFolder', 2)
+        }
+    }
+
+    if (!fs.existsSync(jsonDir) && config.autoSetup) {
+        let json = JSON.stringify(project, null, '\t')
+
+        if (config.rootFolder != 'src') {
+            json = json.replaceAll('src', config.rootFolder)
+        }
+
+        fs.writeFileSync(jsonDir, json)
+    }
+
+    return rootDir
+}
+
+function loadPaths(json) {
+    if (json.tree) {
+        for (let [service, path] of Object.entries(json.tree)) {
+            let defaultPath = config.rootFolder + '/' + service
+            path = path['$path']
+
+            if (path && path != defaultPath) {
+                console.log(path);
+            }
+        }
+    }
 }
 
 function onCreate(uri) {
@@ -96,12 +130,17 @@ function onSave(uri) {
             events.update(parent + config.separator + uri.name, source)
         }
     }
-    else if (uri.name == config.properties) {
-        if (!parent || parent == '') {
-            return
-        }
+    else if (uri.ext == '.json') {
+        if (uri.name == config.properties) {
+            if (!parent || parent == '') {
+                return
+            }
 
-        events.setProperties(parent, source)
+            events.setProperties(parent, source)
+        }
+        else if (uri.name == config.projectFile + '.project') {
+            loadPaths(JSON.parse(source))
+        }
     }
 }
 
@@ -286,35 +325,6 @@ function createInstances(dir, instances) {
     }
 
     lastUnix = Date.now()
-}
-
-function getRootDir() {
-    let rootDir = vscode.workspace.workspaceFolders[0].uri.fsPath
-    let jsonDir = path.join(rootDir, config.projectFile + '.project.json')
-
-    if (fs.existsSync(jsonDir)) {
-        let json = JSON.parse(fs.readFileSync(jsonDir).toString())
-
-        if (json.directory) {
-            rootDir = path.join(rootDir, json.directory)
-        }
-    }
-    else if (config.autoSetup) {
-        fs.writeFileSync(jsonDir, JSON.stringify(project, null, '\t'))
-    }
-
-    rootDir = path.join(rootDir, config.rootFolder)
-
-    if (!fs.existsSync(rootDir)) {
-        if (config.autoSetup) {
-            fs.mkdirSync(rootDir)
-        }
-        else {
-            messageHandler.showMessage('noRootFolder', 2)
-        }
-    }
-
-    return rootDir
 }
 
 function portInstances(data) {
