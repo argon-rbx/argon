@@ -274,7 +274,7 @@ function generateApiDump() {
                     }
                 }
 
-                fs.writeFileSync(DIR, JSON.stringify(api, null, '\t'))
+                fs.writeFileSync(DIR, JSON.stringify(api))
             })
         
         }).on('error', () => {

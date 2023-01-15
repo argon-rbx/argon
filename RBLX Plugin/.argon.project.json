@@ -14,13 +14,7 @@
 			"$path": "src/ReplicatedFirst"
 		},
 		"ReplicatedStorage": {
-			"$path": "src/ReplicatedStorage",
-			"Packages": {
-				"$path": "Packages"
-		   },
-		    "Shared": {
-				"$path": "src/Shared"
-	   		}
+			"$path": "src/ReplicatedStorage"
 		},
 		"ServerScriptService": {
 			"$path": "src/ServerScriptService"

@@ -18,7 +18,6 @@ const API_OPTIONS = {
     headers: {'Content-Type': 'application/json'}
 }
 
-let activated = false
 let isRunning = false
 let func = null
 
@@ -212,79 +211,75 @@ function openMenu() {
 }
 
 async function activate(context) {
-    if (!activated) {
-        activated = true
+    let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
+    let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
+    let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
+    let startCommand = vscode.commands.registerCommand('argon.startDebug', debugStart)
+    let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
 
-        let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
-        let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
-        let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
-        let startCommand = vscode.commands.registerCommand('argon.startDebug', debugStart)
-        let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
+    context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
 
-        context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
-
-        if (config.autoRun) {
-            run(true)
-        }
-
-        if (config.autoLaunchStudio && !winuser.isStudioRunning()) {
-            launchStudio()
-        }
-
-        https.get(VERSION_URL, (response) => {
-            let body = ''
-        
-            response.on('data', (data) => {
-                body += data
-            })
-    
-            response.on('end', () => {
-                if (JSON.parse(body).extension != context.extension.packageJSON.version) {
-                    messageHandler.showMessage('outdatedVersion', 1)
-                }
-            })
-        })
-
-        vscode.workspace.onDidChangeConfiguration(function() {
-            const directories = vscode.workspace.getConfiguration('argon.directories')
-            const extension = vscode.workspace.getConfiguration('argon.extension')
-            const server = vscode.workspace.getConfiguration('argon.server')
-
-            let settings = {
-                rootFolder: directories.get('rootFolder'),
-                extension: directories.get('extension'),
-                projectFile: directories.get('projectFile'),
-                compatibilityMode: directories.get('compatibilityMode'),
-
-                autoRun: extension.get('autoRun'),
-                autoSetup: extension.get('autoSetup'),
-                autoLaunchStudio: extension.get('autoLaunchStudio'),
-                hideNotifications: extension.get('hideNotifications'),
-                openInPreview: extension.get('openInPreview'),
-                snippetExecutionMode: extension.get('snippetExecutionMode'),
-
-                host: server.get('host'),
-                port: server.get('port'),
-            }
-            
-            if (!settings.compatibilityMode) {
-                settings.source = '.source',
-                settings.properties = '.properties'
-            }
-            else {
-                settings.source = 'init',
-                settings.properties = 'init.meta'
-
-                if (settings.projectFile == '.argon') {
-                    settings.projectFile == 'default'
-                }
-            }
-
-            for (let key in settings) {
-                config[key] = settings[key]
-            }
-        })
+    if (config.autoRun) {
+        run(true)
     }
+
+    if (config.autoLaunchStudio && !winuser.isStudioRunning()) {
+        launchStudio()
+    }
+
+    https.get(VERSION_URL, (response) => {
+        let body = ''
+    
+        response.on('data', (data) => {
+            body += data
+        })
+
+        response.on('end', () => {
+            if (JSON.parse(body).extension != context.extension.packageJSON.version) {
+                messageHandler.showMessage('outdatedVersion', 1)
+            }
+        })
+    })
+
+    vscode.workspace.onDidChangeConfiguration(function() {
+        const directories = vscode.workspace.getConfiguration('argon.directories')
+        const extension = vscode.workspace.getConfiguration('argon.extension')
+        const server = vscode.workspace.getConfiguration('argon.server')
+
+        let settings = {
+            rootFolder: directories.get('rootFolder'),
+            extension: directories.get('extension'),
+            projectFile: directories.get('projectFile'),
+            compatibilityMode: directories.get('compatibilityMode'),
+
+            autoRun: extension.get('autoRun'),
+            autoSetup: extension.get('autoSetup'),
+            autoLaunchStudio: extension.get('autoLaunchStudio'),
+            hideNotifications: extension.get('hideNotifications'),
+            openInPreview: extension.get('openInPreview'),
+            snippetExecutionMode: extension.get('snippetExecutionMode'),
+
+            host: server.get('host'),
+            port: server.get('port'),
+        }
+        
+        if (!settings.compatibilityMode) {
+            settings.source = '.source',
+            settings.properties = '.properties'
+        }
+        else {
+            settings.source = 'init',
+            settings.properties = 'init.meta'
+
+            if (settings.projectFile == '.argon') {
+                settings.projectFile == 'default'
+            }
+        }
+
+        for (let key in settings) {
+            config[key] = settings[key]
+        }
+    })
 }
 
 async function deactivate() {

@@ -214,6 +214,9 @@ function requestListener(request, response) {
                 chunks.length = 0
             }
             break
+        case 'clearFolders':
+            files.clearFolders()
+            break
         case 'getApiDump':
             data = JSON.stringify(apiDump)
             break

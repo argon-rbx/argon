@@ -9,11 +9,12 @@ const messageHandler = require('./messageHandler')
 let watchers = []
 let filesToSync = []
 let customPaths = {}
+let customUriPaths = {}
 let useCustomPaths = false
 let lastUnix = Date.now()
 
-function verify(parent) {
-    if (!parent || parent == 'StarterPlayer') {
+function verify(parent, name) {
+    if (!parent || (parent == 'StarterPlayer' && ((name == 'StarterCharacterScripts' || name == 'StarterPlayerScripts') || isSourceFile(name)))) {
         return true
     }
 }
@@ -103,18 +104,28 @@ function getRootDir() {
     return rootDir
 }
 
-function loadPaths(tree, root) {
+function loadPaths(tree, root, init) {
+    if (init) {
+        customPaths = {}
+        customUriPaths = {}
+        useCustomPaths = false
+    }
+
     for (let [key, value] of Object.entries(tree)) {
         if (key == '$path') {
-            let path = value.replaceAll('/', '|')
+            let customPath = value.replaceAll('/', '|')
 
-            if (path && path != root) {
-                customPaths[path] = root
+            if (customPath && customPath != root) {
+                customPaths[customPath] = root
                 useCustomPaths = true
 
-                if (path.split('|').length == 1) {
-                    customPaths[vscode.workspace.name + '|' + path] = root
+                if (customPath.split('|').length == 1) {
+                    customPaths[vscode.workspace.name + '|' + customPath] = root
                 }
+
+                root = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '\\'))
+                customPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, customPath.replaceAll('|', '\\'))
+                customUriPaths[root] = customPath
             }
         }
         else {
@@ -130,7 +141,7 @@ function onCreate(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir, uri.name)
 
-        if (verify(parent) || uri.ext == '.json') {
+        if (verify(parent, uri.name) || uri.ext == '.json') {
             return
         }
 
@@ -148,7 +159,7 @@ function onSave(uri) {
     let parent = getParent(uri.dir, uri.name)
 
     if (uri.ext != '.json') {
-        if (verify(parent)) {
+        if (verify(parent, uri.name)) {
             return
         }
 
@@ -163,7 +174,7 @@ function onSave(uri) {
     }
     else if (uri.ext == '.json') {
         if (uri.name == config.properties) {
-            if (!parent || parent == '') {
+            if (!parent) {
                 return
             }
 
@@ -173,8 +184,6 @@ function onSave(uri) {
             let project = JSON.parse(source)
 
             if (project.tree) {
-                customPaths = {}
-                useCustomPaths = false
                 loadPaths(project.tree, config.rootFolder)
             }
         }
@@ -188,7 +197,7 @@ function onDelete(uri) {
         uri = path.parse(uri.fsPath)
         let parent = getParent(uri.dir, uri.name)
     
-        if (verify(parent) || uri.ext == '.json') {
+        if (verify(parent, uri.name) || uri.ext == '.json') {
             return
         }
     
@@ -219,7 +228,7 @@ function onRename(uri) {
         let newParent = getParent(newUri.dir, newUri.name)
         let oldParent = getParent(oldUri.dir, oldUri.name)
         
-        if (verify(newParent) || verify(oldParent) || newUri.ext == '.json' || oldUri.ext == '.json') {
+        if (verify(newParent, newUri.name) || verify(oldParent, oldUri.name) || newUri.ext == '.json' || oldUri.ext == '.json') {
             return
         }
 
@@ -289,8 +298,6 @@ function run() {
         let json = JSON.parse(fs.readFileSync(project).toString())
 
         if (json.tree) {
-            customPaths = {}
-            useCustomPaths = false
             loadPaths(json.tree, config.rootFolder)
         }
     }
@@ -309,9 +316,21 @@ function stop() {
     watchers.length = 0
 }
 
+function applyCustomPaths(dir) {
+    if (useCustomPaths) {
+        for (let [path, target] of Object.entries(customUriPaths)) {
+            if (dir.startsWith(path)) {
+                return dir = dir.replace(path, target)
+            }
+        }
+    }
+
+    return dir
+}
+
 function createInstances(dir, instances) {
     for (let [key, value] of instances) {
-        let folder = path.join(dir, key)
+        let folder = applyCustomPaths(path.join(dir, key))
         value = new Map(Object.entries(value))
 
         if (key == 'forceSubScript') {
@@ -408,7 +427,7 @@ function portScripts(scripts) {
     scripts = JSON.parse(scripts)
 
     for (let script of scripts) {
-        let dir = path.join(getRootDir(), script.Instance)
+        let dir = applyCustomPaths(path.join(getRootDir(), script.Instance))
 
         if (fs.existsSync(dir + config.extension)) {
             fs.writeFileSync(dir + config.extension, script.Source)
@@ -445,7 +464,8 @@ function portProperties(properties) {
     let rootDir = getRootDir()
 
     for (let [key, value] of properties) {
-        key = path.join(rootDir, key)
+        key = applyCustomPaths(path.join(rootDir, key))
+
         if (fs.existsSync(key)) {
             value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']').replace(/, \t/g, ', ').replace(/\[\t/g, '[').replace(/\n\t\t\]\]/g, ']]').replace(/\n\t\t\]/g, ']')
             fs.writeFileSync(path.join(key, config.properties + '.json'), value)
@@ -453,11 +473,25 @@ function portProperties(properties) {
     }
 }
 
+function clearFolders() {
+    let rootDir = getRootDir()
+
+    fs.readdirSync(rootDir, {withFileTypes: true}).forEach(file => {
+        let dir = path.join(rootDir, file.name)
+
+        if (file.isDirectory()) {
+            if (fs.readdirSync(dir).length == 0) {
+                fs.rmdirSync(dir)
+            }
+        }
+    })
+}
+
 function portCreate(uri) {
     uri = path.parse(uri)
     let parent = getParent(uri.dir, uri.name)
 
-    if (verify(parent)) {
+    if (verify(parent, uri.name)) {
         return
     }
 
@@ -472,7 +506,7 @@ function portSave(uri) {
     let parsedUri = path.parse(uri)
     let parent = getParent(parsedUri.dir, parsedUri.name)
 
-    if (verify(parent)) {
+    if (verify(parent, parsedUri.name)) {
         return
     }
 
@@ -492,7 +526,7 @@ function portUpdate(uri) {
     let parsedUri = path.parse(uri)
     let parent = getParent(parsedUri.dir, parsedUri.name)
 
-    if (!parent || parent == '') {
+    if (!parent) {
         return
     }
 
@@ -540,7 +574,7 @@ function getChunk(data, index) {
 }
 
 function portProject() {
-    let dir = getRootDir()
+    let dir = vscode.workspace.workspaceFolders[0].uri.fsPath
     let chunks = []
     let index = 0
 
@@ -578,7 +612,7 @@ function getTitle() {
         }
     }
 
-    return ''
+    return vscode.workspace.name
 }
 
 function getUnix() {
@@ -588,11 +622,12 @@ function getUnix() {
 module.exports = {
     run,
     stop,
+    getRootDir,
     portInstances,
     portScripts,
     portProperties,
+    clearFolders,
     portProject,
-    getRootDir,
     getTitle,
     getUnix
 }

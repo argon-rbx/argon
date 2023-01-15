@@ -202,6 +202,7 @@ function httpHandler.portScripts(scriptsToSync)
     local url = URL:format(Config.host, Config.port)
     local portHeader = {action = 'portScripts'}
     local stateHeader = {action = 'getState'}
+    local clearHeader = {action = 'clearFolders'}
 
     local success, response = pcall(function()
         while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 100 do
@@ -224,6 +225,8 @@ function httpHandler.portScripts(scriptsToSync)
                 task.wait(0.1)
             end
         end
+
+        HttpService:PostAsync(url, '', Enum.HttpContentType.ApplicationJson, false, clearHeader)
     end)
 
     return success, response
