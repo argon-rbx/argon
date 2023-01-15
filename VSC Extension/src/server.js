@@ -289,7 +289,7 @@ function openFile(file) {
         file.File += '\\' + suffix
     }
 
-    file = path.join(files.getRootDir(), file.File + config.extension)
+    file = files.applyCustomPaths(path.join(files.getRootDir(), file.File + config.extension))
 
     vscode.workspace.openTextDocument(file).then(file => {
         vscode.window.showTextDocument(file, {preview: config.openInPreview}).then(() => {
@@ -311,10 +311,10 @@ function getTitle() {
 }
 
 module.exports = {
+    updateStats,
     run,
     stop,
-    getTitle,
-    updateStats
+    getTitle
 }
 
 statusBarItem.show()

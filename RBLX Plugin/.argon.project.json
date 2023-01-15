@@ -26,7 +26,12 @@
 			"$path": "src/SoundService"
 		},
 		"StarterGui": {
-			"$path": "src/StarterGui"
+			"$path": "src/StarterGui",
+			"Argon": {
+				"Main": {
+					"$path": "src"
+				}
+			}
 		},
 		"StarterPack": {
 			"$path": "src/StarterPack"

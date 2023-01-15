@@ -620,9 +620,10 @@ function getUnix() {
 }
 
 module.exports = {
+    getRootDir,
     run,
     stop,
-    getRootDir,
+    applyCustomPaths,
     portInstances,
     portScripts,
     portProperties,
