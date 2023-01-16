@@ -136,7 +136,7 @@ function connect()
             local tween = TweenService:Create(loadingImage, LOADING_TWEEN_INFO, {Rotation = -360})
             tween:Play()
 
-            local success, response = HttpHandler.connect(fail)
+            local success, response = HttpHandler.connect(fail, widget)
 
             actionLabel.Visible = true
             loadingImage.Visible = false

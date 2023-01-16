@@ -133,6 +133,18 @@ function portSource(object, source) {
     return {Action: 'update', Object: object, Source: source}
 }
 
+function closeFile() {
+    queue.push({Action: 'closeFile'})
+}
+
+function executeSnippet(snippet) {
+    queue.push({Action: 'executeSnippet', Snippet: snippet})
+}
+
+function setTitle(title) {
+    queue.push({Action: 'setTitle', Title: title})
+}
+
 module.exports = {
     queue,
     create,
@@ -142,5 +154,8 @@ module.exports = {
     changeType,
     changeParent,
     setProperties,
-    portSource
+    portSource,
+    closeFile,
+    executeSnippet,
+    setTitle
 }

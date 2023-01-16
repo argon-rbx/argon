@@ -1,5 +1,8 @@
 const vscode = require('vscode')
 const https = require('https')
+const path = require('path')
+const fs = require('fs')
+const os = require('os')
 const childProcess = require('child_process')
 const files = require('./files')
 const events = require('./events')
@@ -64,10 +67,10 @@ function executeSnippet() {
     let selection = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection)
 
     if (selection) {
-        events.queue.push({Action: 'executeSnippet', Snippet: selection})
+        events.executeSnippet(selection)
     }
     else {
-        events.queue.push({Action: 'executeSnippet', Snippet: vscode.window.activeTextEditor.document.getText()})
+        events.executeSnippet(vscode.window.activeTextEditor.document.getText())
     }
 
     if (config.snippetExecutionMode) {
@@ -210,6 +213,16 @@ function openMenu() {
     quickPick.show()
 }
 
+function removeStudioShortcut() {
+    if (config.removeStudioShortcut) {
+        let shortcut = path.join(os.homedir(), 'Desktop\\Roblox Studio.lnk')
+
+        if (fs.existsSync(shortcut)) {
+            fs.rmSync(shortcut)
+        }
+    }
+}
+
 async function activate(context) {
     let menuCommand = vscode.commands.registerCommand('argon.openMenu', openMenu)
     let playCommand = vscode.commands.registerCommand('argon.playDebug', debugPlay)
@@ -241,6 +254,8 @@ async function activate(context) {
         })
     })
 
+    removeStudioShortcut()
+
     vscode.workspace.onDidChangeConfiguration(function() {
         const directories = vscode.workspace.getConfiguration('argon.directories')
         const extension = vscode.workspace.getConfiguration('argon.extension')
@@ -255,6 +270,7 @@ async function activate(context) {
             autoRun: extension.get('autoRun'),
             autoSetup: extension.get('autoSetup'),
             autoLaunchStudio: extension.get('autoLaunchStudio'),
+            removeStudioShortcut: extension.get('removeStudioShortcut'),
             hideNotifications: extension.get('hideNotifications'),
             openInPreview: extension.get('openInPreview'),
             snippetExecutionMode: extension.get('snippetExecutionMode'),
@@ -284,6 +300,7 @@ async function activate(context) {
 
 async function deactivate() {
     let promise = new Promise(function(resolve, reject) {
+        
         let request = https.request(API_OPTIONS, (response) => {
             response.on('end', () => {
                 resolve()
@@ -296,6 +313,8 @@ async function deactivate() {
 
         request.write(JSON.stringify(server.updateStats()))
         request.end()
+
+        removeStudioShortcut()
     })
 
     return promise
@@ -303,5 +322,5 @@ async function deactivate() {
 
 module.exports = {
 	activate,
-    //deactivate
+    deactivate
 }

@@ -13,6 +13,7 @@ let settings = {
     autoRun: extension.get('autoRun'),
     autoSetup: extension.get('autoSetup'),
     autoLaunchStudio: extension.get('autoLaunchStudio'),
+    removeStudioShortcut: extension.get('removeStudioShortcut'),
     hideNotifications: extension.get('hideNotifications'),
     openInPreview: extension.get('openInPreview'),
     snippetExecutionMode: extension.get('snippetExecutionMode'),

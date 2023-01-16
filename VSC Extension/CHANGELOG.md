@@ -2,13 +2,17 @@
 
 ## 1.0.0
 * Argon is no longer in beta
-* Added global stats badges and website
+* Added "Remove Studio Shortcut" setting
+* Added global stats badges and [website](https://argonstatsapi.web.app/)
 * Added support for custom service directories
 * Added support for "Start local server" option in playtest commands
 * Added back support for custom instances in "StarterPlayer"
+* Plugin title now uses VSC workspace name by default and updates in real time
+* VSC status bar icon now displays current server address
 * Improved Roblox plugin UI scaling
 * Improved websocket managing
 * Updated local website
+* Updated wiki
 
 ## 0.6.5
 * Finished Argon [wiki](https://github.com/DervexHero/Argon/wiki)

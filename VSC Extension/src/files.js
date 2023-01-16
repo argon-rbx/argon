@@ -186,6 +186,10 @@ function onSave(uri) {
             if (project.tree) {
                 loadPaths(project.tree, config.rootFolder)
             }
+
+            if (project.name) {
+                events.setTitle(project.name == 'Argon' ? vscode.workspace.name : project.name)
+            }
         }
     }
 }

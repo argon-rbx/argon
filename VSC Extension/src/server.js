@@ -77,9 +77,14 @@ function resetStats() {
 
 function updateStatusBar() {
     statusBarItem.text = isRunning ? isConnected ? '$(pass-filled) Argon' : '$(pass) Argon' : '$(stop) Argon'
-    statusBarItem.tooltip = 'Connected to: ' + (title || 'NONE') + '\nServer uptime: ' + getUptime() + '\nLines synced: ' + linesSynced + '\nFiles synced: ' + filesSynced
     statusBarItem.command = 'argon.openMenu'
     statusBarItem.name = 'Argon'
+
+    statusBarItem.tooltip = 'Running on: ' + (isRunning ? config.host + ':' + config.port : 'NONE')
+    + '\nConnected to: ' + (title || 'NONE')
+    + '\nServer uptime: ' + getUptime()
+    + '\nLines synced: ' + linesSynced
+    + '\nFiles synced: ' + filesSynced
 }
 
 async function countLines(data) {
@@ -300,7 +305,7 @@ function openFile(file) {
                 vscode.window.activeTextEditor.revealRange(range)
             }
 
-            events.queue.push({Action: 'closeFile'})
+            events.closeFile()
             winuser.showVSC(vscode.workspace.name)
         })
     }).then(undefined, () => {})

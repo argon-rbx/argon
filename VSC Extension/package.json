@@ -101,7 +101,7 @@
           "description": "Default prefix of the project file name",
           "pattern": "[uri]",
           "patternErrorMessage": "This symbol is not allowed",
-          "order": 0
+          "order": 2
         },
         "argon.directories.compatibilityMode": {
           "type": "boolean",
@@ -127,23 +127,29 @@
           "description": "Whether Argon should launch Roblox Studio automatically",
           "order": 2
         },
+        "argon.extension.removeStudioShortcut": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Argon should remove Roblox Studio shortcut (that gets created automatically) from your desktop",
+          "order": 3
+        },
         "argon.extension.hideNotifications": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should hide notifications in the bottom right corner",
-          "order": 3
+          "order": 4
         },
         "argon.extension.openInPreview": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should open files in preview mode by default",
-          "order": 4
+          "order": 5
         },
         "argon.extension.snippetExecutionMode": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should automatically switch to Roblox Studio when executing snippets",
-          "order": 5
+          "order": 6
         },
         "argon.server.host": {
           "type": "string",

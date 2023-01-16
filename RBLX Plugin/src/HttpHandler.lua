@@ -11,6 +11,7 @@ local SYNC_INTERVAL = 0.2
 
 local thread = nil
 local snippetThread = nil
+local widget = nil
 local func = nil
 
 local httpHandler = {}
@@ -80,6 +81,8 @@ local function startSyncing(url)
                         httpHandler.openFile()
                     elseif v.Action == 'executeSnippet' then
                         executeSnippet(v.Snippet)
+                    elseif v.Action == 'setTitle' then
+                        widget.Title = 'Argon - '..v.Title
                     end
                 end
 
@@ -96,11 +99,11 @@ local function startSyncing(url)
     end)
 end
 
-function httpHandler.connect(fail)
+function httpHandler.connect(fail, newWidget)
     local url = URL:format(Config.host, Config.port)
     local initHeader = {action = 'init'}
     local titleHeader = {action = 'setTitle'}
-    local customTitle = ''
+    local vsTitle = ''
     local title = ''
 
     local success, response = pcall(function()
@@ -110,10 +113,11 @@ function httpHandler.connect(fail)
             error('Argon is already connected!', 0)
         end
 
-        customTitle = json.Title
+        vsTitle = json.Title
     end)
 
     func = func or fail
+    widget = widget or newWidget
 
     if success then
         startSyncing(url)
@@ -127,12 +131,7 @@ function httpHandler.connect(fail)
         end
 
         HttpService:PostAsync(url, title, Enum.HttpContentType.ApplicationJson, false, titleHeader)
-
-        if customTitle == '' then
-            response = title
-        else
-            response = customTitle
-        end
+        response = vsTitle
     end
 
     return success, response
