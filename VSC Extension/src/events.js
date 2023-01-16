@@ -141,8 +141,8 @@ function executeSnippet(snippet) {
     queue.push({Action: 'executeSnippet', Snippet: snippet})
 }
 
-function setTitle(title) {
-    queue.push({Action: 'setTitle', Title: title})
+function syncTitle(title) {
+    queue.push({Action: 'syncTitle', Title: title})
 }
 
 module.exports = {
@@ -157,5 +157,5 @@ module.exports = {
     portSource,
     closeFile,
     executeSnippet,
-    setTitle
+    syncTitle
 }

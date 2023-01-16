@@ -1,16 +1,16 @@
 <div align='center'>
-  <img alt="Argon Logo" src="https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png">
+  <img alt='Argon Logo' src='https://raw.githubusercontent.com/DervexHero/Argon/main/VSC%20Extension/assets/LogoName.png'>
 </div>
 
 <div align='center'>
-  <img alt='Hours Used' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FhoursUsed' style='margin-right: 5px;'>
-  <img alt='Lines Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FlinesSynced' style='margin-right: 5px;'>
-  <img alt='Files Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FfilesSynced' style='margin-right: 5px;'>
+  <img alt='Hours Used' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FhoursUsed'>
+  <img alt='Lines Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FlinesSynced'>
+  <img alt='Files Synced' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FfilesSynced'>
 </div>
 
 <div align='center'>
-  <img alt='Projects Ported' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FprojectsPorted' style='margin-right: 5px;'>
-  <img alt='Sessions Started' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FsessionsStarted' style='margin-right: 5px;'>
+  <img alt='Projects Ported' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FprojectsPorted'>
+  <img alt='Sessions Started' src='https://img.shields.io/endpoint?url=https%3A%2F%2Fargonstatsapi.web.app%2FsessionsStarted'>
 </div>
 
 # About

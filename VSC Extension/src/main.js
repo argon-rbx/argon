@@ -231,6 +231,7 @@ async function activate(context) {
     let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
 
     context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
+    server.setVersion(context.extension.packageJSON.version)
 
     if (config.autoRun) {
         run(true)
@@ -299,15 +300,14 @@ async function activate(context) {
 }
 
 async function deactivate() {
-    let promise = new Promise(function(resolve, reject) {
-        
+    let promise = new Promise(function(resolve) {
         let request = https.request(API_OPTIONS, (response) => {
             response.on('end', () => {
                 resolve()
             })
 
             response.on('error', () => {
-                reject()
+                resolve()
             })
         })
 

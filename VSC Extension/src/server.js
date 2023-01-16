@@ -19,6 +19,7 @@ let sockets = new Set()
 let isConnected = false
 let isRunning = false
 let requestsLeft = 0
+let version = null
 let chunks = []
 let title = ''
 
@@ -56,7 +57,7 @@ function getUptime() {
 }
 
 function updateStats() {
-    stats.hoursUsed += Math.floor((Date.now() - uptime) / 100 / 60 / 60) / 10
+    stats.hoursUsed += uptime == 0 ? 0 : Math.round((Date.now() - uptime) / 1000 / 60 / 60)
     stats.linesSynced += linesSynced
     stats.filesSynced += filesSynced
     stats.projectsPorted += projectsPorted
@@ -136,7 +137,8 @@ function requestListener(request, response) {
         case 'init':
             data = JSON.stringify({
                 State: isConnected,
-                Title: files.getTitle()
+                Title: files.getTitle(),
+                Version: version,
             })
 
             if (!isConnected) {
@@ -152,7 +154,7 @@ function requestListener(request, response) {
             title = ''
             updateStatusBar()
             break
-        case 'setTitle':
+        case 'syncTitle':
             var body = ''
 
             request.on('data', (chunk) => {
@@ -252,6 +254,7 @@ function run(callback) {
             isRunning = true
             uptime = Date.now()
 
+            events.syncTitle(files.getTitle())
             updateStatusBar()
         }
         callback(canConnect)
@@ -311,6 +314,10 @@ function openFile(file) {
     }).then(undefined, () => {})
 }
 
+function setVersion(ver) {
+    version = ver
+}
+
 function getTitle() {
     return title
 }
@@ -319,6 +326,7 @@ module.exports = {
     updateStats,
     run,
     stop,
+    setVersion,
     getTitle
 }
 

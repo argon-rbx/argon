@@ -107,10 +107,8 @@ local function fail(response)
     stopped = false
     state = 2
 
-    if widget.Title ~= 'Argon' then
-        widget.Title = 'Argon'
-        setStatusIcon()
-    end
+    widget.Title = 'Argon'
+    setStatusIcon()
 
     if Config.autoReconnect then
         task.wait(AUTO_RECONNECT_DELAY)
@@ -136,7 +134,7 @@ function connect()
             local tween = TweenService:Create(loadingImage, LOADING_TWEEN_INFO, {Rotation = -360})
             tween:Play()
 
-            local success, response = HttpHandler.connect(fail, widget)
+            local success, response = HttpHandler.connect(widget, fail)
 
             actionLabel.Visible = true
             loadingImage.Visible = false
@@ -146,7 +144,6 @@ function connect()
             if success then
                 actionLabel.Text = 'STOP'
                 infoLabel.Text = Config.host..':'..Config.port
-                widget.Title = 'Argon'..' - '..response
                 setStatusIcon(true)
                 state = 1
             else
@@ -160,10 +157,10 @@ function connect()
             stopped = true
             actionLabel.Text = 'CONNECT'
             widget.Title = 'Argon'
-            setStatusIcon()
             infoLabel.Text = 'Connecting...'
             inputFrame.Visible = true
             previewFrame.Visible = false
+            setStatusIcon()
             state = 0
         end
 

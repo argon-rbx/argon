@@ -17,6 +17,23 @@ local func = nil
 local httpHandler = {}
 httpHandler.file = nil
 
+local function syncTitle(title)
+    local url = URL:format(Config.host, Config.port)
+    local header = {action = 'syncTitle'}
+
+    widget.Title = 'Argon - '..title
+
+    if game.Name:find('.rbxl') or game.Name:find('.rbxlx') then
+        title = game.Name
+    else
+        pcall(function()
+            title = MarketPlaceService:GetProductInfo(game.PlaceId).Name
+        end)
+    end
+
+    HttpService:PostAsync(url, title, Enum.HttpContentType.ApplicationJson, false, header)
+end
+
 local function executeSnippet(snippet)
     if snippetThread then
         task.cancel(snippetThread)
@@ -81,8 +98,8 @@ local function startSyncing(url)
                         httpHandler.openFile()
                     elseif v.Action == 'executeSnippet' then
                         executeSnippet(v.Snippet)
-                    elseif v.Action == 'setTitle' then
-                        widget.Title = 'Argon - '..v.Title
+                    elseif v.Action == 'syncTitle' then
+                        syncTitle(v.Title)
                     end
                 end
 
@@ -99,39 +116,31 @@ local function startSyncing(url)
     end)
 end
 
-function httpHandler.connect(fail, newWidget)
+function httpHandler.connect(newWidget, fail)
+    widget = widget or newWidget
+    func = func or fail
+
     local url = URL:format(Config.host, Config.port)
-    local initHeader = {action = 'init'}
-    local titleHeader = {action = 'setTitle'}
-    local vsTitle = ''
-    local title = ''
+    local header = {action = 'init'}
 
     local success, response = pcall(function()
-        local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, initHeader))
+        local json = HttpService:JSONDecode(HttpService:GetAsync(url, false, header))
 
         if json.State then
             error('Argon is already connected!', 0)
         end
 
-        vsTitle = json.Title
-    end)
+        if json.Version ~= Config.argonVersion then
+            warn('Argon: detected version mismatch! Please update both plugin and extension to avoid errors!')
+        end
 
-    func = func or fail
-    widget = widget or newWidget
+        if json.Title then
+            syncTitle(json.Title)
+        end
+    end)
 
     if success then
         startSyncing(url)
-
-        if game.Name:find('.rbxl') or game.Name:find('.rbxlx') then
-            title = game.Name
-        else
-            pcall(function()
-                title = MarketPlaceService:GetProductInfo(game.PlaceId).Name
-            end)
-        end
-
-        HttpService:PostAsync(url, title, Enum.HttpContentType.ApplicationJson, false, titleHeader)
-        response = vsTitle
     end
 
     return success, response

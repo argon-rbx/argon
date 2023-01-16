@@ -1,10 +1,15 @@
 # Changelog
 
+## 1.0.1
+* Added version mismatch detection
+* Fixed project name syncing
+* Fixed "hours used" global statistic
+
 ## 1.0.0
 * Argon is no longer in beta
-* Added "Remove Studio Shortcut" setting
 * Added global stats badges and [website](https://argonstatsapi.web.app/)
-* Added support for custom service directories
+* Added "Remove Studio Shortcut" setting
+* Added support for custom service directories, suggested by [@dz_Scy](https://devforum.roblox.com/u/dz_scy)
 * Added support for "Start local server" option in playtest commands
 * Added back support for custom instances in "StarterPlayer"
 * Plugin title now uses VSC workspace name by default and updates in real time

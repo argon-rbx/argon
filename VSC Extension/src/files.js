@@ -188,7 +188,7 @@ function onSave(uri) {
             }
 
             if (project.name) {
-                events.setTitle(project.name == 'Argon' ? vscode.workspace.name : project.name)
+                events.syncTitle(project.name == 'Argon' ? vscode.workspace.name : project.name)
             }
         }
     }
