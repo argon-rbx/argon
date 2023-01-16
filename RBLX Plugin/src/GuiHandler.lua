@@ -661,10 +661,10 @@ function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
 
     local update = HttpHandler.checkForUpdates()
     if typeof(update) == 'string' then
-        updateFrame.Title.Text = 'Argon '..update
+        updateFrame.Container.Title.Text = 'Argon '..update
         updateFrame.Visible = true
 
-        updateFrame.Button.MouseButton1Click:Once(function()
+        updateFrame.Container.Button.MouseButton1Click:Once(function()
             updateFrame.Visible = false
         end)
     end
