@@ -1,3 +1,4 @@
+// @ts-nocheck
 const vscode = require('vscode')
 const https = require('https')
 const path = require('path')
@@ -10,7 +11,6 @@ const server = require('./server')
 const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
 
-//@ts-ignore
 const winuser = require('./utils/winuser')
 
 const VERSION_URL = 'https://dervexhero.github.io/Argon/'
@@ -206,7 +206,6 @@ function openMenu() {
             }
         ]
 
-        //@ts-ignore
         quickPick.items = items.concat(quickPick.items.slice(1))
     }
 

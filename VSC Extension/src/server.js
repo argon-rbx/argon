@@ -8,7 +8,7 @@ const files = require('./files')
 const twoWaySync = require('./twoWaySync')
 const apiDump = require('./config/apiDump')
 
-//@ts-ignore
+// @ts-ignore
 const winuser = require('./utils/winuser')
 
 const URL = 'http://$host:$port/'
