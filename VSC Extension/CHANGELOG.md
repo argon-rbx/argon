@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.2
+* Unhandled properties in the project file no longer cause problems, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+
 ## 1.0.1
 * Added version mismatch detection
 * Fixed project name syncing

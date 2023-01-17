@@ -128,7 +128,7 @@ function loadPaths(tree, root, init) {
                 customUriPaths[root] = customPath
             }
         }
-        else {
+        else if (typeof value == 'object') {
             loadPaths(value, root + '|' + key)
         }
     }
