@@ -44,7 +44,7 @@
       },
       {
         "command": "argon.startDebug",
-        "title": "Run",
+        "title": "Start",
         "category": "Argon"
       },
       {

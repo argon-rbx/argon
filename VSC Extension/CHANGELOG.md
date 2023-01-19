@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.0.3
+* Renamed some commands
+* Improved stats counting
+
 ## 1.0.2
 * Unhandled properties in the project file no longer cause problems, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed intellisense not working for newly created scripts, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)

@@ -24,8 +24,8 @@ let chunks = []
 let title = ''
 
 let uptime = 0
-let linesSynced = 0
-let filesSynced = 0
+let linesSynced = -1
+let filesSynced = -1
 let projectsPorted = 0
 let sessionsStarted = 0
 
@@ -84,8 +84,8 @@ function updateStatusBar() {
     statusBarItem.tooltip = 'Running on: ' + (isRunning ? config.host + ':' + config.port : 'NONE')
     + '\nConnected to: ' + (title || 'NONE')
     + '\nServer uptime: ' + getUptime()
-    + '\nLines synced: ' + linesSynced
-    + '\nFiles synced: ' + filesSynced
+    + '\nLines synced: ' + Math.max(0, linesSynced)
+    + '\nFiles synced: ' + Math.max(0, filesSynced)
 }
 
 async function countLines(data) {
