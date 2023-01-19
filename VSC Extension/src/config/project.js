@@ -1,6 +1,7 @@
 module.exports = {
 	name: 'Argon',
 	tree: {
+		$className: 'DataModel',
 		Chat: {
 			$path: 'src/Chat'
 		},

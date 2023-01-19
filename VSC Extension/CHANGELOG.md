@@ -2,6 +2,9 @@
 
 ## 1.0.2
 * Unhandled properties in the project file no longer cause problems, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Fixed intellisense not working for newly created scripts, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Fixed custom paths working improperly, reported by [@dz_Scy](https://devforum.roblox.com/u/dz_scy)
+* Updated wiki
 
 ## 1.0.1
 * Added version mismatch detection

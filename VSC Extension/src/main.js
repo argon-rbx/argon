@@ -21,6 +21,7 @@ const API_OPTIONS = {
     headers: {'Content-Type': 'application/json'}
 }
 
+let extensionMode = null
 let isRunning = false
 let func = null
 
@@ -231,6 +232,7 @@ async function activate(context) {
 
     context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
     server.setVersion(context.extension.packageJSON.version)
+    extensionMode = context.extensionMode
 
     if (config.autoRun) {
         run(true)
@@ -239,6 +241,8 @@ async function activate(context) {
     if (config.autoLaunchStudio && !winuser.isStudioRunning()) {
         launchStudio()
     }
+
+    removeStudioShortcut()
 
     https.get(VERSION_URL, (response) => {
         let body = ''
@@ -253,8 +257,6 @@ async function activate(context) {
             }
         })
     })
-
-    removeStudioShortcut()
 
     vscode.workspace.onDidChangeConfiguration(function() {
         const directories = vscode.workspace.getConfiguration('argon.directories')
@@ -299,6 +301,10 @@ async function activate(context) {
 }
 
 async function deactivate() {
+    if (extensionMode == 2) {
+        return
+    }
+
     let promise = new Promise(function(resolve) {
         let request = https.request(API_OPTIONS, (response) => {
             response.on('end', () => {

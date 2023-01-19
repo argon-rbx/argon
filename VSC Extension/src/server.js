@@ -257,6 +257,7 @@ function run(callback) {
             events.syncTitle(files.getTitle())
             updateStatusBar()
         }
+
         callback(canConnect)
     }, 100)
 }

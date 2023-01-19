@@ -54,9 +54,14 @@ function getParent(root, name) {
 
     if (useCustomPaths) {
         let key = parent + '|' + name
+        let customPath = customPaths[key]
 
-        if (customPaths[key]) {
-            parent = customPaths[key].slice(0, -(name.length + 1))
+        if (customPath) {
+            let splitted = customPath.split('|')
+
+            if (splitted.length > 2) {
+                parent = customPath.slice(0, -(splitted[splitted.length - 1].length + 1))
+            }
         }
         else {
             for (let [path, target] of Object.entries(customPaths)) {
@@ -119,7 +124,7 @@ function loadPaths(tree, root, init) {
                 customPaths[customPath] = root
                 useCustomPaths = true
 
-                if (customPath.split('|').length == 1) {
+                if (customPath.split('|').length == 1 && root.split('|').length > 2) {
                     customPaths[vscode.workspace.name + '|' + customPath] = root
                 }
 
@@ -148,7 +153,7 @@ function onCreate(uri) {
         if (isSourceFile(uri.name) && !parent.includes(config.separator)) {
             return
         }
-    
+
         events.create(uri.ext, uri.name, parent)
     }
 }
