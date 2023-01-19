@@ -252,7 +252,7 @@ async function activate(context) {
         })
 
         response.on('end', () => {
-            if (JSON.parse(body).extension != context.extension.packageJSON.version) {
+            if (JSON.parse(body).version != context.extension.packageJSON.version) {
                 messageHandler.showMessage('outdatedVersion', 1)
             }
         })

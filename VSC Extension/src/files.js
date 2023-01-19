@@ -591,7 +591,10 @@ function portProject() {
         let uri = path.join(dir, file.name)
 
         if (file.isDirectory()) {
-            portCreate(uri)
+            if (customPaths[vscode.workspace.name + '|' + file.name]) {
+                portCreate(uri)
+            }
+
             getSubDirs(uri)
         }
     })

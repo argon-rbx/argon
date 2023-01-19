@@ -164,8 +164,8 @@ function httpHandler.checkForUpdates()
     pcall(function()
         local json = HttpService:JSONDecode(HttpService:GetAsync(API_URL))
 
-        if json.plugin ~= Config.argonVersion then
-            update = json.plugin
+        if json.version ~= Config.argonVersion then
+            update = json.version
         end
     end)
 
