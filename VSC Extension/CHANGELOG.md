@@ -2,6 +2,7 @@
 
 # 1.0.3
 * Renamed some commands
+* Fixed custom font not loading on local website
 * Improved stats counting
 
 ## 1.0.2
