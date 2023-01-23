@@ -1,9 +1,12 @@
 # Changelog
 
 # 1.0.3
-* Renamed some commands
+* Added support for my other plugins
+* Fixed plugin not detecting first input
 * Fixed custom font not loading on local website
+* Fixed status bar icon not showing sometimes
 * Improved stats counting
+* Renamed some commands
 
 ## 1.0.2
 * Unhandled properties in the project file no longer cause problems, reported by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)

@@ -534,7 +534,7 @@ function guiHandler.runPage(page)
     end
 end
 
-function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
+function guiHandler.run(newPlugin, newWidget, newButton)
     themeConnection = themeConnection or Studio.ThemeChanged:Connect(updateTheme)
     versionLabel.Text = Config.argonVersion
     updateTheme()
@@ -666,11 +666,13 @@ function guiHandler.run(newPlugin, newWidget, newButton, autoConnect)
         end)
     end
 
-    if autoConnect then
+
+
+    if autoRunSetting and state == 0 then
         connect()
-    else
-        changePage(0)
     end
+
+    changePage(0)
 
     if twoWaySyncSetting then
         TwoWaySync.run()

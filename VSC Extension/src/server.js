@@ -255,9 +255,9 @@ function run(callback) {
             uptime = Date.now()
 
             events.syncTitle(files.getTitle())
-            updateStatusBar()
         }
 
+        updateStatusBar()
         callback(canConnect)
     }, 100)
 }
