@@ -1,24 +1,7 @@
-local CoreGui = game:GetService('CoreGui')
-
+local Toolbar = require(script.Toolbar)
 local GuiHandler = require(script.GuiHandler)
 
-local toolbar
-
-if CoreGui:FindFirstChild("Dervex' utils") and #CoreGui["Dervex' utils"]:GetChildren() > 0 then
-    toolbar = CoreGui["Dervex' utils"].Value
-else
-    if CoreGui:FindFirstChild("Dervex' utils") then
-        CoreGui["Dervex' utils"]:Destroy()
-    end
-
-    toolbar = plugin:CreateToolbar("Dervex' utils")
-
-    local toolbarRef = Instance.new('ObjectValue', CoreGui)
-    toolbarRef.Name = "Dervex' utils"
-    toolbarRef.Value = toolbar
-end
-
-local button = toolbar:CreateButton('Argon', 'Show Argon UI', 'rbxassetid://11230142853')
+local button = Toolbar('Argon', plugin)
 
 local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 400, 250, 400, 250)
 local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)
@@ -29,8 +12,6 @@ widget.Name = 'Argon'
 widget.Title = 'Argon'
 widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 script.Parent.ArgonGui.Root.Background.Parent = widget
-button.ClickableWhenViewportHidden = true
-Instance.new('ObjectValue', CoreGui["Dervex' utils"]).Name = 'Argon'
 
 local function open()
     if not isOpen then
@@ -66,9 +47,3 @@ if widget.Enabled then
 elseif plugin:GetSetting('AutoRun') then
     GuiHandler.run(plugin, widget, button)
 end
-
-plugin.Unloading:Connect(function()
-    if CoreGui:FindFirstChild("Dervex' utils") and CoreGui["Dervex' utils"]:FindFirstChild('Argon') then
-        CoreGui["Dervex' utils"].Argon:Destroy()
-    end
-end)

@@ -1,7 +1,7 @@
 # Changelog
 
 # 1.0.3
-* Added support for my other plugins
+* Added support for my other plugins (shared toolbar)
 * Fixed plugin not detecting first input
 * Fixed custom font not loading on local website
 * Fixed status bar icon not showing sometimes
