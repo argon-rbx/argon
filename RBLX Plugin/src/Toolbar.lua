@@ -2,7 +2,7 @@ local CoreGui = game:GetService('CoreGui')
 
 local TOOLBAR = "Dervex' utils"
 
-return function (name, plugin)
+return function (name: string, icon: string, plugin: Plugin)
     local toolbar, button
     local toolbarRef, buttonRef
 
@@ -26,7 +26,7 @@ return function (name, plugin)
         button = buttonRef.Value
         button.Enabled = true
     else
-        button = toolbar:CreateButton(name, 'Show '..name..' UI', 'rbxassetid://12243614008')
+        button = toolbar:CreateButton(name, 'Show '..name..' UI', icon)
         button.ClickableWhenViewportHidden = true
 
         buttonRef = Instance.new('ObjectValue', toolbarRef)

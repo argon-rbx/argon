@@ -1,10 +1,9 @@
 local Toolbar = require(script.Toolbar)
 local GuiHandler = require(script.GuiHandler)
 
-local button = Toolbar('Argon', plugin)
-
 local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 400, 250, 400, 250)
 local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)
+local button = Toolbar('Argon', 'rbxassetid://11230142853', plugin)
 
 local isOpen = false
 
