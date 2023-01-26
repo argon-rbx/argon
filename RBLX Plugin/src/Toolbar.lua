@@ -2,40 +2,60 @@ local CoreGui = game:GetService('CoreGui')
 
 local TOOLBAR = "Dervex' utils"
 
-return function (name: string, icon: string, plugin: Plugin)
-    local toolbar, button
+return function (plugin: Plugin, name: string, icon: string, callback: (PluginToolbarButton) -> ())
     local toolbarRef, buttonRef
+    local toolbar, button
+    local isOwner = false
 
-    if CoreGui:FindFirstChild(TOOLBAR) and #CoreGui[TOOLBAR]:GetChildren() > 0 then
-        toolbarRef = CoreGui[TOOLBAR]
-        toolbar = toolbarRef.Value
-    else
-        if CoreGui:FindFirstChild(TOOLBAR) then
-            CoreGui[TOOLBAR]:Destroy()
+    local function createButton(init)
+        if toolbarRef:FindFirstChild(name) then
+            buttonRef = toolbarRef[name]
+            button = buttonRef.Value
+            button.Enabled = true
+        else
+            button = toolbar:CreateButton(name, 'Show '..name..' UI', icon)
+            button.ClickableWhenViewportHidden = true
+
+            buttonRef = Instance.new('ObjectValue', toolbarRef)
+            buttonRef.Name = name
+            buttonRef.Value = button
+
+            if callback and not init then
+                callback(button)
+            end
         end
-
-        toolbar = plugin:CreateToolbar(TOOLBAR)
-
-        toolbarRef = Instance.new('ObjectValue', CoreGui)
-        toolbarRef.Name = TOOLBAR
-        toolbarRef.Value = toolbar
     end
 
-    if toolbarRef:FindFirstChild(name) then
-        buttonRef = toolbarRef[name]
-        button = buttonRef.Value
-        button.Enabled = true
-    else
-        button = toolbar:CreateButton(name, 'Show '..name..' UI', icon)
-        button.ClickableWhenViewportHidden = true
+    local function createToolbar(init)
+        if CoreGui:FindFirstChild(TOOLBAR) then
+            toolbarRef = CoreGui[TOOLBAR]
+            toolbar = toolbarRef.Value
 
-        buttonRef = Instance.new('ObjectValue', toolbarRef)
-        buttonRef.Name = name
-        buttonRef.Value = button
+            toolbarRef.Destroying:Once(function()
+                task.delay(0, createToolbar)
+            end)
+
+            createButton(init)
+        else
+            toolbar = plugin:CreateToolbar(TOOLBAR)
+            isOwner = true
+
+            toolbarRef = Instance.new('ObjectValue', CoreGui)
+            toolbarRef.Name = TOOLBAR
+            toolbarRef.Value = toolbar
+
+            createButton(init)
+        end
     end
+
+    createToolbar(true)
 
     plugin.Unloading:Once(function()
         button.Enabled = false
+
+        if isOwner then
+            toolbarRef:Destroy()
+        end
     end)
 
     return button

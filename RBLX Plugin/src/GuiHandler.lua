@@ -492,6 +492,14 @@ local function updateTheme()
     end
 end
 
+function guiHandler.updateButton(newButton)
+    button = newButton
+
+    if state == 1 then
+        button.Icon = CONNECTED_ICON
+    end
+end
+
 function guiHandler.runPage(page)
     for _, v in pairs(connections) do
         v:Disconnect()

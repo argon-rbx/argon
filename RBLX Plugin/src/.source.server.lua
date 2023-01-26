@@ -3,14 +3,30 @@ local GuiHandler = require(script.GuiHandler)
 
 local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 400, 250, 400, 250)
 local widget = plugin:CreateDockWidgetPluginGui('Argon', widgetInfo)
-local button = Toolbar('Argon', 'rbxassetid://11230142853', plugin)
 
 local isOpen = false
+local connection = nil
 
 widget.Name = 'Argon'
 widget.Title = 'Argon'
 widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 script.Parent.ArgonGui.Root.Background.Parent = widget
+
+button = Toolbar(plugin, 'Argon', 'rbxassetid://11230142853', function(newButton)
+    GuiHandler.updateButton(newButton)
+    button = newButton
+
+    if isOpen then
+        button:SetActive(true)
+    end
+
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+
+    connection = button.Click:Connect(openClose)
+end)
 
 local function open()
     if not isOpen then
@@ -30,14 +46,15 @@ local function close()
     end
 end
 
-button.Click:Connect(function()
+function openClose()
     if isOpen then
         close()
     else
         open()
     end
-end)
+end
 
+connection = button.Click:Connect(openClose)
 widget.WindowFocused:Connect(open)
 widget:BindToClose(close)
 
