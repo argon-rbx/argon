@@ -589,17 +589,16 @@ function guiHandler.run(newPlugin, newWidget, newButton)
     if autoReconnectSetting ~= nil then
         Config.autoReconnect = autoReconnectSetting
 
-        if autoReconnectSetting then
-            autoReconnectButton.OnIcon.ImageTransparency = 0
+        if not autoReconnectSetting then
+            autoReconnectButton.OnIcon.ImageTransparency = 1
         end
     end
 
     if openInEditorSetting ~= nil then
         Config.openInEditor = openInEditorSetting
 
-        if openInEditorSetting then
-            openInEditorButton.OnIcon.ImageTransparency = 0
-            handleDocumentChange()
+        if not openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 1
         end
     end
 
@@ -664,23 +663,15 @@ function guiHandler.run(newPlugin, newWidget, newButton)
         end
     end
 
-    local update = HttpHandler.checkForUpdates()
-    if typeof(update) == 'string' then
-        updateFrame.Container.Title.Text = 'Argon '..update
-        updateFrame.Visible = true
+    changePage(0)
 
-        updateFrame.Container.Button.MouseButton1Click:Once(function()
-            updateFrame.Visible = false
-        end)
-    end
-
-
-
-    if autoRunSetting and state == 0 then
+    if Config.autoRun and state == 0 then
         connect()
     end
 
-    changePage(0)
+    if Config.openInEditor then
+        handleDocumentChange()
+    end
 
     if twoWaySyncSetting then
         TwoWaySync.run()
@@ -691,6 +682,17 @@ function guiHandler.run(newPlugin, newWidget, newButton)
 
         plugin.Unloading:Once(function()
             HttpHandler.disconnect()
+        end)
+    end
+
+    local update = HttpHandler.checkForUpdates()
+
+    if typeof(update) == 'string' then
+        updateFrame.Container.Title.Text = 'Argon '..update
+        updateFrame.Visible = true
+
+        updateFrame.Container.Button.MouseButton1Click:Once(function()
+            updateFrame.Visible = false
         end)
     end
 end
