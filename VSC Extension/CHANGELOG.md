@@ -1,6 +1,7 @@
 # Changelog
 
-# 1.0.3
+# 1.1.0
+* Added support for instance attributes, suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Added support for my other plugins (shared toolbar)
 * Fixed plugin not detecting first input
 * Fixed custom font not loading on local website

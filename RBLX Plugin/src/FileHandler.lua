@@ -292,7 +292,13 @@ function fileHandler.setProperties(object, properties)
 
         for i, v in pairs(properties) do
             if i ~= 'Class' then
-                object[i] = DataTypes.cast(v, i, object)
+                if i ~= 'Attributes' then
+                    object[i] = DataTypes.cast(v, i, object)
+                else
+                    for j, w in pairs(v) do
+                        object:SetAttribute(j, DataTypes.cast(w.Value, w.Type))
+                    end
+                end
             end
         end
     end)

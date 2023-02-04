@@ -74,12 +74,77 @@ local function getInstance(path)
     return instance
 end
 
+local function stringify(value)
+    local dataType = typeof(value)
+
+    if dataType == 'boolean' or dataType == 'number' or dataType == 'string' then
+        return value
+
+    elseif DATA_TYPES[dataType] then
+        if dataType == 'CFrame' then
+            return {value:GetComponents()}
+        elseif dataType == 'Vector3' then
+            return {value.X, value.Y, value.Z}
+        elseif dataType == 'Vector2' then
+            return {value.X, value.Y}
+        elseif dataType == 'Color3' then
+            return {value.R, value.G, value.B}
+        elseif dataType == 'UDim2' then
+            return {value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset}
+        elseif dataType == 'UDim' then
+            return {value.Scale, value.Offset}
+        elseif dataType == 'Rect' then
+            return {value.Min.X, value.Min.Y, value.Max.X, value.Max.Y}
+        elseif dataType == 'NumberRange' then
+            return {value.Min, value.Max}
+        elseif dataType == 'PhysicalProperties' then
+            return {value.Density, value.Friction, value.Elasticity, value.FrictionWeight, value.ElasticityWeight}
+        end
+
+    elseif dataType == 'EnumItem' or dataType == 'BrickColor' then
+        return tostring(value)
+
+    elseif dataType == 'Font' then
+        return {value.Family, tostring(value.Weight), tostring(value.Style)}
+
+    elseif dataType == 'Faces' or dataType == 'Axes' then
+        return tostring(value):split(', ')
+
+    elseif dataType == 'NumberSequence' then
+        local newValue = {}
+
+        for _, w in ipairs(value.Keypoints) do
+            table.insert(newValue, {w.Time, w.Value, w.Envelope})
+        end
+
+        return newValue
+
+    elseif dataType == 'ColorSequence' then
+        local newValue = {}
+
+        for _, w in ipairs(value.Keypoints) do
+            table.insert(newValue, {w.Time, w.Value.R, w.Value.G, w.Value.B})
+        end
+
+        return newValue
+
+    elseif dataType == 'Instance' then
+        return getPath(value)
+    end
+end
+
 function dataTypes.cast(value, property, object)
     if typeof(value) == 'boolean' or typeof(value) == 'number' then
         return value
     end
 
-    local dataType = typeof(object[property])
+    local dataType
+
+    if object then
+        dataType = typeof(object[property])
+    else
+        dataType = property
+    end
 
     if dataType == 'string' then
         return value
@@ -101,26 +166,32 @@ function dataTypes.cast(value, property, object)
         for i, v in ipairs(value) do
             value[i] = Enum.NormalId[v]
         end
+
         return Faces.new(unpack(value))
 
     elseif dataType == 'Axes' then
         for i, v in ipairs(value) do
             value[i] = Enum.Axis[v]
         end
+
         return Axes.new(unpack(value))
 
     elseif dataType == 'NumberSequence' then
         local keypoints = {}
+
         for _, v in ipairs(value) do
             table.insert(keypoints, NumberSequenceKeypoint.new(v[1], v[2], v[3]))
         end
+
         return NumberSequence.new(keypoints)
 
     elseif dataType == 'ColorSequence' then
         local keypoints = {}
+
         for _, v in ipairs(value) do
             table.insert(keypoints, ColorSequenceKeypoint.new(v[1], Color3.new(v[2], v[3], v[4])))
         end
+
         return ColorSequence.new(keypoints)
 
     else
@@ -144,63 +215,21 @@ function dataTypes.getProperties(object)
     properties.Class = object.ClassName
 
     for _, v in ipairs(apiDump[object.ClassName]) do
-        local dataType = typeof(object[v])
         local value = object[v]
 
         if not value then
             continue
         end
 
-        if dataType == 'boolean' or dataType == 'number' or dataType == 'string' then
-            properties[v] = value
+        properties[v] = stringify(value)
+    end
 
-        elseif DATA_TYPES[dataType] then
-            if dataType == 'CFrame' then
-                properties[v] = {value:GetComponents()}
-            elseif dataType == 'Vector3' then
-                properties[v] = {value.X, value.Y, value.Z}
-            elseif dataType == 'Vector2' then
-                properties[v] = {value.X, value.Y}
-            elseif dataType == 'Color3' then
-                properties[v] = {value.R, value.G, value.B}
-            elseif dataType == 'UDim2' then
-                properties[v] = {value.X.Scale, value.X.Offset, value.Y.Scale, value.Y.Offset}
-            elseif dataType == 'UDim' then
-                properties[v] = {value.Scale, value.Offset}
-            elseif dataType == 'Rect' then
-                properties[v] = {value.Min.X, value.Min.Y, value.Max.X, value.Max.Y}
-            elseif dataType == 'NumberRange' then
-                properties[v] = {value.Min, value.Max}
-            elseif dataType == 'PhysicalProperties' then
-                properties[v] = {value.Density, value.Friction, value.Elasticity, value.FrictionWeight, value.ElasticityWeight}
-            end
-
-        elseif dataType == 'EnumItem' or dataType == 'BrickColor' then
-            properties[v] = tostring(value)
-
-        elseif dataType == 'Font' then
-            properties[v] = {value.Family, tostring(value.Weight), tostring(value.Style)}
-
-        elseif dataType == 'Faces' or dataType == 'Axes' then
-            properties[v] = tostring(value):split(', ')
-
-        elseif dataType == 'NumberSequence' then
-            local newValue = {}
-            for _, w in ipairs(value.Keypoints) do
-                table.insert(newValue, {w.Time, w.Value, w.Envelope})
-            end
-            properties[v] = newValue
-
-        elseif dataType == 'ColorSequence' then
-            local newValue = {}
-            for _, w in ipairs(value.Keypoints) do
-                table.insert(newValue, {w.Time, w.Value.R, w.Value.G, w.Value.B})
-            end
-            properties[v] = newValue
-
-        elseif dataType == 'Instance' then
-            properties[v] = getPath(value)
+    for i, v in pairs(object:GetAttributes()) do
+        if not properties.Attributes then
+            properties.Attributes = {}
         end
+
+        properties.Attributes[i] = {Type = typeof(v), Value = stringify(v)}
     end
 
     return properties
