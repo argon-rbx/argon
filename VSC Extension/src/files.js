@@ -636,7 +636,54 @@ function portProject() {
                 portCreate(uri)
             }
 
-            getSubDirs(uri)
+            if (file.name != 'Packages') {
+                getSubDirs(uri)
+            }
+            else {
+                fs.readdirSync(uri, {withFileTypes: true}).forEach(subFile => {
+                    if (subFile.isFile()) {
+                        let subUri = path.join(uri, subFile.name)
+                        portCreate(subUri)
+                        portSave(subUri)
+                    }
+                })
+
+                fs.readdirSync(path.join(uri, '_Index'), {withFileTypes: true}).forEach(subFile => {
+                    let package = subFile.name.substring(subFile.name.indexOf('_') + 1, subFile.name.lastIndexOf('@'))
+                    let subUri = path.join(path.join(uri, '_Index'), path.join(subFile.name, package))
+
+                    if (fs.existsSync(path.join(subUri, 'src'))) {
+                        subUri = path.join(subUri, 'src')
+                    }
+                    else {
+                        let toml = fs.readFileSync(path.join(subUri, 'rotriever.toml'), 'utf-8')
+                        let found = false
+                        let root = ''
+
+                        for (let i = toml.indexOf('content_root') + 12; i < 100; i++) {
+                            let char = toml[i]
+
+                            if (char == '"') {
+                                if (found) {
+                                    break
+                                }
+                                else {
+                                    found = true
+                                }
+                            }
+
+                            if (found) {
+                                root += char
+                            }
+                        }
+
+                        root = root.substring(1)
+                        subUri = path.join(subUri, root)
+                    }
+
+                    getSubDirs(subUri)
+                })
+            }
         }
     })
 

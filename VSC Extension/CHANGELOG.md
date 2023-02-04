@@ -1,6 +1,7 @@
 # Changelog
 
 # 1.1.0
+* Added support for Wally
 * Added support for instance attributes, suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Added support for my other plugins (shared toolbar)
 * Fixed plugin not detecting first input
