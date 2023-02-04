@@ -476,8 +476,49 @@ function portProperties(properties) {
         key = applyCustomPaths(path.join(rootDir, key))
 
         if (fs.existsSync(key)) {
-            value = JSON.stringify(value, null, '\t').replace(/,\n\t\t/g, ', ').replace(/\[\n\t\t/g, '[').replace(/\n\t\]/g, ']').replace(/, \t/g, ', ').replace(/\[\t/g, '[').replace(/\n\t\t\]\]/g, ']]').replace(/\n\t\t\]/g, ']')
-            fs.writeFileSync(path.join(key, config.properties + '.json'), value)
+            value = JSON.stringify(value)
+            let isString = false
+            let nestiness = 0
+            let newValue = ''
+            let index = 0
+
+            for (let char of value) {
+                if (char == '{' || char == '[') {
+                    if (index != 0) {
+                        nestiness++
+                    }
+                    else {
+                        char = '{\n\t'
+                    }
+                }
+                else if (char == '}' || char == ']') {
+                    if (index != value.length - 1) {
+                        nestiness--
+                    }
+                    else {
+                        char = '\n}'
+                    }
+                }
+
+                if (char == '"') {
+                    isString = !isString
+                }
+
+                if (char == ',' && !isString) {
+                    if (nestiness == 0) {
+                        char += '\n\t'
+                    }
+                    else {
+                        char += ' '
+                    }
+                }
+
+                newValue += char
+                index++
+            }
+
+            newValue = newValue.replaceAll('":', '": ')
+            fs.writeFileSync(path.join(key, config.properties + '.json'), newValue)
         }
     }
 }
