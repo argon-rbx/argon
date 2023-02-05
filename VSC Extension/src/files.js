@@ -673,6 +673,8 @@ function portProject() {
                 getSubDirs(uri)
             }
             else {
+                config.source = 'init'
+
                 fs.readdirSync(uri, {withFileTypes: true}).forEach(subFile => {
                     let subUri = path.join(uri, subFile.name)
 
@@ -735,6 +737,12 @@ function portProject() {
                         }
                     }
                 })
+
+                if (!config.compatibilityMode) {
+                    config.source = '.source'
+                }
+
+                events.lockPackages()
             }
         }
     })

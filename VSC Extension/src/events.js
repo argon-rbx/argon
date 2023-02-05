@@ -145,6 +145,10 @@ function syncTitle(title) {
     queue.push({Action: 'syncTitle', Title: title})
 }
 
+function lockPackages() {
+    queue.push({Action: 'lockPackages'})
+}
+
 module.exports = {
     queue,
     create,
@@ -157,5 +161,6 @@ module.exports = {
     portSource,
     closeFile,
     executeSnippet,
-    syncTitle
+    syncTitle,
+    lockPackages
 }

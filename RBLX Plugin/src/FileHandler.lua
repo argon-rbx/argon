@@ -82,7 +82,11 @@ local function getChildren(dir)
             if v:IsA('LuaSourceContainer') then
                 if ((not Config.filteringMode and not table.find(Config.filteredClasses, v.ClassName)) or (Config.filteringMode and table.find(Config.filteredClasses, v.ClassName))) then
                     if v:GetAttribute(ARGON_IGNORE) == nil then
-                        table.insert(children, getParent(v, dir))
+                        local parent = getParent(v, dir)
+
+                        if parent then
+                            table.insert(children, parent)
+                        end
                     end
                 end
             end

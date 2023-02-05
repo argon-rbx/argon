@@ -421,6 +421,7 @@ local function portToRoblox()
         TwoWaySync.pause()
 
         local tween = TweenService:Create(portToRobloxButton.Icon, LOADING_TWEEN_INFO, {Rotation = -360})
+        portToRobloxButton.Icon.Position = UDim2.fromScale(0.5, 0.5)
         portToRobloxButton.Icon.Image = LOADING_ICON
         tween:Play()
 
@@ -432,6 +433,7 @@ local function portToRoblox()
 
         tween:Cancel()
         portToRobloxButton.Icon.Rotation = 0
+        portToRobloxButton.Icon.Position = UDim2.fromScale(0.55, 0.5)
         portToRobloxButton.Icon.Image = START_ICON
 
         TwoWaySync.resume()

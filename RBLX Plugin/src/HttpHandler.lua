@@ -270,6 +270,10 @@ function httpHandler.portProject()
                 FileHandler.create(v.Type, v.Name, v.Parent, v.Delete)
             elseif v.Action == 'setProperties' then
                 FileHandler.setProperties(v.Object, HttpService:JSONDecode(v.Properties))
+            elseif v.Action == 'lockPackages' then
+                if game:GetService('ReplicatedStorage'):FindFirstChild('Packages') then
+                    game:GetService('ReplicatedStorage').Packages:SetAttribute('ArgonIgnore', true)
+                end
             end
         end
 
