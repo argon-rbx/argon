@@ -664,8 +664,8 @@ function portProject() {
     fs.readdirSync(dir, {withFileTypes: true}).forEach(file => {
         let uri = path.join(dir, file.name)
 
-        if (file.isDirectory()) {
-            if (customPaths[vscode.workspace.name + '|' + file.name]) {
+        if (file.isDirectory() && (file.name == config.rootFolder || customPaths[file.name])) {
+            if (customPaths[vscode.workspace.name + '|' + file.name] && file.name != config.rootFolder) {
                 portCreate(uri)
             }
 
@@ -673,6 +673,7 @@ function portProject() {
                 getSubDirs(uri)
             }
             else {
+                let packages = path.join(uri, '_Index')
                 config.source = 'init'
 
                 fs.readdirSync(uri, {withFileTypes: true}).forEach(subFile => {
@@ -685,58 +686,47 @@ function portProject() {
                     }
                 })
 
-                fs.readdirSync(path.join(uri, '_Index'), {withFileTypes: true}).forEach(subFile => {
-                    let package = subFile.name.substring(subFile.name.indexOf('_') + 1, subFile.name.lastIndexOf('@'))
-                    let subUri = path.join(path.join(uri, '_Index'), subFile.name)
-                    let root = ''
-
-                    portCreate(subUri)
-                    subUri = path.join(subUri, package)
-
-                    if (fs.existsSync(path.join(subUri, 'src'))) {
-                        subUri = path.join(subUri, 'src')
-                        root = 'src'
-                    }
-                    else {
-                        let toml = fs.readFileSync(path.join(subUri, 'rotriever.toml'), 'utf-8')
-                        let found = false
-
-                        for (let i = toml.indexOf('content_root') + 12; i < 100; i++) {
-                            let char = toml[i]
-
-                            if (char == '"') {
+                if (fs.existsSync(packages)) {
+                    fs.readdirSync(packages, {withFileTypes: true}).forEach(subFile => {
+                        let package = subFile.name.substring(subFile.name.indexOf('_') + 1, subFile.name.lastIndexOf('@'))
+                        let subUri = path.join(packages, subFile.name)
+                        let root = ''
+    
+                        portCreate(subUri)
+                        subUri = path.join(subUri, package)
+    
+                        if (fs.existsSync(path.join(subUri, 'src'))) {
+                            subUri = path.join(subUri, 'src')
+                            root = 'src'
+                        }
+                        else {
+                            let toml = fs.readFileSync(path.join(subUri, 'rotriever.toml'), 'utf-8')
+                            let found = false
+    
+                            for (let i = toml.indexOf('content_root') + 12; i < 100; i++) {
+                                let char = toml[i]
+    
+                                if (char == '"') {
+                                    if (found) {
+                                        break
+                                    }
+                                    else {
+                                        found = true
+                                    }
+                                }
+    
                                 if (found) {
-                                    break
-                                }
-                                else {
-                                    found = true
+                                    root += char
                                 }
                             }
-
-                            if (found) {
-                                root += char
-                            }
+    
+                            root = root.substring(1)
+                            subUri = path.join(subUri, root)
                         }
-
-                        root = root.substring(1)
-                        subUri = path.join(subUri, root)
-                    }
-
-                    getSubDirs(subUri, root)
-                })
-
-                events.queue.forEach((v, i) => {
-                    if (v.Delete) {
-                        let parent = v.Parent + config.separator + v.Name
-
-                        for (let [key, value] of events.queue.entries()) {
-                            if (value.Parent == parent) {
-                                moveValue(events.queue, i, key)
-                                break
-                            }
-                        }
-                    }
-                })
+    
+                        getSubDirs(subUri, root)
+                    })
+                }
 
                 if (!config.compatibilityMode) {
                     config.source = '.source'
@@ -744,6 +734,19 @@ function portProject() {
 
                 events.lockPackages()
             }
+
+            events.queue.forEach((v, i) => {
+                if (v.Delete) {
+                    let parent = v.Parent + config.separator + v.Name
+
+                    for (let [key, value] of events.queue.entries()) {
+                        if (value.Parent == parent) {
+                            moveValue(events.queue, i, key)
+                            break
+                        }
+                    }
+                }
+            })
         }
     })
 

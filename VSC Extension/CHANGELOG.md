@@ -7,6 +7,7 @@
 * Fixed plugin not detecting first input
 * Fixed custom font not loading on local website
 * Fixed status bar icon not showing sometimes
+* Optimized porting related code
 * Improved stats counting
 * Renamed some commands
 

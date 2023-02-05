@@ -452,6 +452,12 @@ function fileHandler.portProperties()
     return propertiesToSync
 end
 
+function fileHandler.lockPackages()
+    if game:GetService('ReplicatedStorage'):FindFirstChild('Packages') then
+        game:GetService('ReplicatedStorage').Packages:SetAttribute(ARGON_IGNORE, true)
+    end
+end
+
 function fileHandler.clear()
     currentInstances = {}
 end
