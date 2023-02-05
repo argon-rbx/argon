@@ -537,7 +537,19 @@ function clearFolders() {
     })
 }
 
-function portCreate(uri) {
+function parseParent(parent, root) {
+    if (parent.endsWith(config.separator + root)) {
+        parent = parent.slice(0, -(root.length + 1))
+    }
+    else {
+        let index = parent.lastIndexOf(config.separator + root + config.separator)
+        parent = parent.slice(0, index) + parent.slice(index + root.length + 1)
+    }
+
+    return parent
+}
+
+function portCreate(uri, root) {
     uri = path.parse(uri)
     let parent = getParent(uri.dir, uri.name)
 
@@ -549,10 +561,14 @@ function portCreate(uri) {
         return
     }
 
+    if (root) {
+        parent = parseParent(parent, root)
+    }
+
     events.create(uri.ext, uri.name, parent)
 }
 
-function portSave(uri) {
+function portSave(uri, root) {
     let parsedUri = path.parse(uri)
     let parent = getParent(parsedUri.dir, parsedUri.name)
 
@@ -561,6 +577,10 @@ function portSave(uri) {
     }
 
     let source = fs.readFileSync(uri, 'utf-8')
+
+    if (root) {
+        parent = parseParent(parent, root)
+    }
 
     if (isSourceFile(parsedUri.name)) {
         if (parent.includes(config.separator)) {
@@ -584,18 +604,18 @@ function portUpdate(uri) {
     events.setProperties(parent, source)
 }
 
-function getSubDirs(uri) {
+function getSubDirs(uri, root) {
     fs.readdirSync(uri, {withFileTypes: true}).forEach(file => {
         let subUri = path.join(uri, file.name)
 
         if (file.name != config.properties + '.json') {
-            portCreate(subUri)
+            portCreate(subUri, root)
 
             if (file.isDirectory()) {
-                getSubDirs(subUri)
+                getSubDirs(subUri, root)
             }
             else {
-                portSave(subUri)
+                portSave(subUri, root)
             }
         }
         else {
@@ -623,6 +643,19 @@ function getChunk(data, index) {
     return [lastChunk, index]
 }
 
+function moveValue(array, oldIndex, newIndex) {
+    if (newIndex >= array.length) {
+        let index = newIndex - array.length + 1
+
+        while (index--) {
+            array.push()
+        }
+    }
+
+    array.splice(newIndex, 0, array.splice(oldIndex, 1)[0])
+    return array
+}
+
 function portProject() {
     let dir = vscode.workspace.workspaceFolders[0].uri.fsPath
     let chunks = []
@@ -641,24 +674,30 @@ function portProject() {
             }
             else {
                 fs.readdirSync(uri, {withFileTypes: true}).forEach(subFile => {
+                    let subUri = path.join(uri, subFile.name)
+
+                    portCreate(subUri)
+
                     if (subFile.isFile()) {
-                        let subUri = path.join(uri, subFile.name)
-                        portCreate(subUri)
                         portSave(subUri)
                     }
                 })
 
                 fs.readdirSync(path.join(uri, '_Index'), {withFileTypes: true}).forEach(subFile => {
                     let package = subFile.name.substring(subFile.name.indexOf('_') + 1, subFile.name.lastIndexOf('@'))
-                    let subUri = path.join(path.join(uri, '_Index'), path.join(subFile.name, package))
+                    let subUri = path.join(path.join(uri, '_Index'), subFile.name)
+                    let root = ''
+
+                    portCreate(subUri)
+                    subUri = path.join(subUri, package)
 
                     if (fs.existsSync(path.join(subUri, 'src'))) {
                         subUri = path.join(subUri, 'src')
+                        root = 'src'
                     }
                     else {
                         let toml = fs.readFileSync(path.join(subUri, 'rotriever.toml'), 'utf-8')
                         let found = false
-                        let root = ''
 
                         for (let i = toml.indexOf('content_root') + 12; i < 100; i++) {
                             let char = toml[i]
@@ -681,7 +720,20 @@ function portProject() {
                         subUri = path.join(subUri, root)
                     }
 
-                    getSubDirs(subUri)
+                    getSubDirs(subUri, root)
+                })
+
+                events.queue.forEach((v, i) => {
+                    if (v.Delete) {
+                        let parent = v.Parent + config.separator + v.Name
+
+                        for (let [key, value] of events.queue.entries()) {
+                            if (value.Parent == parent) {
+                                moveValue(events.queue, i, key)
+                                break
+                            }
+                        }
+                    }
                 })
             }
         }
@@ -695,7 +747,7 @@ function portProject() {
         let chunk
         [chunk, index] = getChunk(filesToSync, index)
         chunks.push(chunk)
-    } while (index != filesToSync.length - 1);
+    } while (index != filesToSync.length - 1)
 
     filesToSync.length = 0
     return chunks
