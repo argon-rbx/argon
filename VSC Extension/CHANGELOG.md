@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.1.1
+* Fixed instance attributes not being removed
+* Changed file system handler from VSC to node.js
+
 # 1.1.0
 * Added support for Wally
 * Added support for instance attributes, suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)

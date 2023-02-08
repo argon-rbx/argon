@@ -117,8 +117,8 @@ local function getChildren(dir)
 end
 
 local function getInstance(parent)
-    local lastParent = game
     parent = parent:split(SEPARATOR)
+    local lastParent = game
 
     for _, v in ipairs(parent) do
         if lastParent == game then
@@ -145,8 +145,8 @@ end
 
 function fileHandler.create(class, name, parent, delete)
     local success, response = pcall(function()
-        local object
         parent = getInstance(parent)
+        local object
 
         if delete and parent:FindFirstChild(name) then
             object = Instance.new(class)
@@ -292,6 +292,14 @@ function fileHandler.setProperties(object, properties)
 
             object:Destroy()
             object = newObject
+        end
+
+        local attributes = object:GetAttributes()
+
+        if len(attributes) > 0 and not properties.Attributes then
+            for i, _ in pairs(attributes) do
+                object:SetAttribute(i, nil)
+            end
         end
 
         for i, v in pairs(properties) do
