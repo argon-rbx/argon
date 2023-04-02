@@ -1,8 +1,10 @@
 # Changelog
 
-# 1.1.1
+# 1.2.0
+* Added full support for macOS
+* Added support for multiple instances with the same name inside the same directory
+* Fixed custom dirs behavior when using root path
 * Fixed instance attributes not being removed
-* Changed file system handler from VSC to node.js
 
 # 1.1.0
 * Added support for Wally

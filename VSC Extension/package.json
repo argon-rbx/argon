@@ -6,7 +6,7 @@
   "icon": "assets/Logo.png",
   "version": "1.1.0",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.70.0"
   },
   "keywords": [
     "Roblox",

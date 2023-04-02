@@ -5,6 +5,7 @@ local FileHandler = require(script.Parent.FileHandler)
 local TwoWaySync = require(script.Parent.TwoWaySync)
 local Config = require(script.Parent.Config)
 
+local CONTENT_TYPE = Enum.HttpContentType.ApplicationJson
 local API_URL = 'https://dervexhero.github.io/Argon/'
 local URL = 'http://%s:%s/'
 local SYNC_INTERVAL = 0.2
@@ -31,7 +32,7 @@ local function syncTitle(title)
         end)
     end
 
-    HttpService:PostAsync(url, title, Enum.HttpContentType.ApplicationJson, false, header)
+    HttpService:PostAsync(url, title, CONTENT_TYPE, false, header)
 end
 
 local function executeSnippet(snippet)
@@ -104,7 +105,7 @@ local function startSyncing(url)
                 end
 
                 if Config.twoWaySync and #TwoWaySync.queue ~= 0 then
-                    HttpService:PostAsync(url, HttpService:JSONEncode(TwoWaySync.queue), Enum.HttpContentType.ApplicationJson, false, setHeader)
+                    HttpService:PostAsync(url, HttpService:JSONEncode(TwoWaySync.queue), CONTENT_TYPE, false, setHeader)
                     TwoWaySync.queue = {}
                 end
             end
@@ -154,7 +155,7 @@ function httpHandler.disconnect()
         task.cancel(thread)
         thread = nil
 
-        HttpService:PostAsync(url, HttpService:JSONEncode(''), Enum.HttpContentType.ApplicationJson, false, header)
+        HttpService:PostAsync(url, HttpService:JSONEncode(''), CONTENT_TYPE, false, header)
     end
 end
 
@@ -178,7 +179,7 @@ function httpHandler.openFile(file)
         local header = {action = 'openFile'}
 
         pcall(function()
-            HttpService:PostAsync(url, HttpService:JSONEncode(file), Enum.HttpContentType.ApplicationJson, false, header)
+            HttpService:PostAsync(url, HttpService:JSONEncode(file), CONTENT_TYPE, false, header)
         end)
     elseif httpHandler.file then
         httpHandler.file:CloseAsync()
@@ -196,7 +197,7 @@ function httpHandler.portInstances(instancesToSync)
     }
 
     local success, response = pcall(function()
-        HttpService:PostAsync(url, HttpService:JSONEncode(body), Enum.HttpContentType.ApplicationJson, false, header)
+        HttpService:PostAsync(url, HttpService:JSONEncode(body), CONTENT_TYPE, false, header)
     end)
 
     return success, response
@@ -227,14 +228,14 @@ function httpHandler.portScripts(scriptsToSync)
         until index == #scriptsToSync
 
         for _, v in ipairs(chunks) do
-            HttpService:PostAsync(url, HttpService:JSONEncode(v), Enum.HttpContentType.ApplicationJson, false, portHeader)
+            HttpService:PostAsync(url, HttpService:JSONEncode(v), CONTENT_TYPE, false, portHeader)
 
             while tonumber(HttpService:GetAsync(url, false, stateHeader)) < 100 do
                 task.wait(0.1)
             end
         end
 
-        HttpService:PostAsync(url, '', Enum.HttpContentType.ApplicationJson, false, clearHeader)
+        HttpService:PostAsync(url, '', CONTENT_TYPE, false, clearHeader)
     end)
 
     return success, response
@@ -250,7 +251,7 @@ function httpHandler.portProperties(propertiesToSync)
             task.wait(0.1)
         end
 
-        HttpService:PostAsync(url, HttpService:JSONEncode(propertiesToSync), Enum.HttpContentType.ApplicationJson, false, portHeader)
+        HttpService:PostAsync(url, HttpService:JSONEncode(propertiesToSync), CONTENT_TYPE, false, portHeader)
     end)
 
     return success, response

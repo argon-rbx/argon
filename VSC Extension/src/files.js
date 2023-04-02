@@ -10,6 +10,7 @@ let watchers = []
 let filesToSync = []
 let customPaths = {}
 let customUriPaths = {}
+let ignoredPath = null
 let useCustomPaths = false
 let lastUnix = Date.now()
 
@@ -113,6 +114,7 @@ function loadPaths(tree, root, init) {
     if (init) {
         customPaths = {}
         customUriPaths = {}
+        ignoredPath = null
         useCustomPaths = false
     }
 
@@ -126,6 +128,12 @@ function loadPaths(tree, root, init) {
 
                 if (customPath.split('|').length == 1 && root.split('|').length > 2) {
                     customPaths[vscode.workspace.name + '|' + customPath] = root
+                }
+
+                if (customPath == config.rootFolder) {
+                    let splitted = root.split('|')
+                    ignoredPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '\\'))
+                    ignoredPath = ignoredPath.slice(0, -splitted[splitted.length - 1].length - 1)
                 }
 
                 root = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '\\'))
@@ -189,7 +197,7 @@ function onSave(uri) {
             let project = JSON.parse(source)
 
             if (project.tree) {
-                loadPaths(project.tree, config.rootFolder)
+                loadPaths(project.tree, config.rootFolder, true)
             }
 
             if (project.name) {
@@ -307,7 +315,7 @@ function run() {
         let json = JSON.parse(fs.readFileSync(project).toString())
 
         if (json.tree) {
-            loadPaths(json.tree, config.rootFolder)
+            loadPaths(json.tree, config.rootFolder, true)
         }
     }
 
@@ -342,56 +350,60 @@ function createInstances(dir, instances) {
         let folder = applyCustomPaths(path.join(dir, key))
         value = new Map(Object.entries(value))
 
-        if (key == 'forceSubScript') {
-            continue
-        }
-
-        if (key.endsWith('.Script')) {
-            folder = folder.slice(0, -7)
-
-            if (value.size == 0) {
-                fs.writeFileSync(folder + '.server' + config.extension, '')
+        if (key != 'forceSubScript' && !(useCustomPaths && folder.startsWith(ignoredPath))) {
+            if (key.endsWith('.Script')) {
+                folder = folder.slice(0, -7)
+    
+                if (value.size == 0) {
+                    fs.writeFileSync(folder + '.server' + config.extension, '')
+                }
+                else {
+                    if (!fs.existsSync(folder)) {
+                        fs.mkdirSync(folder)
+                    }
+    
+                    fs.writeFileSync(path.join(folder, config.source + '.server' + config.extension), '')
+                }
+            }
+            else if (key.endsWith('.LocalScript')) {
+                folder = folder.slice(0, -12)
+    
+                if (value.size == 0) {
+                    fs.writeFileSync(folder + '.client' + config.extension, '')
+                }
+                else {
+                    if (!fs.existsSync(folder)) {
+                        fs.mkdirSync(folder)
+                    }
+    
+                    fs.writeFileSync(path.join(folder, config.source + '.client' + config.extension), '')
+                }
+            }
+            else if (key.endsWith('.ModuleScript')) {
+                folder = folder.slice(0, -13)
+    
+                if (value.size == 0) {
+                    fs.writeFileSync(folder + config.extension, '')
+                }
+                else {
+                    if (!fs.existsSync(folder)) {
+                        fs.mkdirSync(folder)
+                    }
+    
+                    fs.writeFileSync(path.join(folder, config.source + config.extension), '')
+                }
             }
             else {
                 if (!fs.existsSync(folder)) {
                     fs.mkdirSync(folder)
                 }
-
-                fs.writeFileSync(path.join(folder, config.source + '.server' + config.extension), '')
-            }
-        }
-        else if (key.endsWith('.LocalScript')) {
-            folder = folder.slice(0, -12)
-
-            if (value.size == 0) {
-                fs.writeFileSync(folder + '.client' + config.extension, '')
-            }
-            else {
-                if (!fs.existsSync(folder)) {
-                    fs.mkdirSync(folder)
+                else {
+                    console.log(folder, 2);
                 }
-
-                fs.writeFileSync(path.join(folder, config.source + '.client' + config.extension), '')
-            }
-        }
-        else if (key.endsWith('.ModuleScript')) {
-            folder = folder.slice(0, -13)
-
-            if (value.size == 0) {
-                fs.writeFileSync(folder + config.extension, '')
-            }
-            else {
-                if (!fs.existsSync(folder)) {
-                    fs.mkdirSync(folder)
-                }
-
-                fs.writeFileSync(path.join(folder, config.source + config.extension), '')
             }
         }
         else {
-            if (!fs.existsSync(folder)) {
-                fs.mkdirSync(folder)
-            }
+            console.log(folder, 1);
         }
 
         if (value.size > 0) {
