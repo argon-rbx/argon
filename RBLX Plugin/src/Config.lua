@@ -11,6 +11,7 @@ config.openInEditor = true
 config.onlyCode = true
 config.twoWaySync = false
 config.propertySyncing = false
+config.syncDuplicates = true --false
 
 config.filteringMode = false
 config.filteredClasses = {}

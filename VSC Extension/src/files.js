@@ -351,7 +351,7 @@ function createInstances(dir, instances) {
         value = new Map(Object.entries(value))
 
         if (key != 'forceSubScript' && !(useCustomPaths && folder.startsWith(ignoredPath))) {
-            if (key.endsWith('.Script')) {
+            if (key.endsWith(config.separator + 'Script')) {
                 folder = folder.slice(0, -7)
     
                 if (value.size == 0) {
@@ -365,7 +365,7 @@ function createInstances(dir, instances) {
                     fs.writeFileSync(path.join(folder, config.source + '.server' + config.extension), '')
                 }
             }
-            else if (key.endsWith('.LocalScript')) {
+            else if (key.endsWith(config.separator + 'LocalScript')) {
                 folder = folder.slice(0, -12)
     
                 if (value.size == 0) {
@@ -379,7 +379,7 @@ function createInstances(dir, instances) {
                     fs.writeFileSync(path.join(folder, config.source + '.client' + config.extension), '')
                 }
             }
-            else if (key.endsWith('.ModuleScript')) {
+            else if (key.endsWith(config.separator + 'ModuleScript')) {
                 folder = folder.slice(0, -13)
     
                 if (value.size == 0) {
@@ -397,13 +397,7 @@ function createInstances(dir, instances) {
                 if (!fs.existsSync(folder)) {
                     fs.mkdirSync(folder)
                 }
-                else {
-                    console.log(folder, 2);
-                }
             }
-        }
-        else {
-            console.log(folder, 1);
         }
 
         if (value.size > 0) {
@@ -490,14 +484,14 @@ function portProperties(properties) {
         if (fs.existsSync(key)) {
             value = JSON.stringify(value)
             let isString = false
-            let nestiness = 0
+            let depth = 0
             let newValue = ''
             let index = 0
 
             for (let char of value) {
                 if (char == '{' || char == '[') {
                     if (index != 0) {
-                        nestiness++
+                        depth++
                     }
                     else {
                         char = '{\n\t'
@@ -505,7 +499,7 @@ function portProperties(properties) {
                 }
                 else if (char == '}' || char == ']') {
                     if (index != value.length - 1) {
-                        nestiness--
+                        depth--
                     }
                     else {
                         char = '\n}'
@@ -517,7 +511,7 @@ function portProperties(properties) {
                 }
 
                 if (char == ',' && !isString) {
-                    if (nestiness == 0) {
+                    if (depth == 0) {
                         char += '\n\t'
                     }
                     else {

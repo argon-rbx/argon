@@ -4,6 +4,8 @@ local Config = require(script.Parent.Config)
 local DataTypes = require(script.Parent.DataTypes)
 
 local SEPARATOR = '|'
+local UUID_PATTERN = 'xxxxxx'
+local ARGON_UUID = 'ArgonUUID'
 local DISABLE_PREFIX = '--disable'
 local ARGON_IGNORE = 'ArgonIgnore'
 local SCRIPT_TYPES = {
@@ -31,6 +33,12 @@ local function len(array)
     return index
 end
 
+local function generateUUID()
+    return string.gsub(UUID_PATTERN, '[x]', function()
+        return string.format('%x', math.random(0, 15))
+    end)
+end
+
 local function parse(instance)
     local name, num = instance.Name:gsub('[%\\%/%:%*%?%"%<%>%|]', '')
     local className = ''
@@ -40,7 +48,32 @@ local function parse(instance)
     end
 
     if instance:IsA('LuaSourceContainer') then
-        className = '.'..instance.ClassName
+        className = SEPARATOR..instance.ClassName
+    end
+
+    if Config.syncDuplicates then
+        local uuid = instance:GetAttribute(ARGON_UUID)
+
+        if not uuid then
+            local duplicates = 0
+
+            for _, v in ipairs(instance.Parent:GetChildren()) do
+                if v.Name == instance.Name then
+                    if duplicates == 0 then
+                        duplicates += 1
+                        continue
+                    else
+                        uuid = generateUUID()
+                        instance:SetAttribute(ARGON_UUID, uuid)
+                        name = name..'%'..uuid
+
+                        break
+                    end
+                end
+            end
+        else
+            name = name..'%'..uuid
+        end
     end
 
     if num ~= 0 then
@@ -125,12 +158,27 @@ local function getInstance(parent)
             lastParent = game:GetService(v)
         else
             local didFind = false
+            local uuid = nil
+
+            if Config.syncDuplicates and v:find('%%') and v:len() - v:find('%%') == 6 then
+                local temp = v
+                v = temp:sub(1, temp:len() - 7)
+                uuid = temp:sub(temp:len() - 5)
+            end
 
             for _, w in ipairs(lastParent:GetChildren()) do
-                if w.Name == v then
-                    lastParent = w
-                    didFind = true
-                    break
+                if not uuid then
+                    if w.Name == v then
+                        lastParent = w
+                        didFind = true
+                        break
+                    end
+                else
+                    if w.Name == v and w:GetAttribute(ARGON_UUID) == uuid then
+                        lastParent = w
+                        didFind = true
+                        break
+                    end
                 end
             end
 
@@ -344,7 +392,7 @@ function fileHandler.getPath(instance, onlyCode, recursive)
     local dir = ''
 
     if instance.Parent ~= game then
-        local name
+        local name, uuid
 
         if instance:IsA('LuaSourceContainer') then
 		    if not recursive then
@@ -353,7 +401,15 @@ function fileHandler.getPath(instance, onlyCode, recursive)
                 if Config.onlyCode or onlyCode then
                     if fileHandler.countChildren(instance) == 0 then
                         if instance.ClassName ~= 'ModuleScript' then
-                            name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                            if Config.syncDuplicates then
+                                uuid = instance:GetAttribute(ARGON_UUID)
+
+                                if uuid then
+                                    name ..= '%'..uuid..'.'..SCRIPT_TYPES[instance.ClassName]
+                                else
+                                    name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                                end
+                            end
                         else
                             name = name
                         end
@@ -363,7 +419,15 @@ function fileHandler.getPath(instance, onlyCode, recursive)
                 else
                     if fileHandler.countChildren(instance) == 0 then
                         if instance.ClassName ~= 'ModuleScript' then
-                            name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                            if Config.syncDuplicates then
+                                uuid = instance:GetAttribute(ARGON_UUID)
+
+                                if uuid then
+                                    name ..= '%'..uuid..'.'..SCRIPT_TYPES[instance.ClassName]
+                                else
+                                    name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                                end
+                            end
                         else
                             name = name
                         end
@@ -376,6 +440,14 @@ function fileHandler.getPath(instance, onlyCode, recursive)
 		    end
         else
             name = instance.Name
+        end
+
+        if Config.syncDuplicates and not uuid then
+            uuid = instance:GetAttribute(ARGON_UUID)
+
+            if uuid then
+                name ..= '%'..uuid
+            end
         end
 
         dir = fileHandler.getPath(parent, onlyCode, true)..'\\'..name
