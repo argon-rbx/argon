@@ -20,11 +20,11 @@ function getVersion(callback) {
         })
     
     }).on('error', () => {
-        console.log('ERROR: getVersion');
+        console.log('ERROR: getVersion')
     })
 }
 
-function generateJsonSchema() {
+function generateJsonSchema(dir) {
     getVersion((version) => {
         https.get(API_URL.replace('$version', version), (response) => {
             let body
@@ -224,17 +224,30 @@ function generateJsonSchema() {
                     }
                 }
 
-                fs.writeFileSync(DIR, JSON.stringify(schema, null, '\t'))
+                fs.writeFileSync(dir || DIR, JSON.stringify(schema, null, '\t'))
             })
         
         }).on('error', () => {
-            console.log('ERROR: generateJsonSchema');
+            console.log('ERROR: generateJsonSchema')
         })
     })
 }
 
-function generateApiDump() {
+function generateApiDump(dir) {
     getVersion((version) => {
+        if (dir) {
+            dir = path.join(dir, 'src\\config\\apiDump.js')
+
+            if (fs.existsSync(dir)) {
+                let apiDump = fs.readFileSync(dir).toString()
+                var currentVersion = apiDump.substring(apiDump.indexOf('//') + 2, apiDump.lastIndexOf('//'))
+
+                if (version == currentVersion) {
+                    return
+                }
+            }
+        }
+
         https.get(API_URL.replace('$version', version), (response) => {
             let body = ''
         
@@ -244,8 +257,8 @@ function generateApiDump() {
     
             response.on('end', () => {
                 let classes = JSON.parse(body).Classes
-                let api = {}
-            
+                let apiDump = {}
+
                 for (let type of classes) {
                     let properties = []
                     let newType = type
@@ -270,15 +283,21 @@ function generateApiDump() {
                     } while (newType.Superclass != '<<<ROOT>>>')
 
                     if (properties.length != 0) {
-                        api[type.Name] = properties
+                        apiDump[type.Name] = properties
                     }
                 }
 
-                fs.writeFileSync(DIR, JSON.stringify(api))
+                if (dir) {
+                    let content = '//' + version + '//\n' + 'module.exports = '
+                    fs.writeFileSync(dir, content + JSON.stringify(apiDump))
+                }
+                else {
+                    fs.writeFileSync(DIR, JSON.stringify(apiDump))
+                }
             })
         
         }).on('error', () => {
-            console.log('ERROR: generateApiDump');
+            console.log('ERROR: generateApiDump')
         })
     })
 }

@@ -10,6 +10,7 @@ const events = require('./events')
 const server = require('./server')
 const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
+const apiUpdater = require('./utils/apiUpdater')
 
 const winuser = require('./utils/winuser')
 
@@ -243,6 +244,7 @@ async function activate(context) {
     }
 
     removeStudioShortcut()
+    apiUpdater.generateApiDump(context.extensionPath)
 
     https.get(VERSION_URL, (response) => {
         let body = ''
