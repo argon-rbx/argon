@@ -240,7 +240,7 @@ function generateApiDump(dir) {
 
             if (fs.existsSync(dir)) {
                 let apiDump = fs.readFileSync(dir).toString()
-                var currentVersion = apiDump.substring(apiDump.indexOf('//') + 2, apiDump.lastIndexOf('//'))
+                let currentVersion = apiDump.substring(apiDump.indexOf('//') + 2, apiDump.lastIndexOf('//'))
 
                 if (version == currentVersion) {
                     return

@@ -62,6 +62,7 @@ local openInEditorButton = settingsPage.Body.OpenInEditor.Button
 local onlyCodeButton = settingsPage.Body.OnlyCode.Button
 local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
 local propertySyncingButton = settingsPage.Body.PropertySyncing.Button
+local syncDuplicatesButton = settingsPage.Body.SyncDuplicates.Button
 local classFilteringButton = settingsPage.Body.ClassFiltering.Button
 local syncedDirectoriesButton = settingsPage.Body.SyncedDirectories.Button
 
@@ -314,6 +315,15 @@ local function toggleSetting(setting, data)
             TweenService:Create(propertySyncingButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 6 then
+        Config.syncDuplicates = not Config.syncDuplicates
+        plugin:SetSetting('SyncDuplicates', Config.syncDuplicates)
+
+        if Config.syncDuplicates then
+            TweenService:Create(syncDuplicatesButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+        else
+            TweenService:Create(syncDuplicatesButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+        end
+    elseif setting == 7 then
         Config.filteringMode = not Config.filteringMode
         plugin:SetSetting('FilteringMode', Config.filteringMode)
 
@@ -322,7 +332,7 @@ local function toggleSetting(setting, data)
         else
             TweenService:Create(data.Selector, SETTINGS_TWEEN_INFO, {Position = UDim2.fromScale(0, 0)}):Play()
         end
-    elseif setting == 7 then
+    elseif setting == 8 then
         data = data:gsub(' ', '')
         data = data:split(',')
 
@@ -529,6 +539,7 @@ function guiHandler.runPage(page)
         connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
         connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(4) end)
         connections['propertySyncingButton'] = propertySyncingButton.MouseButton1Click:Connect(function() toggleSetting(5) end)
+        connections['syncDuplicatesButton'] = syncDuplicatesButton.MouseButton1Click:Connect(function() toggleSetting(6) end)
         connections['classFilteringButton'] = classFilteringButton.MouseButton1Click:Connect(function() expandSetting('ClassFiltering') end)
         connections['syncedDirectoriesButton'] = syncedDirectoriesButton.MouseButton1Click:Connect(function() expandSetting('SyncedDirectories') end)
 
@@ -566,6 +577,7 @@ function guiHandler.run(newPlugin, newWidget, newButton)
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local propertySyncingSetting = plugin:GetSetting('PropertySyncing')
+    local syncDuplicatesSetting = plugin:GetSetting('SyncDuplicates')
     local filteringMode = plugin:GetSetting('FilteringMode')
     local filteredClassesSetting = plugin:GetSetting('FilteredClasses')
     local syncedDirectoriesSetting = plugin:GetSetting('SyncedDirectories')
@@ -625,6 +637,14 @@ function guiHandler.run(newPlugin, newWidget, newButton)
 
         if propertySyncingSetting then
             propertySyncingButton.OnIcon.ImageTransparency = 0
+        end
+    end
+
+    if syncDuplicatesSetting ~= nil then
+        Config.syncDuplicates = syncDuplicatesSetting
+
+        if syncDuplicatesSetting then
+            syncDuplicatesButton.OnIcon.ImageTransparency = 0
         end
     end
 
