@@ -1,4 +1,5 @@
 const vscode = require('vscode')
+const os = require('os')
 
 const directories = vscode.workspace.getConfiguration('argon.directories')
 const extension = vscode.workspace.getConfiguration('argon.extension')
@@ -23,7 +24,8 @@ let settings = {
 
     source: null,
     properties: null,
-    separator : '|'
+    separator : '|',
+    os: os.platform()
 }
 
 if (!settings.compatibilityMode) {

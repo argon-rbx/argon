@@ -11,5 +11,6 @@ module.exports = {
 
     //Errors
     noRootFolder: 'Root folder cannot be found!',
-    robloxStudioLaunch: 'Could not launch Roblox Studio'
+    robloxStudioLaunch: 'Could not launch Roblox Studio!',
+    unsupportedOS: 'This feature is not support on your OS!'
 }

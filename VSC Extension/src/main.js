@@ -12,8 +12,11 @@ const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
 const apiUpdater = require('./utils/apiUpdater')
 
-const winuser = require('./utils/winuser')
+if (config.os == 'win32') {
+    var winuser = require('./utils/winuser')
+}
 
+const APPLE_SCRIPT = `osascript -e 'tell application "System Events" to return name of processes whose background only is false'`
 const VERSION_URL = 'https://dervexhero.github.io/Argon/'
 const API_OPTIONS = {
     hostname: 'argonstatsapi.web.app',
@@ -32,36 +35,36 @@ function run(autoRun) {
             server.run(function(canConnect) {
                 if (canConnect) {
                     files.run()
-                    messageHandler.showMessage('argonRunning')
+                    messageHandler.show('argonRunning')
                     isRunning = true
                     if (func) {
                         func()
                     }
                 }
                 else {
-                    messageHandler.showMessage('alreadyRunning', 2)
+                    messageHandler.show('alreadyRunning', 2)
                 }
             })
 
         }
         else {
-            messageHandler.showMessage('openWorkspace', 1)
+            messageHandler.show('openWorkspace', 1)
         }
     }
     else if (autoRun != false) {
-        messageHandler.showMessage('alreadyRunning', 1)
+        messageHandler.show('alreadyRunning', 1)
     }
 }
 
 function stop() {
     if (isRunning) {
-        messageHandler.showMessage('argonStopped')
+        messageHandler.show('argonStopped')
         files.stop()
         server.stop()
         isRunning = false
     }
     else {
-        messageHandler.showMessage('notRunning', 1)
+        messageHandler.show('notRunning', 1)
     }
 }
 
@@ -76,28 +79,54 @@ function executeSnippet() {
     }
 
     if (config.snippetExecutionMode) {
-        winuser.showStudio()
+        switch (config.os) {
+            case 'win32':
+                winuser.showStudio()
+                break
+            case 'darwin':
+                childProcess.exec('open -a RobloxStudio')
+                break
+            default:
+                messageHandler.show('unsupportedOS', 2)
+                break
+        }
     }
 }
 
 function launchStudio() {
-    childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function(error) {
-        if (error) {
-            messageHandler.showMessage('robloxStudioLaunch', 2)
-        }
-    })
+    switch (config.os) {
+        case 'win32':
+            childProcess.exec('%LOCALAPPDATA%\\Roblox\\Versions\\RobloxStudioLauncherBeta.exe -ide', function(error) {
+                if (error) {
+                    messageHandler.show('robloxStudioLaunch', 2)
+                }
+            })
+
+            break
+        case 'darwin':
+            childProcess.exec('open -a RobloxStudio', function(error) {
+                if (error) {
+                    messageHandler.show('robloxStudioLaunch', 2)
+                }
+            })
+
+            break
+        default:
+            messageHandler.show('unsupportedOS', 2)
+            break
+    }
 }
 
 function debugPlay() {
-    winuser.showStudio(0x74)
+    //winuser.showStudio(0x74)
 }
 
 function debugRun() {
-    winuser.showStudio(0x77)
+    //winuser.showStudio(0x77)
 }
 
 function debugStart() {
-    winuser.showStudio(0x76)
+    //winuser.showStudio(0x76)
 }
 
 function openMenu() {
@@ -239,8 +268,30 @@ async function activate(context) {
         run(true)
     }
 
-    if (config.autoLaunchStudio && !winuser.isStudioRunning()) {
-        launchStudio()
+    //TEMP
+    setTimeout(() => {
+        console.log(1);
+        childProcess.exec('open -a Visual\ Studio\ Code') 
+    }, 1000);
+
+    if (config.autoLaunchStudio) {
+        switch (config.os) {
+            case 'win32':
+                if (!winuser.isStudioRunning()) {
+                    launchStudio()
+                }
+                break
+            case 'darwin':
+                childProcess.exec(APPLE_SCRIPT).stdout.on('data', function(data) {
+                    if (!data.includes('RobloxStudio')) {
+                        launchStudio()
+                    }
+                })
+                break
+            default:
+                messageHandler.show('unsupportedOS', 2)
+                break
+        }
     }
 
     removeStudioShortcut()
@@ -255,7 +306,7 @@ async function activate(context) {
 
         response.on('end', () => {
             if (JSON.parse(body).version != context.extension.packageJSON.version) {
-                messageHandler.showMessage('outdatedVersion', 1)
+                messageHandler.show('outdatedVersion', 1)
             }
         })
     })

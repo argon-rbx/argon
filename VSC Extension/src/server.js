@@ -8,8 +8,10 @@ const files = require('./files')
 const twoWaySync = require('./twoWaySync')
 const apiDump = require('./config/apiDump')
 
-// @ts-ignore
-const winuser = require('./utils/winuser')
+if (config.os == 'win32') {
+    // @ts-ignore
+    var winuser = require('./utils/winuser')
+}
 
 const URL = 'http://$host:$port/'
 
@@ -144,7 +146,11 @@ function requestListener(request, response) {
             if (!isConnected) {
                 isConnected = true
                 sessionsStarted++
-                winuser.resetWindow()
+
+                if (config.os == 'win32') {
+                    winuser.resetWindow()
+                }
+
                 updateStatusBar()
             }
 
@@ -310,7 +316,7 @@ function openFile(file) {
             }
 
             events.closeFile()
-            winuser.showVSC(vscode.workspace.name)
+            //winuser.showVSC(vscode.workspace.name)
         })
     }).then(undefined, () => {})
 }

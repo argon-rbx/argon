@@ -4,7 +4,7 @@ const config = require('./config/settings')
 
 let lastMessage = Date.now()
 
-function showMessage(message, mode) {
+function show(message, mode) {
     if (!config.hideNotifications) {
         message = messages[message]
 
@@ -20,6 +20,7 @@ function showMessage(message, mode) {
                 if (Date.now() - lastMessage < 1000) {
                     return
                 }
+
                 lastMessage = Date.now()
 
                 vscode.window.showErrorMessage(message)
@@ -32,5 +33,5 @@ function showMessage(message, mode) {
 }
 
 module.exports = {
-    showMessage
+    show
 }

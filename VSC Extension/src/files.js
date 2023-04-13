@@ -93,7 +93,7 @@ function getRootDir() {
             fs.mkdirSync(rootDir)
         }
         else {
-            messageHandler.showMessage('noRootFolder', 2)
+            messageHandler.show('noRootFolder', 2)
         }
     }
 
