@@ -3,7 +3,7 @@ local HttpService = game:GetService('HttpService')
 local Config = require(script.Parent.Config)
 
 local URL = 'http://%s:%s/'
-local SEPARATOR = '\\'
+local ARGON_UUID = 'ArgonUUID'
 local DATA_TYPES = {
     ['Vector3'] = Vector3,
     ['Vector2'] = Vector2,
@@ -39,7 +39,7 @@ local function getPath(instance)
     local path = ''
 
     if instance.Parent ~= game then
-        path = getPath(instance.Parent)..SEPARATOR..instance.Name
+        path = getPath(instance.Parent)..Config.separator..instance.Name
     else
         path = instance.ClassName
     end
@@ -47,21 +47,36 @@ local function getPath(instance)
     return path
 end
 
-local function getInstance(path)
-    local instance = game
-    path = path:split(SEPARATOR)
+local function getInstance(parent)
+    parent = parent:split(Config.separator)
+    local lastParent = game
 
-    for _, v in ipairs(path) do
-        if instance == game then
-            instance = game:GetService(v)
+    for _, v in ipairs(parent) do
+        if lastParent == game then
+            lastParent = game:GetService(v)
         else
             local didFind = false
+            local uuid = nil
 
-            for _, w in ipairs(instance:GetChildren()) do
-                if w.Name == v then
-                    instance = w
-                    didFind = true
-                    break
+            if Config.syncDuplicates and v:find('%%') and v:len() - v:find('%%') == 6 then
+                local temp = v
+                v = temp:sub(1, temp:len() - 7)
+                uuid = temp:sub(temp:len() - 5)
+            end
+
+            for _, w in ipairs(lastParent:GetChildren()) do
+                if not uuid then
+                    if w.Name == v then
+                        lastParent = w
+                        didFind = true
+                        break
+                    end
+                else
+                    if w.Name == v and w:GetAttribute(ARGON_UUID) == uuid then
+                        lastParent = w
+                        didFind = true
+                        break
+                    end
                 end
             end
 
@@ -71,7 +86,7 @@ local function getInstance(path)
         end
     end
 
-    return instance
+    return lastParent
 end
 
 local function stringify(value)

@@ -247,6 +247,8 @@ local function handleDocumentChange()
                     file.Type = container.ClassName
                 end
 
+                print(file)
+
                 HttpHandler.openFile(file)
             end)
         end

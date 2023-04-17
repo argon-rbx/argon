@@ -450,7 +450,7 @@ function fileHandler.getPath(instance, onlyCode, recursive)
             end
         end
 
-        dir = fileHandler.getPath(parent, onlyCode, true)..'\\'..name
+        dir = fileHandler.getPath(parent, onlyCode, true)..Config.separator..name
     else
         dir = instance.ClassName
     end

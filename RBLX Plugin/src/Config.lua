@@ -35,4 +35,6 @@ config.syncedDirectories = {
     ['TestService'] = false
 }
 
+config.separator = '\\'
+
 return config

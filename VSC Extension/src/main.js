@@ -117,16 +117,56 @@ function launchStudio() {
     }
 }
 
+function showStudio(key) {
+    switch (config.os) {
+        case 'win32':
+            switch (key) {
+                case 'F5':
+                    winuser.showStudio(0x74)
+                    break
+                case 'F8':
+                    winuser.showStudio(0x74)
+                    break
+                case 'F7':
+                    winuser.showStudio(0x76)
+                    break
+            }
+
+            break
+        case 'darwin':
+            launchStudio()
+
+            setTimeout(() => {
+                switch (key) {
+                    case 'F5':
+                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 96'`)
+                        break
+                    case 'F8':
+                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 100'`)
+                        break
+                    case 'F7':
+                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 98'`)
+                        break
+                }
+            }, 100)
+
+            break
+        default:
+            messageHandler.show('unsupportedOS', 2)
+            break
+    }
+}
+
 function debugPlay() {
-    //winuser.showStudio(0x74)
+    showStudio('F5')
 }
 
 function debugRun() {
-    //winuser.showStudio(0x77)
+    showStudio('F8')
 }
 
 function debugStart() {
-    //winuser.showStudio(0x76)
+    showStudio('F7')
 }
 
 function openMenu() {
@@ -244,7 +284,7 @@ function openMenu() {
 }
 
 function removeStudioShortcut() {
-    if (config.removeStudioShortcut) {
+    if (config.removeStudioShortcut && config.os == 'win32') {
         let shortcut = path.join(os.homedir(), 'Desktop\\Roblox Studio.lnk')
 
         if (fs.existsSync(shortcut)) {
@@ -267,12 +307,6 @@ async function activate(context) {
     if (config.autoRun) {
         run(true)
     }
-
-    //TEMP
-    setTimeout(() => {
-        console.log(1);
-        childProcess.exec('open -a Visual\ Studio\ Code') 
-    }, 1000);
 
     if (config.autoLaunchStudio) {
         switch (config.os) {

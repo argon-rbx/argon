@@ -135,6 +135,10 @@ function httpHandler.connect(newWidget, fail)
             warn('Argon: detected version mismatch! Please update both plugin and extension to avoid errors!')
         end
 
+        if json.Separator then
+            Config.separator = json.Separator
+        end
+
         if json.Title then
             syncTitle(json.Title)
         end

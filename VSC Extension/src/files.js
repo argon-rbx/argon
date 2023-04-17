@@ -27,7 +27,7 @@ function isSourceFile(name) {
 }
 
 function getParent(root, name) {
-    let dir = root.split('\\')
+    let dir = root.split(config.osSeparator)
     let occurrenceCount = 0
     let parent = ''
 
@@ -132,12 +132,12 @@ function loadPaths(tree, root, init) {
 
                 if (customPath == config.rootFolder) {
                     let splitted = root.split('|')
-                    ignoredPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '\\'))
+                    ignoredPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '/'))
                     ignoredPath = ignoredPath.slice(0, -splitted[splitted.length - 1].length - 1)
                 }
 
-                root = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '\\'))
-                customPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, customPath.replaceAll('|', '\\'))
+                root = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, root.replaceAll('|', '/'))
+                customPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, customPath.replaceAll('|', '/'))
                 customUriPaths[root] = customPath
             }
         }

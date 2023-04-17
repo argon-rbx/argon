@@ -2,11 +2,13 @@ const http = require('http')
 const vscode = require('vscode')
 const path = require('path')
 const fs = require('fs')
+const childProcess = require('child_process')
 const config = require('./config/settings')
 const events = require('./events')
 const files = require('./files')
 const twoWaySync = require('./twoWaySync')
 const apiDump = require('./config/apiDump')
+const messageHandler = require('./messageHandler')
 
 if (config.os == 'win32') {
     // @ts-ignore
@@ -141,8 +143,9 @@ function requestListener(request, response) {
                 State: isConnected,
                 Title: files.getTitle(),
                 Version: version,
+                Separator: config.osSeparator
             })
-
+            
             if (!isConnected) {
                 isConnected = true
                 sessionsStarted++
@@ -301,7 +304,7 @@ function openFile(file) {
                 break
         }
 
-        file.File += '\\' + suffix
+        file.File += config.osSeparator + suffix
     }
 
     file = files.applyCustomPaths(path.join(files.getRootDir(), file.File + config.extension))
@@ -316,7 +319,20 @@ function openFile(file) {
             }
 
             events.closeFile()
-            //winuser.showVSC(vscode.workspace.name)
+
+            switch (config.os) {
+                case 'win32':
+                    winuser.showVSC(vscode.workspace.name)
+                    break
+                case 'darwin':
+                    //TODO
+                    console.log(1);
+                    childProcess.exec('open -a Visual\ Studio\ Code')
+                    break
+                default:
+                    messageHandler.show('unsupportedOS', 2)
+                    break
+            }
         })
     }).then(undefined, () => {})
 }
