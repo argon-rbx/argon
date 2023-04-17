@@ -16,7 +16,7 @@ if (config.os == 'win32') {
     var winuser = require('./utils/winuser')
 }
 
-const APPLE_SCRIPT = `osascript -e 'tell application "System Events" to return name of processes whose background only is false'`
+const APPLE_SCRIPT = `osascript -e 'tell app "System Events" to return name of processes whose background only is false'`
 const VERSION_URL = 'https://dervexhero.github.io/Argon/'
 const API_OPTIONS = {
     hostname: 'argonstatsapi.web.app',
@@ -139,13 +139,13 @@ function showStudio(key) {
             setTimeout(() => {
                 switch (key) {
                     case 'F5':
-                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 96'`)
+                        childProcess.exec(`osascript -e 'tell app "System Events" to key code 96'`)
                         break
                     case 'F8':
-                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 100'`)
+                        childProcess.exec(`osascript -e 'tell app "System Events" to key code 100'`)
                         break
                     case 'F7':
-                        childProcess.exec(`osascript -e 'tell application "System Events" to key code 98'`)
+                        childProcess.exec(`osascript -e 'tell app "System Events" to key code 98'`)
                         break
                 }
             }, 100)

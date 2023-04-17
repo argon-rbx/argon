@@ -325,9 +325,7 @@ function openFile(file) {
                     winuser.showVSC(vscode.workspace.name)
                     break
                 case 'darwin':
-                    //TODO
-                    console.log(1);
-                    childProcess.exec('open -a Visual\ Studio\ Code')
+                    childProcess.exec(`osascript -e 'do shell script "open -a Visual\\\\ Studio\\\\ Code"'`)
                     break
                 default:
                     messageHandler.show('unsupportedOS', 2)
