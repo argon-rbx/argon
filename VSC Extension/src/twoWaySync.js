@@ -8,6 +8,8 @@ function sync(queue) {
     let rootDir = files.getRootDir()
 
     for (let data of queue) {
+        //console.log(data);
+
         switch (data.Action) {
             case 'sync':
                 if (data.Type) {
@@ -25,7 +27,7 @@ function sync(queue) {
                             break
                     }
 
-                    var dir = files.applyCustomPaths(path.join(rootDir, data.Path + '\\' + suffix + config.extension))
+                    var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.osSeparator + suffix + config.extension))
                 }
                 else {
                     var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.extension))
@@ -45,19 +47,22 @@ function sync(queue) {
                     }
                 }
                 else {
-                    var dir = files.applyCustomPaths(path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension)))
+                    //var dir = files.applyCustomPaths(path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension)))
+                    var dir = files.applyCustomPaths(path.join(rootDir, data.OldPath + config.extension))
 
                     if (fs.existsSync(dir)) {
-                        fs.renameSync(dir, path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)))
+                        //fs.renameSync(dir, path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)))
+                        fs.renameSync(dir, files.applyCustomPaths(path.join(rootDir, data.NewPath + config.extension)))
                     }
                     else if (data.Source) {
-                        fs.writeFileSync(path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)), data.Source)
+                        //fs.writeFileSync(path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)), data.Source)
+                        fs.writeFileSync(files.applyCustomPaths(path.join(rootDir, data.NewPath + config.extension)), data.Source)
                     }
                 }
                 break
             case 'remove':
-                var dir = files.applyCustomPaths(path.join(rootDir, files.applyCustomPaths(data.Path + config.extension)))
-                let splitted = dir.split('\\')
+                var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.extension))
+                let splitted = dir.split(config.osSeparator)
 
                 if (fs.existsSync(dir)) {
                     fs.rmSync(dir)
@@ -65,7 +70,7 @@ function sync(queue) {
 
                 let parentName = splitted[splitted.length - 2]
                 let scriptDir = dir.replace(splitted[splitted.length - 1], '')
-                let parentDir = scriptDir.replace(parentName + '\\', '')
+                let parentDir = scriptDir.replace(parentName + config.osSeparator, '')
 
                 if (data.Children != 0) {
                     return
@@ -86,17 +91,18 @@ function sync(queue) {
 
                 break
             case 'convert':
-                let newDir = path.join(rootDir, files.applyCustomPaths(data.NewPath))
+                //let newDir = path.join(rootDir, files.applyCustomPaths(data.NewPath))
+                let newDir = files.applyCustomPaths(path.join(rootDir, data.NewPath))
 
                 if (!data.Undo) {
-                    let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension))
+                    //let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension))
+                    let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath + config.extension))
 
                     if (!fs.existsSync(newDir)) {
                         fs.mkdirSync(newDir)
                     }
-    
+
                     if (fs.existsSync(oldDir)) {
-                        let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension))
                         let suffix = data.Type
     
                         switch (suffix) {
@@ -116,7 +122,8 @@ function sync(queue) {
                     }
                 }
                 else {
-                    let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath))
+                    //let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath))
+                    let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath))
 
                     if (fs.existsSync(oldDir)) {
                         let suffix = data.Type
@@ -148,7 +155,6 @@ function sync(queue) {
                     }
                 }
                 break
-
         }
     }
 }

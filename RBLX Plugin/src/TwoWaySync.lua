@@ -19,8 +19,10 @@ local function pathChanged(instance, parent, new)
             for _, v in pairs(connections[instance]) do
                 v:Disconnect()
             end
+
             connections[instance] = nil
             matrix[instance] = nil
+
             return
         end
 
@@ -54,6 +56,7 @@ local function pathChanged(instance, parent, new)
         end
 
         table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Children = FileHandler.countChildren(instance)})
+
         matrix[instance].Parent = instance.Parent
         matrix[instance].Path = path
     else
@@ -66,6 +69,7 @@ local function pathChanged(instance, parent, new)
         for _, v in pairs(connections[instance]) do
             v:Disconnect()
         end
+
         connections[instance] = nil
         matrix[instance] = nil
     end
@@ -128,6 +132,7 @@ function twoWaySync.run()
                     sourceConnection = instance:GetPropertyChangedSignal('Source'):Connect(function()
                         sourceChanged(instance)
                     end)
+
                 elseif sourceConnection then
                     sourceConnection:Disconnect()
                     sourceConnection = nil
