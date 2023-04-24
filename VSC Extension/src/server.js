@@ -98,7 +98,7 @@ async function countLines(data) {
 
 function requestListener(request, response) {
     let headers = request.headers
-    let data = null;
+    let data = null
 
     switch (headers.action) {
         case 'getSync':
@@ -259,7 +259,7 @@ function run(callback) {
 
     setTimeout(() => {
         if (canConnect) {
-            server.listen(config.port, config.host);
+            server.listen(config.port, config.host)
             isRunning = true
             uptime = Date.now()
 
@@ -273,8 +273,8 @@ function run(callback) {
 
 function stop() {
     for (let socket of sockets) {
-        socket.destroy();
-        sockets.delete(socket);
+        socket.destroy()
+        sockets.delete(socket)
     }
 
     server.close()
@@ -354,7 +354,7 @@ module.exports = {
 statusBarItem.show()
 
 server.on('connection', (socket) => {
-    sockets.add(socket);
+    sockets.add(socket)
 
     socket.on('close', () => {
         sockets.delete(socket)

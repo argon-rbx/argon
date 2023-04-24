@@ -5,6 +5,7 @@
 * Added support for multiple instances with the same name inside the same directory
 * Fixed custom dirs behavior when using root path
 * Fixed instance attributes not being removed
+* Fixed and improved two-way sync
 
 # 1.1.0
 * Added support for Wally

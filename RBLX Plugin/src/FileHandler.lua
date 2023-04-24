@@ -22,7 +22,7 @@ local function addWaypoint()
     ChangeHistoryService:SetWaypoint('ArgonSync')
 end
 
---Yep, I know that # exists, but this function is required for counting non-numeric arrays
+-- Yep, I know that # exists, but this function is required for counting non-numeric arrays
 local function len(array)
     local index = 0
 

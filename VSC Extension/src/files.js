@@ -15,7 +15,7 @@ let useCustomPaths = false
 let lastUnix = Date.now()
 
 function verify(parent, name) {
-    if (!parent || (parent == 'StarterPlayer' && ((name == 'StarterCharacterScripts' || name == 'StarterPlayerScripts') || isSourceFile(name)))) {
+    if (!parent || (parent == 'StarterPlayer' && ((name == 'StarterCharacterScripts' || name == 'StarterPlayerScripts') || isSourceFile(name))) || name == '.DS_Store') {
         return true
     }
 }

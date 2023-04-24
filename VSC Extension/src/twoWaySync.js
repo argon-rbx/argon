@@ -3,12 +3,30 @@ const path = require('path')
 const files = require('./files')
 const config = require('./config/settings')
 
+function createUnknownFolders(dir) {
+    let splitted = dir.split(config.osSeparator)
+    let tempDir = ''
+
+    for (let folder of splitted) {
+        if (folder != splitted[splitted.length - 1]) {
+            if (config.os == 'win32' && folder == splitted[0]) {
+                folder += config.osSeparator
+            }
+
+            tempDir = path.join(tempDir, folder)
+
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir)
+            }
+        }
+    }
+}
+
 function sync(queue) {
     queue = JSON.parse(queue)
     let rootDir = files.getRootDir()
 
     for (let data of queue) {
-        //console.log(data);
 
         switch (data.Action) {
             case 'sync':
@@ -40,27 +58,40 @@ function sync(queue) {
                 break
             case 'changePath':
                 if (data.Children && data.Children != 0) {
-                    var dir = files.applyCustomPaths(path.join(rootDir, data.OldPath))
+                    let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath))
+                    let newDir = files.applyCustomPaths(path.join(rootDir, data.NewPath))
 
-                    if (fs.existsSync(dir)) {
-                        fs.renameSync(dir, files.applyCustomPaths(path.join(rootDir, data.NewPath)))
+                    if (fs.existsSync(oldDir)) {
+                        createUnknownFolders(newDir)
+                        fs.renameSync(oldDir, newDir)
                     }
                 }
                 else {
-                    //var dir = files.applyCustomPaths(path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension)))
-                    var dir = files.applyCustomPaths(path.join(rootDir, data.OldPath + config.extension))
+                    let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath + config.extension))
+                    let newDir = files.applyCustomPaths(path.join(rootDir, data.NewPath + config.extension))
 
-                    if (fs.existsSync(dir)) {
-                        //fs.renameSync(dir, path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)))
-                        fs.renameSync(dir, files.applyCustomPaths(path.join(rootDir, data.NewPath + config.extension)))
+                    createUnknownFolders(newDir)
+
+                    if (fs.existsSync(oldDir)) {
+                        fs.renameSync(oldDir, newDir)
                     }
+                    // Create new file
                     else if (data.Source) {
-                        //fs.writeFileSync(path.join(rootDir, files.applyCustomPaths(data.NewPath + config.extension)), data.Source)
-                        fs.writeFileSync(files.applyCustomPaths(path.join(rootDir, data.NewPath + config.extension)), data.Source)
+                        fs.writeFileSync(newDir, data.Source)
                     }
                 }
                 break
             case 'remove':
+                if (!data.Type) {
+                    var dir = files.applyCustomPaths(path.join(rootDir, data.Path))
+
+                    if (fs.existsSync(dir)) {
+                        fs.rmSync(dir, {recursive: true})
+                    }
+
+                    return
+                }
+
                 var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.extension))
                 let splitted = dir.split(config.osSeparator)
 
@@ -91,11 +122,9 @@ function sync(queue) {
 
                 break
             case 'convert':
-                //let newDir = path.join(rootDir, files.applyCustomPaths(data.NewPath))
                 let newDir = files.applyCustomPaths(path.join(rootDir, data.NewPath))
 
                 if (!data.Undo) {
-                    //let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath + config.extension))
                     let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath + config.extension))
 
                     if (!fs.existsSync(newDir)) {
@@ -122,7 +151,6 @@ function sync(queue) {
                     }
                 }
                 else {
-                    //let oldDir = path.join(rootDir, files.applyCustomPaths(data.OldPath))
                     let oldDir = files.applyCustomPaths(path.join(rootDir, data.OldPath))
 
                     if (fs.existsSync(oldDir)) {
@@ -150,7 +178,7 @@ function sync(queue) {
                         if (fs.existsSync(parentDir)) {
                             setTimeout(() => {
                                 fs.rmdirSync(parentDir)
-                            }, 100);
+                            }, 100)
                         }
                     }
                 }

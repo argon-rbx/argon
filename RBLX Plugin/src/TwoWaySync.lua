@@ -41,7 +41,7 @@ local function pathChanged(instance, parent, new)
                 matrix[matrix[instance].Parent].Path = newPath
             end
 
-            if new then
+            if new and instance:IsA('LuaSourceContainer') then
                 table.insert(twoWaySync.queue, {Action = 'changePath', OldPath = matrix[instance].Path, NewPath = path, Source = instance.Source})
                 matrix[instance].Parent = instance.Parent
                 matrix[instance].Path = path
@@ -60,7 +60,7 @@ local function pathChanged(instance, parent, new)
         matrix[instance].Parent = instance.Parent
         matrix[instance].Path = path
     else
-        table.insert(twoWaySync.queue, {Action = 'remove', Path = matrix[instance].Path, Children = FileHandler.countChildren(matrix[instance].Parent)})
+        table.insert(twoWaySync.queue, {Action = 'remove', Path = matrix[instance].Path, Children = FileHandler.countChildren(matrix[instance].Parent), Type = instance:IsA('LuaSourceContainer')})
 
         if matrix[instance].Parent:IsA('LuaSourceContainer') then
             matrix[matrix[instance].Parent].Path = FileHandler.getPath(matrix[instance].Parent, true)
@@ -104,13 +104,13 @@ function twoWaySync.run()
         for i, v in pairs(Config.syncedDirectories) do
             if v then
                 for _, w in ipairs(game:GetService(i):GetDescendants()) do
-                    if w:IsA('LuaSourceContainer') then
+                    if w:IsA('LuaSourceContainer') or w:IsA('Folder') then
                         handleInstance(w)
                     end
                 end
 
                 connections[i] = game:GetService(i).DescendantAdded:Connect(function(descendant)
-                    if descendant:IsA('LuaSourceContainer') then
+                    if descendant:IsA('LuaSourceContainer') or descendant:IsA('Folder') then
                         if not matrix[descendant] then
                             handleInstance(descendant, true)
                         end
@@ -152,6 +152,11 @@ function twoWaySync.stop()
             else
                 v:Disconnect()
             end
+        end
+
+        if sourceConnection then
+            sourceConnection:Disconnect()
+            sourceConnection = nil
         end
 
         isSyncing = false
