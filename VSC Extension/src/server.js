@@ -239,8 +239,8 @@ function requestListener(request, response) {
         default:
             let website = fs.readFileSync(path.resolve(__dirname, './config/website.html')).toString()
             data = website.replace('$uptime', getUptime())
-            .replace('$linesSynced', linesSynced.toString())
-            .replace('$filesSynced', filesSynced.toString())
+            .replace('$linesSynced', Math.max(0, linesSynced).toString())
+            .replace('$filesSynced', Math.max(0, filesSynced).toString())
             .replace('$projectsPorted', projectsPorted.toString())
             .replace('$sessionsStarted', sessionsStarted.toString())
             break
