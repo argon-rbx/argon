@@ -2,7 +2,6 @@ const vscode = require('vscode')
 const https = require('https')
 const path = require('path')
 const fs = require('fs')
-const config = require('../config/settings')
 
 const VERSION_URL = 'https://s3.amazonaws.com/setup.roblox.com/versionQTStudio'
 const API_URL = 'https://s3.amazonaws.com/setup.roblox.com/$version-API-Dump.json'
@@ -237,7 +236,7 @@ function generateJsonSchema(dir) {
 function generateApiDump(dir) {
     getVersion((version) => {
         if (dir) {
-            dir = path.join(dir, 'src' + config.osSeparator + 'config' + config.osSeparator + 'apiDump.js')
+            dir = path.join(dir, 'src' + path.sep + 'config' + path.sep + 'apiDump.js')
 
             if (fs.existsSync(dir)) {
                 let apiDump = fs.readFileSync(dir).toString()

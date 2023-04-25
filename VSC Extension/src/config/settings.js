@@ -25,8 +25,7 @@ let settings = {
     source: null,
     properties: null,
     separator : '|',
-    os: os.platform(),
-    osSeparator: os.platform() == 'win32' ? '\\' : '/'
+    os: os.platform()
 }
 
 if (!settings.compatibilityMode) {

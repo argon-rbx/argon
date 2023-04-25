@@ -27,7 +27,7 @@ function isSourceFile(name) {
 }
 
 function getParent(root, name) {
-    let dir = root.split(config.osSeparator)
+    let dir = root.split(path.sep)
     let occurrenceCount = 0
     let parent = ''
 

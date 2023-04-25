@@ -143,7 +143,7 @@ function requestListener(request, response) {
                 State: isConnected,
                 Title: files.getTitle(),
                 Version: version,
-                Separator: config.osSeparator
+                Separator: path.sep
             })
             
             if (!isConnected) {
@@ -304,7 +304,7 @@ function openFile(file) {
                 break
         }
 
-        file.File += config.osSeparator + suffix
+        file.File += path.sep + suffix
     }
 
     file = files.applyCustomPaths(path.join(files.getRootDir(), file.File + config.extension))

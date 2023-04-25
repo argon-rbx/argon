@@ -4,13 +4,13 @@ const files = require('./files')
 const config = require('./config/settings')
 
 function createUnknownFolders(dir) {
-    let splitted = dir.split(config.osSeparator)
+    let splitted = dir.split(path.sep)
     let tempDir = ''
 
     for (let folder of splitted) {
         if (folder != splitted[splitted.length - 1]) {
             if (config.os == 'win32' && folder == splitted[0]) {
-                folder += config.osSeparator
+                folder += path.sep
             }
 
             tempDir = path.join(tempDir, folder)
@@ -45,7 +45,7 @@ function sync(queue) {
                             break
                     }
 
-                    var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.osSeparator + suffix + config.extension))
+                    var dir = files.applyCustomPaths(path.join(rootDir, data.Path + path.sep + suffix + config.extension))
                 }
                 else {
                     var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.extension))
@@ -93,7 +93,7 @@ function sync(queue) {
                 }
 
                 var dir = files.applyCustomPaths(path.join(rootDir, data.Path + config.extension))
-                let splitted = dir.split(config.osSeparator)
+                let splitted = dir.split(path.sep)
 
                 if (fs.existsSync(dir)) {
                     fs.rmSync(dir)
@@ -101,7 +101,7 @@ function sync(queue) {
 
                 let parentName = splitted[splitted.length - 2]
                 let scriptDir = dir.replace(splitted[splitted.length - 1], '')
-                let parentDir = scriptDir.replace(parentName + config.osSeparator, '')
+                let parentDir = scriptDir.replace(parentName + path.sep, '')
 
                 if (data.Children != 0) {
                     return
