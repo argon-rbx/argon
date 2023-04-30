@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -33,17 +33,17 @@
       },
       {
         "command": "argon.playDebug",
-        "title": "Play",
+        "title": "Play Playtest",
         "category": "Argon"
       },
       {
         "command": "argon.runDebug",
-        "title": "Run",
+        "title": "Run Playtest",
         "category": "Argon"
       },
       {
         "command": "argon.startDebug",
-        "title": "Start",
+        "title": "Start Playtest",
         "category": "Argon"
       },
       {
@@ -156,14 +156,40 @@
           "default": "localhost",
           "description": "The host that server should be running on",
           "pattern": "[hostname]",
-          "patternErrorMessage": "This symbol is not allowed"
+          "patternErrorMessage": "This symbol is not allowed",
+          "order": 0
         },
         "argon.server.port": {
           "type": "number",
           "default": 8000,
           "description": "The port that server should be running on",
           "minimum": 0,
-          "maximum": 65535
+          "maximum": 65535,
+          "order": 1
+        },
+        "argon.git.autoInit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether Argon should automatically initialize Git repository",
+          "order": 0
+        },
+        "argon.git.branchName":  {
+          "type": "string",
+          "default": "main",
+          "pattern": "[a-z]",
+          "description": "The name of the default (HEAD) branch",
+          "patternErrorMessage": "This symbol is not allowed",
+          "order": 1
+        },
+        "argon.git.gitignore": {
+          "type": "array",
+          "default": [],
+          "description": "Files and folders that should be ignored by Git, if left empty .gitignore won't be created",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "order": 2
         }
       }
     },

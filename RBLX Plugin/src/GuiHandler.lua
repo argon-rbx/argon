@@ -230,7 +230,7 @@ local function handleDocumentChange()
     if Config.openInEditor then
         if not documentConnection then
             documentConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
-                if document.Name == 'CommandBar' or state ~= 1 then
+                if document.Name == 'CommandBar' or state ~= 1 or Config.twoWaySync then
                     return
                 end
 

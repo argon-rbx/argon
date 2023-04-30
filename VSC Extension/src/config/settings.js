@@ -4,6 +4,7 @@ const os = require('os')
 const directories = vscode.workspace.getConfiguration('argon.directories')
 const extension = vscode.workspace.getConfiguration('argon.extension')
 const server = vscode.workspace.getConfiguration('argon.server')
+const git = vscode.workspace.getConfiguration('argon.git')
 
 let settings = {
     rootFolder: directories.get('rootFolder'),
@@ -21,6 +22,10 @@ let settings = {
 
     host: server.get('host'),
     port: server.get('port'),
+
+    gitInit: git.get('autoInit'),
+    branchName: git.get('branchName'),
+    gitignore: git.get('gitignore'),
 
     source: null,
     properties: null,

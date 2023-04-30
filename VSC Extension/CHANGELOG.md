@@ -1,5 +1,10 @@
 # Changelog
 
+# 1.2.1
+* Added automatic Git repo initialization (disabled by default), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
+* Fixed issue with porting to VSC caused by UUIDs, reported by [@rick2809](https://devforum.roblox.com/u/rick2809)
+* Open in editor option no longer works when two-way sync is enabled
+
 # 1.2.0
 * Added full support for macOS
 * Added support for multiple instances with the same name inside the same directory

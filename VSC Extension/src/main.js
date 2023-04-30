@@ -328,6 +328,22 @@ async function activate(context) {
         }
     }
 
+    if (config.gitInit && vscode.workspace.name) {
+        let dir = vscode.workspace.workspaceFolders[0].uri.fsPath
+
+        childProcess.exec('git init -b ' + config.branchName, {cwd: dir})
+
+        if (config.gitignore.length != 0 && !fs.existsSync(path.join(dir, '.gitignore'))) {
+            let gitignore = ''
+
+            for (let file of config.gitignore) {
+                gitignore += file + '\n'
+            }
+
+            fs.writeFileSync(path.join(dir, '.gitignore'), gitignore)
+        }
+    }
+
     removeStudioShortcut()
     apiUpdater.generateApiDump(context.extensionPath)
 

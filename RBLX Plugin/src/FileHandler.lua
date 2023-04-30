@@ -401,7 +401,9 @@ function fileHandler.getPath(instance, onlyCode, recursive)
                 if Config.onlyCode or onlyCode then
                     if fileHandler.countChildren(instance) == 0 then
                         if instance.ClassName ~= 'ModuleScript' then
-                            if Config.syncDuplicates then
+                            if not Config.syncDuplicates then
+                                name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                            else
                                 uuid = instance:GetAttribute(ARGON_UUID)
 
                                 if uuid then
@@ -419,7 +421,9 @@ function fileHandler.getPath(instance, onlyCode, recursive)
                 else
                     if fileHandler.countChildren(instance) == 0 then
                         if instance.ClassName ~= 'ModuleScript' then
-                            if Config.syncDuplicates then
+                            if not Config.syncDuplicates then
+                                name ..= '.'..SCRIPT_TYPES[instance.ClassName]
+                            else
                                 uuid = instance:GetAttribute(ARGON_UUID)
 
                                 if uuid then
