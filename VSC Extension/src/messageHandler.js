@@ -18,7 +18,7 @@ function show(message, mode) {
                 break
             case 2:
                 if (Date.now() - lastMessage < 1000) {
-                    return
+                    //return
                 }
 
                 lastMessage = Date.now()

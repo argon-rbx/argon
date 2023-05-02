@@ -2,7 +2,9 @@ local CoreGui = game:GetService('CoreGui')
 
 local TOOLBAR = "Dervex' utils"
 
-return function (plugin: Plugin, name: string, icon: string, callback: (PluginToolbarButton) -> ())
+return function (plugin: Plugin, name: string, icon: string, priority: number, callback: (PluginToolbarButton) -> ())
+    task.wait(priority / 10)
+
     local toolbarRef, buttonRef
     local toolbar, button
     local isOwner = false

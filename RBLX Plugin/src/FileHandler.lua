@@ -507,7 +507,7 @@ function fileHandler.portScripts()
                 if w:IsA('LuaSourceContainer') and w:GetAttribute(ARGON_IGNORE) == nil then
                     local source = w.Source
 
-                    if Config.propertySyncing and not w:IsA('ModuleScript') and not w.Enabled and not source:match('^'..DISABLE_PREFIX) then
+                    if not w:IsA('ModuleScript') and not w.Enabled and not source:match('^'..DISABLE_PREFIX) then
                         source = DISABLE_PREFIX..'\n'..source
                     end
 

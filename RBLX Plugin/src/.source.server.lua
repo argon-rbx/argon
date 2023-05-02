@@ -12,7 +12,7 @@ widget.Title = 'Argon'
 widget.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 script.Parent.ArgonGui.Root.Background.Parent = widget
 
-button = Toolbar(plugin, 'Argon', 'rbxassetid://11230142853', function(newButton)
+button = Toolbar(plugin, 'Argon', 'rbxassetid://11230142853', 0, function(newButton)
     GuiHandler.updateButton(newButton)
     button = newButton
 

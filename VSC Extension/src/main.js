@@ -45,7 +45,6 @@ function run(autoRun) {
                     messageHandler.show('alreadyRunning', 2)
                 }
             })
-
         }
         else {
             messageHandler.show('openWorkspace', 1)
@@ -69,6 +68,10 @@ function stop() {
 }
 
 function executeSnippet() {
+    if (!isRunning) {
+        return
+    }
+
     let selection = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection)
 
     if (selection) {
@@ -423,6 +426,10 @@ async function deactivate() {
         request.end()
 
         removeStudioShortcut()
+
+        if (isRunning) {
+            server.stop()
+        }
     })
 
     return promise

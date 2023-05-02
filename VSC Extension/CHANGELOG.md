@@ -1,5 +1,11 @@
 # Changelog
 
+# 1.2.2
+* .Enabled property of scripts not longer requires property syncing option to be enabled, suggested by [@rick2809](https://devforum.roblox.com/u/rick2809)
+* Reloading the VSC window no longer causes Argon to fail to start the local server
+* Snippet executor no longer causes errors when Argon is not running
+* Added priority levels to the shared toolbar
+
 # 1.2.1
 * Added automatic Git repo initialization (disabled by default), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed issue with porting to VSC caused by UUIDs, reported by [@rick2809](https://devforum.roblox.com/u/rick2809)
