@@ -107,7 +107,7 @@ function launchStudio() {
 
             break
         case 'darwin':
-            childProcess.exec('open -a RobloxStudio', function(error) {
+            childProcess.exec('open /Applications/RobloxStudio.app', function(error) {
                 if (error) {
                     messageHandler.show('robloxStudioLaunch', 2)
                 }
