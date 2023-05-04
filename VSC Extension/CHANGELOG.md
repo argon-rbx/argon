@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.2.3
+* Fixed start debugging & launch studio options on macOS
+* Fixed Argon being unable to launch for some users, reported by [@OneEDM](https://devforum.roblox.com/u/oneedm), [@StarVSK](https://devforum.roblox.com/u/starvsk) & [@Loomiquu](https://github.com/Loomiquu) (damn [Electron](https://releases.electronjs.org/releases/stable?version=22))
+
 # 1.2.2
 * .Enabled property of scripts not longer requires property syncing option to be enabled, suggested by [@rick2809](https://devforum.roblox.com/u/rick2809)
 * Reloading the VSC window no longer causes Argon to fail to start the local server

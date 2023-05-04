@@ -147,5 +147,5 @@ namespace winuser {
 }
 
 //node-gyp configure
-//node-gyp build --target=19.1.8 --arch=x64 --dist-url=https://electronjs.org/headers
-//node-gyp rebuild --target=19.1.8 --arch=x64 --dist-url=https://electronjs.org/headers
+//node-gyp build --target=22.4.8 --arch=x64 --dist-url=https://electronjs.org/headers
+//node-gyp rebuild --target=22.4.8 --arch=x64 --dist-url=https://electronjs.org/headers
