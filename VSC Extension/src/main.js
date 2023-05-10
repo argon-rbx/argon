@@ -11,10 +11,7 @@ const server = require('./server')
 const config = require('./config/settings')
 const messageHandler = require('./messageHandler')
 const apiUpdater = require('./utils/apiUpdater')
-
-if (config.os == 'win32') {
-    var winuser = require('./utils/winuser')
-}
+const winuser = require('./utils/winuser')
 
 const APPLE_SCRIPT = `osascript -e 'tell app "System Events" to return name of processes whose background only is false'`
 const VERSION_URL = 'https://dervexhero.github.io/Argon/'

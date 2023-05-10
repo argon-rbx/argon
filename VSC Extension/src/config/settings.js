@@ -30,7 +30,8 @@ let settings = {
     source: null,
     properties: null,
     separator : '|',
-    os: os.platform()
+    os: os.platform(),
+    nodeModules: process.versions.modules
 }
 
 if (!settings.compatibilityMode) {

@@ -9,11 +9,7 @@ const files = require('./files')
 const twoWaySync = require('./twoWaySync')
 const apiDump = require('./config/apiDump')
 const messageHandler = require('./messageHandler')
-
-if (config.os == 'win32') {
-    // @ts-ignore
-    var winuser = require('./utils/winuser')
-}
+const winuser = require('./utils/winuser')
 
 const URL = 'http://$host:$port/'
 
