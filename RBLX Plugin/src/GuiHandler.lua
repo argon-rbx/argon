@@ -58,8 +58,8 @@ local toolsBack = toolsPage.Header.Back
 
 local autoRunButton = settingsPage.Body.AutoRun.Button
 local autoReconnectButton = settingsPage.Body.AutoReconnect.Button
-local openInEditorButton = settingsPage.Body.OpenInEditor.Button
 local onlyCodeButton = settingsPage.Body.OnlyCode.Button
+local openInEditorButton = settingsPage.Body.OpenInEditor.Button
 local twoWaySyncButton = settingsPage.Body.TwoWaySync.Button
 local propertySyncingButton = settingsPage.Body.PropertySyncing.Button
 local syncDuplicatesButton = settingsPage.Body.SyncDuplicates.Button
@@ -276,6 +276,15 @@ local function toggleSetting(setting, data)
             TweenService:Create(autoReconnectButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 2 then
+        Config.onlyCode = not Config.onlyCode
+        plugin:SetSetting('OnlyCode', Config.onlyCode)
+
+        if Config.onlyCode then
+            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
+        else
+            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
+        end
+    elseif setting == 3 then
         Config.openInEditor = not Config.openInEditor
         plugin:SetSetting('OpenInEditor', Config.openInEditor)
         handleDocumentChange()
@@ -284,15 +293,6 @@ local function toggleSetting(setting, data)
             TweenService:Create(openInEditorButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
         else
             TweenService:Create(openInEditorButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
-        end
-    elseif setting == 3 then
-        Config.onlyCode = not Config.onlyCode
-        plugin:SetSetting('OnlyCode', Config.onlyCode)
-
-        if Config.onlyCode then
-            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 0}):Play()
-        else
-            TweenService:Create(onlyCodeButton.OnIcon, SETTINGS_TWEEN_INFO, {ImageTransparency = 1}):Play()
         end
     elseif setting == 4 then
         Config.twoWaySync = not Config.twoWaySync
@@ -535,8 +535,8 @@ function guiHandler.runPage(page)
 
         connections['autoRunButton'] = autoRunButton.MouseButton1Click:Connect(function() toggleSetting(0) end)
         connections['autoReconnectButton'] = autoReconnectButton.MouseButton1Click:Connect(function() toggleSetting(1) end)
-        connections['openInEditorButton'] = openInEditorButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
-        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
+        connections['onlyCodeButton'] = onlyCodeButton.MouseButton1Click:Connect(function() toggleSetting(2) end)
+        connections['openInEditorButton'] = openInEditorButton.MouseButton1Click:Connect(function() toggleSetting(3) end)
         connections['twoWaySyncButton'] = twoWaySyncButton.MouseButton1Click:Connect(function() toggleSetting(4) end)
         connections['propertySyncingButton'] = propertySyncingButton.MouseButton1Click:Connect(function() toggleSetting(5) end)
         connections['syncDuplicatesButton'] = syncDuplicatesButton.MouseButton1Click:Connect(function() toggleSetting(6) end)
@@ -573,8 +573,8 @@ function guiHandler.run(newPlugin, newWidget, newButton)
     local portSetting = plugin:GetSetting('Port')
     local autoRunSetting = plugin:GetSetting('AutoRun')
     local autoReconnectSetting = plugin:GetSetting('AutoReconnect')
-    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local onlyCodeSetting = plugin:GetSetting('OnlyCode')
+    local openInEditorSetting = plugin:GetSetting('OpenInEditor')
     local twoWaySyncSetting = plugin:GetSetting('TwoWaySync')
     local propertySyncingSetting = plugin:GetSetting('PropertySyncing')
     local syncDuplicatesSetting = plugin:GetSetting('SyncDuplicates')
@@ -608,19 +608,19 @@ function guiHandler.run(newPlugin, newWidget, newButton)
         end
     end
 
-    if openInEditorSetting ~= nil then
-        Config.openInEditor = openInEditorSetting
-
-        if not openInEditorSetting then
-            openInEditorButton.OnIcon.ImageTransparency = 1
-        end
-    end
-
     if onlyCodeSetting ~= nil then
         Config.onlyCode = onlyCodeSetting
 
         if not onlyCodeSetting then
             onlyCodeButton.OnIcon.ImageTransparency = 1
+        end
+    end
+
+    if openInEditorSetting ~= nil then
+        Config.openInEditor = openInEditorSetting
+
+        if not openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 1
         end
     end
 

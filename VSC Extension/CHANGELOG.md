@@ -1,5 +1,10 @@
 # Changelog
 
+# 1.2.4
+* Commands required for VSC keybinds are now hidden from the command palette, thanks to [@AridTheDev](https://devforum.roblox.com/u/aridthedev) 
+* Argon now supports multiple Electron and Node.js versions, thus more VSC versions are supported (Windows only fix), thanks to [@speednino](https://devforum.roblox.com/u/speednino)
+* Changed order of some of the Roblox plugin settings
+
 # 1.2.3
 * Fixed start debugging & launch studio options on macOS
 * Fixed Argon being unable to launch for some users, caused by the obsolete [Electron](https://releases.electronjs.org/releases/stable?version=22) headers, reported by [@OneEDM](https://devforum.roblox.com/u/oneedm), [@StarVSK](https://devforum.roblox.com/u/starvsk) & [@Loomiquu](https://github.com/Loomiquu), special thanks to [@rotntake](https://github.com/rotntake) & [@AridTheDev](https://devforum.roblox.com/u/aridthedev)

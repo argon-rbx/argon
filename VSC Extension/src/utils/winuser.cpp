@@ -146,6 +146,4 @@ namespace winuser {
     NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
 }
 
-//node-gyp configure
 //node-gyp build --target=22.4.8 --arch=x64 --dist-url=https://electronjs.org/headers
-//node-gyp rebuild --target=22.4.8 --arch=x64 --dist-url=https://electronjs.org/headers

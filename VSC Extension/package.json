@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -33,22 +33,22 @@
       },
       {
         "command": "argon.playDebug",
-        "title": "Play Playtest",
+        "title": "Play Playtest in Studio",
         "category": "Argon"
       },
       {
         "command": "argon.runDebug",
-        "title": "Run Playtest",
+        "title": "Run Playtest in Studio",
         "category": "Argon"
       },
       {
         "command": "argon.startDebug",
-        "title": "Start Playtest",
+        "title": "Start Playtest in Studio",
         "category": "Argon"
       },
       {
         "command": "argon.executeSnippet",
-        "title": "Execute Snippet",
+        "title": "Execute Snippet in Studio",
         "category": "Argon"
       }
     ],
@@ -217,7 +217,27 @@
         "fileMatch": "init.meta.json",
         "url": "./assets/.properties.schema.json"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "argon.playDebug",
+          "when": "false"
+        },
+        {
+          "command": "argon.runDebug",
+          "when": "false"
+        },
+        {
+          "command": "argon.startDebug",
+          "when": "false"
+        },
+        {
+          "command": "argon.executeSnippet",
+          "when": "false"
+        }
+      ]
+    }
   },
   "repository": {
     "type": "git",

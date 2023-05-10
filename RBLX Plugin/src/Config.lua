@@ -1,14 +1,14 @@
 local config = {}
 
-config.argonVersion = '1.2.3'
+config.argonVersion = '1.2.4'
 
 config.host = 'localhost'
 config.port = '8000'
 
 config.autoRun = true
 config.autoReconnect = true
-config.openInEditor = true
 config.onlyCode = true
+config.openInEditor = false
 config.twoWaySync = false
 config.propertySyncing = false
 config.syncDuplicates = false
