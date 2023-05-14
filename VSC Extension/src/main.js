@@ -169,6 +169,30 @@ function debugStart() {
     showStudio('F7')
 }
 
+function stopDebugging() {
+    if (!isRunning) {
+        return
+    }
+
+    switch (config.os) {
+        case 'darwin':
+            childProcess.exec('open -a RobloxStudio')
+
+            setTimeout(() => {
+                childProcess.exec(`osascript -e 'tell app "System Events" to key code 96 using {shift down}'`)
+
+                setTimeout(() => {
+                    childProcess.exec(`osascript -e 'do shell script "open -a Visual\\\\ Studio\\\\ Code"'`)
+                }, 100);
+            }, 100);
+
+            break
+        default:
+            messageHandler.show('unsupportedOS', 2)
+            break
+    }
+}
+
 function openMenu() {
     let quickPick = vscode.window.createQuickPick()
 
@@ -299,8 +323,9 @@ async function activate(context) {
     let runCommand = vscode.commands.registerCommand('argon.runDebug', debugRun)
     let startCommand = vscode.commands.registerCommand('argon.startDebug', debugStart)
     let executeCommand = vscode.commands.registerCommand('argon.executeSnippet', executeSnippet)
+    let stopDebuggingCommand = vscode.commands.registerCommand('argon.stopDebugging', stopDebugging)
 
-    context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand)
+    context.subscriptions.push(menuCommand, playCommand, runCommand, startCommand, executeCommand, stopDebuggingCommand)
     server.setVersion(context.extension.packageJSON.version)
     extensionMode = context.extensionMode
 

@@ -230,7 +230,7 @@ local function handleDocumentChange()
     if Config.openInEditor then
         if not documentConnection then
             documentConnection = ScriptEditorService.TextDocumentDidOpen:Connect(function(document)
-                if document.Name == 'CommandBar' or state ~= 1 or Config.twoWaySync then
+                if document.Name == 'CommandBar' or state ~= 1 then
                     return
                 end
 
@@ -619,8 +619,8 @@ function guiHandler.run(newPlugin, newWidget, newButton)
     if openInEditorSetting ~= nil then
         Config.openInEditor = openInEditorSetting
 
-        if not openInEditorSetting then
-            openInEditorButton.OnIcon.ImageTransparency = 1
+        if openInEditorSetting then
+            openInEditorButton.OnIcon.ImageTransparency = 0
         end
     end
 

@@ -1,5 +1,11 @@
 # Changelog
 
+1.2.5
+* Added stop debugging keybind (currently macOS only)
+* Open in editor option works when two-way sync is enabled again (seems to be less confusing)
+* Fixed open in editor option button behavior, reported by [@umamidayo](https://devforum.roblox.com/u/umamidayo/summary)
+* Fixed settings order (VSC extension)
+
 # 1.2.4
 * Commands required for VSC keybinds are now hidden from the command palette, thanks to [@AridTheDev](https://devforum.roblox.com/u/aridthedev) 
 * Argon now supports multiple Electron and Node.js versions, thus more VSC versions are supported (Windows only fix), thanks to [@speednino](https://devforum.roblox.com/u/speednino)

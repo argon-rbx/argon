@@ -4,7 +4,7 @@
   "displayName": "Argon",
   "description": "Roblox Studio two-way live sync of code and instances",
   "icon": "assets/Logo.png",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -50,6 +50,11 @@
         "command": "argon.executeSnippet",
         "title": "Execute Snippet in Studio",
         "category": "Argon"
+      },
+      {
+        "command": "argon.stopDebugging",
+        "title": "Stop Studio Playtest",
+        "category": "Argon"
       }
     ],
     "keybindings": [
@@ -72,6 +77,11 @@
         "command": "argon.executeSnippet",
         "when": "editorLangId == lua || editorLangId == luau",
         "key": "f6"
+      },
+      {
+        "command": "argon.stopDebugging",
+        "when": "editorLangId == lua || editorLangId == luau",
+        "key": "shift+f5"
       }
     ],
     "configuration": {
@@ -113,43 +123,43 @@
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should start automatically",
-          "order": 0
+          "order": 4
         },
         "argon.extension.autoSetup": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should create root folder and project file automatically",
-          "order": 1
+          "order": 5
         },
         "argon.extension.autoLaunchStudio": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should launch Roblox Studio automatically",
-          "order": 2
+          "order": 6
         },
         "argon.extension.removeStudioShortcut": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should remove Roblox Studio shortcut (that gets created automatically) from your desktop",
-          "order": 3
+          "order": 7
         },
         "argon.extension.hideNotifications": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should hide notifications in the bottom right corner",
-          "order": 4
+          "order": 8
         },
         "argon.extension.openInPreview": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should open files in preview mode by default",
-          "order": 5
+          "order": 9
         },
         "argon.extension.snippetExecutionMode": {
           "type": "boolean",
           "default": true,
           "description": "Whether Argon should automatically switch to Roblox Studio when executing snippets",
-          "order": 6
+          "order": 10
         },
         "argon.server.host": {
           "type": "string",
@@ -157,7 +167,7 @@
           "description": "The host that server should be running on",
           "pattern": "[hostname]",
           "patternErrorMessage": "This symbol is not allowed",
-          "order": 0
+          "order": 11
         },
         "argon.server.port": {
           "type": "number",
@@ -165,13 +175,13 @@
           "description": "The port that server should be running on",
           "minimum": 0,
           "maximum": 65535,
-          "order": 1
+          "order": 12
         },
         "argon.git.autoInit": {
           "type": "boolean",
           "default": false,
           "description": "Whether Argon should automatically initialize Git repository",
-          "order": 0
+          "order": 13
         },
         "argon.git.branchName":  {
           "type": "string",
@@ -179,7 +189,7 @@
           "pattern": "[a-z]",
           "description": "The name of the default (HEAD) branch",
           "patternErrorMessage": "This symbol is not allowed",
-          "order": 1
+          "order": 14
         },
         "argon.git.gitignore": {
           "type": "array",
@@ -189,7 +199,7 @@
           "items": {
             "type": "string"
           },
-          "order": 2
+          "order": 15
         }
       }
     },
@@ -234,6 +244,10 @@
         },
         {
           "command": "argon.executeSnippet",
+          "when": "false"
+        },
+        {
+          "command": "argon.stopDebugging",
           "when": "false"
         }
       ]
