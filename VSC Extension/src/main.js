@@ -183,8 +183,8 @@ function stopDebugging() {
 
                 setTimeout(() => {
                     childProcess.exec(`osascript -e 'do shell script "open -a Visual\\\\ Studio\\\\ Code"'`)
-                }, 100);
-            }, 100);
+                }, 100)
+            }, 100)
 
             break
         default:
