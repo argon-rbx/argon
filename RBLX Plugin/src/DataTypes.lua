@@ -230,8 +230,10 @@ function dataTypes.getProperties(object)
     properties.Class = object.ClassName
 
     for _, v in ipairs(apiDump[object.ClassName]) do
-        local value = object[v]
-
+        pcall(function()
+            local value = object[v]
+        end)
+        
         if not value then
             continue
         end
