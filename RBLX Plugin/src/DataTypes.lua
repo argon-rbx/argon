@@ -230,11 +230,12 @@ function dataTypes.getProperties(object)
     properties.Class = object.ClassName
 
     for _, v in ipairs(apiDump[object.ClassName]) do
+        local value = nil
         pcall(function()
-            local value = object[v]
+            value = object[v]
         end)
         
-        if not value then
+        if not value then -- Don't error if value is nil
             continue
         end
 
