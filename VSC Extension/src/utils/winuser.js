@@ -8,6 +8,8 @@ function getVersion() {
             return require('./winuser-106')
         case '110':
             return require('./winuser-110')
+        case '116':
+            return require('./winuser-116')
         default:
             messageHandler.show('unsupportedVersion', 2)
             return null

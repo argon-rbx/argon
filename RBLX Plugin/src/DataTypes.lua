@@ -209,7 +209,7 @@ function dataTypes.cast(value, property, object)
 
         return ColorSequence.new(keypoints)
 
-    else
+    elseif dataType ~= nil then
         return getInstance(value)
     end
 end

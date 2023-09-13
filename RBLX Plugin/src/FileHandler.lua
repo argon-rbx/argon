@@ -218,11 +218,7 @@ function fileHandler.create(class, name, parent, delete)
 
     if not success then
         warn('Argon: '..response..' (fhC)')
-        class = tostring(class)
-        name = tostring(name)
-        parent = tostring(parent)
-        delete = tostring(delete)
-        print('Class: '..class..', Name: '..name..', Parent: '..parent..', State: '..delete)
+        print('Class: ', class, ', Name: ', name, ', Parent: ', parent, ', State: ', delete)
     end
 
     addWaypoint()
@@ -246,8 +242,7 @@ function fileHandler.update(object, source)
 
     if not success then
         warn('Argon: '..response..' (fhU)')
-        object = tostring(object)
-        print('Object: '..object)
+        print('Object: ', object)
     end
 
     addWaypoint()
@@ -260,8 +255,7 @@ function fileHandler.delete(object)
 
     if not success then
         warn('Argon: '..response..' (fhD)')
-        object = tostring(object)
-        print('Object: '..object)
+        print('Object: ', object)
     end
 
     addWaypoint()
@@ -274,9 +268,7 @@ function fileHandler.rename(object, name)
 
     if not success then
         warn('Argon: '..response..' (fhR)')
-        object = tostring(object)
-        name = tostring(name)
-        print('Object: '..object..', Name: '..name)
+        print('Object: ', object, ', Name: ', name)
     end
 
     addWaypoint()
@@ -289,9 +281,7 @@ function fileHandler.changeParent(object, parent)
 
     if not success then
         warn('Argon: '..response..' (fhCP)')
-        object = tostring(object)
-        parent = tostring(parent)
-        print('Object: '..object..', Parent: '..parent)
+        print('Object: ', object, ', Parent: ', parent)
     end
 
     addWaypoint()
@@ -317,10 +307,7 @@ function fileHandler.changeType(object, class, name)
 
     if not success then
         warn('Argon: '..response..' (fhCT)')
-        object = tostring(object)
-        class = tostring(class)
-        name = tostring(name)
-        print('Object: '..object..', Class: '..class..', Name: '..name)
+        print('Object: ', object, ', Class: ', class, ', Name: ', name)
     end
 
     addWaypoint()
@@ -365,9 +352,7 @@ function fileHandler.setProperties(object, properties)
 
     if not success then
         warn('Argon: '..response..' (fhSP)')
-        object = tostring(object)
-        properties = tostring(properties)
-        print('Object: '..object..', Properties: '..properties)
+        print('Object: ', object, ', Properties: ', properties)
     end
 end
 
