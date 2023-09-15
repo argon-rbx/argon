@@ -1,5 +1,10 @@
 # Changelog
 
+1.3.0
+* Updated C++ codebase to work with Electron 25.8.0 (fixes annoying popup for Windows users and brings back debugging capabilities)
+* Merged changes by [@Oetzi_CS](https://github.com/OetziCS) in [#13](https://github.com/DervexHero/Argon/pull/13) (fixes errors when porting place from VSC to Roblox)
+* Improved Roblox-specific type casting
+
 1.2.5
 * Added stop debugging keybind (currently macOS only)
 * Open in editor option works when two-way sync is enabled again (seems to be less confusing)

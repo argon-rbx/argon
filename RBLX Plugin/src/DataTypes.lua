@@ -231,11 +231,12 @@ function dataTypes.getProperties(object)
 
     for _, v in ipairs(apiDump[object.ClassName]) do
         local value = nil
+
         pcall(function()
             value = object[v]
         end)
-        
-        if not value then -- Don't error if value is nil
+
+        if not value then
             continue
         end
 
