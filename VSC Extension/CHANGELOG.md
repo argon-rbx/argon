@@ -1,44 +1,44 @@
 # Changelog
 
-1.3.0
+## 1.3.0
 * Updated C++ codebase to work with Electron 25.8.0 (fixes annoying popup for Windows users and brings back debugging capabilities)
 * Merged changes by [@Oetzi_CS](https://github.com/OetziCS) in [#13](https://github.com/DervexHero/Argon/pull/13) (fixes errors when porting place from VSC to Roblox)
 * Improved Roblox-specific type casting
 
-1.2.5
+## 1.2.5
 * Added stop debugging keybind (currently macOS only)
 * Open in editor option works when two-way sync is enabled again (seems to be less confusing)
 * Fixed open in editor option button behavior, reported by [@umamidayo](https://devforum.roblox.com/u/umamidayo/summary)
 * Fixed settings order (VSC extension)
 
-# 1.2.4
+## 1.2.4
 * Commands required for VSC keybinds are now hidden from the command palette, thanks to [@AridTheDev](https://devforum.roblox.com/u/aridthedev) 
 * Argon now supports multiple Electron and Node.js versions, thus more VSC versions are supported (Windows only fix), thanks to [@speednino](https://devforum.roblox.com/u/speednino)
 * Changed order of some of the Roblox plugin settings
 
-# 1.2.3
+## 1.2.3
 * Fixed start debugging & launch studio options on macOS
 * Fixed Argon being unable to launch for some users, caused by the obsolete [Electron](https://releases.electronjs.org/releases/stable?version=22) headers, reported by [@OneEDM](https://devforum.roblox.com/u/oneedm), [@StarVSK](https://devforum.roblox.com/u/starvsk) & [@Loomiquu](https://github.com/Loomiquu), special thanks to [@rotntake](https://github.com/rotntake) & [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 
-# 1.2.2
+## 1.2.2
 * .Enabled property of scripts not longer requires property syncing option to be enabled, suggested by [@rick2809](https://devforum.roblox.com/u/rick2809)
 * Reloading the VSC window no longer causes Argon to fail to start the local server
 * Snippet executor no longer causes errors when Argon is not running
 * Added priority levels to the shared toolbar
 
-# 1.2.1
+## 1.2.1
 * Added automatic Git repo initialization (disabled by default), suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Fixed issue with porting to VSC caused by UUIDs, reported by [@rick2809](https://devforum.roblox.com/u/rick2809)
 * Open in editor option no longer works when two-way sync is enabled
 
-# 1.2.0
+## 1.2.0
 * Added full support for macOS
 * Added support for multiple instances with the same name inside the same directory
 * Fixed custom dirs behavior when using root path
 * Fixed instance attributes not being removed
 * Fixed and improved two-way sync
 
-# 1.1.0
+## 1.1.0
 * Added support for Wally
 * Added support for instance attributes, suggested by [@AridTheDev](https://devforum.roblox.com/u/aridthedev)
 * Added support for my other plugins (shared toolbar)
@@ -277,6 +277,7 @@
 ## 0.0.5
 * Fixed critical issue
 * Added changelog
+
 ## 0.0.4
 * Finished porting feature
 * Added VS Code extension options
