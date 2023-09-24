@@ -370,7 +370,7 @@ local function expandSetting(setting)
                 end)
             else
                 subConnections[v.Parent.Name] = v.MouseButton1Click:Connect(function()
-                    toggleSetting(6, v)
+                    toggleSetting(7, v)
                 end)
             end
         elseif v:IsA('TextBox') then
@@ -378,7 +378,7 @@ local function expandSetting(setting)
                 filterInput(2)
             end)
             subConnections[v.Parent.Name..2] = v.FocusLost:Connect(function()
-                toggleSetting(7, v.Text)
+                toggleSetting(8, v.Text)
             end)
         end
     end
