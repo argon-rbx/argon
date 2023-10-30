@@ -1,7 +1,0 @@
-.vscode
-build
-node_modules
-.eslintrc.json
-.gitignore
-binding.gyp
-jsconfig.json
