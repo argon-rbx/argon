@@ -1,128 +1,105 @@
 use directories::UserDirs;
-use log::{error, trace};
+use log::{error, trace, warn};
 use std::{
-	error::Error,
 	fs,
 	path::{Path, PathBuf},
 };
 use toml_edit::{table, value, Document};
 
-use crate::{argon_error, confirm::prompt, unwrap_or_return};
+use crate::{unwrap_or_return, DynResult};
 
-fn get_session_dir() -> Result<PathBuf, Box<dyn Error>> {
+fn get_data_dir() -> DynResult<PathBuf> {
 	let user_dirs = unwrap_or_return!(UserDirs::new(), Err("Failed to get user directory!".into()));
 	let home_dir = user_dirs.home_dir();
-	let session_dir = home_dir.join(Path::new(".argon/session.toml"));
+	let data_dir = home_dir.join(Path::new(".argon/session.toml"));
 
-	Ok(session_dir)
+	Ok(data_dir)
 }
 
-fn write_session_template(dir: &PathBuf) -> Result<Document, Box<dyn Error>> {
+fn create_session_document(data_dir: &PathBuf) -> DynResult<Document> {
 	let mut document = Document::new();
 
 	document["last_session"] = value("");
-	document["sessions"] = table();
+	document["active_sessions"] = table();
 
-	fs::write(dir, document.to_string())?;
+	fs::write(data_dir, document.to_string())?;
 
 	Ok(document)
 }
 
-fn get_session_data(read_only: bool) -> Result<(Document, PathBuf), Box<dyn Error>> {
-	let session_dir = get_session_dir()?;
+fn get_session_data() -> DynResult<(Document, PathBuf)> {
+	let data_dir = get_data_dir()?;
 
-	if session_dir.exists() {
-		let session = fs::read_to_string(&session_dir)?;
-		let session = session.parse::<Document>()?;
+	if data_dir.exists() {
+		let session = fs::read_to_string(&data_dir)?;
+		let document = session.parse::<Document>()?;
 
-		return Ok((session, session_dir));
-	}
-
-	if read_only {
-		return Err("Session data does not exist".into());
-	}
-
-	let document = write_session_template(&session_dir)?;
-
-	Ok((document, session_dir))
-}
-
-pub fn add(host: String, port: u16, id: u32) {
-	let session_data = get_session_data(false);
-
-	match session_data {
-		Err(error) => {
-			error!("Failed to get session data: {error}");
-			return;
+		if document.contains_key("last_session")
+			|| document.contains_key("active_sessions")
+			|| document["last_session"].is_str()
+			|| document["active_sessions"].is_table()
+		{
+			return Ok((document, data_dir));
 		}
-		Ok(_) => trace!("Got session data successfully!"),
+
+		warn!("Session data file is corrupted! Creating new one.");
+
+		let document = create_session_document(&data_dir)?;
+
+		return Ok((document, data_dir));
 	}
 
-	let (mut document, session_dir) = session_data.unwrap();
+	let document = create_session_document(&data_dir)?;
 
-	let mut last_sesstion = host;
-	last_sesstion.push_str(":");
-	last_sesstion.push_str(&port.to_string());
-
-	document["last_session"] = value(&last_sesstion);
-	document["sessions"][&last_sesstion] = value::<i64>(i64::from(id).into());
-
-	match fs::write(session_dir, document.to_string()) {
-		Err(error) => error!("Failed to write session data: {}", error),
-		Ok(_) => trace!("Saved session data successfully!"),
-	}
+	Ok((document, data_dir))
 }
 
-pub fn get(host: Option<String>, port: Option<u16>) -> Option<u32> {
-	let session_data = get_session_data(true);
+pub fn add(host: String, port: u16, id: u32) -> DynResult<()> {
+	let (mut document, data_dir) = get_session_data()?;
+
+	let mut session = host;
+	session.push_str(":");
+	session.push_str(&port.to_string());
+
+	document["last_session"] = value(&session);
+	document["active_sessions"][&session] = value::<i64>(id as i64);
+
+	fs::write(data_dir, document.to_string())?;
+
+	Ok(())
+}
+
+pub fn get(host: Option<String>, port: Option<u16>) -> Option<(String, u32)> {
+	let session_data = get_session_data();
 
 	match session_data {
 		Err(error) => {
-			error!("Failed to get session data: {error}");
+			error!("Failed to get session data: {}", error);
 			return None;
 		}
-		Ok(_) => trace!("Got session data successfully!"),
+		Ok(_) => trace!("Session data parsed"),
 	}
 
-	let (document, session_dir) = session_data.unwrap();
-
-	if !document.contains_key("last_session")
-		|| !document.contains_key("sessions")
-		|| !document["last_session"].is_str()
-		|| !document["sessions"].is_table()
-	{
-		argon_error!("Session data file is corrupted!");
-
-		let fix_file = prompt("Would you like to fix this issue by making new session file?", true);
-
-		if fix_file.unwrap_or(false) {
-			match write_session_template(&session_dir) {
-				Err(error) => error!("Failed to fix corrupted session file: {}", error),
-				Ok(_) => trace!("Fixed corrupted session file successfully!"),
-			}
-		}
-
-		return None;
-	}
+	let (document, _) = session_data.unwrap();
 
 	let last_session = document["last_session"].as_str().unwrap();
-	let sessions = document["sessions"].as_table().unwrap();
+	let active_sessions = document["active_sessions"].as_table().unwrap();
 
 	if host.is_none() && port.is_none() {
-		if sessions.contains_key(&last_session) && sessions[&last_session].is_integer() {
-			let id = sessions[&last_session].as_integer().unwrap();
+		if active_sessions.contains_key(&last_session) {
+			let id = active_sessions[&last_session].as_integer()?;
 
-			return Some(id as u32);
+			return Some((last_session.to_string(), id as u32));
 		}
 	} else if host.is_some() && port.is_some() {
 		let mut session = host.unwrap();
 		session.push_str(":");
 		session.push_str(&port.unwrap().to_string());
 
-		if sessions.contains_key(&session) && sessions[&session].is_integer() {
-			let id = sessions[&session].as_integer().unwrap();
+		if active_sessions.contains_key(&session) {
+			let id = active_sessions[&session].as_integer()?;
 
-			return Some(id as u32);
+			return Some((session, id as u32));
 		}
 	} else {
 		let key: String;
@@ -135,148 +112,78 @@ pub fn get(host: Option<String>, port: Option<u16>) -> Option<u32> {
 
 		let mut sessions_vec: Vec<&str> = vec![];
 
-		for session in sessions.iter() {
+		for session in active_sessions.iter() {
 			sessions_vec.push(session.0);
 		}
 
 		for session in sessions_vec.iter().rev() {
 			if session.contains(&key) {
-				let id = &sessions[session];
+				let id = &active_sessions[session].as_integer()?;
 
-				if id.is_integer() {
-					return Some(id.as_integer().unwrap() as u32);
-				}
-
-				break;
+				return Some((session.to_string(), *id as u32));
 			}
 		}
 	}
 
-	return None;
+	None
 }
 
-pub fn get_all() -> Option<Vec<u32>> {
-	let session_data = get_session_data(true);
+pub fn get_all() -> Option<Vec<(String, u32)>> {
+	let session_data = get_session_data();
 
 	match session_data {
 		Err(error) => {
-			error!("Failed to get session data: {error}");
+			error!("Failed to get session data: {}", error);
 			return None;
 		}
-		Ok(_) => trace!("Got session data successfully!"),
+		Ok(_) => trace!("Session data parsed"),
 	}
 
-	let (document, session_dir) = session_data.unwrap();
+	let (document, _) = session_data.unwrap();
+	let active_sessions = document["active_sessions"].as_table().unwrap();
 
-	if !document.contains_key("sessions") || !document["sessions"].is_table() {
-		argon_error!("Session data file is corrupted!");
-
-		let fix_file = prompt("Would you like to fix this issue by making new session file?", true);
-
-		if fix_file.unwrap_or(false) {
-			match write_session_template(&session_dir) {
-				Err(error) => error!("Failed to fix corrupted session file: {}", error),
-				Ok(_) => trace!("Fixed corrupted session file successfully!"),
-			}
-		}
-
+	if active_sessions.len() == 0 {
 		return None;
 	}
 
-	let sessions = document["sessions"].as_table().unwrap();
+	let mut all_sessions: Vec<(String, u32)> = vec![];
 
-	if sessions.len() == 0 {
-		return None;
+	for session in active_sessions.iter() {
+		let address = session.0.to_string();
+		let id = session.1.as_integer()?;
+
+		all_sessions.push((address, id as u32));
 	}
 
-	let mut sessions_vec: Vec<u32> = vec![];
-
-	for session in sessions.iter() {
-		if session.1.is_integer() {
-			let id = session.1.as_integer().unwrap();
-
-			sessions_vec.push(id as u32);
-		}
-	}
-
-	Some(sessions_vec)
+	Some(all_sessions)
 }
 
-pub fn remove(id: u32) {
-	let session_data = get_session_data(true);
+pub fn remove(address: &String) -> DynResult<()> {
+	let (mut document, data_dir) = get_session_data()?;
 
-	match session_data {
-		Err(error) => {
-			error!("Failed to get session data: {error}");
-			return;
-		}
-		Ok(_) => trace!("Got session data successfully!"),
-	}
+	let last_session = document["last_session"].as_str().unwrap().to_string();
+	let active_sessions = document["active_sessions"].as_table_mut().unwrap();
 
-	let (mut document, session_dir) = session_data.unwrap();
+	active_sessions.remove(&address);
 
-	if !document.contains_key("last_session")
-		|| !document.contains_key("sessions")
-		|| !document["last_session"].is_str()
-		|| !document["sessions"].is_table()
-	{
-		argon_error!("Session data file is corrupted!");
+	if last_session == *address {
+		let mut last_address = "";
 
-		let fix_file = prompt("Would you like to fix this issue by making new session file?", true);
-
-		if fix_file.unwrap_or(false) {
-			match write_session_template(&session_dir) {
-				Err(error) => error!("Failed to fix corrupted session file: {}", error),
-				Ok(_) => trace!("Fixed corrupted session file successfully!"),
-			}
+		for session in active_sessions.iter() {
+			last_address = session.0;
 		}
 
-		return;
+		document["last_session"] = value(last_address);
 	}
 
-	let last_session = document["last_session"].as_str().unwrap().to_owned();
-	let sessions = document["sessions"].as_table_mut().unwrap();
+	fs::write(data_dir, document.to_string())?;
 
-	let mut last_session_address = "";
-
-	for session in sessions.clone().iter() {
-		if session.1.is_integer() {
-			let session_id = session.1.as_integer().unwrap();
-			let session_address = session.0;
-
-			if id == session_id as u32 {
-				sessions.remove(session_address);
-
-				if session_address == last_session {
-					document["last_session"] = value(last_session_address);
-				}
-
-				break;
-			}
-
-			last_session_address = session_address;
-		}
-	}
-
-	match fs::write(session_dir, document.to_string()) {
-		Err(error) => error!("Failed to write session data: {}", error),
-		Ok(_) => trace!("Saved session data successfully!"),
-	}
+	Ok(())
 }
 
-pub fn remove_all() {
-	let session_dir = get_session_dir();
+pub fn remove_all() -> DynResult<()> {
+	let data_dir = get_data_dir()?;
+	create_session_document(&data_dir)?;
 
-	match session_dir {
-		Err(error) => {
-			error!("Failed to get session directory: {error}");
-			return;
-		}
-		Ok(_) => trace!("Got session directory successfully!"),
-	}
-
-	match write_session_template(&session_dir.unwrap()) {
-		Err(error) => error!("Failed to clear session data: {error}"),
-		Ok(_) => trace!("Session data cleared successfully!"),
-	}
+	Ok(())
 }

@@ -24,7 +24,7 @@ impl Command {
 						error!("Failed to create config file: {error}");
 						return;
 					}
-					Ok(_) => trace!("Created config file successfully!"),
+					Ok(_) => trace!("Created config file"),
 				}
 			} else {
 				return;
@@ -33,7 +33,7 @@ impl Command {
 
 		match open::that(config_dir) {
 			Err(error) => error!("Failed to open config file: {error}"),
-			Ok(()) => trace!("Opened config file successfully!"),
+			Ok(()) => trace!("Opening config file"),
 		}
 	}
 }

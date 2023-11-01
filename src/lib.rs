@@ -8,6 +8,8 @@ pub mod logger;
 pub mod server;
 pub mod session;
 
+pub type DynResult<T> = Result<T, Box<dyn std::error::Error>>;
+
 // TODO: needs improvements, Result support
 
 #[macro_export]
@@ -23,6 +25,13 @@ macro_rules! unwrap_or_return {
 		match $e {
 			Some(x) => x,
 			None => return $r,
+		}
+	};
+
+	($e:expr) => {
+		match $e {
+			Ok(x) => x,
+			Err(e) => e,
 		}
 	};
 }

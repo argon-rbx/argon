@@ -1,6 +1,7 @@
 use crate::{argon_error, argon_warn, session};
+use awc::Client;
 use clap::{ArgAction, Parser};
-use sysinfo::{Pid, ProcessExt, System, SystemExt};
+use log::trace;
 
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
@@ -19,51 +20,63 @@ pub struct Command {
 }
 
 impl Command {
+	#[actix_web::main]
+	async fn make_request(&self, client: &Client, address: &String, id: &u32) {
+		let mut url = String::from("http://");
+		url.push_str(address);
+		url.push_str("/stop");
+
+		let result = client.post(url).send().await;
+
+		match result {
+			Err(error) => {
+				argon_error!("Failed to stop Argon session: {}", error);
+				argon_warn!("You might wanna stop it manually using session's PID: {}", id)
+			}
+			Ok(_) => trace!("Stopped Argon session {}", address),
+		}
+	}
+
 	pub fn run(self) {
-		if !self.all.unwrap_or(false) {
-			let id = session::get(self.host, self.port);
+		if self.all.unwrap_or_default() {
+			let sessions = session::get_all();
 
-			if id.is_none() {
-				argon_warn!("There is no running session with this host or port!");
+			if sessions.is_none() {
+				argon_warn!("There are no running sessions");
 				return;
 			}
 
-			let system = System::new_all();
+			let client = Client::default();
 
-			if let Some(process) = system.process(Pid::from(id.unwrap() as usize)) {
-				let killed = process.kill();
+			for session in sessions.unwrap().iter() {
+				let (address, id) = session;
 
-				if !killed {
-					argon_error!("Failed to kill Argon process");
-				}
-			} else {
-				argon_error!("Failed to get process id!");
+				self.make_request(&client, &address, &id);
 			}
 
-			session::remove(id.unwrap());
-		} else {
-			let ids = session::get_all();
-
-			if ids.is_none() {
-				argon_warn!("There are no running sessions!");
-				return;
+			match session::remove_all() {
+				Err(error) => argon_error!("Failed to clear session data: {}", error),
+				Ok(()) => trace!("Cleared session data"),
 			}
 
-			let system = System::new_all();
+			return;
+		}
 
-			for id in ids.unwrap().iter() {
-				if let Some(process) = system.process(Pid::from(*id as usize)) {
-					let killed = process.kill();
+		let session = session::get(self.host.clone(), self.port);
 
-					if !killed {
-						argon_error!("Failed to kill Argon process");
-					}
-				} else {
-					argon_error!("Failed to get process id!");
-				}
-			}
+		if session.is_none() {
+			argon_warn!("There is no running session on this address");
+			return;
+		}
 
-			session::remove_all();
+		let (address, id) = session.unwrap();
+		let client = Client::default();
+
+		self.make_request(&client, &address, &id);
+
+		match session::remove(&address) {
+			Err(error) => argon_error!("Failed to remove session {}: {}", address, error),
+			Ok(()) => trace!("Removed session {}", address),
 		}
 	}
 }

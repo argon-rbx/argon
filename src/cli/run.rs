@@ -1,7 +1,7 @@
 use crate::config::Config;
-use crate::session;
+use crate::{argon_error, session};
 use clap::Parser;
-use log::LevelFilter;
+use log::{trace, LevelFilter};
 use std::env;
 
 /// Run Argon, start local server and looking for file changes
@@ -48,6 +48,19 @@ impl Command {
 			.env("RUST_BACKTRACE", backtrace)
 			.spawn();
 
-		session::add(host, port, handle.unwrap().id());
+		match handle {
+			Err(error) => {
+				argon_error!("Failed to start new Argon process: {}", error);
+				return;
+			}
+			Ok(_) => trace!("Started new Argon process"),
+		}
+
+		let session_result = session::add(host, port, handle.unwrap().id());
+
+		match session_result {
+			Err(error) => argon_error!("Failed to update session data: {}", error),
+			Ok(()) => trace!("Saved session data"),
+		}
 	}
 }
