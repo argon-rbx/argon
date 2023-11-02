@@ -1,7 +1,6 @@
-use crate::{confirm::prompt, unwrap_or_return};
+use crate::{argon_error, confirm::prompt, utils::get_home_dir};
 use clap::Parser;
-use directories::UserDirs;
-use log::{error, trace};
+use log::trace;
 use open;
 use std::{fs::File, path::Path};
 
@@ -11,9 +10,17 @@ pub struct Command {}
 
 impl Command {
 	pub fn run(self) {
-		let user_dirs = unwrap_or_return!(UserDirs::new());
-		let home_dir = user_dirs.home_dir();
-		let config_dir = home_dir.join(Path::new(".argon/config.toml"));
+		let home_dir = get_home_dir();
+
+		match home_dir {
+			Err(error) => {
+				argon_error!("Failed to locate config: {}", error);
+				return;
+			}
+			Ok(_) => trace!("Retrieved home dir"),
+		}
+
+		let config_dir = home_dir.unwrap().join(Path::new(".argon/config.toml"));
 
 		if !config_dir.exists() {
 			let create_config = prompt("Config does not exist. Would you like to create one?", true);
@@ -21,7 +28,7 @@ impl Command {
 			if create_config.unwrap_or(false) {
 				match File::create(&config_dir) {
 					Err(error) => {
-						error!("Failed to create config file: {error}");
+						argon_error!("Failed to create config file: {error}");
 						return;
 					}
 					Ok(_) => trace!("Created config file"),
@@ -32,7 +39,7 @@ impl Command {
 		}
 
 		match open::that(config_dir) {
-			Err(error) => error!("Failed to open config file: {error}"),
+			Err(error) => argon_error!("Failed to open config file: {error}"),
 			Ok(()) => trace!("Opening config file"),
 		}
 	}

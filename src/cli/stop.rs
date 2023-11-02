@@ -21,7 +21,7 @@ pub struct Command {
 
 impl Command {
 	#[actix_web::main]
-	async fn make_request(&self, client: &Client, address: &String, id: &u32) {
+	async fn make_request(client: &Client, address: &String, id: &u32) {
 		let mut url = String::from("http://");
 		url.push_str(address);
 		url.push_str("/stop");
@@ -51,7 +51,7 @@ impl Command {
 			for session in sessions.unwrap().iter() {
 				let (address, id) = session;
 
-				self.make_request(&client, &address, &id);
+				Command::make_request(&client, &address, &id);
 			}
 
 			match session::remove_all() {
@@ -72,7 +72,7 @@ impl Command {
 		let (address, id) = session.unwrap();
 		let client = Client::default();
 
-		self.make_request(&client, &address, &id);
+		Command::make_request(&client, &address, &id);
 
 		match session::remove(&address) {
 			Err(error) => argon_error!("Failed to remove session {}: {}", address, error),

@@ -1,4 +1,3 @@
-use directories::UserDirs;
 use log::{error, trace, warn};
 use std::{
 	fs,
@@ -6,11 +5,10 @@ use std::{
 };
 use toml_edit::{table, value, Document};
 
-use crate::{unwrap_or_return, DynResult};
+use crate::{utils::get_home_dir, DynResult};
 
 fn get_data_dir() -> DynResult<PathBuf> {
-	let user_dirs = unwrap_or_return!(UserDirs::new(), Err("Failed to get user directory!".into()));
-	let home_dir = user_dirs.home_dir();
+	let home_dir = get_home_dir()?;
 	let data_dir = home_dir.join(Path::new(".argon/session.toml"));
 
 	Ok(data_dir)

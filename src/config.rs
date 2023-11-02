@@ -1,10 +1,13 @@
-use directories::UserDirs;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs, path::Path};
+use std::{
+	error::Error,
+	fs,
+	path::{Path, PathBuf},
+};
 use toml;
 
-use crate::unwrap_or_return;
+use crate::utils::get_home_dir;
 
 macro_rules! set_if_some {
 	($default:expr, $optional:expr) => {
@@ -18,18 +21,13 @@ macro_rules! set_if_some {
 struct GlobalConfig {
 	host: Option<String>,
 	port: Option<u16>,
-}
-
-// TODO
-#[derive(Serialize, Deserialize)]
-struct ProjectConfig {
-	host: Option<String>,
-	port: Option<u16>,
+	project: Option<PathBuf>,
 }
 
 pub struct Config {
 	pub host: String,
 	pub port: u16,
+	pub project: PathBuf,
 }
 
 impl Config {
@@ -37,6 +35,7 @@ impl Config {
 		let mut config = Config {
 			host: String::from("localhost"),
 			port: 8000,
+			project: PathBuf::from(".argon"),
 		};
 
 		match config.load() {
@@ -48,8 +47,7 @@ impl Config {
 	}
 
 	pub fn load(&mut self) -> Result<(), Box<dyn Error>> {
-		let user_dirs = unwrap_or_return!(UserDirs::new(), Err("Failed to get user directory!".into()));
-		let home_dir = user_dirs.home_dir();
+		let home_dir = get_home_dir()?;
 		let config_dir = home_dir.join(Path::new(".argon/config.toml"));
 
 		let config_toml = fs::read_to_string(config_dir)?;
@@ -57,6 +55,7 @@ impl Config {
 
 		set_if_some!(self.host, config.host);
 		set_if_some!(self.port, config.port);
+		set_if_some!(self.project, config.project);
 
 		Ok(())
 	}

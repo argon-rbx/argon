@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::{argon_error, session};
 use clap::Parser;
 use log::{trace, LevelFilter};
-use std::env;
+use std::{env, path::PathBuf};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -11,9 +11,13 @@ pub struct Command {
 	#[arg(short = 'H', long)]
 	host: Option<String>,
 
-	/// Server port [type: int, default: "8000"]
-	#[arg(short, long)]
+	/// Server port [type: int, default: 8000]
+	#[arg(short = 'P', long)]
 	port: Option<u16>,
+
+	/// Project path [type: path, default: ".argon"]
+	#[arg(short, long)]
+	project: Option<PathBuf>,
 }
 
 impl Command {
@@ -22,6 +26,7 @@ impl Command {
 
 		let host = self.host.unwrap_or(config.host);
 		let port = self.port.unwrap_or(config.port);
+		let project = self.project.unwrap_or(config.project);
 
 		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
 		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
@@ -36,7 +41,24 @@ impl Command {
 		};
 
 		let port_string = port.to_string();
-		let mut args = vec!["serve", "--host", &host, "--port", &port_string];
+		let project_dir: &str;
+
+		if project.is_absolute() {
+			let dir = env::current_dir();
+
+			match dir {
+				Err(error) => {
+					argon_error!("Failed to get current directory: {}", error);
+					return;
+				}
+				Ok(_) => trace!("Current directory exists"),
+			}
+
+			// let mut project = dir.unwrap();
+			// TODO
+		}
+
+		let mut args = vec!["serve", "--host", &host, "--port", &port_string, "--project"];
 
 		if verbosity != "" {
 			args.push(verbosity)

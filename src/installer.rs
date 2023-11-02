@@ -1,12 +1,10 @@
-use directories::UserDirs;
 use globenv;
 use std::{env, error::Error, fs};
 
-use crate::{confirm::prompt, unwrap_or_return};
+use crate::{confirm::prompt, utils::get_home_dir};
 
 pub fn install() -> Result<(), Box<dyn Error>> {
-	let user_dirs = unwrap_or_return!(UserDirs::new(), Err("Failed to get user directory!".into()));
-	let home_dir = user_dirs.home_dir();
+	let home_dir = get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
 	let bin_dir = argon_dir.join("bin");
