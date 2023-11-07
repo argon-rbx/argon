@@ -1,12 +1,17 @@
-use crate::config::Config;
-use crate::{argon_error, session};
-use clap::Parser;
-use log::{trace, LevelFilter};
-use std::{env, path::PathBuf};
+use anyhow::{Context, Result};
+use clap::{ArgAction, Parser};
+use log::LevelFilter;
+use std::{
+	env,
+	path::PathBuf,
+	process::{self, Command},
+};
+
+use crate::{argon_info, config::Config, server, session, workspace};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
-pub struct Command {
+pub struct Run {
 	/// Server host name [type: string, default: "localhost"]
 	#[arg(short = 'H', long)]
 	host: Option<String>,
@@ -16,73 +21,78 @@ pub struct Command {
 	port: Option<u16>,
 
 	/// Project path [type: path, default: ".argon"]
-	#[arg(short, long)]
+	#[arg()]
 	project: Option<PathBuf>,
+
+	/// Actually run Argon, used to spawn new process
+	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
+	run: bool,
 }
 
-impl Command {
-	pub fn run(self, level: LevelFilter) {
+impl Run {
+	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
+		if !self.run {
+			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
+			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
+
+			let verbosity = match level_filter {
+				LevelFilter::Off => "-q",
+				LevelFilter::Error => "",
+				LevelFilter::Warn => "-v",
+				LevelFilter::Info => "-vv",
+				LevelFilter::Debug => "-vvv",
+				LevelFilter::Trace => "-vvvv",
+			};
+
+			let mut args = vec![String::from("run")];
+
+			if self.host.is_some() {
+				args.push(String::from("--host"));
+				args.push(self.host.unwrap())
+			}
+
+			if self.port.is_some() {
+				args.push(String::from("--port"));
+				args.push(self.port.unwrap().to_string());
+			}
+
+			if self.project.is_some() {
+				args.push(
+					self.project
+						.unwrap()
+						.to_str()
+						.context("Project path contains invalid characters")?
+						.to_string(),
+				);
+			}
+
+			if verbosity != "" {
+				args.push(verbosity.to_string())
+			}
+
+			Command::new("argon")
+				.args(args)
+				.arg("--run")
+				.env("RUST_LOG_STYLE", log_style)
+				.env("RUST_BACKTRACE", backtrace)
+				.spawn()?;
+
+			return Ok(());
+		}
+
 		let config = Config::new();
 
 		let host = self.host.unwrap_or(config.host);
 		let port = self.port.unwrap_or(config.port);
 		let project = self.project.unwrap_or(config.project);
 
-		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
-		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
+		workspace::init(&project, config.auto_init)?;
 
-		let verbosity = match level {
-			LevelFilter::Off => "-q",
-			LevelFilter::Error => "",
-			LevelFilter::Warn => "-v",
-			LevelFilter::Info => "-vv",
-			LevelFilter::Debug => "-vvv",
-			LevelFilter::Trace => "-vvvv",
-		};
+		argon_info!("Serving on: {}:{}, project: {}", host, port, project.to_str().unwrap());
 
-		let port_string = port.to_string();
-		let project_dir: &str;
+		// fs::watch().ok();
+		// server::start(host.clone(), port.clone())?;
 
-		if project.is_absolute() {
-			let dir = env::current_dir();
-
-			match dir {
-				Err(error) => {
-					argon_error!("Failed to get current directory: {}", error);
-					return;
-				}
-				Ok(_) => trace!("Current directory exists"),
-			}
-
-			// let mut project = dir.unwrap();
-			// TODO
-		}
-
-		let mut args = vec!["serve", "--host", &host, "--port", &port_string, "--project"];
-
-		if verbosity != "" {
-			args.push(verbosity)
-		}
-
-		let handle = std::process::Command::new("argon")
-			.args(args)
-			.env("RUST_LOG_STYLE", log_style)
-			.env("RUST_BACKTRACE", backtrace)
-			.spawn();
-
-		match handle {
-			Err(error) => {
-				argon_error!("Failed to start new Argon process: {}", error);
-				return;
-			}
-			Ok(_) => trace!("Started new Argon process"),
-		}
-
-		let session_result = session::add(host, port, handle.unwrap().id());
-
-		match session_result {
-			Err(error) => argon_error!("Failed to update session data: {}", error),
-			Ok(()) => trace!("Saved session data"),
-		}
+		session::add(host, port, process::id())
 	}
 }

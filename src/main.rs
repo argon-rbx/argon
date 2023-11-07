@@ -5,6 +5,7 @@ use std::{
 	io::{self, IsTerminal},
 };
 
+use argon::argon_error;
 use argon::cli::Cli;
 use argon::crash_handler;
 use argon::installer;
@@ -32,9 +33,12 @@ fn main() {
 	logger::init(cli.verbose.log_level_filter(), color_choice);
 
 	match installation {
-		Ok(()) => info!("Argon installation verified sucessfully!"),
+		Ok(()) => info!("Argon installation verified successfully!"),
 		Err(error) => warn!("Failed to verify Argon installation: {}", error),
 	}
 
-	cli.run();
+	match cli.main() {
+		Ok(()) => info!("Successfully executed command!"),
+		Err(error) => argon_error!("Command execution failed: {}", error),
+	};
 }

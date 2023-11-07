@@ -1,10 +1,10 @@
-use crate::confirm::prompt;
-use crate::{argon_error, argon_info};
 use backtrace::Backtrace;
 use colored::Colorize;
 use open;
 use panic_message::get_panic_info_message;
 use std::{env, panic};
+
+use crate::{argon_error, argon_info, logger};
 
 const MAX_BACKTRACE_LEN: usize = 6500;
 
@@ -72,12 +72,12 @@ pub fn hook() {
 			);
 		}
 
-		let report_issue = prompt(
+		let report_issue = logger::prompt(
 			"Would you like to create new issue on GitHub with current report?",
 			false,
 		);
 
-		if report_issue.unwrap_or(false) {
+		if report_issue {
 			let mut url = env!("CARGO_PKG_REPOSITORY").to_string();
 			url.push_str("/issues/new?title=Argon crash report&body=");
 			url.push_str(&report);

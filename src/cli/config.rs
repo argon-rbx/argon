@@ -1,46 +1,32 @@
-use crate::{argon_error, confirm::prompt, utils::get_home_dir};
+use anyhow::Result;
 use clap::Parser;
-use log::trace;
 use open;
 use std::{fs::File, path::Path};
 
+use crate::{logger, utils};
+
 /// Edit global config with default editor
 #[derive(Parser)]
-pub struct Command {}
+pub struct Config {}
 
-impl Command {
-	pub fn run(self) {
-		let home_dir = get_home_dir();
+impl Config {
+	pub fn main(self) -> Result<()> {
+		let home_dir = utils::get_home_dir()?;
 
-		match home_dir {
-			Err(error) => {
-				argon_error!("Failed to locate config: {}", error);
-				return;
-			}
-			Ok(_) => trace!("Retrieved home dir"),
-		}
-
-		let config_dir = home_dir.unwrap().join(Path::new(".argon/config.toml"));
+		let config_dir = home_dir.join(Path::new(".argon/config.toml"));
 
 		if !config_dir.exists() {
-			let create_config = prompt("Config does not exist. Would you like to create one?", true);
+			let create_config = logger::prompt("Config does not exist. Would you like to create one?", true);
 
-			if create_config.unwrap_or(false) {
-				match File::create(&config_dir) {
-					Err(error) => {
-						argon_error!("Failed to create config file: {error}");
-						return;
-					}
-					Ok(_) => trace!("Created config file"),
-				}
+			if create_config {
+				File::create(&config_dir)?;
 			} else {
-				return;
+				return Ok(());
 			}
 		}
 
-		match open::that(config_dir) {
-			Err(error) => argon_error!("Failed to open config file: {error}"),
-			Ok(()) => trace!("Opening config file"),
-		}
+		open::that(config_dir)?;
+
+		Ok(())
 	}
 }

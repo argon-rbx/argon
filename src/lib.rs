@@ -1,6 +1,5 @@
 pub mod cli;
 pub mod config;
-pub mod confirm;
 pub mod crash_handler;
 pub mod fs;
 pub mod installer;
@@ -9,8 +8,7 @@ pub mod project;
 pub mod server;
 pub mod session;
 pub mod utils;
-
-pub type DynResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub mod workspace;
 
 // These Argon logs ignore verbosity level, aside of `Off`
 #[macro_export]

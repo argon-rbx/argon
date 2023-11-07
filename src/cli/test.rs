@@ -1,10 +1,15 @@
+use anyhow::{Context, Result};
 use clap::Parser;
 
 #[derive(Parser)]
-pub struct Command {}
+pub struct Test {}
 
-impl Command {
-	pub fn run(self) {
+impl Test {
+	fn test() -> Option<u32> {
+		None
+	}
+
+	pub fn main(self) -> Result<()> {
 		log::error!("1");
 		log::warn!("2");
 		log::info!("3");
@@ -15,6 +20,8 @@ impl Command {
 		crate::argon_warn!("argon_2");
 		crate::argon_info!("argon_3");
 
-		let _ = crate::confirm::prompt("test prompt", false);
+		Test::test().context("blah blah blah")?;
+
+		Ok(())
 	}
 }

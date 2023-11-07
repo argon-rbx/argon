@@ -1,11 +1,13 @@
-use crate::{argon_error, argon_warn, session};
+use anyhow::Result;
 use awc::Client;
 use clap::{ArgAction, Parser};
 use log::trace;
 
+use crate::{argon_error, argon_warn, session};
+
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
-pub struct Command {
+pub struct Stop {
 	/// Server host name [type: string]
 	#[arg(short = 'H', long)]
 	host: Option<String>,
@@ -16,10 +18,10 @@ pub struct Command {
 
 	/// Stop all running session
 	#[arg(short, long, action = ArgAction::SetTrue)]
-	all: Option<bool>,
+	all: bool,
 }
 
-impl Command {
+impl Stop {
 	#[actix_web::main]
 	async fn make_request(client: &Client, address: &String, id: &u32) {
 		let mut url = String::from("http://");
@@ -31,19 +33,19 @@ impl Command {
 		match result {
 			Err(error) => {
 				argon_error!("Failed to stop Argon session: {}", error);
-				argon_warn!("You might wanna stop it manually using session's PID: {}", id)
+				argon_warn!("You might wanna stop process manually using its PID: {}", id)
 			}
 			Ok(_) => trace!("Stopped Argon session {}", address),
 		}
 	}
 
-	pub fn run(self) {
-		if self.all.unwrap_or_default() {
+	pub fn main(self) -> Result<()> {
+		if self.all {
 			let sessions = session::get_all();
 
 			if sessions.is_none() {
 				argon_warn!("There are no running sessions");
-				return;
+				return Ok(());
 			}
 
 			let client = Client::default();
@@ -51,32 +53,24 @@ impl Command {
 			for session in sessions.unwrap().iter() {
 				let (address, id) = session;
 
-				Command::make_request(&client, &address, &id);
+				Stop::make_request(&client, &address, &id);
 			}
 
-			match session::remove_all() {
-				Err(error) => argon_error!("Failed to clear session data: {}", error),
-				Ok(()) => trace!("Cleared session data"),
-			}
-
-			return;
+			return session::remove_all();
 		}
 
 		let session = session::get(self.host.clone(), self.port);
 
 		if session.is_none() {
 			argon_warn!("There is no running session on this address");
-			return;
+			return Ok(());
 		}
 
 		let (address, id) = session.unwrap();
 		let client = Client::default();
 
-		Command::make_request(&client, &address, &id);
+		Stop::make_request(&client, &address, &id);
 
-		match session::remove(&address) {
-			Err(error) => argon_error!("Failed to remove session {}: {}", address, error),
-			Ok(()) => trace!("Removed session {}", address),
-		}
+		session::remove(&address)
 	}
 }

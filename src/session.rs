@@ -1,3 +1,4 @@
+use anyhow::Result;
 use log::{error, trace, warn};
 use std::{
 	fs,
@@ -5,16 +6,16 @@ use std::{
 };
 use toml_edit::{table, value, Document};
 
-use crate::{utils::get_home_dir, DynResult};
+use crate::utils;
 
-fn get_data_dir() -> DynResult<PathBuf> {
-	let home_dir = get_home_dir()?;
+fn get_data_dir() -> Result<PathBuf> {
+	let home_dir = utils::get_home_dir()?;
 	let data_dir = home_dir.join(Path::new(".argon/session.toml"));
 
 	Ok(data_dir)
 }
 
-fn create_session_document(data_dir: &PathBuf) -> DynResult<Document> {
+fn create_session_document(data_dir: &PathBuf) -> Result<Document> {
 	let mut document = Document::new();
 
 	document["last_session"] = value("");
@@ -25,7 +26,7 @@ fn create_session_document(data_dir: &PathBuf) -> DynResult<Document> {
 	Ok(document)
 }
 
-fn get_session_data() -> DynResult<(Document, PathBuf)> {
+fn get_session_data() -> Result<(Document, PathBuf)> {
 	let data_dir = get_data_dir()?;
 
 	if data_dir.exists() {
@@ -52,7 +53,7 @@ fn get_session_data() -> DynResult<(Document, PathBuf)> {
 	Ok((document, data_dir))
 }
 
-pub fn add(host: String, port: u16, id: u32) -> DynResult<()> {
+pub fn add(host: String, port: u16, id: u32) -> Result<()> {
 	let (mut document, data_dir) = get_session_data()?;
 
 	let mut session = host;
@@ -156,7 +157,7 @@ pub fn get_all() -> Option<Vec<(String, u32)>> {
 	Some(all_sessions)
 }
 
-pub fn remove(address: &String) -> DynResult<()> {
+pub fn remove(address: &String) -> Result<()> {
 	let (mut document, data_dir) = get_session_data()?;
 
 	let last_session = document["last_session"].as_str().unwrap().to_string();
@@ -179,7 +180,7 @@ pub fn remove(address: &String) -> DynResult<()> {
 	Ok(())
 }
 
-pub fn remove_all() -> DynResult<()> {
+pub fn remove_all() -> Result<()> {
 	let data_dir = get_data_dir()?;
 	create_session_document(&data_dir)?;
 
