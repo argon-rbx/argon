@@ -1,10 +1,8 @@
 use anyhow::Result;
 use log::{info, warn};
+use optfield::optfield;
 use serde::{Deserialize, Serialize};
-use std::{
-	fs,
-	path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 use toml;
 
 use crate::utils;
@@ -17,19 +15,13 @@ macro_rules! set_if_some {
 	};
 }
 
+#[optfield(GlobalConfig, attrs)]
 #[derive(Serialize, Deserialize)]
-struct GlobalConfig {
-	host: Option<String>,
-	port: Option<u16>,
-	project: Option<PathBuf>,
-	auto_init: Option<bool>,
-	git_init: Option<bool>,
-}
-
 pub struct Config {
 	pub host: String,
 	pub port: u16,
 	pub project: PathBuf,
+	pub template: String,
 	pub auto_init: bool,
 	pub git_init: bool,
 }
@@ -40,6 +32,7 @@ impl Config {
 			host: String::from("localhost"),
 			port: 8000,
 			project: PathBuf::from(".argon"),
+			template: String::from("default"),
 			auto_init: false,
 			git_init: true,
 		};
@@ -54,7 +47,7 @@ impl Config {
 
 	pub fn load(&mut self) -> Result<()> {
 		let home_dir = utils::get_home_dir()?;
-		let config_dir = home_dir.join(Path::new(".argon/config.toml"));
+		let config_dir = home_dir.join(".argon").join("config.toml");
 
 		let config_toml = fs::read_to_string(config_dir)?;
 		let config: GlobalConfig = toml::from_str(&config_toml)?;
@@ -62,6 +55,7 @@ impl Config {
 		set_if_some!(self.host, config.host);
 		set_if_some!(self.port, config.port);
 		set_if_some!(self.project, config.project);
+		set_if_some!(self.template, config.template);
 		set_if_some!(self.auto_init, config.auto_init);
 		set_if_some!(self.git_init, config.git_init);
 

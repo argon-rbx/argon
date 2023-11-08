@@ -1,31 +1,47 @@
 use anyhow::Result;
-use std::{env, path::PathBuf};
+use std::{fs, path::PathBuf};
 
-use crate::{argon_error, argon_warn, config::Config};
+use crate::utils;
 
-// TODO: make project.rs function
-pub fn verify(mut project: PathBuf) -> Result<(PathBuf, bool)> {
-	if !project.is_absolute() {
-		let current_dir = env::current_dir()?;
-		project = current_dir.join(project);
-	}
+pub fn init(project: &PathBuf, template: String) -> Result<()> {
+	let home_dir = utils::get_home_dir()?;
+	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
-	Ok((project.to_path_buf(), project.exists()))
-}
+	let project_name = project.file_name().unwrap().to_str().unwrap();
+	let mut project_dir = project.to_path_buf();
+	project_dir.pop();
 
-pub fn init(project: &PathBuf, auto_init: bool) -> Result<()> {
-	let (project, exists) = verify(project.to_owned())?;
+	for dir_entry in fs::read_dir(template_dir)? {
+		let dir_entry = dir_entry?;
 
-	if !exists && auto_init {
-		// TODO: load template
-		argon_warn!("Cannot find the project, creating new one!")
-	} else if !exists {
-		argon_error!(
-			"Project file does not exist in this directory: {}. Run `argon init` or enable `auto_init` setting.",
-			project.to_str().unwrap()
-		);
+		let file_path = dir_entry.path();
+		let file_name = dir_entry.file_name();
+		let file_name = file_name.to_str().unwrap();
 
-		// Err()
+		let new_file_path: PathBuf;
+
+		if file_name == "project.json" {
+			let mut project_file_name = String::from(project_name);
+			project_file_name.push_str(".");
+			project_file_name.push_str(file_name);
+
+			new_file_path = project_dir.join(project_file_name);
+		} else {
+			new_file_path = project_dir.join(file_name);
+		}
+
+		if new_file_path.exists() {
+			continue;
+		}
+
+		if file_name == "project.json" || file_name == "README.md" {
+			let content = fs::read_to_string(file_path)?;
+			let content = content.replace("$name", project_name);
+
+			fs::write(new_file_path, content)?;
+		} else {
+			fs::copy(file_path, new_file_path)?;
+		}
 	}
 
 	Ok(())

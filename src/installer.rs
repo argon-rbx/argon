@@ -3,11 +3,11 @@ use std::{env, fs};
 
 use crate::{logger, utils};
 
-const DEFAULT_PROJECT: &str = include_str!("../assets/templates/default/.argon.project.json");
+const DEFAULT_PROJECT: &str = include_str!("../assets/templates/default/project.json");
 const DEFAULT_GITIGNORE: &str = include_str!("../assets/templates/default/.gitignore");
 const DEFAULT_README: &str = include_str!("../assets/templates/default/README.md");
 
-const COMPACT_PROJECT: &str = include_str!("../assets/templates/compact/.argon.project.json");
+const COMPACT_PROJECT: &str = include_str!("../assets/templates/compact/project.json");
 
 pub fn install() -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
@@ -45,7 +45,7 @@ pub fn install() -> Result<()> {
 	globenv::set_path(&bin_dir.to_str().unwrap())?;
 
 	let default_template_dir = templates_dir.join("default");
-	let default_project_dir = default_template_dir.join(".argon.project.json");
+	let default_project_dir = default_template_dir.join("project.json");
 	let default_gitignore_dir = default_template_dir.join(".gitignore");
 	let default_readme_dir = default_template_dir.join("README.md");
 
@@ -66,7 +66,7 @@ pub fn install() -> Result<()> {
 	}
 
 	let compact_template_dir = templates_dir.join("compact");
-	let compact_project_dir = compact_template_dir.join(".argon.project.json");
+	let compact_project_dir = compact_template_dir.join("project.json");
 
 	if !compact_template_dir.exists() {
 		fs::create_dir(&compact_template_dir)?;

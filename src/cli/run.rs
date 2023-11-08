@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{ArgAction, Parser};
 use log::LevelFilter;
 use std::{
@@ -7,7 +7,7 @@ use std::{
 	process::{self, Command},
 };
 
-use crate::{argon_info, config::Config, server, session, workspace};
+use crate::{argon_info, argon_warn, config::Config, project, server, session, workspace};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -32,6 +32,8 @@ pub struct Run {
 impl Run {
 	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
 		if !self.run {
+			let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
+
 			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
 			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
 
@@ -70,7 +72,7 @@ impl Run {
 				args.push(verbosity.to_string())
 			}
 
-			Command::new("argon")
+			Command::new(program)
 				.args(args)
 				.arg("--run")
 				.env("RUST_LOG_STYLE", log_style)
@@ -86,9 +88,25 @@ impl Run {
 		let port = self.port.unwrap_or(config.port);
 		let project = self.project.unwrap_or(config.project);
 
-		workspace::init(&project, config.auto_init)?;
+		let project_resolved = project::resolve(project)?;
+		let project_exists = project_resolved.exists();
 
-		argon_info!("Serving on: {}:{}, project: {}", host, port, project.to_str().unwrap());
+		if !project_exists && config.auto_init {
+			argon_warn!("Cannot find the project, creating new one!");
+			workspace::init(&project_resolved, config.template)?;
+		} else {
+			bail!(
+				"Project file does not exist in this directory: {}. Run `argon init` or enable `auto_init` setting.",
+				project_resolved.to_str().unwrap()
+			)
+		}
+
+		argon_info!(
+			"Serving on: {}:{}, project: {}",
+			host,
+			port,
+			project_resolved.to_str().unwrap()
+		);
 
 		// fs::watch().ok();
 		// server::start(host.clone(), port.clone())?;
