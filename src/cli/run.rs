@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use clap::{ArgAction, Parser};
 use log::LevelFilter;
 use std::{
@@ -12,17 +12,17 @@ use crate::{argon_info, argon_warn, config::Config, project, server, session, wo
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
 pub struct Run {
-	/// Server host name [type: string, default: "localhost"]
+	/// Server host name [default: "localhost"]
 	#[arg(short = 'H', long)]
 	host: Option<String>,
 
-	/// Server port [type: int, default: 8000]
+	/// Server port [default: 8000]
 	#[arg(short = 'P', long)]
 	port: Option<u16>,
 
-	/// Project path [type: path, default: ".argon"]
+	/// Project path [default: ".argon"]
 	#[arg()]
-	project: Option<PathBuf>,
+	project: Option<String>,
 
 	/// Actually run Argon, used to spawn new process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
@@ -59,13 +59,7 @@ impl Run {
 			}
 
 			if self.project.is_some() {
-				args.push(
-					self.project
-						.unwrap()
-						.to_str()
-						.context("Project path contains invalid characters")?
-						.to_string(),
-				);
+				args.push(self.project.unwrap());
 			}
 
 			if verbosity != "" {
@@ -86,18 +80,18 @@ impl Run {
 
 		let host = self.host.unwrap_or(config.host);
 		let port = self.port.unwrap_or(config.port);
-		let project = self.project.unwrap_or(config.project);
+		let project = self.project.unwrap_or(config.project.clone());
 
-		let project_resolved = project::resolve(project)?;
-		let project_exists = project_resolved.exists();
+		let project_path = project::resolve(project, config.project)?;
+		let project_exists = project_path.exists();
 
 		if !project_exists && config.auto_init {
 			argon_warn!("Cannot find the project, creating new one!");
-			workspace::init(&project_resolved, config.template)?;
-		} else {
+			workspace::init(&project_path, config.template)?;
+		} else if !project_exists {
 			bail!(
 				"Project file does not exist in this directory: {}. Run `argon init` or enable `auto_init` setting.",
-				project_resolved.to_str().unwrap()
+				project_path.to_str().unwrap()
 			)
 		}
 
@@ -105,7 +99,7 @@ impl Run {
 			"Serving on: {}:{}, project: {}",
 			host,
 			port,
-			project_resolved.to_str().unwrap()
+			project_path.to_str().unwrap()
 		);
 
 		// fs::watch().ok();

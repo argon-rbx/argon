@@ -5,29 +5,29 @@ use toml_edit::{table, value, Document};
 
 use crate::utils;
 
-fn get_session_dir() -> Result<PathBuf> {
+fn get_session_path() -> Result<PathBuf> {
 	let home_dir = utils::get_home_dir()?;
-	let session_dir = home_dir.join(".argon").join("session.toml");
+	let session_path = home_dir.join(".argon").join("session.toml");
 
-	Ok(session_dir)
+	Ok(session_path)
 }
 
-fn create_session_doc(session_dir: &PathBuf) -> Result<Document> {
+fn create_session_doc(session_path: &PathBuf) -> Result<Document> {
 	let mut document = Document::new();
 
 	document["last_session"] = value("");
 	document["active_sessions"] = table();
 
-	fs::write(session_dir, document.to_string())?;
+	fs::write(session_path, document.to_string())?;
 
 	Ok(document)
 }
 
 fn get_session_data() -> Result<(Document, PathBuf)> {
-	let session_dir = get_session_dir()?;
+	let session_path = get_session_path()?;
 
-	if session_dir.exists() {
-		let session = fs::read_to_string(&session_dir)?;
+	if session_path.exists() {
+		let session = fs::read_to_string(&session_path)?;
 		let document = session.parse::<Document>()?;
 
 		if document.contains_key("last_session")
@@ -35,23 +35,23 @@ fn get_session_data() -> Result<(Document, PathBuf)> {
 			|| document["last_session"].is_str()
 			|| document["active_sessions"].is_table()
 		{
-			return Ok((document, session_dir));
+			return Ok((document, session_path));
 		}
 
 		warn!("Session data file is corrupted! Creating new one.");
 
-		let document = create_session_doc(&session_dir)?;
+		let document = create_session_doc(&session_path)?;
 
-		return Ok((document, session_dir));
+		return Ok((document, session_path));
 	}
 
-	let document = create_session_doc(&session_dir)?;
+	let document = create_session_doc(&session_path)?;
 
-	Ok((document, session_dir))
+	Ok((document, session_path))
 }
 
 pub fn add(host: String, port: u16, id: u32) -> Result<()> {
-	let (mut document, session_dir) = get_session_data()?;
+	let (mut document, session_path) = get_session_data()?;
 
 	let mut session = host;
 	session.push_str(":");
@@ -60,7 +60,7 @@ pub fn add(host: String, port: u16, id: u32) -> Result<()> {
 	document["last_session"] = value(&session);
 	document["active_sessions"][&session] = value::<i64>(id as i64);
 
-	fs::write(session_dir, document.to_string())?;
+	fs::write(session_path, document.to_string())?;
 
 	Ok(())
 }
@@ -155,7 +155,7 @@ pub fn get_all() -> Option<Vec<(String, u32)>> {
 }
 
 pub fn remove(address: &String) -> Result<()> {
-	let (mut document, session_dir) = get_session_data()?;
+	let (mut document, session_path) = get_session_data()?;
 
 	let last_session = document["last_session"].as_str().unwrap().to_string();
 	let active_sessions = document["active_sessions"].as_table_mut().unwrap();
@@ -172,14 +172,14 @@ pub fn remove(address: &String) -> Result<()> {
 		document["last_session"] = value(last_address);
 	}
 
-	fs::write(session_dir, document.to_string())?;
+	fs::write(session_path, document.to_string())?;
 
 	Ok(())
 }
 
 pub fn remove_all() -> Result<()> {
-	let session_dir = get_session_dir()?;
-	create_session_doc(&session_dir)?;
+	let session_path = get_session_path()?;
+	create_session_doc(&session_path)?;
 
 	Ok(())
 }

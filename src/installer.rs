@@ -28,52 +28,52 @@ pub fn install() -> Result<()> {
 		fs::create_dir(&templates_dir)?;
 	}
 
-	let exe_dir = bin_dir.join("argon");
+	let exe_path = bin_dir.join("argon");
 
-	if !exe_dir.exists() {
+	if !exe_path.exists() {
 		let current_dir = env::current_exe()?;
 
 		let remove_exe = logger::prompt("Installation completed! Do you want to remove this executable?", true);
 
 		if remove_exe {
-			fs::rename(&current_dir, &exe_dir)?;
+			fs::rename(&current_dir, &exe_path)?;
 		} else {
-			fs::copy(&current_dir, &exe_dir)?;
+			fs::copy(&current_dir, &exe_path)?;
 		}
 	}
 
 	globenv::set_path(&bin_dir.to_str().unwrap())?;
 
 	let default_template_dir = templates_dir.join("default");
-	let default_project_dir = default_template_dir.join("project.json");
-	let default_gitignore_dir = default_template_dir.join(".gitignore");
-	let default_readme_dir = default_template_dir.join("README.md");
+	let default_project_path = default_template_dir.join("project.json");
+	let default_gitignore_path = default_template_dir.join(".gitignore");
+	let default_readme_path = default_template_dir.join("README.md");
 
 	if !default_template_dir.exists() {
 		fs::create_dir(&default_template_dir)?;
 	}
 
-	if !default_project_dir.exists() {
-		fs::write(default_project_dir, DEFAULT_PROJECT)?;
+	if !default_project_path.exists() {
+		fs::write(default_project_path, DEFAULT_PROJECT)?;
 	}
 
-	if !default_gitignore_dir.exists() {
-		fs::write(default_gitignore_dir, DEFAULT_GITIGNORE)?;
+	if !default_gitignore_path.exists() {
+		fs::write(default_gitignore_path, DEFAULT_GITIGNORE)?;
 	}
 
-	if !default_readme_dir.exists() {
-		fs::write(default_readme_dir, DEFAULT_README)?;
+	if !default_readme_path.exists() {
+		fs::write(default_readme_path, DEFAULT_README)?;
 	}
 
 	let compact_template_dir = templates_dir.join("compact");
-	let compact_project_dir = compact_template_dir.join("project.json");
+	let compact_project_path = compact_template_dir.join("project.json");
 
 	if !compact_template_dir.exists() {
 		fs::create_dir(&compact_template_dir)?;
 	}
 
-	if !compact_project_dir.exists() {
-		fs::write(compact_project_dir, COMPACT_PROJECT)?;
+	if !compact_project_path.exists() {
+		fs::write(compact_project_path, COMPACT_PROJECT)?;
 	}
 
 	Ok(())

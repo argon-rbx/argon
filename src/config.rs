@@ -2,7 +2,7 @@ use anyhow::Result;
 use log::{info, warn};
 use optfield::optfield;
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf};
+use std::fs;
 use toml;
 
 use crate::utils;
@@ -20,7 +20,7 @@ macro_rules! set_if_some {
 pub struct Config {
 	pub host: String,
 	pub port: u16,
-	pub project: PathBuf,
+	pub project: String,
 	pub template: String,
 	pub auto_init: bool,
 	pub git_init: bool,
@@ -31,7 +31,7 @@ impl Config {
 		let mut config = Config {
 			host: String::from("localhost"),
 			port: 8000,
-			project: PathBuf::from(".argon"),
+			project: String::from(".argon"),
 			template: String::from("default"),
 			auto_init: false,
 			git_init: true,
