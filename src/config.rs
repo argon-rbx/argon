@@ -20,6 +20,7 @@ macro_rules! set_if_some {
 pub struct Config {
 	pub host: String,
 	pub port: u16,
+	pub source: String,
 	pub project: String,
 	pub template: String,
 	pub auto_init: bool,
@@ -31,6 +32,7 @@ impl Config {
 		let mut config = Config {
 			host: String::from("localhost"),
 			port: 8000,
+			source: String::from("src"),
 			project: String::from(".argon"),
 			template: String::from("default"),
 			auto_init: false,
@@ -54,6 +56,7 @@ impl Config {
 
 		set_if_some!(self.host, config.host);
 		set_if_some!(self.port, config.port);
+		set_if_some!(self.source, config.source);
 		set_if_some!(self.project, config.project);
 		set_if_some!(self.template, config.template);
 		set_if_some!(self.auto_init, config.auto_init);

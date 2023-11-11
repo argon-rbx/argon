@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use clap::{ArgAction, Parser};
+use colored::Colorize;
 use log::LevelFilter;
 use std::{
 	env,
@@ -7,7 +8,7 @@ use std::{
 	process::{self, Command},
 };
 
-use crate::{argon_info, argon_warn, config::Config, project, server, session, workspace};
+use crate::{argon_info, argon_warn, config::Config, project, server, session, utils, workspace};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -87,11 +88,20 @@ impl Run {
 
 		if !project_exists && config.auto_init {
 			argon_warn!("Cannot find the project, creating new one!");
-			workspace::init(&project_path, config.template)?;
+			workspace::init(&project_path, config.template, config.source)?;
+
+			if config.git_init {
+				let mut workspace_dir = project_path.clone();
+				workspace_dir.pop();
+
+				utils::initialize_repo(&workspace_dir)?;
+			}
 		} else if !project_exists {
 			bail!(
-				"Project file does not exist in this directory: {}. Run `argon init` or enable `auto_init` setting.",
-				project_path.to_str().unwrap()
+				"Project {} does not exist. Run {} or enable {} setting first.",
+				project_path.to_str().unwrap().bold(),
+				"argon init".bold(),
+				"auto_init".bold()
 			)
 		}
 

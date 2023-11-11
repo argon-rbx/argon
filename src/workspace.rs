@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 
 use crate::utils;
 
-pub fn init(project: &PathBuf, template: String) -> Result<()> {
+pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
@@ -46,7 +46,11 @@ pub fn init(project: &PathBuf, template: String) -> Result<()> {
 		}
 	}
 
-	fs::create_dir(project_dir.join("src"))?;
+	let src_dir = project_dir.join(source);
+
+	if !src_dir.exists() {
+		fs::create_dir(src_dir)?;
+	}
 
 	Ok(())
 }
