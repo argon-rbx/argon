@@ -8,7 +8,12 @@ use std::{
 	process::{self, Command},
 };
 
-use crate::{argon_info, argon_warn, config::Config, project, server, session, utils, workspace};
+use crate::{
+	argon_info, argon_warn,
+	config::Config,
+	project::{self, Project},
+	server, session, workspace,
+};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -94,7 +99,7 @@ impl Run {
 				let mut workspace_dir = project_path.clone();
 				workspace_dir.pop();
 
-				utils::initialize_repo(&workspace_dir)?;
+				workspace::initialize_repo(&workspace_dir)?;
 			}
 		} else if !project_exists {
 			bail!(
@@ -105,15 +110,17 @@ impl Run {
 			)
 		}
 
+		let project = Project::load(project_path.clone())?;
+
+		// fs::watch().ok();
+		// server::start(host.clone(), port.clone())?;
+
 		argon_info!(
 			"Serving on: {}:{}, project: {}",
 			host,
 			port,
 			project_path.to_str().unwrap()
 		);
-
-		// fs::watch().ok();
-		// server::start(host.clone(), port.clone())?;
 
 		session::add(host, port, process::id())
 	}

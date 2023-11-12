@@ -1,7 +1,9 @@
-use anyhow::Result;
-use std::{fs, path::PathBuf};
+use anyhow::{bail, Result};
+use colored::Colorize;
+use log::trace;
+use std::{fs, io, path::PathBuf, process::Command};
 
-use crate::utils;
+use crate::{argon_error, utils};
 
 pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
@@ -35,7 +37,11 @@ pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
 		}
 
 		if file_name == "project.json" || file_name == "README.md" {
-			let name = project_name.replace(".project.json", "");
+			let mut name = project_name.replace(".project.json", "");
+
+			if name == ".argon" {
+				name = String::from("Argon project");
+			}
 
 			let content = fs::read_to_string(file_path)?;
 			let content = content.replace("$name", &name);
@@ -50,6 +56,24 @@ pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
 
 	if !src_dir.exists() {
 		fs::create_dir(src_dir)?;
+	}
+
+	Ok(())
+}
+
+pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
+	match Command::new("git").arg("init").arg(directory).output() {
+		Ok(_) => trace!("Initialized Git repository"),
+		Err(error) => {
+			if error.kind() == io::ErrorKind::NotFound {
+				argon_error!(
+					"Failed to initialize repository: Git is not installed. To suppress this message disable {} setting.",
+					"git_init".bold()
+				);
+			} else {
+				bail!("Failed to initialize Git repository: {}", error)
+			}
+		}
 	}
 
 	Ok(())

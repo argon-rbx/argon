@@ -7,15 +7,7 @@ use toml;
 
 use crate::utils;
 
-macro_rules! set_if_some {
-	($default:expr, $optional:expr) => {
-		if $optional.is_some() {
-			$default = $optional.unwrap();
-		}
-	};
-}
-
-#[optfield(GlobalConfig, attrs)]
+#[optfield(GlobalConfig, attrs, merge_fn)]
 #[derive(Serialize, Deserialize)]
 pub struct Config {
 	pub host: String,
@@ -54,13 +46,7 @@ impl Config {
 		let config_toml = fs::read_to_string(config_dir)?;
 		let config: GlobalConfig = toml::from_str(&config_toml)?;
 
-		set_if_some!(self.host, config.host);
-		set_if_some!(self.port, config.port);
-		set_if_some!(self.source, config.source);
-		set_if_some!(self.project, config.project);
-		set_if_some!(self.template, config.template);
-		set_if_some!(self.auto_init, config.auto_init);
-		set_if_some!(self.git_init, config.git_init);
+		self.merge_opt(config);
 
 		Ok(())
 	}

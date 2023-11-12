@@ -1,10 +1,43 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::{
-	env,
+	collections::BTreeMap,
+	env, fs,
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-pub struct Project {}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Project {
+	pub name: String,
+	pub tree: ProjectTree,
+	pub host: Option<String>,
+	pub port: Option<u16>,
+	pub place_ids: Option<Vec<u64>>,
+	pub ignore_paths: Option<Vec<String>>,
+}
+
+impl Project {
+	pub fn load(project_path: PathBuf) -> Result<Project> {
+		let project = fs::read_to_string(project_path)?;
+		let project: Project = serde_json::from_str(&project)?;
+
+		println!("{:?}", project);
+
+		Ok(project)
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProjectTree {
+	#[serde(rename = "$className")]
+	pub class_name: Option<String>,
+
+	#[serde(rename = "$path")]
+	pub path: Option<PathBuf>,
+
+	#[serde(flatten)]
+	pub node: BTreeMap<String, ProjectTree>,
+}
 
 pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
 	if project.ends_with(MAIN_SEPARATOR) {
