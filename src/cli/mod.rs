@@ -58,10 +58,8 @@ impl Cli {
 	}
 
 	pub fn get_color_choice(&self) -> WriteStyle {
-		let log_style = env::var("RUST_LOG_STYLE");
-
-		if log_style.is_ok() {
-			return match log_style.unwrap().as_str() {
+		if let Ok(log_style) = env::var("RUST_LOG_STYLE") {
+			return match log_style.as_str() {
 				"always" => WriteStyle::Always,
 				"never" => WriteStyle::Never,
 				_ => WriteStyle::Auto,

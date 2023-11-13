@@ -54,7 +54,7 @@ pub fn add(host: String, port: u16, id: u32) -> Result<()> {
 	let (mut document, session_path) = get_session_data()?;
 
 	let mut session = host;
-	session.push_str(":");
+	session.push(':');
 	session.push_str(&port.to_string());
 
 	document["last_session"] = value(&session);
@@ -82,14 +82,14 @@ pub fn get(host: Option<String>, port: Option<u16>) -> Option<(String, u32)> {
 	let active_sessions = document["active_sessions"].as_table().unwrap();
 
 	if host.is_none() && port.is_none() {
-		if active_sessions.contains_key(&last_session) {
+		if active_sessions.contains_key(last_session) {
 			let id = active_sessions[&last_session].as_integer()?;
 
 			return Some((last_session.to_string(), id as u32));
 		}
 	} else if host.is_some() && port.is_some() {
 		let mut session = host.unwrap();
-		session.push_str(":");
+		session.push(':');
 		session.push_str(&port.unwrap().to_string());
 
 		if active_sessions.contains_key(&session) {
@@ -98,13 +98,7 @@ pub fn get(host: Option<String>, port: Option<u16>) -> Option<(String, u32)> {
 			return Some((session, id as u32));
 		}
 	} else {
-		let key: String;
-
-		if port.is_some() {
-			key = port.unwrap().to_string();
-		} else {
-			key = host.unwrap();
-		}
+		let key = host.unwrap_or_else(|| port.unwrap().to_string());
 
 		let mut sessions_vec: Vec<&str> = vec![];
 
@@ -138,7 +132,7 @@ pub fn get_all() -> Option<Vec<(String, u32)>> {
 	let (document, _) = session_data.unwrap();
 	let active_sessions = document["active_sessions"].as_table().unwrap();
 
-	if active_sessions.len() == 0 {
+	if active_sessions.is_empty() {
 		return None;
 	}
 
@@ -160,7 +154,7 @@ pub fn remove(address: &String) -> Result<()> {
 	let last_session = document["last_session"].as_str().unwrap().to_string();
 	let active_sessions = document["active_sessions"].as_table_mut().unwrap();
 
-	active_sessions.remove(&address);
+	active_sessions.remove(address);
 
 	if last_session == *address {
 		let mut last_address = "";

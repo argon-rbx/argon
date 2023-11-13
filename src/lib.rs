@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 pub mod cli;
 pub mod config;
 pub mod crash_handler;

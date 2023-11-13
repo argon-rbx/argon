@@ -16,7 +16,7 @@ pub async fn start(host: String, port: u16) -> Result<()> {
 			.service(home::main)
 			.service(stop::main)
 			.service(sync_server::main)
-			.default_service(web::to(|| default_redirect()))
+			.default_service(web::to(default_redirect))
 	})
 	.bind((host, port))?
 	.run()

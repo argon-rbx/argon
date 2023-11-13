@@ -36,7 +36,7 @@ impl Config {
 			Err(error) => warn!("Failed to load config file: {}", error),
 		}
 
-		return config;
+		config
 	}
 
 	pub fn load(&mut self) -> Result<()> {

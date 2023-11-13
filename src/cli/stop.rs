@@ -53,7 +53,7 @@ impl Stop {
 			for session in sessions.unwrap().iter() {
 				let (address, id) = session;
 
-				Stop::make_request(&client, &address, &id);
+				Stop::make_request(&client, address, id);
 			}
 
 			return session::remove_all();

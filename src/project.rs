@@ -6,6 +6,8 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
+use crate::utils;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
 	pub name: String,
@@ -21,9 +23,11 @@ impl Project {
 		let project = fs::read_to_string(project_path)?;
 		let project: Project = serde_json::from_str(&project)?;
 
-		println!("{:?}", project);
-
 		Ok(project)
+	}
+
+	pub fn get_sync_paths(&self) -> Vec<PathBuf> {
+		vec![]
 	}
 }
 
@@ -47,10 +51,9 @@ pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
 		let mut project_path = PathBuf::from(project);
 		let mut found_project = false;
 
-		for path in glob::glob(&project_glob)? {
+		if let Some(path) = (glob::glob(&project_glob)?).next() {
 			project_path = path?;
 			found_project = true;
-			break;
 		}
 
 		if !found_project {
@@ -60,10 +63,7 @@ pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
 			project_path = project_path.join(default_project);
 		}
 
-		if !project_path.is_absolute() {
-			let current_dir = env::current_dir()?;
-			project_path = current_dir.join(project_path);
-		}
+		project_path = utils::resolve_path(project_path)?;
 
 		return Ok(project_path);
 	}

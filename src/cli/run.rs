@@ -68,7 +68,7 @@ impl Run {
 				args.push(self.project.unwrap());
 			}
 
-			if verbosity != "" {
+			if !verbosity.is_empty() {
 				args.push(verbosity.to_string())
 			}
 
@@ -111,7 +111,10 @@ impl Run {
 		}
 
 		let project = Project::load(project_path.clone())?;
+		let sync_paths = project.get_sync_paths();
 
+		println!("{:?}", project);
+		println!("{:?}", sync_paths);
 		// fs::watch().ok();
 		// server::start(host.clone(), port.clone())?;
 

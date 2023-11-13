@@ -1,11 +1,15 @@
 use anyhow::{bail, Result};
 use colored::Colorize;
 use log::trace;
-use std::{fs, io, path::PathBuf, process::Command};
+use std::{
+	fs, io,
+	path::{Path, PathBuf},
+	process::Command,
+};
 
 use crate::{argon_error, utils};
 
-pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
+pub fn init(project: &Path, template: String, source: String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
@@ -24,13 +28,11 @@ pub fn init(project: &PathBuf, template: String, source: String) -> Result<()> {
 		let file_name = dir_entry.file_name();
 		let file_name = file_name.to_str().unwrap();
 
-		let new_file_path: PathBuf;
-
-		if file_name == "project.json" {
-			new_file_path = project_dir.join(project_name);
+		let new_file_path = if file_name == "project.json" {
+			project_dir.join(project_name)
 		} else {
-			new_file_path = project_dir.join(file_name);
-		}
+			project_dir.join(file_name)
+		};
 
 		if new_file_path.exists() {
 			continue;

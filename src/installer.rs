@@ -42,7 +42,7 @@ pub fn install() -> Result<()> {
 		}
 	}
 
-	globenv::set_path(&bin_dir.to_str().unwrap())?;
+	globenv::set_path(bin_dir.to_str().unwrap())?;
 
 	let default_template_dir = templates_dir.join("default");
 	let default_project_path = default_template_dir.join("project.json");
