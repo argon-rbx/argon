@@ -7,12 +7,14 @@ use std::{
 	path::PathBuf,
 	process::{self, Command},
 };
+use tokio::runtime::Runtime;
 
 use crate::{
 	argon_info, argon_warn,
 	config::Config,
+	fs::Fs,
 	project::{self, Project},
-	server, session, workspace,
+	server, session, utils, workspace,
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -96,8 +98,7 @@ impl Run {
 			workspace::init(&project_path, config.template, config.source)?;
 
 			if config.git_init {
-				let mut workspace_dir = project_path.clone();
-				workspace_dir.pop();
+				let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
 
 				workspace::initialize_repo(&workspace_dir)?;
 			}
@@ -110,13 +111,22 @@ impl Run {
 			)
 		}
 
-		let project = Project::load(project_path.clone())?;
-		let sync_paths = project.get_sync_paths();
+		let project = Project::load(&project_path)?;
+		let project_paths = project.get_sync_paths();
+		let project_root = project.get_root_path();
 
-		println!("{:?}", project);
-		println!("{:?}", sync_paths);
-		// fs::watch().ok();
-		// server::start(host.clone(), port.clone())?;
+		let runtime = Runtime::new()?;
+
+		runtime.spawn({
+			let local_paths = project_paths.clone();
+			let local_root = project_root.clone();
+
+			async move {
+				Fs::new(local_root).start(&local_paths).await.ok();
+			}
+		});
+
+		session::add(&host, &port, process::id())?;
 
 		argon_info!(
 			"Serving on: {}:{}, project: {}",
@@ -125,6 +135,8 @@ impl Run {
 			project_path.to_str().unwrap()
 		);
 
-		session::add(host, port, process::id())
+		server::start(host, port)?;
+
+		Ok(())
 	}
 }

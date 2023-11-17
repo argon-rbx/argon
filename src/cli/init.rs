@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 
-use crate::{argon_info, argon_warn, config::Config, project, workspace};
+use crate::{argon_info, argon_warn, config::Config, project, utils, workspace};
 
 #[derive(Parser)]
 pub struct Init {
@@ -38,8 +38,7 @@ impl Init {
 		workspace::init(&project_path, template, source)?;
 
 		if config.git_init {
-			let mut workspace_dir = project_path.clone();
-			workspace_dir.pop();
+			let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
 
 			workspace::initialize_repo(&workspace_dir)?;
 		}

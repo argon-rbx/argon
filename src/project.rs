@@ -11,28 +11,68 @@ use crate::utils;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
 	pub name: String,
-	pub tree: ProjectTree,
+	#[serde(rename = "tree")]
+	pub node: ProjectNode,
 	pub host: Option<String>,
 	pub port: Option<u16>,
 	pub place_ids: Option<Vec<u64>>,
 	pub ignore_paths: Option<Vec<String>>,
+
+	#[serde(skip)]
+	root: PathBuf,
 }
 
 impl Project {
-	pub fn load(project_path: PathBuf) -> Result<Project> {
+	pub fn load(project_path: &PathBuf) -> Result<Project> {
 		let project = fs::read_to_string(project_path)?;
-		let project: Project = serde_json::from_str(&project)?;
+		let mut project: Project = serde_json::from_str(&project)?;
+
+		let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
+
+		project.root = workspace_dir;
 
 		Ok(project)
 	}
 
 	pub fn get_sync_paths(&self) -> Vec<PathBuf> {
-		vec![]
+		fn get_paths(tree: &BTreeMap<String, ProjectNode>, root: &PathBuf) -> Vec<PathBuf> {
+			let mut paths: Vec<PathBuf> = vec![];
+
+			for node in tree.values() {
+				if node.path.is_some() {
+					let mut path = node.path.clone().unwrap();
+
+					if !path.is_absolute() {
+						path = root.join(path);
+					}
+
+					paths.push(path);
+				}
+
+				paths.append(&mut get_paths(&node.tree, root));
+			}
+
+			paths
+		}
+
+		// TODO: Utilize `class_name` to create `from` field for
+		// Redirect object, later used for two-way sync
+
+		get_paths(&self.node.tree, &self.root)
+	}
+
+	pub fn get_root_path(&self) -> &PathBuf {
+		&self.root
 	}
 }
 
+// struct Redirect {
+// 	from: PathBuf,
+// 	to: PathBuf,
+// }
+
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ProjectTree {
+pub struct ProjectNode {
 	#[serde(rename = "$className")]
 	pub class_name: Option<String>,
 
@@ -40,7 +80,7 @@ pub struct ProjectTree {
 	pub path: Option<PathBuf>,
 
 	#[serde(flatten)]
-	pub node: BTreeMap<String, ProjectTree>,
+	pub tree: BTreeMap<String, ProjectNode>,
 }
 
 pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {

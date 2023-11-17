@@ -14,11 +14,10 @@ pub fn init(project: &Path, template: String, source: String) -> Result<()> {
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
 	let project_name = project.file_name().unwrap().to_str().unwrap();
-	let mut project_dir = project.to_path_buf();
-	project_dir.pop();
+	let workspace_dir = utils::get_workspace_dir(project.to_owned());
 
-	if !project_dir.exists() {
-		fs::create_dir_all(&project_dir)?;
+	if !workspace_dir.exists() {
+		fs::create_dir_all(&workspace_dir)?;
 	}
 
 	for dir_entry in fs::read_dir(template_dir)? {
@@ -29,9 +28,9 @@ pub fn init(project: &Path, template: String, source: String) -> Result<()> {
 		let file_name = file_name.to_str().unwrap();
 
 		let new_file_path = if file_name == "project.json" {
-			project_dir.join(project_name)
+			workspace_dir.join(project_name)
 		} else {
-			project_dir.join(file_name)
+			workspace_dir.join(file_name)
 		};
 
 		if new_file_path.exists() {
@@ -54,7 +53,7 @@ pub fn init(project: &Path, template: String, source: String) -> Result<()> {
 		}
 	}
 
-	let src_dir = project_dir.join(source);
+	let src_dir = workspace_dir.join(source);
 
 	if !src_dir.exists() {
 		fs::create_dir(src_dir)?;

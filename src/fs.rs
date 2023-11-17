@@ -1,27 +1,59 @@
-use notify::{Config, RecommendedWatcher, RecursiveMode, Result, Watcher};
-//use std::net::{TcpListener, TcpStream};
-use std::path::Path;
+use anyhow::Result;
+use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+use std::{path::PathBuf, sync::mpsc};
 
-use crate::argon_info;
+pub struct Fs {
+	watcher: RecommendedWatcher,
+	receiver: mpsc::Receiver<notify::Result<notify::Event>>,
+	sync_paths: Vec<PathBuf>,
+	project_root: PathBuf,
+}
 
-#[tokio::main]
-pub async fn watch() -> Result<()> {
-	argon_info!("Started watching file changes!");
+impl Fs {
+	pub fn new(project_root: PathBuf) -> Self {
+		let (sender, receiver) = mpsc::channel();
+		let config = Config::default().with_compare_contents(true);
+		let watcher = RecommendedWatcher::new(sender, config).unwrap();
 
-	let (sender, receiver) = std::sync::mpsc::channel();
-
-	let mut watcher = RecommendedWatcher::new(sender, Config::default())?;
-
-	watcher.watch(Path::new("."), RecursiveMode::Recursive)?;
-
-	for response in receiver {
-		match response {
-			Ok(event) => println!("{event:?}"),
-			Err(error) => println!("error: {:?}", error),
+		Self {
+			watcher,
+			receiver,
+			sync_paths: vec![],
+			project_root,
 		}
 	}
 
-	println!("end!");
+	pub async fn start(&mut self, sync_paths: &Vec<PathBuf>) -> Result<()> {
+		self.sync_paths = sync_paths.to_owned();
 
-	Ok(())
+		self.watch(sync_paths)?;
+		self.main().await?;
+
+		Ok(())
+	}
+
+	fn watch(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
+		self.watcher.watch(&self.project_root, RecursiveMode::NonRecursive)?;
+
+		for path in paths {
+			if path.exists() {
+				self.watcher.watch(path, RecursiveMode::Recursive)?;
+			}
+		}
+
+		Ok(())
+	}
+
+	async fn main(&self) -> Result<()> {
+		for response in &self.receiver {
+			match response {
+				Ok(event) => println!("{event:?}"),
+				Err(error) => println!("error: {:?}", error),
+			}
+		}
+
+		Ok(())
+	}
 }
+
+unsafe impl Sync for Fs {}

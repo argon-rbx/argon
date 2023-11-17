@@ -50,10 +50,10 @@ fn get_session_data() -> Result<(Document, PathBuf)> {
 	Ok((document, session_path))
 }
 
-pub fn add(host: String, port: u16, id: u32) -> Result<()> {
+pub fn add(host: &String, port: &u16, id: u32) -> Result<()> {
 	let (mut document, session_path) = get_session_data()?;
 
-	let mut session = host;
+	let mut session = host.to_owned();
 	session.push(':');
 	session.push_str(&port.to_string());
 
