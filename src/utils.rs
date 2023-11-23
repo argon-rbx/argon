@@ -21,8 +21,8 @@ pub fn resolve_path(mut path: PathBuf) -> Result<PathBuf> {
 }
 
 pub fn get_workspace_dir(project_path: PathBuf) -> PathBuf {
-	let mut project_dir = project_path.to_owned();
-	project_dir.pop();
+	let mut workspace_dir = project_path.to_owned();
+	workspace_dir.pop();
 
-	project_dir
+	workspace_dir
 }

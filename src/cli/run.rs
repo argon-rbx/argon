@@ -95,7 +95,7 @@ impl Run {
 
 		if !project_exists && config.auto_init {
 			argon_warn!("Cannot find the project, creating new one!");
-			workspace::init(&project_path, config.template, config.source)?;
+			workspace::init(&project_path, &config.template, &config.source)?;
 
 			if config.git_init {
 				let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
@@ -120,9 +120,14 @@ impl Run {
 		runtime.spawn({
 			let local_paths = project_paths.clone();
 			let local_root = project_root.clone();
+			let local_source = config.source.clone();
 
 			async move {
-				Fs::new(local_root).start(&local_paths).await.ok();
+				Fs::new(local_root, local_source)
+					.unwrap()
+					.start(&local_paths)
+					.await
+					.ok();
 			}
 		});
 

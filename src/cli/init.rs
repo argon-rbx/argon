@@ -35,7 +35,7 @@ impl Init {
 			return Ok(());
 		}
 
-		workspace::init(&project_path, template, source)?;
+		workspace::init(&project_path, &template, &source)?;
 
 		if config.git_init {
 			let workspace_dir = utils::get_workspace_dir(project_path.to_owned());

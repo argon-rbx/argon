@@ -9,7 +9,7 @@ use std::{
 
 use crate::{argon_error, utils};
 
-pub fn init(project: &Path, template: String, source: String) -> Result<()> {
+pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 

@@ -325,6 +325,7 @@ dependencies = [
  "globenv",
  "log",
  "notify",
+ "notify-debouncer-full",
  "open",
  "optfield",
  "panic-message",
@@ -729,6 +730,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 
 [[package]]
+name = "file-id"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6584280525fb2059cba3db2c04abf947a1a29a45ddae89f3870f8281704fafc9"
+dependencies = [
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "filetime"
 version = "0.2.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -840,9 +850,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "globenv"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edc681d2b2320e478db87d77e21351c27d114926be61c5808098bbd060f3d759"
+checksum = "a7019c2afcc6aa0392b6313c295ef89c1a6a43a8105841e34752fc7b23e714e8"
 dependencies = [
  "winreg",
 ]
@@ -1158,6 +1168,20 @@ dependencies = [
  "mio",
  "walkdir",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "notify-debouncer-full"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49f5dab59c348b9b50cf7f261960a20e389feb2713636399cd9082cd4b536154"
+dependencies = [
+ "crossbeam-channel",
+ "file-id",
+ "log",
+ "notify",
+ "parking_lot",
+ "walkdir",
 ]
 
 [[package]]
@@ -2081,9 +2105,9 @@ dependencies = [
 
 [[package]]
 name = "winreg"
-version = "0.51.0"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "937f3df7948156640f46aacef17a70db0de5917bda9c92b0f751f3a955b588fc"
+checksum = "a277a57398d4bfa075df44f501a17cfdf8542d224f0d36095a2adc7aee4ef0a5"
 dependencies = [
  "cfg-if",
  "windows-sys 0.48.0",
