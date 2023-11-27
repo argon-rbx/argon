@@ -6,8 +6,8 @@ use std::{
 	env,
 	path::PathBuf,
 	process::{self, Command},
+	thread,
 };
-use tokio::runtime::Runtime;
 
 use crate::{
 	argon_info, argon_warn,
@@ -115,21 +115,9 @@ impl Run {
 		let project_paths = project.get_sync_paths();
 		let project_root = project.get_root_path();
 
-		let runtime = Runtime::new()?;
+		let mut fs = Fs::new(project_root, &project_paths)?;
 
-		runtime.spawn({
-			let local_paths = project_paths.clone();
-			let local_root = project_root.clone();
-			let local_source = config.source.clone();
-
-			async move {
-				Fs::new(local_root, local_source)
-					.unwrap()
-					.start(&local_paths)
-					.await
-					.ok();
-			}
-		});
+		thread::spawn(move || fs.start());
 
 		session::add(&host, &port, process::id())?;
 
