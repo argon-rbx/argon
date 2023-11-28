@@ -113,9 +113,8 @@ impl Run {
 
 		let project = Project::load(&project_path)?;
 		let project_paths = project.get_sync_paths();
-		let project_root = project.get_root_path();
 
-		let mut fs = Fs::new(project_root, &project_paths)?;
+		let mut fs = Fs::new(&project.workspace, &project.project, &project_paths)?;
 
 		thread::spawn(move || fs.start());
 

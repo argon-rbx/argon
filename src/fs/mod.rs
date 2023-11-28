@@ -1,7 +1,9 @@
 mod debouncer;
 mod watcher;
 
-use self::watcher::{ArgonWatcher, WorkspaceEvent};
+use crate::project::Project;
+
+use self::watcher::{ArgonWatcher, WorkspaceEvent, WorkspaceEventKind};
 use anyhow::Result;
 use std::{
 	path::PathBuf,
@@ -15,12 +17,13 @@ pub struct Fs {
 	watcher: ArgonWatcher,
 	receiver: Arc<Mutex<Receiver<WorkspaceEvent>>>,
 	sync_paths: Vec<PathBuf>,
+	project: PathBuf,
 }
 
 impl Fs {
-	pub fn new(root_dir: &PathBuf, sync_paths: &Vec<PathBuf>) -> Result<Self> {
+	pub fn new(workspace: &PathBuf, project: &PathBuf, sync_paths: &Vec<PathBuf>) -> Result<Self> {
 		let (sender, receiver) = mpsc::channel();
-		let watcher = ArgonWatcher::new(root_dir, &sender)?;
+		let watcher = ArgonWatcher::new(workspace, &sender)?;
 
 		let receiver = Arc::new(Mutex::new(receiver));
 
@@ -28,6 +31,7 @@ impl Fs {
 			watcher,
 			receiver,
 			sync_paths: sync_paths.to_owned(),
+			project: project.to_owned(),
 		};
 
 		fs.watch()?;
@@ -43,6 +47,24 @@ impl Fs {
 		self.watcher.start()?;
 
 		for event in receiver.iter() {
+			if event.root {
+				match event.kind {
+					WorkspaceEventKind::Write => {
+						if event.path == self.project {
+							self.update(true)?;
+						}
+					}
+					_ => {
+						if event.path.is_dir() && self.sync_paths.contains(&event.path) {
+							self.update(false)?;
+						}
+					}
+				}
+
+				continue;
+			}
+
+			// TODO: Add to queue here
 			println!("{:?}", event);
 		}
 
@@ -61,6 +83,21 @@ impl Fs {
 		for path in &self.sync_paths {
 			self.watcher.unwatch(path)?;
 		}
+
+		Ok(())
+	}
+
+	fn update(&mut self, is_project: bool) -> Result<()> {
+		self.unwatch()?;
+
+		if is_project {
+			let project = Project::load(&self.project)?;
+			let project_paths = project.get_sync_paths();
+
+			self.sync_paths = project_paths;
+		}
+
+		self.watch()?;
 
 		Ok(())
 	}

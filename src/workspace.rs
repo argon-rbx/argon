@@ -46,6 +46,7 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 
 			let content = fs::read_to_string(file_path)?;
 			let content = content.replace("$name", &name);
+			let content = content.replace("$source", source);
 
 			fs::write(new_file_path, content)?;
 		} else {
@@ -53,10 +54,10 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 		}
 	}
 
-	let src_dir = workspace_dir.join(source);
+	let source_dir = workspace_dir.join(source);
 
-	if !src_dir.exists() {
-		fs::create_dir(src_dir)?;
+	if !source_dir.exists() {
+		fs::create_dir(source_dir)?;
 	}
 
 	Ok(())

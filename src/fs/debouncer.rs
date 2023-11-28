@@ -34,7 +34,11 @@ impl ArgonDebouncer {
 
 		match event.kind {
 			EventKind::Create(_) => {
-				send(WorkspaceEventKind::Create, get_path());
+				let path = get_path();
+
+				if path.exists() {
+					send(WorkspaceEventKind::Create, path);
+				}
 			}
 			EventKind::Modify(kind) => match kind {
 				ModifyKind::Name(_) => {

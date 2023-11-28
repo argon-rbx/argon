@@ -19,7 +19,10 @@ pub struct Project {
 	pub ignore_paths: Option<Vec<String>>,
 
 	#[serde(skip)]
-	root: PathBuf,
+	pub project: PathBuf,
+
+	#[serde(skip)]
+	pub workspace: PathBuf,
 }
 
 impl Project {
@@ -29,7 +32,8 @@ impl Project {
 
 		let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
 
-		project.root = workspace_dir;
+		project.project = project_path.to_owned();
+		project.workspace = workspace_dir;
 
 		Ok(project)
 	}
@@ -58,11 +62,7 @@ impl Project {
 		// TODO: Utilize `class_name` to create `from` field for
 		// Redirect object, later used for two-way sync
 
-		get_paths(&self.node.tree, &self.root)
-	}
-
-	pub fn get_root_path(&self) -> &PathBuf {
-		&self.root
+		get_paths(&self.node.tree, &self.workspace)
 	}
 }
 
