@@ -1,25 +1,32 @@
 mod debouncer;
 mod watcher;
 
+use self::watcher::{ArgonWatcher, WorkspaceEvent};
 use anyhow::Result;
-
 use std::{
 	path::PathBuf,
-	sync::mpsc::{self},
+	sync::{
+		mpsc::{self, Receiver},
+		Arc, Mutex,
+	},
 };
-use watcher::WorkspaceWatcher;
 
 pub struct Fs {
-	watcher: WorkspaceWatcher,
+	watcher: ArgonWatcher,
+	receiver: Arc<Mutex<Receiver<WorkspaceEvent>>>,
 	sync_paths: Vec<PathBuf>,
 }
 
 impl Fs {
 	pub fn new(root_dir: &PathBuf, sync_paths: &Vec<PathBuf>) -> Result<Self> {
-		let watcher = WorkspaceWatcher::new(root_dir.to_owned())?;
+		let (sender, receiver) = mpsc::channel();
+		let watcher = ArgonWatcher::new(root_dir, &sender)?;
+
+		let receiver = Arc::new(Mutex::new(receiver));
 
 		let mut fs = Self {
 			watcher,
+			receiver,
 			sync_paths: sync_paths.to_owned(),
 		};
 
@@ -30,11 +37,13 @@ impl Fs {
 
 	#[tokio::main]
 	pub async fn start(&mut self) -> Result<()> {
-		let (sender, receiver) = mpsc::channel();
-		self.watcher.start(sender)?;
+		let receiver = self.receiver.clone();
+		let receiver = receiver.lock().unwrap();
 
-		for event in receiver {
-			// println!("{:?}", event);
+		self.watcher.start()?;
+
+		for event in receiver.iter() {
+			println!("{:?}", event);
 		}
 
 		Ok(())
