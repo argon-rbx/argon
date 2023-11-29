@@ -17,7 +17,7 @@ use std::{
 
 pub struct ArgonWatcher {
 	debouncer: Debouncer<RecommendedWatcher, FileIdMap>,
-	argon_debouncer: Arc<ArgonDebouncer>,
+	argon_debouncer: Arc<Mutex<ArgonDebouncer>>,
 	receiver: Arc<Mutex<Receiver<Result<Vec<DebouncedEvent>, Vec<Error>>>>>,
 	watched_paths: Vec<PathBuf>,
 }
@@ -26,12 +26,13 @@ impl ArgonWatcher {
 	pub fn new(root: &PathBuf, handler: &Sender<WorkspaceEvent>) -> Result<Self> {
 		let (sender, receiver) = mpsc::channel();
 		let mut debouncer = new_debouncer(Duration::from_millis(100), None, sender, false)?;
-		let argon_debouncer = Arc::new(ArgonDebouncer::new(root, handler));
+		let argon_debouncer = ArgonDebouncer::new(root, handler);
 
 		debouncer.watcher().watch(root, RecursiveMode::NonRecursive)?;
 		debouncer.cache().add_root(root, RecursiveMode::NonRecursive);
 
 		let receiver = Arc::new(Mutex::new(receiver));
+		let argon_debouncer = Arc::new(Mutex::new(argon_debouncer));
 
 		Ok(Self {
 			debouncer,
@@ -70,6 +71,12 @@ impl ArgonWatcher {
 
 		thread::spawn(move || {
 			let receiver = receiver.lock().unwrap();
+
+			#[cfg(not(target_os = "linux"))]
+			let argon_debouncer = argon_debouncer.lock().unwrap();
+
+			#[cfg(target_os = "linux")]
+			let mut argon_debouncer = argon_debouncer.lock().unwrap();
 
 			for response in receiver.iter() {
 				for event in response.unwrap() {
