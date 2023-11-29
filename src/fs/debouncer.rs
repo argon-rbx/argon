@@ -1,29 +1,27 @@
 use super::watcher::{WorkspaceEvent, WorkspaceEventKind};
-use notify::{event::ModifyKind, EventKind};
+use notify::EventKind;
 use notify_debouncer_full::DebouncedEvent;
-use std::{
-	path::PathBuf,
-	sync::mpsc::Sender,
-	time::{Duration, Instant},
-};
+use std::{path::PathBuf, sync::mpsc::Sender};
 
 #[cfg(target_os = "macos")]
-use notify::event::DataChange;
+use notify::event::{DataChange, ModifyKind};
 
 #[cfg(target_os = "linux")]
-use notify::event::{AccessKind, AccessMode, RenameMode};
+use {
+	notify::event::{AccessKind, AccessMode, ModifyKind, RenameMode},
+	std::time::{Duration, Instant},
+};
 
-#[allow(dead_code)]
+#[cfg(target_os = "linux")]
 const DEBOUNCE_TIME: Duration = Duration::from_micros(500);
 
 pub struct ArgonDebouncer {
 	root: PathBuf,
 	sender: Sender<WorkspaceEvent>,
 
-	#[allow(dead_code)]
+	#[cfg(target_os = "linux")]
 	time: Instant,
-
-	#[allow(dead_code)]
+	#[cfg(target_os = "linux")]
 	path: PathBuf,
 }
 
@@ -32,7 +30,10 @@ impl ArgonDebouncer {
 		Self {
 			root: root.to_owned(),
 			sender: sender.to_owned(),
+
+			#[cfg(target_os = "linux")]
 			time: Instant::now(),
+			#[cfg(target_os = "linux")]
 			path: PathBuf::new(),
 		}
 	}
@@ -71,10 +72,8 @@ impl ArgonDebouncer {
 					}
 				}
 				ModifyKind::Data(kind) => {
-					let path = self.get_path(event);
-
-					if kind == DataChange::Content && path.is_file() {
-						self.send(WorkspaceEventKind::Write, path);
+					if kind == DataChange::Content {
+						self.send(WorkspaceEventKind::Write, self.get_path(event));
 					}
 				}
 				_ => {}
@@ -123,6 +122,17 @@ impl ArgonDebouncer {
 
 	#[cfg(target_os = "windows")]
 	pub fn debounce(&self, event: &DebouncedEvent) {
-		println!("{:?}", event);
+		match event.kind {
+			EventKind::Create(_) => {
+				self.send(WorkspaceEventKind::Create, self.get_path(event));
+			}
+			EventKind::Remove(_) => {
+				self.send(WorkspaceEventKind::Delete, self.get_path(event));
+			}
+			EventKind::Modify(_) => {
+				self.send(WorkspaceEventKind::Write, self.get_path(event));
+			}
+			_ => {}
+		}
 	}
 }
