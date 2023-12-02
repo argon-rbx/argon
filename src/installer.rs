@@ -28,21 +28,25 @@ pub fn install() -> Result<()> {
 		fs::create_dir(&templates_dir)?;
 	}
 
+	globenv::set_path(bin_dir.to_str().unwrap())?;
+
+	#[cfg(not(target_os = "windows"))]
 	let exe_path = bin_dir.join("argon");
 
+	#[cfg(target_os = "windows")]
+	let exe_path = bin_dir.join("argon.exe");
+
 	if !exe_path.exists() {
-		let current_dir = env::current_exe()?;
+		let current_exe = env::current_exe()?;
+
+		fs::copy(current_exe, &exe_path)?;
 
 		let remove_exe = logger::prompt("Installation completed! Do you want to remove this executable?", true);
 
 		if remove_exe {
-			fs::rename(&current_dir, &exe_path)?;
-		} else {
-			fs::copy(&current_dir, &exe_path)?;
+			self_replace::self_delete()?;
 		}
 	}
-
-	globenv::set_path(bin_dir.to_str().unwrap())?;
 
 	let default_template_dir = templates_dir.join("default");
 	let default_project_path = default_template_dir.join("project.json");
