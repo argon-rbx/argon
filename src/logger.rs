@@ -117,8 +117,8 @@ impl Theme for PromptTheme {
 }
 
 impl PromptTheme {
-	fn color() -> PromptTheme {
-		PromptTheme {
+	fn color() -> Self {
+		Self {
 			prompt_style: Style::new().for_stderr(),
 			prompt_prefix: style("PROMPT".to_string()).for_stderr().blue().bold(),
 			prompt_suffix: style("·".to_string()).for_stderr().black().bright(),
@@ -129,8 +129,8 @@ impl PromptTheme {
 		}
 	}
 
-	fn no_color() -> PromptTheme {
-		PromptTheme {
+	fn no_color() -> Self {
+		Self {
 			prompt_style: Style::new().for_stderr(),
 			prompt_prefix: style("PROMPT".to_string()).for_stderr(),
 			prompt_suffix: style("·".to_string()).for_stderr(),

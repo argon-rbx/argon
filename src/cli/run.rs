@@ -6,15 +6,16 @@ use std::{
 	env,
 	path::PathBuf,
 	process::{self, Command},
-	thread,
 };
 
 use crate::{
 	argon_info, argon_warn,
 	config::Config,
+	core::Core,
 	fs::Fs,
 	project::{self, Project},
-	server, session, utils, workspace,
+	server::Server,
+	session, workspace,
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -56,18 +57,18 @@ impl Run {
 
 			let mut args = vec![String::from("run")];
 
-			if self.host.is_some() {
+			if let Some(host) = self.host {
 				args.push(String::from("--host"));
-				args.push(self.host.unwrap())
+				args.push(host)
 			}
 
-			if self.port.is_some() {
+			if let Some(port) = self.port {
 				args.push(String::from("--port"));
-				args.push(self.port.unwrap().to_string());
+				args.push(port.to_string());
 			}
 
-			if self.project.is_some() {
-				args.push(self.project.unwrap());
+			if let Some(project) = self.project {
+				args.push(project)
 			}
 
 			if !verbosity.is_empty() {
@@ -84,7 +85,7 @@ impl Run {
 			return Ok(());
 		}
 
-		let config = Config::new();
+		let config = Config::load();
 
 		let host = self.host.unwrap_or(config.host);
 		let port = self.port.unwrap_or(config.port);
@@ -98,7 +99,7 @@ impl Run {
 			workspace::init(&project_path, &config.template, &config.source)?;
 
 			if config.git_init {
-				let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
+				let workspace_dir = workspace::get_dir(project_path.to_owned());
 
 				workspace::initialize_repo(&workspace_dir)?;
 			}
@@ -112,11 +113,11 @@ impl Run {
 		}
 
 		let project = Project::load(&project_path)?;
-		let project_paths = project.get_sync_paths();
+		let fs = Fs::new(&project)?;
+		let core = Core::new(project, fs);
+		let server = Server::new(core);
 
-		let mut fs = Fs::new(&project.workspace, &project.project, &project_paths)?;
-
-		thread::spawn(move || fs.start());
+		// thread::spawn(move || fs.start());
 
 		session::add(&host, &port, process::id())?;
 
@@ -127,7 +128,7 @@ impl Run {
 			project_path.to_str().unwrap()
 		);
 
-		server::start(host, port)?;
+		server.start()?;
 
 		Ok(())
 	}

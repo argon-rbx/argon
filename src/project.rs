@@ -2,11 +2,11 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::BTreeMap,
-	env, fs,
+	fs,
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::utils;
+use crate::{utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
@@ -26,11 +26,11 @@ pub struct Project {
 }
 
 impl Project {
-	pub fn load(project_path: &PathBuf) -> Result<Project> {
+	pub fn load(project_path: &PathBuf) -> Result<Self> {
 		let project = fs::read_to_string(project_path)?;
 		let mut project: Project = serde_json::from_str(&project)?;
 
-		let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
+		let workspace_dir = workspace::get_dir(project_path.to_owned());
 
 		project.project = project_path.to_owned();
 		project.workspace = workspace_dir;
@@ -43,8 +43,8 @@ impl Project {
 			let mut paths: Vec<PathBuf> = vec![];
 
 			for node in tree.values() {
-				if node.path.is_some() {
-					let mut path = node.path.clone().unwrap();
+				if let Some(path) = &node.path {
+					let mut path = path.clone();
 
 					if !path.is_absolute() {
 						path = root.join(path);
@@ -112,12 +112,5 @@ pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
 		project.push_str(".project.json")
 	}
 
-	let mut project_path = PathBuf::from(project);
-
-	if !project_path.is_absolute() {
-		let current_dir = env::current_dir()?;
-		project_path = current_dir.join(project_path);
-	}
-
-	Ok(project_path)
+	utils::resolve_path(PathBuf::from(project))
 }

@@ -21,17 +21,17 @@ pub struct Fs {
 }
 
 impl Fs {
-	pub fn new(workspace: &PathBuf, project: &PathBuf, sync_paths: &Vec<PathBuf>) -> Result<Self> {
+	pub fn new(project: &Project) -> Result<Self> {
 		let (sender, receiver) = mpsc::channel();
-		let watcher = ArgonWatcher::new(workspace, &sender)?;
+		let watcher = ArgonWatcher::new(&project.workspace, &sender)?;
 
 		let receiver = Arc::new(Mutex::new(receiver));
 
 		let mut fs = Self {
 			watcher,
 			receiver,
-			sync_paths: sync_paths.to_owned(),
-			project: project.to_owned(),
+			sync_paths: project.get_sync_paths().to_owned(),
+			project: project.project.to_owned(),
 		};
 
 		fs.watch()?;

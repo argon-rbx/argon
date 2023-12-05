@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 
-use crate::{argon_info, argon_warn, config::Config, project, utils, workspace};
+use crate::{argon_info, argon_warn, config::Config, project, workspace};
 
 #[derive(Parser)]
 pub struct Init {
@@ -21,7 +21,7 @@ pub struct Init {
 
 impl Init {
 	pub fn main(self) -> Result<()> {
-		let config = Config::new();
+		let config = Config::load();
 
 		let project = self.project.unwrap_or(config.project.clone());
 		let template = self.template.unwrap_or(config.template);
@@ -38,7 +38,7 @@ impl Init {
 		workspace::init(&project_path, &template, &source)?;
 
 		if config.git_init {
-			let workspace_dir = utils::get_workspace_dir(project_path.to_owned());
+			let workspace_dir = workspace::get_dir(project_path.to_owned());
 
 			workspace::initialize_repo(&workspace_dir)?;
 		}

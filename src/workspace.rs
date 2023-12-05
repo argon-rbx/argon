@@ -7,14 +7,14 @@ use std::{
 	process::Command,
 };
 
-use crate::{argon_error, utils};
+use crate::{argon_error, logger, utils};
 
 pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
 	let project_name = project.file_name().unwrap().to_str().unwrap();
-	let workspace_dir = utils::get_workspace_dir(project.to_owned());
+	let workspace_dir = get_dir(project.to_owned());
 
 	if !workspace_dir.exists() {
 		fs::create_dir_all(&workspace_dir)?;
@@ -72,6 +72,12 @@ pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
 					"Failed to initialize repository: Git is not installed. To suppress this message disable {} setting.",
 					"git_init".bold()
 				);
+
+				let install_git = logger::prompt("Do you want to install Git now?", false);
+
+				if install_git {
+					open::that("https://git-scm.com/downloads")?;
+				}
 			} else {
 				bail!("Failed to initialize Git repository: {}", error)
 			}
@@ -79,4 +85,11 @@ pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+pub fn get_dir(project_path: PathBuf) -> PathBuf {
+	let mut workspace_dir = project_path.to_owned();
+	workspace_dir.pop();
+
+	workspace_dir
 }

@@ -20,8 +20,8 @@ pub struct Config {
 }
 
 impl Config {
-	pub fn new() -> Config {
-		let mut config = Config {
+	pub fn load() -> Self {
+		let mut config = Self {
 			host: String::from("localhost"),
 			port: 8000,
 			source: String::from("src"),
@@ -31,7 +31,7 @@ impl Config {
 			git_init: true,
 		};
 
-		match config.load() {
+		match config.load_global() {
 			Ok(()) => info!("Config file loaded"),
 			Err(error) => warn!("Failed to load config file: {}", error),
 		}
@@ -39,7 +39,7 @@ impl Config {
 		config
 	}
 
-	pub fn load(&mut self) -> Result<()> {
+	pub fn load_global(&mut self) -> Result<()> {
 		let home_dir = utils::get_home_dir()?;
 		let config_dir = home_dir.join(".argon").join("config.toml");
 
