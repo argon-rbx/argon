@@ -8,15 +8,7 @@ use std::{
 	process::{self, Command},
 };
 
-use crate::{
-	argon_info, argon_warn,
-	config::Config,
-	core::Core,
-	fs::Fs,
-	project::{self, Project},
-	server::Server,
-	session, workspace,
-};
+use crate::{argon_info, argon_warn, config::Config, core::Core, project, server::Server, session, workspace};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -87,11 +79,11 @@ impl Run {
 
 		let config = Config::load();
 
-		let host = self.host.unwrap_or(config.host);
+		let host = self.host.unwrap_or(config.host.clone());
 		let port = self.port.unwrap_or(config.port);
 		let project = self.project.unwrap_or(config.project.clone());
 
-		let project_path = project::resolve(project, config.project)?;
+		let project_path = project::resolve(project, &config.project)?;
 		let project_exists = project_path.exists();
 
 		if !project_exists && config.auto_init {
@@ -112,12 +104,8 @@ impl Run {
 			)
 		}
 
-		let project = Project::load(&project_path)?;
-		let fs = Fs::new(&project)?;
-		let core = Core::new(project, fs);
+		let core = Core::new(config, &project_path)?;
 		let server = Server::new(core);
-
-		// thread::spawn(move || fs.start());
 
 		session::add(&host, &port, process::id())?;
 

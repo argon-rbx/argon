@@ -9,6 +9,18 @@ use std::{
 use crate::{utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ProjectNode {
+	#[serde(rename = "$className")]
+	pub class_name: Option<String>,
+
+	#[serde(rename = "$path")]
+	pub path: Option<PathBuf>,
+
+	#[serde(flatten)]
+	pub tree: BTreeMap<String, ProjectNode>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
@@ -19,10 +31,13 @@ pub struct Project {
 	pub ignore_paths: Option<Vec<String>>,
 
 	#[serde(skip)]
-	pub project: PathBuf,
+	pub project_path: PathBuf,
 
 	#[serde(skip)]
-	pub workspace: PathBuf,
+	pub workspace_dir: PathBuf,
+
+	#[serde(skip)]
+	pub tree_paths: Vec<PathBuf>,
 }
 
 impl Project {
@@ -32,8 +47,9 @@ impl Project {
 
 		let workspace_dir = workspace::get_dir(project_path.to_owned());
 
-		project.project = project_path.to_owned();
-		project.workspace = workspace_dir;
+		project.project_path = project_path.to_owned();
+		project.workspace_dir = workspace_dir;
+		project.tree_paths = project.get_sync_paths();
 
 		Ok(project)
 	}
@@ -62,28 +78,11 @@ impl Project {
 		// TODO: Utilize `class_name` to create `from` field for
 		// Redirect object, later used for two-way sync
 
-		get_paths(&self.node.tree, &self.workspace)
+		get_paths(&self.node.tree, &self.workspace_dir)
 	}
 }
 
-// struct Redirect {
-// 	from: PathBuf,
-// 	to: PathBuf,
-// }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ProjectNode {
-	#[serde(rename = "$className")]
-	pub class_name: Option<String>,
-
-	#[serde(rename = "$path")]
-	pub path: Option<PathBuf>,
-
-	#[serde(flatten)]
-	pub tree: BTreeMap<String, ProjectNode>,
-}
-
-pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
+pub fn resolve(mut project: String, default: &str) -> Result<PathBuf> {
 	if project.ends_with(MAIN_SEPARATOR) {
 		let mut project_glob = project.clone();
 		project_glob.push_str("*.project.json");
@@ -97,7 +96,7 @@ pub fn resolve(mut project: String, default: String) -> Result<PathBuf> {
 		}
 
 		if !found_project {
-			let mut default_project = default;
+			let mut default_project = default.to_owned();
 			default_project.push_str(".project.json");
 
 			project_path = project_path.join(default_project);

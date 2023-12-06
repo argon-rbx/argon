@@ -1,13 +1,14 @@
 #![allow(clippy::type_complexity)]
 
-use super::debouncer::ArgonDebouncer;
+use super::debouncer::FsDebouncer;
 use anyhow::Result;
+use crossbeam_channel::Sender;
 use notify::{Error, RecommendedWatcher, RecursiveMode, Watcher};
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
 use std::{
 	path::PathBuf,
 	sync::{
-		mpsc::{self, Receiver, Sender},
+		mpsc::{self, Receiver},
 		Arc, Mutex,
 	},
 	thread::{self},
@@ -15,28 +16,28 @@ use std::{
 	vec,
 };
 
-pub struct ArgonWatcher {
+pub struct FsWatcher {
 	debouncer: Debouncer<RecommendedWatcher, FileIdMap>,
-	argon_debouncer: Arc<Mutex<ArgonDebouncer>>,
+	fs_debouncer: Arc<Mutex<FsDebouncer>>,
 	receiver: Arc<Mutex<Receiver<Result<Vec<DebouncedEvent>, Vec<Error>>>>>,
 	watched_paths: Vec<PathBuf>,
 }
 
-impl ArgonWatcher {
+impl FsWatcher {
 	pub fn new(root: &PathBuf, handler: &Sender<WorkspaceEvent>) -> Result<Self> {
 		let (sender, receiver) = mpsc::channel();
 		let mut debouncer = new_debouncer(Duration::from_millis(100), None, sender, false)?;
-		let argon_debouncer = ArgonDebouncer::new(root, handler);
+		let fs_debouncer = FsDebouncer::new(root, handler);
 
 		debouncer.watcher().watch(root, RecursiveMode::NonRecursive)?;
 		debouncer.cache().add_root(root, RecursiveMode::NonRecursive);
 
 		let receiver = Arc::new(Mutex::new(receiver));
-		let argon_debouncer = Arc::new(Mutex::new(argon_debouncer));
+		let fs_debouncer = Arc::new(Mutex::new(fs_debouncer));
 
 		Ok(Self {
 			debouncer,
-			argon_debouncer,
+			fs_debouncer,
 			receiver,
 			watched_paths: vec![],
 		})
@@ -58,8 +59,7 @@ impl ArgonWatcher {
 			self.debouncer.watcher().unwatch(path)?;
 			self.debouncer.cache().remove_root(path);
 
-			let index = self.watched_paths.iter().position(|p| p == path).unwrap();
-			self.watched_paths.remove(index);
+			self.watched_paths.retain(|p| p != path);
 		}
 
 		Ok(())
@@ -67,20 +67,20 @@ impl ArgonWatcher {
 
 	pub fn start(&self) -> Result<()> {
 		let receiver = self.receiver.clone();
-		let argon_debouncer = self.argon_debouncer.clone();
+		let fs_debouncer = self.fs_debouncer.clone();
 
 		thread::spawn(move || {
 			let receiver = receiver.lock().unwrap();
 
 			#[cfg(not(target_os = "linux"))]
-			let argon_debouncer = argon_debouncer.lock().unwrap();
+			let fs_debouncer = fs_debouncer.lock().unwrap();
 
 			#[cfg(target_os = "linux")]
-			let mut argon_debouncer = argon_debouncer.lock().unwrap();
+			let mut fs_debouncer = fs_debouncer.lock().unwrap();
 
 			for response in receiver.iter() {
 				for event in response.unwrap() {
-					argon_debouncer.debounce(&event);
+					fs_debouncer.debounce(&event);
 				}
 			}
 		});

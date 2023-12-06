@@ -1,9 +1,8 @@
 use anyhow::Result;
 use awc::Client;
 use clap::{ArgAction, Parser};
-use log::trace;
 
-use crate::{argon_error, argon_warn, session};
+use crate::{argon_error, argon_info, argon_warn, session};
 
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
@@ -35,7 +34,7 @@ impl Stop {
 				argon_error!("Failed to stop Argon session: {}", error);
 				argon_warn!("You might wanna stop process manually using its PID: {}", id)
 			}
-			Ok(_) => trace!("Stopped Argon session {}", address),
+			Ok(_) => argon_info!("Stopped Argon session {}", address),
 		}
 	}
 

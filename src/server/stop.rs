@@ -1,11 +1,9 @@
 use actix_web::{post, HttpResponse, Responder};
-use std::{process, thread, time::Duration};
-
-use crate::argon_info;
+use log::trace;
+use std::process;
 
 async fn stop() {
-	argon_info!("Argon stopped!");
-	thread::sleep(Duration::from_millis(1000));
+	trace!("Argon stopped!");
 	process::exit(1);
 }
 

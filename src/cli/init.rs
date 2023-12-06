@@ -27,7 +27,7 @@ impl Init {
 		let template = self.template.unwrap_or(config.template);
 		let source = self.source.unwrap_or(config.source);
 
-		let project_path = project::resolve(project, config.project)?;
+		let project_path = project::resolve(project, &config.project)?;
 		let project_exists = project_path.exists();
 
 		if project_exists {

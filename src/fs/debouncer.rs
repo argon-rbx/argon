@@ -1,7 +1,8 @@
 use super::watcher::{WorkspaceEvent, WorkspaceEventKind};
+use crossbeam_channel::Sender;
 use notify::EventKind;
 use notify_debouncer_full::DebouncedEvent;
-use std::{path::PathBuf, sync::mpsc::Sender};
+use std::path::PathBuf;
 
 #[cfg(target_os = "macos")]
 use notify::event::{DataChange, ModifyKind};
@@ -15,7 +16,7 @@ use {
 #[cfg(target_os = "linux")]
 const DEBOUNCE_TIME: Duration = Duration::from_micros(500);
 
-pub struct ArgonDebouncer {
+pub struct FsDebouncer {
 	root: PathBuf,
 	sender: Sender<WorkspaceEvent>,
 
@@ -25,7 +26,7 @@ pub struct ArgonDebouncer {
 	path: PathBuf,
 }
 
-impl ArgonDebouncer {
+impl FsDebouncer {
 	pub fn new(root: &PathBuf, sender: &Sender<WorkspaceEvent>) -> Self {
 		Self {
 			root: root.to_owned(),

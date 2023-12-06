@@ -22,8 +22,10 @@ impl Server {
 
 	#[actix_web::main]
 	pub async fn start(&self) -> Result<()> {
-		let host = String::from("localhost");
-		let port = 8000;
+		let host = self.core.host();
+		let port = self.core.port();
+
+		self.core.start();
 
 		HttpServer::new(|| {
 			App::new()
@@ -32,7 +34,7 @@ impl Server {
 				.service(sync_server::main)
 				.default_service(web::to(default_redirect))
 		})
-		.bind((host.clone(), port))?
+		.bind((host, port))?
 		.run()
 		.await
 	}

@@ -1,104 +1,51 @@
 mod debouncer;
-mod watcher;
+pub mod watcher;
 
-use crate::project::Project;
-
-use self::watcher::{ArgonWatcher, WorkspaceEvent, WorkspaceEventKind};
+use self::watcher::{FsWatcher, WorkspaceEvent};
 use anyhow::Result;
-use std::{
-	path::PathBuf,
-	sync::{
-		mpsc::{self, Receiver},
-		Arc, Mutex,
-	},
-};
+use crossbeam_channel::Receiver;
+use std::path::PathBuf;
 
 pub struct Fs {
-	watcher: ArgonWatcher,
-	receiver: Arc<Mutex<Receiver<WorkspaceEvent>>>,
-	sync_paths: Vec<PathBuf>,
-	project: PathBuf,
+	watcher: FsWatcher,
+	receiver: Receiver<WorkspaceEvent>,
 }
 
 impl Fs {
-	pub fn new(project: &Project) -> Result<Self> {
-		let (sender, receiver) = mpsc::channel();
-		let watcher = ArgonWatcher::new(&project.workspace, &sender)?;
+	pub fn new(root: &PathBuf) -> Result<Self> {
+		let (sender, receiver) = crossbeam_channel::unbounded();
+		let watcher = FsWatcher::new(root, &sender)?;
 
-		let receiver = Arc::new(Mutex::new(receiver));
+		watcher.start()?;
 
-		let mut fs = Self {
-			watcher,
-			receiver,
-			sync_paths: project.get_sync_paths().to_owned(),
-			project: project.project.to_owned(),
-		};
-
-		fs.watch()?;
-
-		Ok(fs)
+		Ok(Self { watcher, receiver })
 	}
 
-	#[tokio::main]
-	pub async fn start(&mut self) -> Result<()> {
-		let receiver = self.receiver.clone();
-		let receiver = receiver.lock().unwrap();
+	pub fn watch(&mut self, path: &PathBuf) -> Result<()> {
+		self.watcher.watch(path)
+	}
 
-		self.watcher.start()?;
+	pub fn unwatch(&mut self, path: &PathBuf) -> Result<()> {
+		self.watcher.unwatch(path)
+	}
 
-		for event in receiver.iter() {
-			if event.root {
-				match event.kind {
-					WorkspaceEventKind::Write => {
-						if event.path == self.project {
-							self.update(true)?;
-						}
-					}
-					_ => {
-						if event.path.is_dir() && self.sync_paths.contains(&event.path) {
-							self.update(false)?;
-						}
-					}
-				}
-
-				continue;
-			}
-
-			// TODO: Add to queue here
-			println!("{:?}", event);
+	pub fn watch_all(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
+		for path in paths {
+			self.watch(path)?;
 		}
 
 		Ok(())
 	}
 
-	fn watch(&mut self) -> Result<()> {
-		for path in &self.sync_paths {
-			self.watcher.watch(path)?;
+	pub fn unwatch_all(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
+		for path in paths {
+			self.unwatch(path)?;
 		}
 
 		Ok(())
 	}
 
-	fn unwatch(&mut self) -> Result<()> {
-		for path in &self.sync_paths {
-			self.watcher.unwatch(path)?;
-		}
-
-		Ok(())
-	}
-
-	fn update(&mut self, is_project: bool) -> Result<()> {
-		self.unwatch()?;
-
-		if is_project {
-			let project = Project::load(&self.project)?;
-			let project_paths = project.get_sync_paths();
-
-			self.sync_paths = project_paths;
-		}
-
-		self.watch()?;
-
-		Ok(())
+	pub fn receiver(&self) -> Receiver<WorkspaceEvent> {
+		self.receiver.clone()
 	}
 }
