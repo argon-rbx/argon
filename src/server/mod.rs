@@ -13,18 +13,21 @@ async fn default_redirect() -> impl Responder {
 
 pub struct Server {
 	core: Core,
+	host: String,
+	port: u16,
 }
 
 impl Server {
-	pub fn new(core: Core) -> Self {
-		Self { core }
+	pub fn new(core: Core, host: &String, port: &u16) -> Self {
+		Self {
+			core,
+			host: host.to_owned(),
+			port: port.to_owned(),
+		}
 	}
 
 	#[actix_web::main]
 	pub async fn start(&self) -> Result<()> {
-		let host = self.core.host();
-		let port = self.core.port();
-
 		self.core.start();
 
 		HttpServer::new(|| {
@@ -34,7 +37,7 @@ impl Server {
 				.service(sync_server::main)
 				.default_service(web::to(default_redirect))
 		})
-		.bind((host, port))?
+		.bind((self.host.clone(), self.port))?
 		.run()
 		.await
 	}

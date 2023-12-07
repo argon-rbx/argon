@@ -1,6 +1,5 @@
 use anyhow::Result;
 use std::{
-	path::PathBuf,
 	sync::{Arc, Mutex},
 	thread,
 };
@@ -8,59 +7,66 @@ use std::{
 use crate::{
 	config::Config,
 	fs::{watcher::WorkspaceEventKind, Fs},
+	lock,
 	project::Project,
 };
+
+use self::processor::Processor;
+
+mod processor;
+mod queue;
 
 pub struct Core {
 	config: Config,
 	project: Arc<Mutex<Project>>,
 	fs: Arc<Mutex<Fs>>,
+	processor: Arc<Processor>,
 }
 
 impl Core {
-	pub fn new(config: Config, project_path: &PathBuf) -> Result<Self> {
-		let project = Project::load(project_path)?;
-		let mut fs = Fs::new(&project.workspace_dir)?;
-
+	pub fn new(config: Config, project: Project, mut fs: Fs) -> Result<Self> {
 		fs.watch_all(&project.tree_paths)?;
 
 		let project = Arc::new(Mutex::new(project));
 		let fs = Arc::new(Mutex::new(fs));
 
-		Ok(Self { config, project, fs })
+		let processor = Arc::new(Processor::new(project.clone()));
+
+		Ok(Self {
+			config,
+			project,
+			fs,
+			processor,
+		})
 	}
 
 	pub fn name(&self) -> String {
-		self.project.lock().unwrap().name.clone()
+		lock!(self.project).name.clone()
 	}
 
 	pub fn host(&self) -> String {
-		self.project
-			.lock()
-			.unwrap()
-			.host
-			.clone()
-			.unwrap_or(self.config.host.clone())
+		lock!(self.project).host.clone().unwrap_or(self.config.host.clone())
 	}
 
 	pub fn port(&self) -> u16 {
-		self.project.lock().unwrap().port.unwrap_or(self.config.port)
+		lock!(self.project).port.unwrap_or(self.config.port)
 	}
 
 	pub fn start(&self) {
+		let processor = self.processor.clone();
 		let project = self.project.clone();
 		let fs = self.fs.clone();
 
 		thread::spawn(move || -> Result<()> {
-			let receiver = fs.lock().unwrap().receiver();
+			let receiver = lock!(fs).receiver();
 
 			for event in receiver.iter() {
 				if event.root {
 					match event.kind {
 						WorkspaceEventKind::Write => {
-							if event.path == project.lock().unwrap().project_path {
-								let new_project = Project::load(&project.lock().unwrap().project_path)?;
-								let mut fs = fs.lock().unwrap();
+							if event.path == lock!(project).project_path {
+								let new_project = Project::load(&lock!(project).project_path)?;
+								let mut fs = lock!(fs);
 
 								fs.unwatch_all(&project.lock().unwrap().tree_paths)?;
 								*project.lock().unwrap() = new_project;
@@ -68,11 +74,10 @@ impl Core {
 							}
 						}
 						_ => {
-							let project = project.lock().unwrap();
+							let project = lock!(project);
+							let mut fs = lock!(fs);
 
 							if event.path.is_dir() && project.tree_paths.contains(&event.path) {
-								let mut fs = fs.lock().unwrap();
-
 								fs.unwatch_all(&project.tree_paths)?;
 								fs.watch_all(&project.tree_paths)?;
 							}
@@ -82,8 +87,11 @@ impl Core {
 					continue;
 				}
 
-				// TODO: Add to queue here
-				println!("{:?}", event);
+				match event.kind {
+					WorkspaceEventKind::Create => processor.create(&event.path),
+					WorkspaceEventKind::Delete => processor.delete(&event.path),
+					WorkspaceEventKind::Write => processor.write(&event.path),
+				}
 			}
 
 			Ok(())

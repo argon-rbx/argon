@@ -8,7 +8,15 @@ use std::{
 	process::{self, Command},
 };
 
-use crate::{argon_info, argon_warn, config::Config, core::Core, project, server::Server, session, workspace};
+use crate::{
+	argon_info, argon_warn,
+	config::Config,
+	core::Core,
+	fs::Fs,
+	project::{self, Project},
+	server::Server,
+	session, workspace,
+};
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
@@ -33,56 +41,12 @@ pub struct Run {
 impl Run {
 	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
 		if !self.run {
-			let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
-
-			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
-			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
-
-			let verbosity = match level_filter {
-				LevelFilter::Off => "-q",
-				LevelFilter::Error => "",
-				LevelFilter::Warn => "-v",
-				LevelFilter::Info => "-vv",
-				LevelFilter::Debug => "-vvv",
-				LevelFilter::Trace => "-vvvv",
-			};
-
-			let mut args = vec![String::from("run")];
-
-			if let Some(host) = self.host {
-				args.push(String::from("--host"));
-				args.push(host)
-			}
-
-			if let Some(port) = self.port {
-				args.push(String::from("--port"));
-				args.push(port.to_string());
-			}
-
-			if let Some(project) = self.project {
-				args.push(project)
-			}
-
-			if !verbosity.is_empty() {
-				args.push(verbosity.to_string())
-			}
-
-			Command::new(program)
-				.args(args)
-				.arg("--run")
-				.env("RUST_LOG_STYLE", log_style)
-				.env("RUST_BACKTRACE", backtrace)
-				.spawn()?;
-
-			return Ok(());
+			return self.spawn(level_filter);
 		}
 
 		let config = Config::load();
 
-		let host = self.host.unwrap_or(config.host.clone());
-		let port = self.port.unwrap_or(config.port);
 		let project = self.project.unwrap_or(config.project.clone());
-
 		let project_path = project::resolve(project, &config.project)?;
 		let project_exists = project_path.exists();
 
@@ -104,8 +68,30 @@ impl Run {
 			)
 		}
 
-		let core = Core::new(config, &project_path)?;
-		let server = Server::new(core);
+		let project = Project::load(&project_path)?;
+		let fs = Fs::new(&project.workspace_dir)?;
+
+		let host: String;
+		let port: u16;
+
+		if self.host.is_some() {
+			host = self.host.unwrap();
+		} else if project.host.is_some() {
+			host = project.host.clone().unwrap();
+		} else {
+			host = config.host.clone();
+		}
+
+		if self.port.is_some() {
+			port = self.port.unwrap();
+		} else if project.port.is_some() {
+			port = project.port.unwrap();
+		} else {
+			port = config.port;
+		}
+
+		let core = Core::new(config, project, fs)?;
+		let server = Server::new(core, &host, &port);
 
 		session::add(&host, &port, process::id())?;
 
@@ -117,6 +103,51 @@ impl Run {
 		);
 
 		server.start()?;
+
+		Ok(())
+	}
+
+	fn spawn(self, level_filter: LevelFilter) -> Result<()> {
+		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
+
+		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
+		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
+
+		let verbosity = match level_filter {
+			LevelFilter::Off => "-q",
+			LevelFilter::Error => "",
+			LevelFilter::Warn => "-v",
+			LevelFilter::Info => "-vv",
+			LevelFilter::Debug => "-vvv",
+			LevelFilter::Trace => "-vvvv",
+		};
+
+		let mut args = vec![String::from("run")];
+
+		if let Some(host) = self.host {
+			args.push(String::from("--host"));
+			args.push(host)
+		}
+
+		if let Some(port) = self.port {
+			args.push(String::from("--port"));
+			args.push(port.to_string());
+		}
+
+		if let Some(project) = self.project {
+			args.push(project)
+		}
+
+		if !verbosity.is_empty() {
+			args.push(verbosity.to_string())
+		}
+
+		Command::new(program)
+			.args(args)
+			.arg("--run")
+			.env("RUST_LOG_STYLE", log_style)
+			.env("RUST_BACKTRACE", backtrace)
+			.spawn()?;
 
 		Ok(())
 	}
