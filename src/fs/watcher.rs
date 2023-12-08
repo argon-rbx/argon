@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-use super::debouncer::FsDebouncer;
+use super::{debouncer::FsDebouncer, FsEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use notify::{Error, RecommendedWatcher, RecursiveMode, Watcher};
@@ -24,7 +24,7 @@ pub struct FsWatcher {
 }
 
 impl FsWatcher {
-	pub fn new(root: &PathBuf, handler: &Sender<WorkspaceEvent>) -> Result<Self> {
+	pub fn new(root: &PathBuf, handler: &Sender<FsEvent>) -> Result<Self> {
 		let (sender, receiver) = mpsc::channel();
 		let mut debouncer = new_debouncer(Duration::from_millis(100), None, sender, false)?;
 		let fs_debouncer = FsDebouncer::new(root, handler);
@@ -87,18 +87,4 @@ impl FsWatcher {
 
 		Ok(())
 	}
-}
-
-#[derive(Debug)]
-pub struct WorkspaceEvent {
-	pub kind: WorkspaceEventKind,
-	pub path: PathBuf,
-	pub root: bool,
-}
-
-#[derive(Debug)]
-pub enum WorkspaceEventKind {
-	Create,
-	Delete,
-	Write,
 }

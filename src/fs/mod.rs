@@ -1,14 +1,28 @@
 mod debouncer;
 pub mod watcher;
 
-use self::watcher::{FsWatcher, WorkspaceEvent};
+use self::watcher::FsWatcher;
 use anyhow::Result;
 use crossbeam_channel::Receiver;
 use std::path::PathBuf;
 
+#[derive(Debug)]
+pub struct FsEvent {
+	pub kind: FsEventKind,
+	pub path: PathBuf,
+	pub root: bool,
+}
+
+#[derive(Debug)]
+pub enum FsEventKind {
+	Create,
+	Delete,
+	Write,
+}
+
 pub struct Fs {
 	watcher: FsWatcher,
-	receiver: Receiver<WorkspaceEvent>,
+	receiver: Receiver<FsEvent>,
 }
 
 impl Fs {
@@ -45,7 +59,7 @@ impl Fs {
 		Ok(())
 	}
 
-	pub fn receiver(&self) -> Receiver<WorkspaceEvent> {
+	pub fn receiver(&self) -> Receiver<FsEvent> {
 		self.receiver.clone()
 	}
 }

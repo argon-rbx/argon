@@ -1,4 +1,4 @@
-use super::watcher::{WorkspaceEvent, WorkspaceEventKind};
+use super::{FsEvent, FsEventKind};
 use crossbeam_channel::Sender;
 use notify::EventKind;
 use notify_debouncer_full::DebouncedEvent;
@@ -18,7 +18,7 @@ const DEBOUNCE_TIME: Duration = Duration::from_micros(500);
 
 pub struct FsDebouncer {
 	root: PathBuf,
-	sender: Sender<WorkspaceEvent>,
+	sender: Sender<FsEvent>,
 
 	#[cfg(target_os = "linux")]
 	time: Instant,
@@ -27,7 +27,7 @@ pub struct FsDebouncer {
 }
 
 impl FsDebouncer {
-	pub fn new(root: &PathBuf, sender: &Sender<WorkspaceEvent>) -> Self {
+	pub fn new(root: &PathBuf, sender: &Sender<FsEvent>) -> Self {
 		Self {
 			root: root.to_owned(),
 			sender: sender.to_owned(),
@@ -43,11 +43,11 @@ impl FsDebouncer {
 		event.paths.first().unwrap().to_owned()
 	}
 
-	fn send(&self, kind: WorkspaceEventKind, path: PathBuf) {
+	fn send(&self, kind: FsEventKind, path: PathBuf) {
 		let parent = path.parent().unwrap();
 		let root = self.root == parent;
 
-		let event = WorkspaceEvent { kind, path, root };
+		let event = FsEvent { kind, path, root };
 
 		self.sender.send(event).unwrap();
 	}
@@ -59,7 +59,7 @@ impl FsDebouncer {
 				let path = self.get_path(event);
 
 				if path.exists() {
-					self.send(WorkspaceEventKind::Create, path);
+					self.send(FsEventKind::Create, path);
 				}
 			}
 			EventKind::Modify(kind) => match kind {
@@ -67,14 +67,14 @@ impl FsDebouncer {
 					let path = self.get_path(event);
 
 					if path.exists() {
-						self.send(WorkspaceEventKind::Create, path);
+						self.send(FsEventKind::Create, path);
 					} else {
-						self.send(WorkspaceEventKind::Delete, path);
+						self.send(FsEventKind::Delete, path);
 					}
 				}
 				ModifyKind::Data(kind) => {
 					if kind == DataChange::Content {
-						self.send(WorkspaceEventKind::Write, self.get_path(event));
+						self.send(FsEventKind::Write, self.get_path(event));
 					}
 				}
 				_ => {}
@@ -92,14 +92,14 @@ impl FsDebouncer {
 				self.time = event.time;
 				self.path = path.to_owned();
 
-				self.send(WorkspaceEventKind::Create, path);
+				self.send(FsEventKind::Create, path);
 			}
 			EventKind::Modify(ModifyKind::Name(mode)) => match mode {
 				RenameMode::From => {
-					self.send(WorkspaceEventKind::Delete, self.get_path(event));
+					self.send(FsEventKind::Delete, self.get_path(event));
 				}
 				RenameMode::To => {
-					self.send(WorkspaceEventKind::Create, self.get_path(event));
+					self.send(FsEventKind::Create, self.get_path(event));
 				}
 				_ => {}
 			},
@@ -114,7 +114,7 @@ impl FsDebouncer {
 						return;
 					}
 
-					self.send(WorkspaceEventKind::Write, path);
+					self.send(FsEventKind::Write, path);
 				}
 			}
 			_ => {}
@@ -125,13 +125,13 @@ impl FsDebouncer {
 	pub fn debounce(&self, event: &DebouncedEvent) {
 		match event.kind {
 			EventKind::Create(_) => {
-				self.send(WorkspaceEventKind::Create, self.get_path(event));
+				self.send(FsEventKind::Create, self.get_path(event));
 			}
 			EventKind::Remove(_) => {
-				self.send(WorkspaceEventKind::Delete, self.get_path(event));
+				self.send(FsEventKind::Delete, self.get_path(event));
 			}
 			EventKind::Modify(_) => {
-				self.send(WorkspaceEventKind::Write, self.get_path(event));
+				self.send(FsEventKind::Write, self.get_path(event));
 			}
 			_ => {}
 		}

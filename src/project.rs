@@ -27,8 +27,9 @@ pub struct Project {
 	pub node: ProjectNode,
 	pub host: Option<String>,
 	pub port: Option<u16>,
+	pub game_id: Option<i64>,
 	pub place_ids: Option<Vec<u64>>,
-	pub ignore_paths: Option<Vec<String>>,
+	pub ignore_globs: Option<Vec<String>>,
 
 	#[serde(skip)]
 	pub project_path: PathBuf,
@@ -37,7 +38,7 @@ pub struct Project {
 	pub workspace_dir: PathBuf,
 
 	#[serde(skip)]
-	pub tree_paths: Vec<PathBuf>,
+	pub sync_paths: Vec<PathBuf>,
 }
 
 impl Project {
@@ -49,12 +50,12 @@ impl Project {
 
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
-		project.tree_paths = project.get_sync_paths();
+		project.sync_paths = project.get_sync_paths();
 
 		Ok(project)
 	}
 
-	pub fn get_sync_paths(&self) -> Vec<PathBuf> {
+	fn get_sync_paths(&self) -> Vec<PathBuf> {
 		fn get_paths(tree: &BTreeMap<String, ProjectNode>, root: &PathBuf) -> Vec<PathBuf> {
 			let mut paths: Vec<PathBuf> = vec![];
 
