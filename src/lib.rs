@@ -7,6 +7,7 @@ pub mod crash_handler;
 pub mod fs;
 pub mod installer;
 pub mod logger;
+pub mod messages;
 pub mod project;
 pub mod server;
 pub mod session;

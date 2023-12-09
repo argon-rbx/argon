@@ -12,7 +12,7 @@ use crate::{
 	project::Project,
 };
 
-use self::processor::Processor;
+use self::{processor::Processor, queue::Queue};
 
 mod processor;
 mod queue;
@@ -22,13 +22,15 @@ pub struct Core {
 	project: Arc<Mutex<Project>>,
 	fs: Arc<Mutex<Fs>>,
 	processor: Arc<Mutex<Processor>>,
+	queue: Arc<Mutex<Queue>>,
 }
 
 impl Core {
 	pub fn new(config: Config, project: Project, mut fs: Fs) -> Result<Self> {
 		fs.watch_all(&project.sync_paths)?;
 
-		let processor = Processor::new(project.ignore_globs.clone());
+		let queue = Arc::new(Mutex::new(Queue::new()));
+		let processor = Processor::new(queue.clone(), project.ignore_globs.clone());
 
 		let project = Arc::new(Mutex::new(project));
 		let fs = Arc::new(Mutex::new(fs));
@@ -39,6 +41,7 @@ impl Core {
 			project,
 			fs,
 			processor,
+			queue,
 		})
 	}
 
