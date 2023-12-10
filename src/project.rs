@@ -6,7 +6,7 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{utils, workspace};
+use crate::{glob::Glob, utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectNode {
@@ -29,7 +29,7 @@ pub struct Project {
 	pub port: Option<u16>,
 	pub game_id: Option<i64>,
 	pub place_ids: Option<Vec<u64>>,
-	pub ignore_globs: Option<Vec<String>>,
+	pub ignore_globs: Option<Vec<Glob>>,
 
 	#[serde(skip)]
 	pub project_path: PathBuf,
@@ -85,18 +85,13 @@ impl Project {
 
 pub fn resolve(mut project: String, default: &str) -> Result<PathBuf> {
 	if project.ends_with(MAIN_SEPARATOR) {
-		let mut project_glob = project.clone();
-		project_glob.push_str("*.project.json");
+		let mut project_path = PathBuf::from(project.clone());
 
-		let mut project_path = PathBuf::from(project);
-		let mut found_project = false;
+		project.push_str("*.project.json");
 
-		if let Some(path) = (glob::glob(&project_glob)?).next() {
-			project_path = path?;
-			found_project = true;
-		}
-
-		if !found_project {
+		if let Some(path) = Glob::new(&project)?.first() {
+			project_path = path;
+		} else {
 			let mut default_project = default.to_owned();
 			default_project.push_str(".project.json");
 

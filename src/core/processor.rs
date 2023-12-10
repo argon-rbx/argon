@@ -1,9 +1,9 @@
 use std::{
-	path::PathBuf,
+	path::{Path, PathBuf},
 	sync::{Arc, Mutex},
 };
 
-use crate::lock;
+use crate::{glob::Glob, lock};
 
 use super::queue::Queue;
 
@@ -11,31 +11,46 @@ const FILE_EXTENSIONS: [&str; 2] = ["lua", "luau"];
 
 pub struct Processor {
 	queue: Arc<Mutex<Queue>>,
-	ignore_globs: Vec<String>,
+	ignore_globs: Vec<Glob>,
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, ignore_globs: Option<Vec<String>>) -> Self {
+	pub fn new(queue: Arc<Mutex<Queue>>, ignore_globs: Option<Vec<Glob>>) -> Self {
 		Self {
 			queue,
 			ignore_globs: ignore_globs.unwrap_or_default(),
 		}
 	}
 
-	pub fn set_ignore_globs(&mut self, ignore_globs: Option<Vec<String>>) {
+	pub fn set_ignore_globs(&mut self, ignore_globs: Option<Vec<Glob>>) {
 		self.ignore_globs = ignore_globs.unwrap_or_default();
 	}
 
-	pub fn create(&self, path: &PathBuf) {
+	fn is_valid(&self, path: &Path) -> bool {
+		let extension = path.extension().unwrap_or_default();
+		let path = path.to_str().unwrap_or_default();
+
+		if !FILE_EXTENSIONS.contains(&extension.to_str().unwrap()) {
+			return false;
+		}
+
+		for glob in &self.ignore_globs {
+			if glob.matches(path) {
+				return false;
+			}
+		}
+
+		true
+	}
+
+	pub fn create(&self, path: &Path) {
 		let queue = lock!(self.queue);
 
 		if path.is_dir() {
-			return;
+			return; // TEMP!
 		}
 
-		let extension = path.extension().unwrap_or_default();
-
-		if !FILE_EXTENSIONS.contains(&extension.to_str().unwrap()) {
+		if !self.is_valid(path) {
 			return;
 		}
 
