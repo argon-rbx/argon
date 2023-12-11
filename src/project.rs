@@ -6,7 +6,7 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{glob::Glob, utils, workspace};
+use crate::{glob::Glob, utils, workspace, ROBLOX_SEPARATOR};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectNode {
@@ -33,12 +33,12 @@ pub struct Project {
 
 	#[serde(skip)]
 	pub project_path: PathBuf,
-
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
-
 	#[serde(skip)]
-	pub sync_paths: Vec<PathBuf>,
+	pub local_paths: Vec<PathBuf>,
+	#[serde(skip)]
+	pub roblox_paths: Vec<String>,
 }
 
 impl Project {
@@ -50,36 +50,50 @@ impl Project {
 
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
-		project.sync_paths = project.get_sync_paths();
+
+		(project.local_paths, project.roblox_paths) =
+			project.get_paths(&project.node.tree, &project.workspace_dir, String::new());
 
 		Ok(project)
 	}
 
-	fn get_sync_paths(&self) -> Vec<PathBuf> {
-		fn get_paths(tree: &BTreeMap<String, ProjectNode>, root: &PathBuf) -> Vec<PathBuf> {
-			let mut paths: Vec<PathBuf> = vec![];
+	#[allow(clippy::only_used_in_recursion)]
+	fn get_paths(
+		&self,
+		tree: &BTreeMap<String, ProjectNode>,
+		local_root: &PathBuf,
+		roblox_root: String,
+	) -> (Vec<PathBuf>, Vec<String>) {
+		let mut local_paths = vec![];
+		let mut roblox_paths = vec![];
 
-			for node in tree.values() {
-				if let Some(path) = &node.path {
-					let mut path = path.clone();
+		for (name, node) in tree.iter() {
+			let mut roblox_path = roblox_root.clone();
 
-					if !path.is_absolute() {
-						path = root.join(path);
-					}
-
-					paths.push(path);
-				}
-
-				paths.append(&mut get_paths(&node.tree, root));
+			if !roblox_path.is_empty() {
+				roblox_path.push(ROBLOX_SEPARATOR);
 			}
 
-			paths
+			roblox_path.push_str(name);
+
+			if let Some(path) = &node.path {
+				let mut local_path = path.clone();
+
+				if !local_path.is_absolute() {
+					local_path = local_root.join(local_path);
+				}
+
+				local_paths.push(local_path);
+				roblox_paths.push(roblox_path.clone());
+			}
+
+			let mut paths = self.get_paths(&node.tree, local_root, roblox_path);
+
+			local_paths.append(&mut paths.0);
+			roblox_paths.append(&mut paths.1);
 		}
 
-		// TODO: Utilize `class_name` to create `from` field for
-		// Redirect object, later used for two-way sync
-
-		get_paths(&self.node.tree, &self.workspace_dir)
+		(local_paths, roblox_paths)
 	}
 }
 

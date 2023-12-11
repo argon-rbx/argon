@@ -15,6 +15,8 @@ pub mod session;
 pub mod utils;
 pub mod workspace;
 
+const ROBLOX_SEPARATOR: char = '/';
+
 // These Argon logs ignore verbosity level, aside of `Off`
 #[macro_export]
 macro_rules! argon_error {

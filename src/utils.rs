@@ -1,6 +1,9 @@
 use anyhow::{Context, Result};
 use directories::UserDirs;
-use std::{env, path::PathBuf};
+use std::{
+	env,
+	path::{Path, PathBuf},
+};
 
 pub fn get_home_dir() -> Result<PathBuf> {
 	let user_dirs = UserDirs::new().context("Failed to get user directory")?;
@@ -18,4 +21,12 @@ pub fn resolve_path(mut path: PathBuf) -> Result<PathBuf> {
 	path = current_dir.join(&path);
 
 	Ok(path)
+}
+
+pub fn get_file_extension(path: &Path) -> &str {
+	path.extension().unwrap_or_default().to_str().unwrap_or_default()
+}
+
+pub fn get_file_name(path: &Path) -> &str {
+	path.file_stem().unwrap().to_str().unwrap()
 }

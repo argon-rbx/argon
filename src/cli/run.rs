@@ -12,7 +12,6 @@ use crate::{
 	argon_info, argon_warn,
 	config::Config,
 	core::Core,
-	fs::Fs,
 	project::{self, Project},
 	server::Server,
 	session, workspace,
@@ -46,13 +45,13 @@ impl Run {
 
 		let config = Config::load();
 
-		let project = self.project.unwrap_or(config.project.clone());
-		let project_path = project::resolve(project, &config.project)?;
+		let project = self.project.unwrap_or(config.project_name.clone());
+		let project_path = project::resolve(project, &config.project_name)?;
 		let project_exists = project_path.exists();
 
 		if !project_exists && config.auto_init {
 			argon_warn!("Cannot find the project, creating new one!");
-			workspace::init(&project_path, &config.template, &config.source)?;
+			workspace::init(&project_path, &config.template, &config.source_dir)?;
 
 			if config.git_init {
 				let workspace_dir = workspace::get_dir(project_path.to_owned());
@@ -69,8 +68,6 @@ impl Run {
 		}
 
 		let project = Project::load(&project_path)?;
-		let fs = Fs::new(&project.workspace_dir)?;
-
 		let host: String;
 		let port: u16;
 
@@ -90,7 +87,7 @@ impl Run {
 			port = config.port;
 		}
 
-		let core = Core::new(config, project, fs)?;
+		let core = Core::new(config, project)?;
 		let server = Server::new(core, &host, &port);
 
 		session::add(&host, &port, process::id())?;

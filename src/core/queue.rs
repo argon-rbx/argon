@@ -1,10 +1,7 @@
-pub struct Message {
-	id: String,
-	payload: String,
-}
+use crate::messages::Message;
 
 pub struct Queue {
-	queue: Vec<String>,
+	queue: Vec<Message>,
 	subcribers: Vec<String>,
 }
 
@@ -16,7 +13,7 @@ impl Queue {
 		}
 	}
 
-	pub fn push(&mut self, message: String) {
+	pub fn push(&mut self, message: Message) {
 		self.queue.push(message);
 
 		println!("{:?}", self.queue);

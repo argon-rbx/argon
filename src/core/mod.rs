@@ -9,6 +9,7 @@ use crate::{
 	config::Config,
 	fs::{Fs, FsEventKind},
 	lock,
+	messages::{Message, UpdateMeta},
 	project::Project,
 };
 
@@ -18,7 +19,7 @@ mod processor;
 mod queue;
 
 pub struct Core {
-	config: Config,
+	config: Arc<Config>,
 	project: Arc<Mutex<Project>>,
 	fs: Arc<Mutex<Fs>>,
 	processor: Arc<Mutex<Processor>>,
@@ -26,15 +27,20 @@ pub struct Core {
 }
 
 impl Core {
-	pub fn new(config: Config, project: Project, mut fs: Fs) -> Result<Self> {
-		fs.watch_all(&project.sync_paths)?;
+	pub fn new(config: Config, project: Project) -> Result<Self> {
+		let mut fs = Fs::new(&project.workspace_dir)?;
+		fs.watch_all(&project.local_paths)?;
 
-		let queue = Arc::new(Mutex::new(Queue::new()));
-		let processor = Processor::new(queue.clone(), project.ignore_globs.clone());
-
+		let config = Arc::new(config);
 		let project = Arc::new(Mutex::new(project));
 		let fs = Arc::new(Mutex::new(fs));
-		let processor = Arc::new(Mutex::new(processor));
+
+		let queue = Arc::new(Mutex::new(Queue::new()));
+		let processor = Arc::new(Mutex::new(Processor::new(
+			queue.clone(),
+			project.clone(),
+			config.clone(),
+		)));
 
 		Ok(Self {
 			config,
@@ -60,6 +66,7 @@ impl Core {
 	pub fn start(&self) {
 		let processor = self.processor.clone();
 		let project = self.project.clone();
+		let queue = self.queue.clone();
 		let fs = self.fs.clone();
 
 		thread::spawn(move || -> Result<()> {
@@ -77,26 +84,31 @@ impl Core {
 									continue;
 								}
 
-								let mut processor = lock!(processor);
+								let mut queue = lock!(queue);
 								let mut fs = lock!(fs);
 
-								fs.unwatch_all(&lock!(project).sync_paths)?;
+								fs.unwatch_all(&lock!(project).local_paths)?;
 
 								*lock!(project) = new_project.unwrap();
 
 								let project = lock!(project);
 
-								fs.watch_all(&project.sync_paths)?;
-								processor.set_ignore_globs(project.ignore_globs.clone());
+								fs.watch_all(&project.local_paths)?;
+
+								queue.push(Message::UpdateMeta(UpdateMeta {
+									name: project.name.clone(),
+									game_id: project.game_id,
+									place_ids: project.place_ids.clone(),
+								}));
 							}
 						}
 						_ => {
 							let project = lock!(project);
 							let mut fs = lock!(fs);
 
-							if event.path.is_dir() && project.sync_paths.contains(&event.path) {
-								fs.unwatch_all(&project.sync_paths)?;
-								fs.watch_all(&project.sync_paths)?;
+							if event.path.is_dir() && project.local_paths.contains(&event.path) {
+								fs.unwatch_all(&project.local_paths)?;
+								fs.watch_all(&project.local_paths)?;
 							}
 						}
 					}

@@ -12,11 +12,17 @@ use crate::utils;
 pub struct Config {
 	pub host: String,
 	pub port: u16,
-	pub source: String,
-	pub project: String,
+	pub source_dir: String,
+	pub project_name: String,
 	pub template: String,
 	pub auto_init: bool,
 	pub git_init: bool,
+	pub rojo_mode: bool,
+
+	#[serde(skip)]
+	pub src: String,
+	#[serde(skip)]
+	pub data: String,
 }
 
 impl Config {
@@ -24,11 +30,14 @@ impl Config {
 		let mut config = Self {
 			host: String::from("localhost"),
 			port: 8000,
-			source: String::from("src"),
-			project: String::from(".argon"),
+			source_dir: String::from("src"),
+			project_name: String::from(".argon"),
 			template: String::from("default"),
 			auto_init: false,
 			git_init: true,
+			rojo_mode: false,
+			src: String::from(".src"),
+			data: String::from(".data"),
 		};
 
 		match config.load_global() {
@@ -47,6 +56,11 @@ impl Config {
 		let config: GlobalConfig = toml::from_str(&config_toml)?;
 
 		self.merge_opt(config);
+
+		if self.rojo_mode {
+			self.src = String::from("init");
+			self.data = String::from("meta");
+		}
 
 		Ok(())
 	}

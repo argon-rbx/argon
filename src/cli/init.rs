@@ -23,11 +23,11 @@ impl Init {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
-		let project = self.project.unwrap_or(config.project.clone());
+		let project = self.project.unwrap_or(config.project_name.clone());
 		let template = self.template.unwrap_or(config.template);
-		let source = self.source.unwrap_or(config.source);
+		let source = self.source.unwrap_or(config.source_dir);
 
-		let project_path = project::resolve(project, &config.project)?;
+		let project_path = project::resolve(project, &config.project_name)?;
 		let project_exists = project_path.exists();
 
 		if project_exists {
