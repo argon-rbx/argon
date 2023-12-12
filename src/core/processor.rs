@@ -1,5 +1,8 @@
+use anyhow::Result;
+use log::{info, warn};
 use pathsub::sub_paths;
 use std::{
+	fs,
 	path::Path,
 	sync::{Arc, Mutex},
 };
@@ -9,7 +12,7 @@ use crate::{
 	lock,
 	messages::{Message, MessageAction, Sync},
 	project::Project,
-	types::{RobloxPath, RobloxType},
+	types::{RobloxKind, RobloxPath},
 	utils,
 };
 
@@ -17,13 +20,25 @@ use super::queue::Queue;
 
 const FILE_EXTENSIONS: [&str; 3] = ["lua", "luau", "json"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FileKind {
 	ServerScript,
 	ClientScript,
 	ModuleScript,
 	Properties,
 	Other,
+}
+
+impl From<FileKind> for RobloxKind {
+	fn from(kind: FileKind) -> Self {
+		match kind {
+			FileKind::ServerScript => RobloxKind::ServerScript,
+			FileKind::ClientScript => RobloxKind::ClientScript,
+			FileKind::ModuleScript => RobloxKind::ModuleScript,
+			FileKind::Other => RobloxKind::Other,
+			_ => panic!("Cannot convert FileKind to RobloxType"),
+		}
+	}
 }
 
 pub struct Processor {
@@ -91,7 +106,7 @@ impl Processor {
 		None
 	}
 
-	fn get_file_type(&self, name: &str, ext: &str, is_dir: bool) -> Option<FileKind> {
+	fn get_file_kind(&self, name: &str, ext: &str, is_dir: bool) -> Option<FileKind> {
 		if is_dir {
 			return Some(FileKind::Other);
 		}
@@ -117,62 +132,106 @@ impl Processor {
 		Some(FileKind::Other)
 	}
 
-	pub fn create(&self, path: &Path) {
+	pub fn create(&self, path: &Path) -> Result<()> {
 		let ext = utils::get_file_extension(path);
 		let is_dir = path.is_dir();
 
 		if !self.is_valid(path, ext, is_dir) {
-			return;
+			return Ok(());
 		}
 
 		let name = utils::get_file_name(path);
 
 		let roblox_path = self.get_roblox_path(path, name, ext);
-		let file_type = self.get_file_type(name, ext, is_dir);
+		let file_kind = self.get_file_kind(name, ext, is_dir);
 
-		if let Some(file_type) = file_type {
+		if let Some(file_kind) = file_kind {
 			let mut queue = lock!(self.queue);
-			let roblox_type: RobloxType;
+			let content = fs::read_to_string(path)?;
 
-			match file_type {
-				FileKind::ServerScript => {
-					roblox_type = RobloxType::ServerScript;
-				}
-				FileKind::ClientScript => {
-					roblox_type = RobloxType::ClientScript;
-				}
-				FileKind::ModuleScript => {
-					roblox_type = RobloxType::ModuleScript;
-				}
-				FileKind::Other => {
-					roblox_type = RobloxType::Other;
-				}
-				_ => return,
+			if file_kind != FileKind::Properties {
+				queue.push(Message::Sync(Sync {
+					action: MessageAction::Create,
+					path: roblox_path.unwrap(),
+					kind: Some(file_kind.into()),
+					data: Some(content),
+				}));
+			} else {
+				queue.push(Message::Sync(Sync {
+					action: MessageAction::Update,
+					path: roblox_path.unwrap(),
+					kind: None,
+					data: Some(content),
+				}));
 			}
 
-			queue.push(Message::Sync(Sync {
-				action: MessageAction::Create,
-				path: roblox_path.unwrap(),
-				kind: Some(roblox_type),
-			}));
+			info!("Create: {:?}", path);
+		} else {
+			warn!("Unknown file kind: {:?}", path);
 		};
+
+		Ok(())
 	}
 
-	pub fn delete(&self, path: &Path) {
-		// println!("delete: {:?}", path);
-	}
-
-	pub fn write(&self, path: &Path) {
+	pub fn delete(&self, path: &Path) -> Result<()> {
 		let ext = utils::get_file_extension(path);
 
 		if !self.is_valid(path, ext, false) {
-			return;
+			return Ok(());
 		}
 
 		let name = utils::get_file_name(path);
+		let roblox_path = self.get_roblox_path(path, name, ext);
+		let mut queue = lock!(self.queue);
 
-		let queue = lock!(self.queue);
+		queue.push(Message::Sync(Sync {
+			action: MessageAction::Delete,
+			path: roblox_path.unwrap(),
+			kind: None,
+			data: None,
+		}));
 
-		println!("{:?}", self.get_roblox_path(path, name, ext));
+		Ok(())
+	}
+
+	pub fn write(&self, path: &Path) -> Result<()> {
+		let ext = utils::get_file_extension(path);
+
+		if !self.is_valid(path, ext, false) {
+			return Ok(());
+		}
+
+		let name = utils::get_file_name(path);
+		let is_dir = path.is_dir();
+
+		let roblox_path = self.get_roblox_path(path, name, ext);
+		let file_kind = self.get_file_kind(name, ext, is_dir);
+
+		if let Some(file_kind) = file_kind {
+			let mut queue = lock!(self.queue);
+			let content = fs::read_to_string(path)?;
+
+			if file_kind != FileKind::Properties {
+				queue.push(Message::Sync(Sync {
+					action: MessageAction::Write,
+					path: roblox_path.unwrap(),
+					kind: None,
+					data: Some(content),
+				}));
+			} else {
+				queue.push(Message::Sync(Sync {
+					action: MessageAction::Update,
+					path: roblox_path.unwrap(),
+					kind: None,
+					data: Some(content),
+				}));
+			}
+
+			info!("Write: {:?}", path);
+		} else {
+			warn!("Unknown file kind: {:?}", path);
+		};
+
+		Ok(())
 	}
 }

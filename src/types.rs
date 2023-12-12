@@ -1,4 +1,8 @@
-#[derive(Debug, Clone)]
+use std::fmt::Debug;
+
+use crate::ROBLOX_SEPARATOR;
+
+#[derive(Clone)]
 pub struct RobloxPath {
 	components: Vec<String>,
 }
@@ -43,8 +47,14 @@ impl RobloxPath {
 	}
 }
 
+impl Debug for RobloxPath {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", self.components.join(&ROBLOX_SEPARATOR.to_string()))
+	}
+}
+
 #[derive(Debug)]
-pub enum RobloxType {
+pub enum RobloxKind {
 	ServerScript,
 	ClientScript,
 	ModuleScript,

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::warn;
+use log::{trace, warn};
 use std::{
 	sync::{Arc, Mutex},
 	thread,
@@ -116,12 +116,24 @@ impl Core {
 					continue;
 				}
 
-				let processor = lock!(processor);
+				let result = || -> Result<()> {
+					let processor = lock!(processor);
 
-				match event.kind {
-					FsEventKind::Create => processor.create(&event.path),
-					FsEventKind::Delete => processor.delete(&event.path),
-					FsEventKind::Write => processor.write(&event.path),
+					match event.kind {
+						FsEventKind::Create => processor.create(&event.path)?,
+						FsEventKind::Delete => processor.delete(&event.path)?,
+						FsEventKind::Write => processor.write(&event.path)?,
+					}
+					Ok(())
+				};
+
+				match result() {
+					Ok(_) => {
+						trace!("Processed event: {:?}", event);
+					}
+					Err(err) => {
+						warn!("Failed to process event: {:?}", err);
+					}
 				}
 			}
 
