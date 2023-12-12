@@ -42,3 +42,11 @@ impl RobloxPath {
 		self.components.is_empty()
 	}
 }
+
+#[derive(Debug)]
+pub enum RobloxType {
+	ServerScript,
+	ClientScript,
+	ModuleScript,
+	Other,
+}

@@ -4,11 +4,27 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use crate::{config::Config, lock, project::Project, types::RobloxPath, utils};
+use crate::{
+	config::Config,
+	lock,
+	messages::{Message, MessageAction, Sync},
+	project::Project,
+	types::{RobloxPath, RobloxType},
+	utils,
+};
 
 use super::queue::Queue;
 
 const FILE_EXTENSIONS: [&str; 3] = ["lua", "luau", "json"];
+
+#[derive(Debug, Clone)]
+pub enum FileKind {
+	ServerScript,
+	ClientScript,
+	ModuleScript,
+	Properties,
+	Other,
+}
 
 pub struct Processor {
 	queue: Arc<Mutex<Queue>>,
@@ -75,6 +91,32 @@ impl Processor {
 		None
 	}
 
+	fn get_file_type(&self, name: &str, ext: &str, is_dir: bool) -> Option<FileKind> {
+		if is_dir {
+			return Some(FileKind::Other);
+		}
+
+		if ext == "lua" || ext == "luau" {
+			if name.ends_with(".server") {
+				return Some(FileKind::ServerScript);
+			} else if name.ends_with(".client") {
+				return Some(FileKind::ClientScript);
+			} else {
+				return Some(FileKind::ModuleScript);
+			}
+		}
+
+		if ext == "json" {
+			if name == self.config.data {
+				return Some(FileKind::Properties);
+			} else {
+				return None;
+			}
+		}
+
+		Some(FileKind::Other)
+	}
+
 	pub fn create(&self, path: &Path) {
 		let ext = utils::get_file_extension(path);
 		let is_dir = path.is_dir();
@@ -83,12 +125,37 @@ impl Processor {
 			return;
 		}
 
-		let queue = lock!(self.queue);
-
 		let name = utils::get_file_name(path);
-		let extension = utils::get_file_extension(path);
 
-		println!("{:?}", self.get_roblox_path(path, name, extension));
+		let roblox_path = self.get_roblox_path(path, name, ext);
+		let file_type = self.get_file_type(name, ext, is_dir);
+
+		if let Some(file_type) = file_type {
+			let mut queue = lock!(self.queue);
+			let roblox_type: RobloxType;
+
+			match file_type {
+				FileKind::ServerScript => {
+					roblox_type = RobloxType::ServerScript;
+				}
+				FileKind::ClientScript => {
+					roblox_type = RobloxType::ClientScript;
+				}
+				FileKind::ModuleScript => {
+					roblox_type = RobloxType::ModuleScript;
+				}
+				FileKind::Other => {
+					roblox_type = RobloxType::Other;
+				}
+				_ => return,
+			}
+
+			queue.push(Message::Sync(Sync {
+				action: MessageAction::Create,
+				path: roblox_path.unwrap(),
+				kind: Some(roblox_type),
+			}));
+		};
 	}
 
 	pub fn delete(&self, path: &Path) {

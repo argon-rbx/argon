@@ -1,3 +1,5 @@
+use crate::types::{RobloxPath, RobloxType};
+
 #[derive(Debug)]
 pub enum Message {
 	UpdateMeta(UpdateMeta),
@@ -14,8 +16,8 @@ pub struct UpdateMeta {
 #[derive(Debug)]
 pub struct Sync {
 	pub action: MessageAction,
-	pub path: String,
-	pub kind: Option<String>,
+	pub path: RobloxPath,
+	pub kind: Option<RobloxType>,
 	// pub data: Option<String>,
 }
 
