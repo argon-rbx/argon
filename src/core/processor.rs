@@ -1,10 +1,10 @@
 use pathsub::sub_paths;
 use std::{
-	path::{Path, PathBuf},
+	path::Path,
 	sync::{Arc, Mutex},
 };
 
-use crate::{config::Config, lock, project::Project, utils, ROBLOX_SEPARATOR};
+use crate::{config::Config, lock, project::Project, types::RobloxPath, utils};
 
 use super::queue::Queue;
 
@@ -21,13 +21,12 @@ impl Processor {
 		Self { queue, project, config }
 	}
 
-	fn is_valid(&self, path: &Path) -> bool {
-		let extension = utils::get_file_extension(path);
-		let path = path.to_str().unwrap_or_default();
-
-		if !FILE_EXTENSIONS.contains(&extension) {
+	fn is_valid(&self, path: &Path, ext: &str, is_dir: bool) -> bool {
+		if !FILE_EXTENSIONS.contains(&ext) && !is_dir {
 			return false;
 		}
+
+		let path = path.to_str().unwrap_or_default();
 
 		if let Some(ignore_globs) = &lock!(self.project).ignore_globs {
 			for glob in ignore_globs {
@@ -40,40 +39,36 @@ impl Processor {
 		true
 	}
 
-	fn get_roblox_path(&self, path: &Path) -> Option<String> {
+	fn get_roblox_path(&self, path: &Path, name: &str, ext: &str) -> Option<RobloxPath> {
 		let project = lock!(self.project);
 
 		for (index, local_path) in project.local_paths.iter().enumerate() {
 			if let Some(path) = sub_paths(path, local_path) {
 				let absolute = &project.roblox_paths[index];
-				let extension = utils::get_file_extension(&path);
-				let name = utils::get_file_name(&path);
 
-				match extension {
+				let mut roblox_path = absolute.clone();
+				let mut parent = path.clone();
+
+				parent.pop();
+				roblox_path.push(parent.to_str().unwrap());
+
+				match ext {
 					"lua" | "luau" => {
-						let mut roblox_path = absolute.to_owned();
-						let mut parent = path.clone();
-
-						parent.pop();
-
-						if parent != PathBuf::from("") {
-							roblox_path.push(ROBLOX_SEPARATOR);
-							roblox_path.push_str(parent.to_str().unwrap());
-						}
-
 						if !name.starts_with(&self.config.src) {
-							roblox_path.push(ROBLOX_SEPARATOR);
-							roblox_path.push_str(name);
+							roblox_path.push(name);
 						}
-
-						return Some(roblox_path);
+					}
+					"json" => {
+						if !name.starts_with(&self.config.data) {
+							roblox_path.push(name);
+						}
 					}
 					_ => {
-						// TODO
+						roblox_path.push(name);
 					}
 				}
 
-				break;
+				return Some(roblox_path);
 			}
 		}
 
@@ -81,32 +76,36 @@ impl Processor {
 	}
 
 	pub fn create(&self, path: &Path) {
-		let queue = lock!(self.queue);
+		let ext = utils::get_file_extension(path);
+		let is_dir = path.is_dir();
 
-		if path.is_dir() {
-			return; // TEMP!
-		}
-
-		if !self.is_valid(path) {
+		if !self.is_valid(path, ext, is_dir) {
 			return;
 		}
 
-		let file_name = path.file_stem().unwrap().to_str().unwrap();
+		let queue = lock!(self.queue);
 
-		println!("{:?}", file_name);
+		let name = utils::get_file_name(path);
+		let extension = utils::get_file_extension(path);
+
+		println!("{:?}", self.get_roblox_path(path, name, extension));
 	}
 
-	pub fn delete(&self, path: &PathBuf) {
-		println!("delete: {:?}", path);
+	pub fn delete(&self, path: &Path) {
+		// println!("delete: {:?}", path);
 	}
 
 	pub fn write(&self, path: &Path) {
-		if !self.is_valid(path) {
+		let ext = utils::get_file_extension(path);
+
+		if !self.is_valid(path, ext, false) {
 			return;
 		}
 
+		let name = utils::get_file_name(path);
+
 		let queue = lock!(self.queue);
 
-		println!("{:?}", self.get_roblox_path(path));
+		println!("{:?}", self.get_roblox_path(path, name, ext));
 	}
 }
