@@ -1,7 +1,7 @@
 use anyhow::Result;
 use log::{trace, warn};
 use std::{
-	sync::{Arc, Mutex},
+	sync::{Arc, Mutex, MutexGuard},
 	thread,
 };
 
@@ -61,6 +61,18 @@ impl Core {
 
 	pub fn port(&self) -> u16 {
 		lock!(self.project).port.unwrap_or(self.config.port)
+	}
+
+	pub fn game_id(&self) -> Option<u64> {
+		lock!(self.project).game_id
+	}
+
+	pub fn place_ids(&self) -> Option<Vec<u64>> {
+		lock!(self.project).place_ids.clone()
+	}
+
+	pub fn get_queue(&self) -> MutexGuard<'_, Queue> {
+		lock!(self.queue)
 	}
 
 	pub fn start(&self) {

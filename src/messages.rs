@@ -9,7 +9,7 @@ pub enum Message {
 #[derive(Debug)]
 pub struct UpdateMeta {
 	pub name: String,
-	pub game_id: Option<i64>,
+	pub game_id: Option<u64>,
 	pub place_ids: Option<Vec<u64>>,
 }
 

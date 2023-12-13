@@ -1,18 +1,23 @@
-use actix_web::{web, App, HttpServer, Responder};
-use std::io::Result;
+use actix_web::{
+	web::{self, Data},
+	App, HttpServer, Responder,
+};
+use std::{io::Result, sync::Arc};
 
 use crate::core::Core;
 
 mod home;
 mod stop;
+mod subscribe;
 mod sync_server;
+mod unsubscribe;
 
 async fn default_redirect() -> impl Responder {
 	web::Redirect::to("/")
 }
 
 pub struct Server {
-	core: Core,
+	core: Arc<Core>,
 	host: String,
 	port: u16,
 }
@@ -20,7 +25,7 @@ pub struct Server {
 impl Server {
 	pub fn new(core: Core, host: &String, port: &u16) -> Self {
 		Self {
-			core,
+			core: Arc::new(core),
 			host: host.to_owned(),
 			port: port.to_owned(),
 		}
@@ -28,10 +33,14 @@ impl Server {
 
 	#[actix_web::main]
 	pub async fn start(&self) -> Result<()> {
-		self.core.start();
+		let core = self.core.clone();
+		core.start();
 
-		HttpServer::new(|| {
+		HttpServer::new(move || {
 			App::new()
+				.app_data(Data::new(core.clone()))
+				.service(subscribe::main)
+				.service(unsubscribe::main)
 				.service(home::main)
 				.service(stop::main)
 				.service(sync_server::main)

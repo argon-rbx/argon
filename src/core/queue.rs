@@ -2,7 +2,7 @@ use crate::messages::Message;
 
 pub struct Queue {
 	queue: Vec<Message>,
-	subcribers: Vec<String>,
+	subcribers: Vec<u64>,
 }
 
 impl Queue {
@@ -19,7 +19,7 @@ impl Queue {
 		println!("{:?}", self.queue);
 	}
 
-	pub fn subscribe(&mut self, id: String) -> bool {
+	pub fn subscribe(&mut self, id: u64) -> bool {
 		if self.is_subscribed(&id) {
 			return false;
 		}
@@ -29,7 +29,7 @@ impl Queue {
 		true
 	}
 
-	pub fn unsubscribe(&mut self, id: String) -> bool {
+	pub fn unsubscribe(&mut self, id: u64) -> bool {
 		if !self.is_subscribed(&id) {
 			return false;
 		}
@@ -39,7 +39,7 @@ impl Queue {
 		true
 	}
 
-	pub fn is_subscribed(&self, id: &String) -> bool {
+	pub fn is_subscribed(&self, id: &u64) -> bool {
 		self.subcribers.contains(id)
 	}
 }

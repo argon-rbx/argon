@@ -27,7 +27,7 @@ pub struct Project {
 	pub node: ProjectNode,
 	pub host: Option<String>,
 	pub port: Option<u16>,
-	pub game_id: Option<i64>,
+	pub game_id: Option<u64>,
 	pub place_ids: Option<Vec<u64>>,
 	pub ignore_globs: Option<Vec<Glob>>,
 
