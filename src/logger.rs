@@ -101,7 +101,7 @@ impl Theme for PromptTheme {
 			write!(f, "{}: {} ", &self.prompt_prefix, self.prompt_style.apply_to(prompt))?;
 		}
 
-		let selection = selection.map(|x| if x { "yes" } else { "no" });
+		let selection = selection.map(|s| if s { "yes" } else { "no" });
 
 		match selection {
 			Some(selection) => match selection {

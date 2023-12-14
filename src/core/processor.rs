@@ -10,7 +10,7 @@ use std::{
 use crate::{
 	config::Config,
 	lock,
-	messages::{Message, MessageAction, Sync},
+	messages::{Message, Sync, SyncAction},
 	project::Project,
 	types::{RobloxKind, RobloxPath},
 	utils,
@@ -151,14 +151,14 @@ impl Processor {
 
 			if file_kind != FileKind::Properties {
 				queue.push(Message::Sync(Sync {
-					action: MessageAction::Create,
+					action: SyncAction::Create,
 					path: roblox_path.unwrap(),
 					kind: Some(file_kind.into()),
 					data: Some(content),
 				}));
 			} else {
 				queue.push(Message::Sync(Sync {
-					action: MessageAction::Update,
+					action: SyncAction::Update,
 					path: roblox_path.unwrap(),
 					kind: None,
 					data: Some(content),
@@ -185,7 +185,7 @@ impl Processor {
 		let mut queue = lock!(self.queue);
 
 		queue.push(Message::Sync(Sync {
-			action: MessageAction::Delete,
+			action: SyncAction::Delete,
 			path: roblox_path.unwrap(),
 			kind: None,
 			data: None,
@@ -213,14 +213,14 @@ impl Processor {
 
 			if file_kind != FileKind::Properties {
 				queue.push(Message::Sync(Sync {
-					action: MessageAction::Write,
+					action: SyncAction::Write,
 					path: roblox_path.unwrap(),
 					kind: None,
 					data: Some(content),
 				}));
 			} else {
 				queue.push(Message::Sync(Sync {
-					action: MessageAction::Update,
+					action: SyncAction::Update,
 					path: roblox_path.unwrap(),
 					kind: None,
 					data: Some(content),

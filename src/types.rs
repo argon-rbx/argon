@@ -53,7 +53,7 @@ impl Debug for RobloxPath {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RobloxKind {
 	ServerScript,
 	ClientScript,
