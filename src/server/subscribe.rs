@@ -29,7 +29,7 @@ async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
 		}
 	}
 
-	let subscribed = core.get_queue().subscribe(request.client_id);
+	let subscribed = core.queue().subscribe(&request.client_id);
 
 	if subscribed {
 		HttpResponse::Ok().body("Subscribed successfully")

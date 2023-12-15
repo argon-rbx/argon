@@ -71,7 +71,7 @@ impl Core {
 		lock!(self.project).place_ids.clone()
 	}
 
-	pub fn get_queue(&self) -> MutexGuard<'_, Queue> {
+	pub fn queue(&self) -> MutexGuard<'_, Queue> {
 		lock!(self.queue)
 	}
 

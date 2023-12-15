@@ -1,112 +1,67 @@
+use std::collections::HashMap;
+
 use crate::messages::Message;
 
 #[derive(Debug, Clone)]
-struct QueueMessage {
-	listeners: Vec<u64>,
-	message: Message,
-}
-
-#[derive(Debug, Clone)]
 pub struct Queue {
-	queue: Vec<QueueMessage>,
+	queues: HashMap<u64, Vec<Message>>,
 	listeners: Vec<u64>,
 }
 
 impl Queue {
 	pub fn new() -> Self {
 		Self {
-			queue: vec![],
+			queues: HashMap::new(),
 			listeners: vec![],
 		}
 	}
 
 	pub fn push(&mut self, message: Message) {
-		let message = QueueMessage {
-			listeners: self.listeners.clone(),
-			message,
-		};
-
-		self.queue.push(message);
-
-		println!("{:?}", self.queue);
+		for id in &self.listeners {
+			self.queues.get_mut(id).unwrap().push(message.clone());
+		}
 	}
 
-	pub fn pop(&mut self, id: u64) -> Option<Message> {
-		if self.queue.is_empty() {
+	pub fn pop(&mut self, id: &u64) {
+		if !self.is_subscribed(id) {
+			return;
+		}
+
+		let queue = self.queues.get_mut(id).unwrap();
+
+		if queue.is_empty() {
+			return;
+		}
+
+		queue.remove(0);
+	}
+
+	pub fn get(&mut self, id: &u64) -> Option<&Message> {
+		if !self.is_subscribed(id) {
 			return None;
 		}
 
-		let mut message_index: Option<usize> = None;
-
-		for index in 0..self.queue.len() {
-			let message = &mut self.queue[index];
-
-			if message.listeners.contains(&id) {
-				message.listeners.retain(|i| i != &id);
-
-				if message.listeners.is_empty() {
-					message_index = Some(index);
-				}
-
-				break;
-			}
-		}
-
-		if let Some(index) = message_index {
-			let message = self.queue.remove(index);
-
-			return Some(message.message);
-		}
-
-		None
+		self.queues.get(id).unwrap().get(0)
 	}
 
-	pub fn get(&mut self, id: u64) -> Option<Message> {
-		if !self.is_subscribed(&id) {
-			return None;
-		}
-
-		for message in &self.queue {
-			if message.listeners.contains(&id) {
-				return Some(message.message.clone());
-			}
-		}
-
-		None
-	}
-
-	pub fn subscribe(&mut self, id: u64) -> bool {
-		if self.is_subscribed(&id) {
+	pub fn subscribe(&mut self, id: &u64) -> bool {
+		if self.is_subscribed(id) {
 			return false;
 		}
 
-		self.listeners.push(id);
-
-		println!("{:?}", self.queue);
+		self.listeners.push(id.to_owned());
+		self.queues.insert(id.to_owned(), vec![]);
 
 		true
 	}
 
-	pub fn unsubscribe(&mut self, id: u64) -> bool {
-		if !self.is_subscribed(&id) {
+	pub fn unsubscribe(&mut self, id: &u64) -> bool {
+		if !self.is_subscribed(id) {
 			return false;
 		}
 
-		self.listeners.retain(|i| i != &id);
-
-		let mut new_queue = vec![];
-
-		for message in &mut self.queue {
-			message.listeners.retain(|i| i != &id);
-
-			if !message.listeners.is_empty() {
-				new_queue.push(message.clone());
-			}
-		}
-
-		self.queue = new_queue;
-
-		println!("{:?}", self.queue);
+		self.listeners.retain(|i| i != id);
+		self.queues.remove(id);
 
 		true
 	}

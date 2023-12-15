@@ -7,9 +7,9 @@ use std::{io::Result, sync::Arc};
 use crate::core::Core;
 
 mod home;
+mod read;
 mod stop;
 mod subscribe;
-mod sync_server;
 mod unsubscribe;
 
 async fn default_redirect() -> impl Responder {
@@ -43,7 +43,7 @@ impl Server {
 				.service(unsubscribe::main)
 				.service(home::main)
 				.service(stop::main)
-				.service(sync_server::main)
+				.service(read::main)
 				.default_service(web::to(default_redirect))
 		})
 		.bind((self.host.clone(), self.port))?
