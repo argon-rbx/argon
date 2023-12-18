@@ -13,8 +13,9 @@ use crate::{
 	project::Project,
 };
 
-use self::{processor::Processor, queue::Queue};
+use self::{dom::Dom, processor::Processor, queue::Queue};
 
+mod dom;
 mod processor;
 mod queue;
 
@@ -24,19 +25,24 @@ pub struct Core {
 	fs: Arc<Mutex<Fs>>,
 	processor: Arc<Mutex<Processor>>,
 	queue: Arc<Mutex<Queue>>,
+	dom: Arc<Mutex<Dom>>,
 }
 
 impl Core {
 	pub fn new(config: Config, project: Project) -> Result<Self> {
+		let dom = Dom::from_project(&project);
+
 		let mut fs = Fs::new(&project.workspace_dir)?;
-		fs.watch_all(&project.local_paths)?;
+		fs.watch_all(&project.sync_paths)?;
 
 		let config = Arc::new(config);
 		let project = Arc::new(Mutex::new(project));
 		let fs = Arc::new(Mutex::new(fs));
+		let dom = Arc::new(Mutex::new(dom));
 
 		let queue = Arc::new(Mutex::new(Queue::new()));
 		let processor = Arc::new(Mutex::new(Processor::new(
+			dom.clone(),
 			queue.clone(),
 			project.clone(),
 			config.clone(),
@@ -48,6 +54,7 @@ impl Core {
 			fs,
 			processor,
 			queue,
+			dom,
 		})
 	}
 
@@ -99,13 +106,13 @@ impl Core {
 								let mut queue = lock!(queue);
 								let mut fs = lock!(fs);
 
-								fs.unwatch_all(&lock!(project).local_paths)?;
+								fs.unwatch_all(&lock!(project).sync_paths)?;
 
 								*lock!(project) = new_project.unwrap();
 
 								let project = lock!(project);
 
-								fs.watch_all(&project.local_paths)?;
+								fs.watch_all(&project.sync_paths)?;
 
 								queue.push(Message::UpdateMeta(UpdateMeta {
 									name: project.name.clone(),
@@ -118,9 +125,9 @@ impl Core {
 							let project = lock!(project);
 							let mut fs = lock!(fs);
 
-							if event.path.is_dir() && project.local_paths.contains(&event.path) {
-								fs.unwatch_all(&project.local_paths)?;
-								fs.watch_all(&project.local_paths)?;
+							if event.path.is_dir() && project.sync_paths.contains(&event.path) {
+								fs.unwatch_all(&project.sync_paths)?;
+								fs.watch_all(&project.sync_paths)?;
 							}
 						}
 					}

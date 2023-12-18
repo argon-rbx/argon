@@ -21,6 +21,7 @@ notify-debouncer-full = "0.3.1"
 clap-verbosity-flag = "2.1.0"
 crossbeam-channel = "0.5.8"
 panic-message = "0.3.0"
+rbx_dom_weak = "2.6.0"
 self-replace = "1.3.7"
 serde_json = "1.0.107"
 env_logger = "0.10.0"
@@ -43,3 +44,4 @@ awc = "3.2.0"
 
 [patch.crates-io]
 notify-debouncer-full = { git = "https://github.com/argon-rbx/notify-debouncer-full.git" }
+rbx_dom_weak = { git = "https://github.com/DervexHero/rbx-dom.git" }

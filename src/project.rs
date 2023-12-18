@@ -6,7 +6,7 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{glob::Glob, types::RobloxPath, utils, workspace};
+use crate::{glob::Glob, utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectNode {
@@ -36,9 +36,9 @@ pub struct Project {
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
 	#[serde(skip)]
-	pub local_paths: Vec<PathBuf>,
+	pub sync_paths: Vec<PathBuf>,
 	#[serde(skip)]
-	pub roblox_paths: Vec<RobloxPath>,
+	pub is_place: bool,
 }
 
 impl Project {
@@ -50,27 +50,28 @@ impl Project {
 
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
+		project.sync_paths = project.get_paths(&project.node.tree, &project.workspace_dir);
 
-		(project.local_paths, project.roblox_paths) =
-			project.get_paths(&project.node.tree, &project.workspace_dir, &RobloxPath::new());
+		if let Some(path) = project.node.path.clone() {
+			if path.is_absolute() {
+				project.sync_paths.push(path);
+			} else {
+				project.sync_paths.push(project.workspace_dir.join(path));
+			}
+		} else if let Some(class_name) = project.node.class_name.clone() {
+			if class_name == "DataModel" {
+				project.is_place = true;
+			}
+		}
 
 		Ok(project)
 	}
 
 	#[allow(clippy::only_used_in_recursion)]
-	fn get_paths(
-		&self,
-		tree: &BTreeMap<String, ProjectNode>,
-		local_root: &PathBuf,
-		roblox_root: &RobloxPath,
-	) -> (Vec<PathBuf>, Vec<RobloxPath>) {
-		let mut local_paths = vec![];
-		let mut roblox_paths = vec![];
+	fn get_paths(&self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf) -> Vec<PathBuf> {
+		let mut sync_paths = vec![];
 
-		for (name, node) in tree.iter() {
-			let mut roblox_path = roblox_root.clone();
-			roblox_path.push(name);
-
+		for (_name, node) in tree.iter() {
 			if let Some(path) = &node.path {
 				let mut local_path = path.clone();
 
@@ -78,17 +79,15 @@ impl Project {
 					local_path = local_root.join(local_path);
 				}
 
-				local_paths.push(local_path);
-				roblox_paths.push(roblox_path.clone());
+				sync_paths.push(local_path);
 			}
 
-			let mut paths = self.get_paths(&node.tree, local_root, &roblox_path);
+			let mut paths = self.get_paths(&node.tree, local_root);
 
-			local_paths.append(&mut paths.0);
-			roblox_paths.append(&mut paths.1);
+			sync_paths.append(&mut paths);
 		}
 
-		(local_paths, roblox_paths)
+		sync_paths
 	}
 }
 

@@ -16,7 +16,7 @@ use crate::{
 	utils,
 };
 
-use super::queue::Queue;
+use super::{dom::Dom, queue::Queue};
 
 const FILE_EXTENSIONS: [&str; 3] = ["lua", "luau", "json"];
 
@@ -48,7 +48,12 @@ pub struct Processor {
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, project: Arc<Mutex<Project>>, config: Arc<Config>) -> Self {
+	pub fn new(
+		dom: Arc<Mutex<Dom>>,
+		queue: Arc<Mutex<Queue>>,
+		project: Arc<Mutex<Project>>,
+		config: Arc<Config>,
+	) -> Self {
 		Self { queue, project, config }
 	}
 
@@ -73,11 +78,11 @@ impl Processor {
 	fn get_roblox_path(&self, path: &Path, name: &str, ext: &str) -> Option<RobloxPath> {
 		let project = lock!(self.project);
 
-		for (index, local_path) in project.local_paths.iter().enumerate() {
+		for (index, local_path) in project.sync_paths.iter().enumerate() {
 			if let Some(path) = sub_paths(path, local_path) {
-				let absolute = &project.roblox_paths[index];
+				// let absolute = &project.roblox_paths[index];
 
-				let mut roblox_path = absolute.clone();
+				let mut roblox_path = RobloxPath::new();
 				let mut parent = path.clone();
 
 				parent.pop();
