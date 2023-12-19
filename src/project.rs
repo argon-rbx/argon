@@ -6,9 +6,9 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{glob::Glob, utils, workspace};
+use crate::{glob::Glob, types::RobloxPath, utils, workspace};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
 	#[serde(rename = "$className")]
 	pub class_name: Option<String>,
@@ -20,25 +20,32 @@ pub struct ProjectNode {
 	pub tree: BTreeMap<String, ProjectNode>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
 	pub node: ProjectNode,
+	#[serde(alias = "serveAddress")]
 	pub host: Option<String>,
+	#[serde(alias = "servePort")]
 	pub port: Option<u16>,
+	#[serde(rename = "gameId")]
 	pub game_id: Option<u64>,
+	#[serde(rename = "placeIds", alias = "servePlaceIds")]
 	pub place_ids: Option<Vec<u64>>,
+	#[serde(alias = "globIgnorePaths")]
 	pub ignore_globs: Option<Vec<Glob>>,
 
+	#[serde(skip)]
+	pub root_type: String,
 	#[serde(skip)]
 	pub project_path: PathBuf,
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
 	#[serde(skip)]
-	pub sync_paths: Vec<PathBuf>,
+	pub local_paths: Vec<PathBuf>,
 	#[serde(skip)]
-	pub is_place: bool,
+	pub roblox_paths: Vec<RobloxPath>,
 }
 
 impl Project {
@@ -48,30 +55,41 @@ impl Project {
 
 		let workspace_dir = workspace::get_dir(project_path.to_owned());
 
+		project.root_type = project.node.class_name.clone().unwrap_or(String::from("Folder"));
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
-		project.sync_paths = project.get_paths(&project.node.tree, &project.workspace_dir);
 
-		if let Some(path) = project.node.path.clone() {
-			if path.is_absolute() {
-				project.sync_paths.push(path);
-			} else {
-				project.sync_paths.push(project.workspace_dir.join(path));
-			}
-		} else if let Some(class_name) = project.node.class_name.clone() {
-			if class_name == "DataModel" {
-				project.is_place = true;
-			}
+		if project.node.path.is_none() {
+			(project.local_paths, project.roblox_paths) = project.get_paths(
+				&project.node.tree,
+				&project.workspace_dir,
+				&RobloxPath::from(&project.name),
+			);
+		} else {
+			let mut tree = BTreeMap::new();
+			tree.insert(project.name.clone(), project.node.clone());
+
+			(project.local_paths, project.roblox_paths) =
+				project.get_paths(&tree, &project.workspace_dir, &RobloxPath::new());
 		}
 
 		Ok(project)
 	}
 
 	#[allow(clippy::only_used_in_recursion)]
-	fn get_paths(&self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf) -> Vec<PathBuf> {
-		let mut sync_paths = vec![];
+	fn get_paths(
+		&self,
+		tree: &BTreeMap<String, ProjectNode>,
+		local_root: &PathBuf,
+		roblox_root: &RobloxPath,
+	) -> (Vec<PathBuf>, Vec<RobloxPath>) {
+		let mut local_paths = vec![];
+		let mut roblox_paths = vec![];
 
-		for (_name, node) in tree.iter() {
+		for (name, node) in tree.iter() {
+			let mut roblox_path = roblox_root.clone();
+			roblox_path.push(name);
+
 			if let Some(path) = &node.path {
 				let mut local_path = path.clone();
 
@@ -79,15 +97,17 @@ impl Project {
 					local_path = local_root.join(local_path);
 				}
 
-				sync_paths.push(local_path);
+				local_paths.push(local_path);
+				roblox_paths.push(roblox_path.clone());
 			}
 
-			let mut paths = self.get_paths(&node.tree, local_root);
+			let mut paths = self.get_paths(&node.tree, local_root, &roblox_path);
 
-			sync_paths.append(&mut paths);
+			local_paths.append(&mut paths.0);
+			roblox_paths.append(&mut paths.1);
 		}
 
-		sync_paths
+		(local_paths, roblox_paths)
 	}
 }
 

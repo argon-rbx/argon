@@ -1,5 +1,7 @@
 #![allow(clippy::type_complexity)]
 
+use crate::lock;
+
 use super::{debouncer::FsDebouncer, FsEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -70,13 +72,13 @@ impl FsWatcher {
 		let fs_debouncer = self.fs_debouncer.clone();
 
 		thread::spawn(move || {
-			let receiver = receiver.lock().unwrap();
+			let receiver = lock!(receiver);
 
 			#[cfg(not(target_os = "linux"))]
-			let fs_debouncer = fs_debouncer.lock().unwrap();
+			let fs_debouncer = lock!(fs_debouncer);
 
 			#[cfg(target_os = "linux")]
-			let mut fs_debouncer = fs_debouncer.lock().unwrap();
+			let mut fs_debouncer = lock!(fs_debouncer);
 
 			for response in receiver.iter() {
 				for event in response.unwrap() {

@@ -1,9 +1,11 @@
 use anyhow::Result;
 use log::{trace, warn};
 use std::{
+	fs,
 	sync::{Arc, Mutex, MutexGuard},
 	thread,
 };
+use walkdir::WalkDir;
 
 use crate::{
 	config::Config,
@@ -30,10 +32,8 @@ pub struct Core {
 
 impl Core {
 	pub fn new(config: Config, project: Project) -> Result<Self> {
-		let dom = Dom::from_project(&project);
-
-		let mut fs = Fs::new(&project.workspace_dir)?;
-		fs.watch_all(&project.sync_paths)?;
+		let dom = Dom::new(&project.root_type);
+		let fs = Fs::new(&project.workspace_dir)?;
 
 		let config = Arc::new(config);
 		let project = Arc::new(Mutex::new(project));
@@ -82,6 +82,24 @@ impl Core {
 		lock!(self.queue)
 	}
 
+	pub fn load_dom(&mut self) {
+		let project = lock!(self.project);
+		let processor = lock!(self.processor);
+
+		for path in &project.local_paths {
+			for entry in WalkDir::new(path).into_iter().skip(1).flatten() {
+				match processor.create(entry.path()) {
+					Ok(_) => {
+						trace!("Loaded path: {:?}", entry.path());
+					}
+					Err(err) => {
+						warn!("Failed to load path: {:?}", err);
+					}
+				}
+			}
+		}
+	}
+
 	pub fn start(&self) {
 		let processor = self.processor.clone();
 		let project = self.project.clone();
@@ -90,6 +108,9 @@ impl Core {
 
 		thread::spawn(move || -> Result<()> {
 			let receiver = lock!(fs).receiver();
+
+			// Start watching for file changes
+			lock!(fs).watch_all(&lock!(project).local_paths)?;
 
 			for event in receiver.iter() {
 				if event.root {
@@ -106,13 +127,13 @@ impl Core {
 								let mut queue = lock!(queue);
 								let mut fs = lock!(fs);
 
-								fs.unwatch_all(&lock!(project).sync_paths)?;
+								fs.unwatch_all(&lock!(project).local_paths)?;
 
 								*lock!(project) = new_project.unwrap();
 
 								let project = lock!(project);
 
-								fs.watch_all(&project.sync_paths)?;
+								fs.watch_all(&project.local_paths)?;
 
 								queue.push(Message::UpdateMeta(UpdateMeta {
 									name: project.name.clone(),
@@ -125,9 +146,9 @@ impl Core {
 							let project = lock!(project);
 							let mut fs = lock!(fs);
 
-							if event.path.is_dir() && project.sync_paths.contains(&event.path) {
-								fs.unwatch_all(&project.sync_paths)?;
-								fs.watch_all(&project.sync_paths)?;
+							if event.path.is_dir() && project.local_paths.contains(&event.path) {
+								fs.unwatch_all(&project.local_paths)?;
+								fs.watch_all(&project.local_paths)?;
 							}
 						}
 					}
@@ -143,6 +164,7 @@ impl Core {
 						FsEventKind::Delete => processor.delete(&event.path)?,
 						FsEventKind::Write => processor.write(&event.path)?,
 					}
+
 					Ok(())
 				};
 

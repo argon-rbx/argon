@@ -1,23 +1,17 @@
-use rbx_dom_weak::{types::Ref, WeakDom};
+use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::project::Project;
-
+#[derive(Debug)]
 pub struct Dom {
 	inner: WeakDom,
 	ref_map: HashMap<PathBuf, Ref>,
 }
 
 impl Dom {
-	pub fn new() -> Self {
+	pub fn new(root_type: &str) -> Self {
 		Self {
-			inner: WeakDom::default(),
+			inner: WeakDom::new(InstanceBuilder::new(root_type)),
 			ref_map: HashMap::new(),
 		}
-	}
-
-	pub fn from_project(project: &Project) -> Self {
-		// TODO
-		Self::new()
 	}
 }

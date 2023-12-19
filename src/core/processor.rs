@@ -78,7 +78,7 @@ impl Processor {
 	fn get_roblox_path(&self, path: &Path, name: &str, ext: &str) -> Option<RobloxPath> {
 		let project = lock!(self.project);
 
-		for (index, local_path) in project.sync_paths.iter().enumerate() {
+		for (index, local_path) in project.local_paths.iter().enumerate() {
 			if let Some(path) = sub_paths(path, local_path) {
 				// let absolute = &project.roblox_paths[index];
 

@@ -13,15 +13,15 @@ impl RobloxPath {
 		Self { components: vec![] }
 	}
 
-	// pub fn from(path: &str) -> Self {
-	// 	let mut components = vec![];
+	pub fn from(path: &str) -> Self {
+		let mut components = vec![];
 
-	// 	for component in path.split(ROBLOX_SEPARATOR) {
-	// 		components.push(component.to_owned());
-	// 	}
+		for component in path.split(ROBLOX_SEPARATOR) {
+			components.push(component.to_owned());
+		}
 
-	// 	Self { components }
-	// }
+		Self { components }
+	}
 
 	pub fn push(&mut self, path: &str) {
 		if path.is_empty() {

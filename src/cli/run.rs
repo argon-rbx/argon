@@ -87,7 +87,9 @@ impl Run {
 			port = config.port;
 		}
 
-		let core = Core::new(config, project)?;
+		let mut core = Core::new(config, project)?;
+		core.load_dom();
+
 		let server = Server::new(core, &host, &port);
 
 		session::add(&host, &port, process::id())?;
