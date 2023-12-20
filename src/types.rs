@@ -1,14 +1,14 @@
 use serde::{Serialize, Serializer};
 use std::fmt::{self, Debug, Display};
 
-use crate::ROBLOX_SEPARATOR;
+use crate::RBX_SEPARATOR;
 
-#[derive(Clone)]
-pub struct RobloxPath {
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct RbxPath {
 	components: Vec<String>,
 }
 
-impl RobloxPath {
+impl RbxPath {
 	pub fn new() -> Self {
 		Self { components: vec![] }
 	}
@@ -16,7 +16,7 @@ impl RobloxPath {
 	pub fn from(path: &str) -> Self {
 		let mut components = vec![];
 
-		for component in path.split(ROBLOX_SEPARATOR) {
+		for component in path.split(RBX_SEPARATOR) {
 			components.push(component.to_owned());
 		}
 
@@ -42,28 +42,32 @@ impl RobloxPath {
 	pub fn is_empty(&self) -> bool {
 		self.components.is_empty()
 	}
+
+	pub fn iter(&self) -> impl Iterator<Item = &String> {
+		self.components.iter()
+	}
 }
 
-impl Serialize for RobloxPath {
+impl Serialize for RbxPath {
 	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
 		serializer.serialize_str(&self.to_string())
 	}
 }
 
-impl Display for RobloxPath {
+impl Display for RbxPath {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.components.join(&ROBLOX_SEPARATOR.to_string()))
+		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
 	}
 }
 
-impl Debug for RobloxPath {
+impl Debug for RbxPath {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.components.join(&ROBLOX_SEPARATOR.to_string()))
+		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
 	}
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum RobloxKind {
+pub enum RbxKind {
 	ServerScript,
 	ClientScript,
 	ModuleScript,

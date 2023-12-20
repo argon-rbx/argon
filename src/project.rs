@@ -6,7 +6,7 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{glob::Glob, types::RobloxPath, utils, workspace};
+use crate::{glob::Glob, types::RbxPath, utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
@@ -37,15 +37,19 @@ pub struct Project {
 	pub ignore_globs: Option<Vec<Glob>>,
 
 	#[serde(skip)]
-	pub root_type: String,
+	pub root_class: String,
+	#[serde(skip)]
+	pub root_dir: Option<PathBuf>,
 	#[serde(skip)]
 	pub project_path: PathBuf,
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
+
+	// These two fields need improvement
 	#[serde(skip)]
 	pub local_paths: Vec<PathBuf>,
 	#[serde(skip)]
-	pub roblox_paths: Vec<RobloxPath>,
+	pub rbx_paths: Vec<RbxPath>,
 }
 
 impl Project {
@@ -55,22 +59,25 @@ impl Project {
 
 		let workspace_dir = workspace::get_dir(project_path.to_owned());
 
-		project.root_type = project.node.class_name.clone().unwrap_or(String::from("Folder"));
+		project.root_class = project.node.class_name.clone().unwrap_or(String::from("Folder"));
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
 
-		if project.node.path.is_none() {
-			(project.local_paths, project.roblox_paths) = project.get_paths(
-				&project.node.tree,
-				&project.workspace_dir,
-				&RobloxPath::from(&project.name),
-			);
-		} else {
+		if let Some(path) = &project.node.path {
 			let mut tree = BTreeMap::new();
 			tree.insert(project.name.clone(), project.node.clone());
 
-			(project.local_paths, project.roblox_paths) =
-				project.get_paths(&tree, &project.workspace_dir, &RobloxPath::new());
+			(project.local_paths, project.rbx_paths) =
+				project.get_paths(&tree, &project.workspace_dir, &RbxPath::new());
+
+			let path = utils::resolve_path(path.to_owned())?;
+			project.root_dir = Some(path);
+		} else {
+			(project.local_paths, project.rbx_paths) = project.get_paths(
+				&project.node.tree,
+				&project.workspace_dir,
+				&RbxPath::from(&project.name),
+			);
 		}
 
 		Ok(project)
@@ -81,14 +88,14 @@ impl Project {
 		&self,
 		tree: &BTreeMap<String, ProjectNode>,
 		local_root: &PathBuf,
-		roblox_root: &RobloxPath,
-	) -> (Vec<PathBuf>, Vec<RobloxPath>) {
+		rbx_root: &RbxPath,
+	) -> (Vec<PathBuf>, Vec<RbxPath>) {
 		let mut local_paths = vec![];
-		let mut roblox_paths = vec![];
+		let mut rbx_paths = vec![];
 
 		for (name, node) in tree.iter() {
-			let mut roblox_path = roblox_root.clone();
-			roblox_path.push(name);
+			let mut rbx_path = rbx_root.clone();
+			rbx_path.push(name);
 
 			if let Some(path) = &node.path {
 				let mut local_path = path.clone();
@@ -98,16 +105,16 @@ impl Project {
 				}
 
 				local_paths.push(local_path);
-				roblox_paths.push(roblox_path.clone());
+				rbx_paths.push(rbx_path.clone());
 			}
 
-			let mut paths = self.get_paths(&node.tree, local_root, &roblox_path);
+			let mut paths = self.get_paths(&node.tree, local_root, &rbx_path);
 
 			local_paths.append(&mut paths.0);
-			roblox_paths.append(&mut paths.1);
+			rbx_paths.append(&mut paths.1);
 		}
 
-		(local_paths, roblox_paths)
+		(local_paths, rbx_paths)
 	}
 }
 

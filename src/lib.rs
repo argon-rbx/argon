@@ -16,7 +16,7 @@ pub mod types;
 pub mod utils;
 pub mod workspace;
 
-const ROBLOX_SEPARATOR: char = '/';
+const RBX_SEPARATOR: char = '/';
 
 // These Argon logs ignore verbosity level, aside of `Off`
 #[macro_export]

@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::types::{RobloxKind, RobloxPath};
+use crate::types::{RbxKind, RbxPath};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum Message {
@@ -18,8 +18,8 @@ pub struct UpdateMeta {
 #[derive(Debug, Clone, Serialize)]
 pub struct Sync {
 	pub action: SyncAction,
-	pub path: RobloxPath,
-	pub kind: Option<RobloxKind>,
+	pub path: RbxPath,
+	pub kind: Option<RbxKind>,
 	pub data: Option<String>,
 }
 

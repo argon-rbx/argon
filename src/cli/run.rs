@@ -12,6 +12,7 @@ use crate::{
 	argon_info, argon_warn,
 	config::Config,
 	core::Core,
+	lock,
 	project::{self, Project},
 	server::Server,
 	session, workspace,
@@ -88,7 +89,12 @@ impl Run {
 		}
 
 		let mut core = Core::new(config, project)?;
-		core.load_dom();
+		core.load_dom()?;
+
+		// Test stuff
+		// let writer = std::io::BufWriter::new(std::fs::File::create("test.rbxm").unwrap());
+		// let dom = lock!(core.dom);
+		// rbx_binary::to_writer(writer, dom.inner(), &[dom.root()])?;
 
 		let server = Server::new(core, &host, &port);
 

@@ -20,11 +20,11 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 		fs::create_dir_all(&workspace_dir)?;
 	}
 
-	for dir_entry in fs::read_dir(template_dir)? {
-		let dir_entry = dir_entry?;
+	for entry in fs::read_dir(template_dir)? {
+		let entry = entry?;
 
-		let file_path = dir_entry.path();
-		let file_name = dir_entry.file_name();
+		let file_path = entry.path();
+		let file_name = entry.file_name();
 		let file_name = file_name.to_str().unwrap();
 
 		let new_file_path = if file_name == "project.json" {

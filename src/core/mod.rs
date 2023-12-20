@@ -5,7 +5,6 @@ use std::{
 	sync::{Arc, Mutex, MutexGuard},
 	thread,
 };
-use walkdir::WalkDir;
 
 use crate::{
 	config::Config,
@@ -27,12 +26,12 @@ pub struct Core {
 	fs: Arc<Mutex<Fs>>,
 	processor: Arc<Mutex<Processor>>,
 	queue: Arc<Mutex<Queue>>,
-	dom: Arc<Mutex<Dom>>,
+	pub dom: Arc<Mutex<Dom>>,
 }
 
 impl Core {
 	pub fn new(config: Config, project: Project) -> Result<Self> {
-		let dom = Dom::new(&project.root_type);
+		let dom = Dom::new(&project);
 		let fs = Fs::new(&project.workspace_dir)?;
 
 		let config = Arc::new(config);
@@ -82,22 +81,33 @@ impl Core {
 		lock!(self.queue)
 	}
 
-	pub fn load_dom(&mut self) {
-		let project = lock!(self.project);
+	pub fn load_dom(&mut self) -> Result<()> {
 		let processor = lock!(self.processor);
 
-		for path in &project.local_paths {
-			for entry in WalkDir::new(path).into_iter().skip(1).flatten() {
-				match processor.create(entry.path()) {
-					Ok(_) => {
-						trace!("Loaded path: {:?}", entry.path());
-					}
-					Err(err) => {
-						warn!("Failed to load path: {:?}", err);
+		// We need to clone local_paths because we can't hold lock on the Mutex
+		let local_paths = lock!(self.project).local_paths.clone();
+
+		for path in &local_paths {
+			// println!("{:?}", path);
+			if let Ok(read_dir) = fs::read_dir(path) {
+				for entry in read_dir {
+					let entry = entry?;
+
+					// println!("{:?}", entry.path());
+
+					match processor.create(&entry.path()) {
+						Ok(_) => {
+							trace!("Processed path: {:?}", entry.path());
+						}
+						Err(err) => {
+							warn!("Failed to process path: {:?}", err);
+						}
 					}
 				}
 			}
 		}
+
+		Ok(())
 	}
 
 	pub fn start(&self) {

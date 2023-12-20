@@ -339,7 +339,6 @@ dependencies = [
  "tokio",
  "toml",
  "toml_edit 0.21.0",
- "walkdir",
 ]
 
 [[package]]

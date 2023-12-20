@@ -1,9 +1,10 @@
 use anyhow::Result;
 use log::{info, warn};
 use pathsub::sub_paths;
+use rbx_dom_weak::types::Ref;
 use std::{
 	fs,
-	path::Path,
+	path::{Path, PathBuf},
 	sync::{Arc, Mutex},
 };
 
@@ -12,7 +13,7 @@ use crate::{
 	lock,
 	messages::{Message, Sync, SyncAction},
 	project::Project,
-	types::{RobloxKind, RobloxPath},
+	types::{RbxKind, RbxPath},
 	utils,
 };
 
@@ -29,19 +30,20 @@ pub enum FileKind {
 	Other,
 }
 
-impl From<FileKind> for RobloxKind {
+impl From<FileKind> for RbxKind {
 	fn from(kind: FileKind) -> Self {
 		match kind {
-			FileKind::ServerScript => RobloxKind::ServerScript,
-			FileKind::ClientScript => RobloxKind::ClientScript,
-			FileKind::ModuleScript => RobloxKind::ModuleScript,
-			FileKind::Other => RobloxKind::Other,
-			_ => panic!("Cannot convert FileKind to RobloxType"),
+			FileKind::ServerScript => RbxKind::ServerScript,
+			FileKind::ClientScript => RbxKind::ClientScript,
+			FileKind::ModuleScript => RbxKind::ModuleScript,
+			FileKind::Other => RbxKind::Other,
+			_ => panic!("Cannot convert FileKind to RbxKind"),
 		}
 	}
 }
 
 pub struct Processor {
+	dom: Arc<Mutex<Dom>>,
 	queue: Arc<Mutex<Queue>>,
 	project: Arc<Mutex<Project>>,
 	config: Arc<Config>,
@@ -54,7 +56,12 @@ impl Processor {
 		project: Arc<Mutex<Project>>,
 		config: Arc<Config>,
 	) -> Self {
-		Self { queue, project, config }
+		Self {
+			dom,
+			queue,
+			project,
+			config,
+		}
 	}
 
 	fn is_valid(&self, path: &Path, ext: &str, is_dir: bool) -> bool {
@@ -75,36 +82,34 @@ impl Processor {
 		true
 	}
 
-	fn get_roblox_path(&self, path: &Path, name: &str, ext: &str) -> Option<RobloxPath> {
+	fn get_rbx_path(&self, path: &Path, name: &str, ext: &str) -> Option<RbxPath> {
 		let project = lock!(self.project);
 
 		for (index, local_path) in project.local_paths.iter().enumerate() {
 			if let Some(path) = sub_paths(path, local_path) {
-				// let absolute = &project.roblox_paths[index];
-
-				let mut roblox_path = RobloxPath::new();
+				let mut rbx_path = project.rbx_paths[index].clone();
 				let mut parent = path.clone();
 
 				parent.pop();
-				roblox_path.push(parent.to_str().unwrap());
+				rbx_path.push(parent.to_str().unwrap());
 
 				match ext {
 					"lua" | "luau" => {
 						if !name.starts_with(&self.config.src) {
-							roblox_path.push(name);
+							rbx_path.push(name);
 						}
 					}
 					"json" => {
 						if !name.starts_with(&self.config.data) {
-							roblox_path.push(name);
+							rbx_path.push(name);
 						}
 					}
 					_ => {
-						roblox_path.push(name);
+						rbx_path.push(name);
 					}
 				}
 
-				return Some(roblox_path);
+				return Some(rbx_path);
 			}
 		}
 
@@ -137,6 +142,13 @@ impl Processor {
 		Some(FileKind::Other)
 	}
 
+	// fn get_parent(&self, path: &Path) -> PathBuf {
+	// 	let mut parent = path.to_owned();
+	// 	parent.pop();
+
+	// 	parent
+	// }
+
 	pub fn create(&self, path: &Path) -> Result<()> {
 		let ext = utils::get_file_extension(path);
 		let is_dir = path.is_dir();
@@ -147,33 +159,48 @@ impl Processor {
 
 		let name = utils::get_file_name(path);
 
-		let roblox_path = self.get_roblox_path(path, name, ext);
-		let file_kind = self.get_file_kind(name, ext, is_dir);
+		let rbx_path = self.get_rbx_path(path, name, ext).unwrap();
+		// let file_kind = self.get_file_kind(name, ext, is_dir);
 
-		if let Some(file_kind) = file_kind {
-			let mut queue = lock!(self.queue);
-			let content = fs::read_to_string(path)?;
+		let mut dom = lock!(self.dom);
 
-			if file_kind != FileKind::Properties {
-				queue.push(Message::Sync(Sync {
-					action: SyncAction::Create,
-					path: roblox_path.unwrap(),
-					kind: Some(file_kind.into()),
-					data: Some(content),
-				}));
+		let mut cur_rbx_path = RbxPath::new();
+		let mut last_ref = Ref::new();
+
+		for comp in rbx_path.iter() {
+			cur_rbx_path.push(comp);
+
+			if dom.contains(&cur_rbx_path) {
+				last_ref = dom.get_ref(&cur_rbx_path).unwrap();
 			} else {
-				queue.push(Message::Sync(Sync {
-					action: SyncAction::Update,
-					path: roblox_path.unwrap(),
-					kind: None,
-					data: Some(content),
-				}));
+				dom.insert(last_ref, comp, path.to_owned(), cur_rbx_path.clone());
 			}
+		}
 
-			info!("Create: {:?}", path);
-		} else {
-			warn!("Unknown file kind: {:?}", path);
-		};
+		// if let Some(file_kind) = file_kind {
+		// 	let mut queue = lock!(self.queue);
+		// 	let content = fs::read_to_string(path)?;
+
+		// 	if file_kind != FileKind::Properties {
+		// 		queue.push(Message::Sync(Sync {
+		// 			action: SyncAction::Create,
+		// 			path: rbx_path.unwrap(),
+		// 			kind: Some(file_kind.into()),
+		// 			data: Some(content),
+		// 		}));
+		// 	} else {
+		// 		queue.push(Message::Sync(Sync {
+		// 			action: SyncAction::Update,
+		// 			path: rbx_path.unwrap(),
+		// 			kind: None,
+		// 			data: Some(content),
+		// 		}));
+		// 	}
+
+		// 	info!("Create: {:?}", path);
+		// } else {
+		// 	warn!("Unknown file kind: {:?}", path);
+		// };
 
 		Ok(())
 	}
@@ -186,12 +213,12 @@ impl Processor {
 		}
 
 		let name = utils::get_file_name(path);
-		let roblox_path = self.get_roblox_path(path, name, ext);
+		let rbx_path = self.get_rbx_path(path, name, ext);
 		let mut queue = lock!(self.queue);
 
 		queue.push(Message::Sync(Sync {
 			action: SyncAction::Delete,
-			path: roblox_path.unwrap(),
+			path: rbx_path.unwrap(),
 			kind: None,
 			data: None,
 		}));
@@ -209,7 +236,7 @@ impl Processor {
 		let name = utils::get_file_name(path);
 		let is_dir = path.is_dir();
 
-		let roblox_path = self.get_roblox_path(path, name, ext);
+		let rbx_path = self.get_rbx_path(path, name, ext);
 		let file_kind = self.get_file_kind(name, ext, is_dir);
 
 		if let Some(file_kind) = file_kind {
@@ -219,14 +246,14 @@ impl Processor {
 			if file_kind != FileKind::Properties {
 				queue.push(Message::Sync(Sync {
 					action: SyncAction::Write,
-					path: roblox_path.unwrap(),
+					path: rbx_path.unwrap(),
 					kind: None,
 					data: Some(content),
 				}));
 			} else {
 				queue.push(Message::Sync(Sync {
 					action: SyncAction::Update,
-					path: roblox_path.unwrap(),
+					path: rbx_path.unwrap(),
 					kind: None,
 					data: Some(content),
 				}));
