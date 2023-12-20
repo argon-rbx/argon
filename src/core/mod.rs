@@ -84,18 +84,22 @@ impl Core {
 	pub fn load_dom(&mut self) -> Result<()> {
 		let processor = lock!(self.processor);
 
-		// We need to clone local_paths because we can't hold lock on the Mutex
-		let local_paths = lock!(self.project).local_paths.clone();
+		let project = lock!(self.project);
+		let local_paths = project.local_paths.clone();
+		let has_root_dir = project.root_dir.is_some();
+
+		drop(project);
 
 		for path in &local_paths {
-			// println!("{:?}", path);
+			if !has_root_dir {
+				processor.init(path)?;
+			}
+
 			if let Ok(read_dir) = fs::read_dir(path) {
 				for entry in read_dir {
 					let entry = entry?;
 
-					// println!("{:?}", entry.path());
-
-					match processor.create(&entry.path()) {
+					match processor.create(&entry.path(), true) {
 						Ok(_) => {
 							trace!("Processed path: {:?}", entry.path());
 						}
@@ -170,7 +174,7 @@ impl Core {
 					let processor = lock!(processor);
 
 					match event.kind {
-						FsEventKind::Create => processor.create(&event.path)?,
+						FsEventKind::Create => processor.create(&event.path, false)?,
 						FsEventKind::Delete => processor.delete(&event.path)?,
 						FsEventKind::Write => processor.write(&event.path)?,
 					}

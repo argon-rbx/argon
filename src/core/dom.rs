@@ -1,4 +1,7 @@
-use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
+use rbx_dom_weak::{
+	types::{Ref, Variant},
+	InstanceBuilder, WeakDom,
+};
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{project::Project, types::RbxPath};
@@ -52,6 +55,16 @@ impl Dom {
 		);
 
 		dom_ref
+	}
+
+	pub fn set_class(&mut self, dom_ref: Ref, class: &str) {
+		let instance = self.inner.get_by_ref_mut(dom_ref).unwrap();
+		instance.class = class.to_owned();
+	}
+
+	pub fn set_properties(&mut self, dom_ref: Ref, properties: HashMap<String, Variant>) {
+		let instance = self.inner.get_by_ref_mut(dom_ref).unwrap();
+		instance.properties = properties;
 	}
 
 	pub fn contains(&self, rbx_path: &RbxPath) -> bool {

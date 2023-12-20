@@ -333,6 +333,8 @@ dependencies = [
  "pathsub",
  "rbx_binary",
  "rbx_dom_weak",
+ "rbx_reflection",
+ "rbx_reflection_database",
  "self-replace",
  "serde",
  "serde_json",

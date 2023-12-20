@@ -1,5 +1,8 @@
 use serde::{Serialize, Serializer};
-use std::fmt::{self, Debug, Display};
+use std::{
+	fmt::{self, Debug, Display},
+	ops::Index,
+};
 
 use crate::RBX_SEPARATOR;
 
@@ -45,6 +48,22 @@ impl RbxPath {
 
 	pub fn iter(&self) -> impl Iterator<Item = &String> {
 		self.components.iter()
+	}
+
+	pub fn first(&self) -> Option<&String> {
+		self.components.first()
+	}
+
+	pub fn last(&self) -> Option<&String> {
+		self.components.last()
+	}
+}
+
+impl Index<usize> for RbxPath {
+	type Output = String;
+
+	fn index(&self, index: usize) -> &Self::Output {
+		&self.components[index]
 	}
 }
 

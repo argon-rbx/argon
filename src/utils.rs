@@ -30,3 +30,7 @@ pub fn get_file_extension(path: &Path) -> &str {
 pub fn get_file_name(path: &Path) -> &str {
 	path.file_stem().unwrap().to_str().unwrap()
 }
+
+pub fn get_index<T: PartialEq>(vec: &[T], value: &T) -> Option<usize> {
+	vec.iter().position(|v| v == value)
+}

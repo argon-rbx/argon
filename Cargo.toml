@@ -16,6 +16,8 @@ path = "src/lib.rs"
 [dependencies]
 rbx_binary = "0.7.3"
 rbx_dom_weak = "2.6.0"
+rbx_reflection = "4.4.0"
+rbx_reflection_database = "0.2.9"
 clap = { version = "4.4.1", features = ["derive", "cargo"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }

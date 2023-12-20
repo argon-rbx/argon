@@ -12,7 +12,6 @@ use crate::{
 	argon_info, argon_warn,
 	config::Config,
 	core::Core,
-	lock,
 	project::{self, Project},
 	server::Server,
 	session, workspace,

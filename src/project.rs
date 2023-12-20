@@ -45,7 +45,6 @@ pub struct Project {
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
 
-	// These two fields need improvement
 	#[serde(skip)]
 	pub local_paths: Vec<PathBuf>,
 	#[serde(skip)]

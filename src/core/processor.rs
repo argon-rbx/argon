@@ -1,7 +1,8 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use log::{info, warn};
 use pathsub::sub_paths;
 use rbx_dom_weak::types::Ref;
+use rbx_reflection::ClassTag;
 use std::{
 	fs,
 	path::{Path, PathBuf},
@@ -19,17 +20,23 @@ use crate::{
 
 use super::{dom::Dom, queue::Queue};
 
-const FILE_EXTENSIONS: [&str; 3] = ["lua", "luau", "json"];
+const FILE_EXTENSIONS: [&str; 7] = ["lua", "luau", "json", "csv", "txt", "rbxm", "rbxmx"];
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FileKind {
-	ServerScript,
-	ClientScript,
-	ModuleScript,
-	Properties,
-	Other,
+	ServerScript,      // .server.lua
+	ClientScript,      // .client.lua
+	ModuleScript,      // .lua
+	InstanceData,      // .data.json
+	JsonModule,        // .json
+	LocalizationTable, // .csv
+	StringValue,       // .txt
+	BinaryModel,       // .rbxm
+	XmlModel,          // .rbxmx
+	Other,             // dir
 }
 
+// This will be removed in the future
 impl From<FileKind> for RbxKind {
 	fn from(kind: FileKind) -> Self {
 		match kind {
@@ -64,6 +71,20 @@ impl Processor {
 		}
 	}
 
+	fn is_place(&self) -> bool {
+		lock!(self.project).root_class == "DataModel"
+	}
+
+	fn is_service(&self, class: &str) -> bool {
+		let class = rbx_reflection_database::get().classes.get(class);
+
+		if let Some(class) = class {
+			class.tags.contains(&ClassTag::Service)
+		} else {
+			false
+		}
+	}
+
 	fn is_valid(&self, path: &Path, ext: &str, is_dir: bool) -> bool {
 		if !FILE_EXTENSIONS.contains(&ext) && !is_dir {
 			return false;
@@ -82,7 +103,7 @@ impl Processor {
 		true
 	}
 
-	fn get_rbx_path(&self, path: &Path, name: &str, ext: &str) -> Option<RbxPath> {
+	fn get_rbx_path(&self, path: &Path, name: &str, ext: &str) -> Result<RbxPath> {
 		let project = lock!(self.project);
 
 		for (index, local_path) in project.local_paths.iter().enumerate() {
@@ -109,47 +130,105 @@ impl Processor {
 					}
 				}
 
-				return Some(rbx_path);
+				return Ok(rbx_path);
 			}
 		}
 
-		None
+		bail!("{:?} does not exists in the project file", path)
 	}
 
-	fn get_file_kind(&self, name: &str, ext: &str, is_dir: bool) -> Option<FileKind> {
+	fn get_file_kind(&self, name: &str, ext: &str, is_dir: bool) -> Result<FileKind> {
 		if is_dir {
-			return Some(FileKind::Other);
+			return Ok(FileKind::Other);
 		}
 
 		if ext == "lua" || ext == "luau" {
 			if name.ends_with(".server") {
-				return Some(FileKind::ServerScript);
+				return Ok(FileKind::ServerScript);
 			} else if name.ends_with(".client") {
-				return Some(FileKind::ClientScript);
+				return Ok(FileKind::ClientScript);
 			} else {
-				return Some(FileKind::ModuleScript);
+				return Ok(FileKind::ModuleScript);
 			}
-		}
-
-		if ext == "json" {
+		} else if ext == "json" {
 			if name == self.config.data {
-				return Some(FileKind::Properties);
+				return Ok(FileKind::InstanceData);
 			} else {
-				return None;
+				return Ok(FileKind::JsonModule);
 			}
+		} else if ext == "csv" {
+			return Ok(FileKind::LocalizationTable);
+		} else if ext == "txt" {
+			return Ok(FileKind::StringValue);
+		} else if ext == "rbxm" {
+			return Ok(FileKind::BinaryModel);
+		} else if ext == "rbxmx" {
+			return Ok(FileKind::XmlModel);
 		}
 
-		Some(FileKind::Other)
+		bail!(".{} extension is not supported", ext)
 	}
 
-	// fn get_parent(&self, path: &Path) -> PathBuf {
-	// 	let mut parent = path.to_owned();
-	// 	parent.pop();
+	pub fn get_class(&self, kind: &FileKind, path: Option<&Path>, rbx_path: Option<&RbxPath>) -> Result<String> {
+		let class = match kind {
+			FileKind::ServerScript => "Script",
+			FileKind::ClientScript => "LocalScript",
+			FileKind::ModuleScript => "ModuleScript",
+			FileKind::JsonModule => "ModuleScript",
+			FileKind::LocalizationTable => "LocalizationTable",
+			FileKind::StringValue => "StringValue",
+			FileKind::Other => {
+				if let Some(path) = path {
+					println!("{:?}", path);
+					"temp"
+				} else if let Some(rbx_path) = rbx_path {
+					if self.is_place() {
+						if rbx_path.len() == 2 && self.is_service(&rbx_path[1]) {
+							&rbx_path[1]
+						} else {
+							"Folder"
+						}
+					} else {
+						"Folder"
+					}
+				} else {
+					"Folder"
+				}
+			}
+			_ => bail!("Cannot get class of {:?} file kind", kind),
+		};
 
-	// 	parent
-	// }
+		Ok(String::from(class))
+	}
 
-	pub fn create(&self, path: &Path) -> Result<()> {
+	fn get_parent(&self, rbx_path: &RbxPath) -> RbxPath {
+		let mut parent = rbx_path.to_owned();
+		parent.pop();
+
+		parent
+	}
+
+	pub fn init(&self, path: &Path) -> Result<()> {
+		let ext = utils::get_file_extension(path);
+		let is_dir = ext.is_empty();
+
+		if !self.is_valid(path, ext, is_dir) {
+			return Ok(());
+		}
+
+		let project = lock!(self.project);
+		let rbx_path = project.rbx_paths[utils::get_index(&project.local_paths, &path.to_path_buf()).unwrap()].clone();
+
+		drop(project);
+
+		let name = utils::get_file_name(path);
+		let kind = self.get_file_kind(name, ext, is_dir)?;
+		let class = self.get_class(&kind, None, Some(&rbx_path))?;
+
+		Ok(())
+	}
+
+	pub fn create(&self, path: &Path, dom_only: bool) -> Result<()> {
 		let ext = utils::get_file_extension(path);
 		let is_dir = path.is_dir();
 
@@ -157,24 +236,21 @@ impl Processor {
 			return Ok(());
 		}
 
-		let name = utils::get_file_name(path);
+		bail!("temp");
 
-		let rbx_path = self.get_rbx_path(path, name, ext).unwrap();
-		// let file_kind = self.get_file_kind(name, ext, is_dir);
+		let name = utils::get_file_name(path);
+		let rbx_path = self.get_rbx_path(path, name, ext)?;
+		let file_kind = self.get_file_kind(name, ext, is_dir)?;
+		let parent = self.get_parent(&rbx_path);
 
 		let mut dom = lock!(self.dom);
 
-		let mut cur_rbx_path = RbxPath::new();
-		let mut last_ref = Ref::new();
+		// let dom_ref = dom.get_ref(&parent).unwrap();
 
-		for comp in rbx_path.iter() {
-			cur_rbx_path.push(comp);
+		// println!("{:?}", dom_ref);
 
-			if dom.contains(&cur_rbx_path) {
-				last_ref = dom.get_ref(&cur_rbx_path).unwrap();
-			} else {
-				dom.insert(last_ref, comp, path.to_owned(), cur_rbx_path.clone());
-			}
+		if !dom_only {
+			println!("{:?}", "message");
 		}
 
 		// if let Some(file_kind) = file_kind {
@@ -216,12 +292,12 @@ impl Processor {
 		let rbx_path = self.get_rbx_path(path, name, ext);
 		let mut queue = lock!(self.queue);
 
-		queue.push(Message::Sync(Sync {
-			action: SyncAction::Delete,
-			path: rbx_path.unwrap(),
-			kind: None,
-			data: None,
-		}));
+		// queue.push(Message::Sync(Sync {
+		// 	action: SyncAction::Delete,
+		// 	path: rbx_path.unwrap(),
+		// 	kind: None,
+		// 	data: None,
+		// }));
 
 		Ok(())
 	}
@@ -239,30 +315,30 @@ impl Processor {
 		let rbx_path = self.get_rbx_path(path, name, ext);
 		let file_kind = self.get_file_kind(name, ext, is_dir);
 
-		if let Some(file_kind) = file_kind {
-			let mut queue = lock!(self.queue);
-			let content = fs::read_to_string(path)?;
+		// if let Some(file_kind) = file_kind {
+		// 	let mut queue = lock!(self.queue);
+		// 	let content = fs::read_to_string(path)?;
 
-			if file_kind != FileKind::Properties {
-				queue.push(Message::Sync(Sync {
-					action: SyncAction::Write,
-					path: rbx_path.unwrap(),
-					kind: None,
-					data: Some(content),
-				}));
-			} else {
-				queue.push(Message::Sync(Sync {
-					action: SyncAction::Update,
-					path: rbx_path.unwrap(),
-					kind: None,
-					data: Some(content),
-				}));
-			}
+		// 	if file_kind != FileKind::InstanceData {
+		// 		queue.push(Message::Sync(Sync {
+		// 			action: SyncAction::Write,
+		// 			path: rbx_path.unwrap(),
+		// 			kind: None,
+		// 			data: Some(content),
+		// 		}));
+		// 	} else {
+		// 		queue.push(Message::Sync(Sync {
+		// 			action: SyncAction::Update,
+		// 			path: rbx_path.unwrap(),
+		// 			kind: None,
+		// 			data: Some(content),
+		// 		}));
+		// 	}
 
-			info!("Write: {:?}", path);
-		} else {
-			warn!("Unknown file kind: {:?}", path);
-		};
+		// 	info!("Write: {:?}", path);
+		// } else {
+		// 	warn!("Unknown file kind: {:?}", path);
+		// };
 
 		Ok(())
 	}
