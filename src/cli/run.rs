@@ -90,12 +90,17 @@ impl Run {
 		let mut core = Core::new(config, project)?;
 		core.load_dom()?;
 
-		// Test stuff
-		// let writer = std::io::BufWriter::new(std::fs::File::create("test.rbxm").unwrap());
-		// let dom = lock!(core.dom);
-		// rbx_binary::to_writer(writer, dom.inner(), &[dom.root()])?;
+		// Temporary testing stuff
+		let writer = std::io::BufWriter::new(std::fs::File::create("test/output.rbxlx").unwrap());
+		let dom = crate::lock!(core.dom);
+		rbx_xml::to_writer(
+			writer,
+			dom.inner(),
+			dom.place_roots(),
+			rbx_xml::EncodeOptions::default(),
+		)?;
 
-		let server = Server::new(core, &host, &port);
+		// let server = Server::new(core, &host, &port);
 
 		session::add(&host, &port, process::id())?;
 
@@ -106,7 +111,7 @@ impl Run {
 			project_path.to_str().unwrap()
 		);
 
-		server.start()?;
+		// server.start()?;
 
 		Ok(())
 	}

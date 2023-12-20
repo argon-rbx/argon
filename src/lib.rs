@@ -10,13 +10,11 @@ pub mod installer;
 pub mod logger;
 pub mod messages;
 pub mod project;
+pub mod rbx_path;
 pub mod server;
 pub mod session;
-pub mod types;
 pub mod utils;
 pub mod workspace;
-
-const RBX_SEPARATOR: char = '/';
 
 // These Argon logs ignore verbosity level, aside of `Off`
 #[macro_export]

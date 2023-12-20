@@ -14,7 +14,7 @@ use crate::{
 	lock,
 	messages::{Message, Sync, SyncAction},
 	project::Project,
-	types::{RbxKind, RbxPath},
+	rbx_path::RbxPath,
 	utils,
 };
 
@@ -33,20 +33,7 @@ pub enum FileKind {
 	StringValue,       // .txt
 	BinaryModel,       // .rbxm
 	XmlModel,          // .rbxmx
-	Other,             // dir
-}
-
-// This will be removed in the future
-impl From<FileKind> for RbxKind {
-	fn from(kind: FileKind) -> Self {
-		match kind {
-			FileKind::ServerScript => RbxKind::ServerScript,
-			FileKind::ClientScript => RbxKind::ClientScript,
-			FileKind::ModuleScript => RbxKind::ModuleScript,
-			FileKind::Other => RbxKind::Other,
-			_ => panic!("Cannot convert FileKind to RbxKind"),
-		}
-	}
+	Dir,               // dir
 }
 
 pub struct Processor {
@@ -106,40 +93,42 @@ impl Processor {
 	fn get_rbx_path(&self, path: &Path, name: &str, ext: &str) -> Result<RbxPath> {
 		let project = lock!(self.project);
 
-		for (index, local_path) in project.local_paths.iter().enumerate() {
-			if let Some(path) = sub_paths(path, local_path) {
-				let mut rbx_path = project.rbx_paths[index].clone();
-				let mut parent = path.clone();
+		// TODO: rewrite this
 
-				parent.pop();
-				rbx_path.push(parent.to_str().unwrap());
+		// for (index, local_path) in project.local_paths.iter().enumerate() {
+		// 	if let Some(path) = sub_paths(path, local_path) {
+		// 		let mut rbx_path = project.rbx_paths[index].clone();
+		// 		let mut parent = path.clone();
 
-				match ext {
-					"lua" | "luau" => {
-						if !name.starts_with(&self.config.src) {
-							rbx_path.push(name);
-						}
-					}
-					"json" => {
-						if !name.starts_with(&self.config.data) {
-							rbx_path.push(name);
-						}
-					}
-					_ => {
-						rbx_path.push(name);
-					}
-				}
+		// 		parent.pop();
+		// 		rbx_path.push(parent.to_str().unwrap());
 
-				return Ok(rbx_path);
-			}
-		}
+		// 		match ext {
+		// 			"lua" | "luau" => {
+		// 				if !name.starts_with(&self.config.src) {
+		// 					rbx_path.push(name);
+		// 				}
+		// 			}
+		// 			"json" => {
+		// 				if !name.starts_with(&self.config.data) {
+		// 					rbx_path.push(name);
+		// 				}
+		// 			}
+		// 			_ => {
+		// 				rbx_path.push(name);
+		// 			}
+		// 		}
+
+		// 		return Ok(rbx_path);
+		// 	}
+		// }
 
 		bail!("{:?} does not exists in the project file", path)
 	}
 
 	fn get_file_kind(&self, name: &str, ext: &str, is_dir: bool) -> Result<FileKind> {
 		if is_dir {
-			return Ok(FileKind::Other);
+			return Ok(FileKind::Dir);
 		}
 
 		if ext == "lua" || ext == "luau" {
@@ -177,7 +166,7 @@ impl Processor {
 			FileKind::JsonModule => "ModuleScript",
 			FileKind::LocalizationTable => "LocalizationTable",
 			FileKind::StringValue => "StringValue",
-			FileKind::Other => {
+			FileKind::Dir => {
 				if let Some(path) = path {
 					println!("{:?}", path);
 					"temp"
@@ -217,13 +206,39 @@ impl Processor {
 		}
 
 		let project = lock!(self.project);
-		let rbx_path = project.rbx_paths[utils::get_index(&project.local_paths, &path.to_path_buf()).unwrap()].clone();
+		let rbx_paths = project.path_map.get_vec(path).unwrap().clone();
 
 		drop(project);
 
-		let name = utils::get_file_name(path);
-		let kind = self.get_file_kind(name, ext, is_dir)?;
-		let class = self.get_class(&kind, None, Some(&rbx_path))?;
+		for rbx_path in rbx_paths {
+			let mut dom = lock!(self.dom);
+			let mut cur_rbx_path = RbxPath::new();
+			let mut last_ref = Ref::new();
+
+			for (index, comp) in rbx_path.iter().enumerate() {
+				cur_rbx_path.push(comp);
+
+				if dom.contains(&cur_rbx_path) {
+					last_ref = dom.get_ref(&cur_rbx_path).unwrap();
+				} else if index != rbx_path.len() - 1 {
+					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
+					let class = self.get_class(&FileKind::Dir, None, Some(&cur_rbx_path))?;
+
+					// println!("1 {:?} {}", dom.get(last_ref).unwrap().name, cur_rbx_path);
+
+					dom.set_class(dom_ref, &class);
+					last_ref = dom_ref;
+				} else {
+					let kind = self.get_file_kind(comp, ext, is_dir)?;
+					let class = self.get_class(&kind, None, Some(&cur_rbx_path))?;
+
+					// println!("2 {:?} {}", dom.get(last_ref).unwrap().name, cur_rbx_path);
+
+					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
+					dom.set_class(dom_ref, &class);
+				}
+			}
+		}
 
 		Ok(())
 	}

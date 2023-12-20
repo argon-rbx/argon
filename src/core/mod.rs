@@ -85,7 +85,7 @@ impl Core {
 		let processor = lock!(self.processor);
 
 		let project = lock!(self.project);
-		let local_paths = project.local_paths.clone();
+		let local_paths = project.get_local_paths();
 		let has_root_dir = project.root_dir.is_some();
 
 		drop(project);
@@ -124,7 +124,7 @@ impl Core {
 			let receiver = lock!(fs).receiver();
 
 			// Start watching for file changes
-			lock!(fs).watch_all(&lock!(project).local_paths)?;
+			lock!(fs).watch_all(&lock!(project).get_local_paths())?;
 
 			for event in receiver.iter() {
 				if event.root {
@@ -141,13 +141,13 @@ impl Core {
 								let mut queue = lock!(queue);
 								let mut fs = lock!(fs);
 
-								fs.unwatch_all(&lock!(project).local_paths)?;
+								fs.unwatch_all(&lock!(project).get_local_paths())?;
 
 								*lock!(project) = new_project.unwrap();
 
 								let project = lock!(project);
 
-								fs.watch_all(&project.local_paths)?;
+								fs.watch_all(&project.get_local_paths())?;
 
 								queue.push(Message::UpdateMeta(UpdateMeta {
 									name: project.name.clone(),
@@ -160,9 +160,9 @@ impl Core {
 							let project = lock!(project);
 							let mut fs = lock!(fs);
 
-							if event.path.is_dir() && project.local_paths.contains(&event.path) {
-								fs.unwatch_all(&project.local_paths)?;
-								fs.watch_all(&project.local_paths)?;
+							if event.path.is_dir() && project.get_local_paths().contains(&event.path) {
+								fs.unwatch_all(&project.get_local_paths())?;
+								fs.watch_all(&project.get_local_paths())?;
 							}
 						}
 					}

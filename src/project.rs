@@ -1,4 +1,5 @@
 use anyhow::Result;
+use multimap::MultiMap;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::BTreeMap,
@@ -6,7 +7,7 @@ use std::{
 	path::{PathBuf, MAIN_SEPARATOR},
 };
 
-use crate::{glob::Glob, types::RbxPath, utils, workspace};
+use crate::{glob::Glob, rbx_path::RbxPath, utils, workspace};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
@@ -46,9 +47,7 @@ pub struct Project {
 	pub workspace_dir: PathBuf,
 
 	#[serde(skip)]
-	pub local_paths: Vec<PathBuf>,
-	#[serde(skip)]
-	pub rbx_paths: Vec<RbxPath>,
+	pub path_map: MultiMap<PathBuf, RbxPath>,
 }
 
 impl Project {
@@ -62,36 +61,27 @@ impl Project {
 		project.project_path = project_path.to_owned();
 		project.workspace_dir = workspace_dir;
 
-		if let Some(path) = &project.node.path {
+		if let Some(path) = project.node.path.clone() {
+			let workspace_dir = project.workspace_dir.clone();
 			let mut tree = BTreeMap::new();
 			tree.insert(project.name.clone(), project.node.clone());
 
-			(project.local_paths, project.rbx_paths) =
-				project.get_paths(&tree, &project.workspace_dir, &RbxPath::new());
+			project.parse_paths(&tree, &workspace_dir, &RbxPath::new());
 
-			let path = utils::resolve_path(path.to_owned())?;
+			let path = utils::resolve_path(path)?;
 			project.root_dir = Some(path);
 		} else {
-			(project.local_paths, project.rbx_paths) = project.get_paths(
-				&project.node.tree,
-				&project.workspace_dir,
-				&RbxPath::from(&project.name),
-			);
+			let workspace_dir = project.workspace_dir.clone();
+			let tree = project.node.tree.clone();
+
+			project.parse_paths(&tree, &workspace_dir, &RbxPath::from(&project.name));
 		}
 
 		Ok(project)
 	}
 
 	#[allow(clippy::only_used_in_recursion)]
-	fn get_paths(
-		&self,
-		tree: &BTreeMap<String, ProjectNode>,
-		local_root: &PathBuf,
-		rbx_root: &RbxPath,
-	) -> (Vec<PathBuf>, Vec<RbxPath>) {
-		let mut local_paths = vec![];
-		let mut rbx_paths = vec![];
-
+	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
 		for (name, node) in tree.iter() {
 			let mut rbx_path = rbx_root.clone();
 			rbx_path.push(name);
@@ -103,17 +93,15 @@ impl Project {
 					local_path = local_root.join(local_path);
 				}
 
-				local_paths.push(local_path);
-				rbx_paths.push(rbx_path.clone());
+				self.path_map.insert(local_path, rbx_path.clone());
 			}
 
-			let mut paths = self.get_paths(&node.tree, local_root, &rbx_path);
-
-			local_paths.append(&mut paths.0);
-			rbx_paths.append(&mut paths.1);
+			self.parse_paths(&node.tree, local_root, &rbx_path);
 		}
+	}
 
-		(local_paths, rbx_paths)
+	pub fn get_local_paths(&self) -> Vec<PathBuf> {
+		self.path_map.keys().cloned().collect()
 	}
 }
 

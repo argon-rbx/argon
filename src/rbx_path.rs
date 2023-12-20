@@ -4,7 +4,7 @@ use std::{
 	ops::Index,
 };
 
-use crate::RBX_SEPARATOR;
+const RBX_SEPARATOR: char = '/';
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct RbxPath {
@@ -83,12 +83,4 @@ impl Debug for RbxPath {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
 	}
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub enum RbxKind {
-	ServerScript,
-	ClientScript,
-	ModuleScript,
-	Other,
 }

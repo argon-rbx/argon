@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::types::{RbxKind, RbxPath};
+use crate::rbx_path::RbxPath;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum Message {
@@ -19,7 +19,7 @@ pub struct UpdateMeta {
 pub struct Sync {
 	pub action: SyncAction,
 	pub path: RbxPath,
-	pub kind: Option<RbxKind>,
+	pub class: Option<String>,
 	pub data: Option<String>,
 }
 

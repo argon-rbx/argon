@@ -325,6 +325,7 @@ dependencies = [
  "glob",
  "globenv",
  "log",
+ "multimap",
  "notify",
  "notify-debouncer-full",
  "open",
@@ -335,6 +336,7 @@ dependencies = [
  "rbx_dom_weak",
  "rbx_reflection",
  "rbx_reflection_database",
+ "rbx_xml",
  "self-replace",
  "serde",
  "serde_json",
@@ -1240,6 +1242,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "multimap"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1a5d38b9b352dbd913288736af36af41c48d61b1a8cd34bcecd727561b7d511"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "notify"
 version = "6.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1544,6 +1555,20 @@ dependencies = [
  "rand",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "rbx_xml"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc87343301303ff0510903fb7eb3dbd1c75bdb6ab780fea6091bdc3f58b5829f"
+dependencies = [
+ "base64 0.13.1",
+ "log",
+ "rbx_dom_weak",
+ "rbx_reflection",
+ "rbx_reflection_database",
+ "xml-rs",
 ]
 
 [[package]]
@@ -2329,6 +2354,12 @@ dependencies = [
  "cfg-if",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "xml-rs"
+version = "0.8.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fcb9cbac069e033553e8bb871be2fbdffcab578eb25bd0f7c508cedc6dcd75a"
 
 [[package]]
 name = "zerocopy"
