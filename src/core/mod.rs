@@ -17,6 +17,7 @@ use crate::{
 use self::{dom::Dom, processor::Processor, queue::Queue};
 
 mod dom;
+mod instance;
 mod processor;
 mod queue;
 

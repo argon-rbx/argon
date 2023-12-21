@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use log::{info, warn};
 use pathsub::sub_paths;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::types::{Enum, Variant};
 use rbx_reflection::ClassTag;
 use serde_json::{from_reader, Value};
 use std::{
@@ -21,22 +21,28 @@ use crate::{
 	utils,
 };
 
-use super::{dom::Dom, queue::Queue};
+use super::{dom::Dom, instance::Instance, queue::Queue};
 
 const FILE_EXTENSIONS: [&str; 7] = ["lua", "luau", "json", "csv", "txt", "rbxm", "rbxmx"];
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum ScriptKind {
+	Server,
+	Client,
+	Module,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum FileKind {
-	ServerScript,      // .server.lua
-	ClientScript,      // .client.lua
-	ModuleScript,      // .lua
-	InstanceData,      // .data.json
-	JsonModule,        // .json
-	LocalizationTable, // .csv
-	StringValue,       // .txt
-	BinaryModel,       // .rbxm
-	XmlModel,          // .rbxmx
-	Dir,               // dir
+	Script(ScriptKind),      // *.lua(u)
+	ChildScript(ScriptKind), // .src.lua(u)
+	InstanceData,            // .data.json
+	JsonModule,              // .json
+	LocalizationTable,       // .csv
+	StringValue,             // .txt
+	BinaryModel,             // .rbxm
+	XmlModel,                // .rbxmx
+	Dir,                     // dir
 }
 
 pub struct Processor {
@@ -146,12 +152,18 @@ impl Processor {
 		}
 
 		if ext == "lua" || ext == "luau" {
-			if name.ends_with(".server") {
-				return Ok(FileKind::ServerScript);
+			let kind = if name.ends_with(".server") {
+				ScriptKind::Server
 			} else if name.ends_with(".client") {
-				return Ok(FileKind::ClientScript);
+				ScriptKind::Client
 			} else {
-				return Ok(FileKind::ModuleScript);
+				ScriptKind::Module
+			};
+
+			if name.starts_with(&self.config.src) {
+				return Ok(FileKind::ChildScript(kind));
+			} else {
+				return Ok(FileKind::Script(kind));
 			}
 		} else if ext == "json" {
 			if name == self.config.data {
@@ -177,9 +189,11 @@ impl Processor {
 		let mut temp = String::new();
 
 		let class = match kind {
-			FileKind::ServerScript => "Script",
-			FileKind::ClientScript => "LocalScript",
-			FileKind::ModuleScript => "ModuleScript",
+			FileKind::Script(kind) | FileKind::ChildScript(kind) => match kind {
+				ScriptKind::Server => "Script",
+				ScriptKind::Client => "LocalScript",
+				ScriptKind::Module => "ModuleScript",
+			},
 			FileKind::JsonModule => "ModuleScript",
 			FileKind::LocalizationTable => "LocalizationTable",
 			FileKind::StringValue => "StringValue",
@@ -188,7 +202,7 @@ impl Processor {
 					let data_file = path.join(&self.data_file);
 
 					if data_file.exists() {
-						let result = || -> Result<&str> {
+						|| -> Result<&str> {
 							let data_file = File::open(data_file)?;
 							let reader = BufReader::new(data_file);
 							let data: HashMap<String, Value> = from_reader(reader)?;
@@ -200,13 +214,8 @@ impl Processor {
 							} else {
 								Ok("Folder")
 							}
-						};
-
-						if let Ok(class) = result() {
-							class
-						} else {
-							"Folder"
-						}
+						}()
+						.unwrap_or("Folder")
 					} else {
 						"Folder"
 					}
@@ -241,6 +250,64 @@ impl Processor {
 		parent
 	}
 
+	fn get_properties(&self, kind: &FileKind, path: &Path) -> Result<HashMap<String, Variant>> {
+		let mut properties = HashMap::new();
+
+		match kind {
+			FileKind::Script(kind) | FileKind::ChildScript(kind) => {
+				let content = fs::read_to_string(path)?;
+
+				if *kind != ScriptKind::Module {
+					if let Some(line) = content.lines().next() {
+						if line.contains("--disable") {
+							properties.insert(String::from("Disabled"), Variant::Bool(true));
+						}
+
+						if line.contains("--server") {
+							properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(1)));
+						} else if line.contains("--client") {
+							properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(2)));
+						} else if line.contains("--plugin") {
+							properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(3)));
+						}
+					}
+				}
+
+				properties.insert(String::from("Source"), Variant::String(content));
+			}
+			FileKind::JsonModule => {
+				let mut content = String::from("require = ");
+				content.push_str(&fs::read_to_string(path)?);
+
+				properties.insert(String::from("Source"), Variant::String(content));
+			}
+			FileKind::LocalizationTable => {
+				// TODO: Implement
+			}
+			FileKind::StringValue => {
+				let content = fs::read_to_string(path)?;
+
+				properties.insert(String::from("Value"), Variant::String(content));
+			}
+			FileKind::Dir => {
+				let data_file = path.join(&self.data_file);
+
+				if data_file.exists() {
+					let data_file = File::open(data_file)?;
+					let reader = BufReader::new(data_file);
+					let data: HashMap<String, Value> = from_reader(reader)?;
+
+					for (_key, _value) in data {
+						// TODO: Implement
+					}
+				}
+			}
+			_ => bail!("Cannot get properties of {:?} file kind", kind),
+		}
+
+		Ok(properties)
+	}
+
 	pub fn init(&self, path: &Path) -> Result<()> {
 		let ext = utils::get_file_extension(path);
 		let is_dir = ext.is_empty();
@@ -257,25 +324,33 @@ impl Processor {
 		for rbx_path in rbx_paths {
 			let mut dom = lock!(self.dom);
 			let mut cur_rbx_path = RbxPath::new();
-			let mut last_ref = Ref::new();
 
 			for (index, comp) in rbx_path.iter().enumerate() {
 				cur_rbx_path.push(comp);
 
 				if dom.contains(&cur_rbx_path) {
-					last_ref = dom.get_ref(&cur_rbx_path).unwrap();
+					continue;
 				} else if index != rbx_path.len() - 1 {
-					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
 					let class = self.get_class(&FileKind::Dir, None, Some(&cur_rbx_path))?;
+					let parent = self.get_parent(&cur_rbx_path);
 
-					dom.set_class(dom_ref, &class);
-					last_ref = dom_ref;
+					let instance = Instance::new(comp)
+						.with_class(&class)
+						.with_rbx_path(&cur_rbx_path)
+						.with_path(path);
+
+					dom.insert(instance, &parent);
 				} else {
 					let kind = self.get_file_kind(comp, ext, is_dir)?;
 					let class = self.get_class(&kind, None, Some(&cur_rbx_path))?;
+					let parent = self.get_parent(&cur_rbx_path);
 
-					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
-					dom.set_class(dom_ref, &class);
+					let instance = Instance::new(comp)
+						.with_class(&class)
+						.with_rbx_path(&cur_rbx_path)
+						.with_path(path);
+
+					dom.insert(instance, &parent);
 				}
 			}
 		}
@@ -299,19 +374,43 @@ impl Processor {
 
 		for rbx_path in rbx_paths {
 			let parent = self.get_parent(&rbx_path);
-			let parent = dom.get_ref(&parent).unwrap();
 
 			match file_kind {
-				FileKind::ServerScript
-				| FileKind::ClientScript
-				| FileKind::ModuleScript
+				FileKind::ChildScript(_)
+				| FileKind::Script(_)
 				| FileKind::JsonModule
 				| FileKind::StringValue
 				| FileKind::LocalizationTable
 				| FileKind::Dir => {
 					let class = self.get_class(&file_kind, Some(path), None)?;
-					let dom_ref = dom.insert(parent, name, path, rbx_path);
-					dom.set_class(dom_ref, &class);
+					let properties = self.get_properties(&file_kind, path)?;
+					let mut name = String::from(name);
+
+					match file_kind {
+						FileKind::Script(ref kind) => {
+							if *kind != ScriptKind::Module {
+								let pos = if *kind == ScriptKind::Server {
+									name.rfind(".server").unwrap()
+								} else {
+									name.rfind(".client").unwrap()
+								};
+
+								name = name[..pos].to_owned();
+							}
+						}
+						FileKind::ChildScript(_) => {
+							name = rbx_path.last().unwrap().clone();
+						}
+						_ => {}
+					}
+
+					let instance = Instance::new(&name)
+						.with_class(&class)
+						.with_properties(properties)
+						.with_rbx_path(&rbx_path)
+						.with_path(path);
+
+					dom.insert(instance, &parent);
 				}
 				_ => bail!("Unimplemented!"),
 			}
