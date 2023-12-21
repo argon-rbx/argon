@@ -3,9 +3,12 @@ use log::{info, warn};
 use pathsub::sub_paths;
 use rbx_dom_weak::types::Ref;
 use rbx_reflection::ClassTag;
+use serde_json::{from_reader, Value};
 use std::{
-	fs,
-	path::{Path, PathBuf},
+	collections::HashMap,
+	fs::{self, File},
+	io::BufReader,
+	path::Path,
 	sync::{Arc, Mutex},
 };
 
@@ -41,6 +44,7 @@ pub struct Processor {
 	queue: Arc<Mutex<Queue>>,
 	project: Arc<Mutex<Project>>,
 	config: Arc<Config>,
+	data_file: String,
 }
 
 impl Processor {
@@ -50,11 +54,15 @@ impl Processor {
 		project: Arc<Mutex<Project>>,
 		config: Arc<Config>,
 	) -> Self {
+		let mut data_file = config.data.clone();
+		data_file.push_str(".json");
+
 		Self {
 			dom,
 			queue,
 			project,
 			config,
+			data_file,
 		}
 	}
 
@@ -63,13 +71,15 @@ impl Processor {
 	}
 
 	fn is_service(&self, class: &str) -> bool {
-		let class = rbx_reflection_database::get().classes.get(class);
+		let descriptor = rbx_reflection_database::get().classes.get(class);
 
-		if let Some(class) = class {
-			class.tags.contains(&ClassTag::Service)
+		let has_tag = if let Some(descriptor) = descriptor {
+			descriptor.tags.contains(&ClassTag::Service)
 		} else {
 			false
-		}
+		};
+
+		has_tag || class == "StarterPlayerScripts" || class == "StarterCharacterScripts"
 	}
 
 	fn is_valid(&self, path: &Path, ext: &str, is_dir: bool) -> bool {
@@ -90,38 +100,42 @@ impl Processor {
 		true
 	}
 
-	fn get_rbx_path(&self, path: &Path, name: &str, ext: &str) -> Result<RbxPath> {
+	fn get_rbx_paths(&self, path: &Path, name: &str, ext: &str) -> Result<Vec<RbxPath>> {
 		let project = lock!(self.project);
 
-		// TODO: rewrite this
+		for local_path in project.get_paths() {
+			if let Some(diff) = sub_paths(path, &local_path) {
+				let mut rbx_paths = project.path_map.get_vec(&local_path).unwrap().clone();
+				let mut parent = diff.clone();
 
-		// for (index, local_path) in project.local_paths.iter().enumerate() {
-		// 	if let Some(path) = sub_paths(path, local_path) {
-		// 		let mut rbx_path = project.rbx_paths[index].clone();
-		// 		let mut parent = path.clone();
+				parent.pop();
 
-		// 		parent.pop();
-		// 		rbx_path.push(parent.to_str().unwrap());
+				for rbx_path in rbx_paths.iter_mut() {
+					for comp in parent.iter() {
+						let comp = utils::from_os_str(comp);
+						rbx_path.push(comp);
+					}
 
-		// 		match ext {
-		// 			"lua" | "luau" => {
-		// 				if !name.starts_with(&self.config.src) {
-		// 					rbx_path.push(name);
-		// 				}
-		// 			}
-		// 			"json" => {
-		// 				if !name.starts_with(&self.config.data) {
-		// 					rbx_path.push(name);
-		// 				}
-		// 			}
-		// 			_ => {
-		// 				rbx_path.push(name);
-		// 			}
-		// 		}
+					match ext {
+						"lua" | "luau" => {
+							if !name.starts_with(&self.config.src) {
+								rbx_path.push(name);
+							}
+						}
+						"json" => {
+							if !name.starts_with(&self.config.data) {
+								rbx_path.push(name);
+							}
+						}
+						_ => {
+							rbx_path.push(name);
+						}
+					}
+				}
 
-		// 		return Ok(rbx_path);
-		// 	}
-		// }
+				return Ok(rbx_paths);
+			}
+		}
 
 		bail!("{:?} does not exists in the project file", path)
 	}
@@ -159,6 +173,9 @@ impl Processor {
 	}
 
 	pub fn get_class(&self, kind: &FileKind, path: Option<&Path>, rbx_path: Option<&RbxPath>) -> Result<String> {
+		#[allow(unused_assignments)]
+		let mut temp = String::new();
+
 		let class = match kind {
 			FileKind::ServerScript => "Script",
 			FileKind::ClientScript => "LocalScript",
@@ -168,12 +185,39 @@ impl Processor {
 			FileKind::StringValue => "StringValue",
 			FileKind::Dir => {
 				if let Some(path) = path {
-					println!("{:?}", path);
-					"temp"
+					let data_file = path.join(&self.data_file);
+
+					if data_file.exists() {
+						let result = || -> Result<&str> {
+							let data_file = File::open(data_file)?;
+							let reader = BufReader::new(data_file);
+							let data: HashMap<String, Value> = from_reader(reader)?;
+
+							if data.contains_key("ClassName") && data["ClassName"].is_string() {
+								// Sketchy solution to get around borrow checker
+								temp = data["ClassName"].as_str().unwrap().to_owned();
+								Ok(&temp)
+							} else {
+								Ok("Folder")
+							}
+						};
+
+						if let Ok(class) = result() {
+							class
+						} else {
+							"Folder"
+						}
+					} else {
+						"Folder"
+					}
 				} else if let Some(rbx_path) = rbx_path {
 					if self.is_place() {
-						if rbx_path.len() == 2 && self.is_service(&rbx_path[1]) {
+						let len = rbx_path.len();
+
+						if len == 2 && self.is_service(&rbx_path[1]) {
 							&rbx_path[1]
+						} else if len == 3 && self.is_service(&rbx_path[1]) && self.is_service(&rbx_path[2]) {
+							&rbx_path[2]
 						} else {
 							"Folder"
 						}
@@ -224,15 +268,11 @@ impl Processor {
 					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
 					let class = self.get_class(&FileKind::Dir, None, Some(&cur_rbx_path))?;
 
-					// println!("1 {:?} {}", dom.get(last_ref).unwrap().name, cur_rbx_path);
-
 					dom.set_class(dom_ref, &class);
 					last_ref = dom_ref;
 				} else {
 					let kind = self.get_file_kind(comp, ext, is_dir)?;
 					let class = self.get_class(&kind, None, Some(&cur_rbx_path))?;
-
-					// println!("2 {:?} {}", dom.get(last_ref).unwrap().name, cur_rbx_path);
 
 					let dom_ref = dom.insert(last_ref, comp, path, cur_rbx_path.clone());
 					dom.set_class(dom_ref, &class);
@@ -251,21 +291,42 @@ impl Processor {
 			return Ok(());
 		}
 
-		bail!("temp");
-
 		let name = utils::get_file_name(path);
-		let rbx_path = self.get_rbx_path(path, name, ext)?;
+		let rbx_paths = self.get_rbx_paths(path, name, ext)?;
 		let file_kind = self.get_file_kind(name, ext, is_dir)?;
-		let parent = self.get_parent(&rbx_path);
 
 		let mut dom = lock!(self.dom);
 
-		// let dom_ref = dom.get_ref(&parent).unwrap();
+		for rbx_path in rbx_paths {
+			let parent = self.get_parent(&rbx_path);
+			let parent = dom.get_ref(&parent).unwrap();
 
-		// println!("{:?}", dom_ref);
+			match file_kind {
+				FileKind::ServerScript
+				| FileKind::ClientScript
+				| FileKind::ModuleScript
+				| FileKind::JsonModule
+				| FileKind::StringValue
+				| FileKind::LocalizationTable
+				| FileKind::Dir => {
+					let class = self.get_class(&file_kind, Some(path), None)?;
+					let dom_ref = dom.insert(parent, name, path, rbx_path);
+					dom.set_class(dom_ref, &class);
+				}
+				_ => bail!("Unimplemented!"),
+			}
 
-		if !dom_only {
-			println!("{:?}", "message");
+			if !dom_only {
+				println!("{:?}", "message");
+			}
+		}
+
+		drop(dom);
+
+		if path.is_dir() {
+			for entry in fs::read_dir(path)? {
+				self.create(&entry?.path(), dom_only)?;
+			}
 		}
 
 		// if let Some(file_kind) = file_kind {
@@ -304,7 +365,7 @@ impl Processor {
 		}
 
 		let name = utils::get_file_name(path);
-		let rbx_path = self.get_rbx_path(path, name, ext);
+		let rbx_path = self.get_rbx_paths(path, name, ext);
 		let mut queue = lock!(self.queue);
 
 		// queue.push(Message::Sync(Sync {
@@ -327,7 +388,7 @@ impl Processor {
 		let name = utils::get_file_name(path);
 		let is_dir = path.is_dir();
 
-		let rbx_path = self.get_rbx_path(path, name, ext);
+		let rbx_path = self.get_rbx_paths(path, name, ext);
 		let file_kind = self.get_file_kind(name, ext, is_dir);
 
 		// if let Some(file_kind) = file_kind {

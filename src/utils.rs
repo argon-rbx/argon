@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use directories::UserDirs;
 use std::{
 	env,
+	ffi::OsStr,
 	path::{Path, PathBuf},
 };
 
@@ -33,4 +34,8 @@ pub fn get_file_name(path: &Path) -> &str {
 
 pub fn get_index<T: PartialEq>(slice: &[T], item: &T) -> Option<usize> {
 	slice.iter().position(|i| i == item)
+}
+
+pub fn from_os_str(str: &OsStr) -> &str {
+	str.to_str().unwrap_or_default()
 }

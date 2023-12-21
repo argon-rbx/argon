@@ -100,7 +100,7 @@ impl Project {
 		}
 	}
 
-	pub fn get_local_paths(&self) -> Vec<PathBuf> {
+	pub fn get_paths(&self) -> Vec<PathBuf> {
 		self.path_map.keys().cloned().collect()
 	}
 }
