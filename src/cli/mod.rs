@@ -4,11 +4,11 @@ use clap_verbosity_flag::Verbosity;
 use env_logger::fmt::WriteStyle;
 use std::env;
 
+mod build;
 mod config;
 mod init;
 mod run;
 mod stop;
-mod test;
 
 macro_rules! about {
 	() => {
@@ -76,8 +76,8 @@ impl Cli {
 	pub fn main(self) -> Result<()> {
 		match self.command {
 			Commands::Run(command) => command.main(self.verbose.log_level_filter()),
-			Commands::Test(command) => command.main(),
 			Commands::Stop(command) => command.main(),
+			Commands::Build(command) => command.main(),
 			Commands::Config(command) => command.main(),
 			Commands::Init(command) => command.main(),
 		}
@@ -88,7 +88,7 @@ impl Cli {
 pub enum Commands {
 	Run(run::Run),
 	Stop(stop::Stop),
-	Test(test::Test),
+	Build(build::Build),
 	Config(config::Config),
 	Init(init::Init),
 }

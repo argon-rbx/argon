@@ -20,17 +20,17 @@ use crate::{
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
 pub struct Run {
-	/// Server host name [default: "localhost"]
+	/// Server host name
 	#[arg(short = 'H', long)]
 	host: Option<String>,
 
-	/// Server port [default: 8000]
+	/// Server port
 	#[arg(short = 'P', long)]
 	port: Option<u16>,
 
-	/// Project path [default: ".argon"]
+	/// Project path
 	#[arg()]
-	project: Option<String>,
+	project: Option<PathBuf>,
 
 	/// Actually run Argon, used to spawn new process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
@@ -45,7 +45,7 @@ impl Run {
 
 		let config = Config::load();
 
-		let project = self.project.unwrap_or(config.project_name.clone());
+		let project = self.project.unwrap_or_default();
 		let project_path = project::resolve(project, &config.project_name)?;
 		let project_exists = project_path.exists();
 
@@ -54,7 +54,7 @@ impl Run {
 			workspace::init(&project_path, &config.template, &config.source_dir)?;
 
 			if config.git_init {
-				let workspace_dir = workspace::get_dir(project_path.to_owned());
+				let workspace_dir = workspace::get_dir(&project_path);
 
 				workspace::initialize_repo(&workspace_dir)?;
 			}
@@ -90,17 +90,7 @@ impl Run {
 		let mut core = Core::new(config, project)?;
 		core.load_dom()?;
 
-		// Temporary testing stuff
-		let writer = std::io::BufWriter::new(std::fs::File::create("test/output.rbxlx").unwrap());
-		let dom = crate::lock!(core.dom);
-		rbx_xml::to_writer(
-			writer,
-			dom.inner(),
-			dom.place_roots(),
-			rbx_xml::EncodeOptions::default(),
-		)?;
-
-		// let server = Server::new(core, &host, &port);
+		let server = Server::new(core, &host, &port);
 
 		session::add(&host, &port, process::id())?;
 
@@ -111,7 +101,7 @@ impl Run {
 			project_path.to_str().unwrap()
 		);
 
-		// server.start()?;
+		server.start()?;
 
 		Ok(())
 	}
@@ -144,7 +134,7 @@ impl Run {
 		}
 
 		if let Some(project) = self.project {
-			args.push(project)
+			args.push(project.to_str().unwrap().to_string())
 		}
 
 		if !verbosity.is_empty() {

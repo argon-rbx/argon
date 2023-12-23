@@ -1,20 +1,23 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 
 use crate::{argon_info, argon_warn, config::Config, project, workspace};
 
+/// Initialize new Argon project
 #[derive(Parser)]
 pub struct Init {
-	/// Project path [default: ".argon"]
+	/// Project path
 	#[arg()]
-	project: Option<String>,
+	project: Option<PathBuf>,
 
-	/// Workspace template [default: "default"]
+	/// Workspace template
 	#[arg(short, long)]
 	template: Option<String>,
 
-	/// Source folder [default: "src"]
+	/// Source folder
 	#[arg(short, long)]
 	source: Option<String>,
 }
@@ -23,7 +26,7 @@ impl Init {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
-		let project = self.project.unwrap_or(config.project_name.clone());
+		let project = self.project.unwrap_or_default();
 		let template = self.template.unwrap_or(config.template);
 		let source = self.source.unwrap_or(config.source_dir);
 
@@ -38,7 +41,7 @@ impl Init {
 		workspace::init(&project_path, &template, &source)?;
 
 		if config.git_init {
-			let workspace_dir = workspace::get_dir(project_path.to_owned());
+			let workspace_dir = workspace::get_dir(&project_path);
 
 			workspace::initialize_repo(&workspace_dir)?;
 		}

@@ -13,8 +13,8 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 	let home_dir = utils::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
-	let project_name = project.file_name().unwrap().to_str().unwrap();
-	let workspace_dir = get_dir(project.to_owned());
+	let project_name = get_name(project);
+	let workspace_dir = get_dir(project);
 
 	if !workspace_dir.exists() {
 		fs::create_dir_all(&workspace_dir)?;
@@ -28,7 +28,7 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 		let file_name = file_name.to_str().unwrap();
 
 		let new_file_path = if file_name == "project.json" {
-			workspace_dir.join(project_name)
+			project.to_owned()
 		} else {
 			workspace_dir.join(file_name)
 		};
@@ -38,14 +38,8 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 		}
 
 		if file_name == "project.json" || file_name == "README.md" {
-			let mut name = project_name.replace(".project.json", "");
-
-			if name == ".argon" {
-				name = String::from("Argon project");
-			}
-
 			let content = fs::read_to_string(file_path)?;
-			let content = content.replace("$name", &name);
+			let content = content.replace("$name", &project_name);
 			let content = content.replace("$source", source);
 
 			fs::write(new_file_path, content)?;
@@ -87,9 +81,16 @@ pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
 	Ok(())
 }
 
-pub fn get_dir(project_path: PathBuf) -> PathBuf {
+pub fn get_dir(project_path: &Path) -> PathBuf {
 	let mut workspace_dir = project_path.to_owned();
 	workspace_dir.pop();
 
 	workspace_dir
+}
+
+pub fn get_name(project_path: &Path) -> String {
+	let mut name = project_path.to_owned();
+	name.pop();
+
+	name.file_name().unwrap().to_str().unwrap().to_owned()
 }

@@ -1,7 +1,10 @@
 use anyhow::Result;
 use log::{trace, warn};
+use rbx_xml::EncodeOptions;
 use std::{
-	fs,
+	fs::{self, File},
+	io::BufWriter,
+	path::Path,
 	sync::{Arc, Mutex, MutexGuard},
 	thread,
 };
@@ -11,7 +14,7 @@ use crate::{
 	fs::{Fs, FsEventKind},
 	lock,
 	messages::{Message, UpdateMeta},
-	project::Project,
+	project::{self, Project},
 };
 
 use self::{dom::Dom, processor::Processor, queue::Queue};
@@ -195,5 +198,26 @@ impl Core {
 
 			Ok(())
 		});
+	}
+
+	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {
+		let writer = BufWriter::new(File::create(path)?);
+
+		let project = lock!(self.project);
+		let dom = lock!(self.dom);
+
+		let root_refs = if project.is_place() {
+			dom.place_roots().to_vec()
+		} else {
+			vec![dom.root()]
+		};
+
+		if xml {
+			rbx_xml::to_writer(writer, dom.inner(), &root_refs, EncodeOptions::default())?;
+		} else {
+			rbx_binary::to_writer(writer, dom.inner(), &root_refs)?;
+		}
+
+		Ok(())
 	}
 }

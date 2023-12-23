@@ -13,12 +13,13 @@ pub struct Config {
 	pub host: String,
 	pub port: u16,
 	pub source_dir: String,
-	pub project_name: String,
 	pub template: String,
 	pub auto_init: bool,
 	pub git_init: bool,
 	pub rojo_mode: bool,
 
+	#[serde(skip)]
+	pub project_name: String,
 	#[serde(skip)]
 	pub src: String,
 	#[serde(skip)]
@@ -31,11 +32,12 @@ impl Config {
 			host: String::from("localhost"),
 			port: 8000,
 			source_dir: String::from("src"),
-			project_name: String::from(".argon"),
 			template: String::from("default"),
 			auto_init: false,
 			git_init: true,
 			rojo_mode: false,
+
+			project_name: String::from(".argon"),
 			src: String::from(".src"),
 			data: String::from(".data"),
 		};
@@ -58,6 +60,7 @@ impl Config {
 		self.merge_opt(config);
 
 		if self.rojo_mode {
+			self.project_name = String::from("default");
 			self.src = String::from("init");
 			self.data = String::from("meta");
 		}

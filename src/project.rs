@@ -1,10 +1,11 @@
 use anyhow::Result;
 use multimap::MultiMap;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{
-	collections::BTreeMap,
+	collections::{BTreeMap, HashMap},
 	fs,
-	path::{PathBuf, MAIN_SEPARATOR},
+	path::PathBuf,
 };
 
 use crate::{glob::Glob, rbx_path::RbxPath, utils, workspace};
@@ -19,6 +20,13 @@ pub struct ProjectNode {
 
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
+
+	#[serde(rename = "$properties")]
+	pub properties: Option<HashMap<String, Value>>,
+	#[serde(rename = "$attributes")]
+	pub attributes: Option<HashMap<String, Value>>,
+	#[serde(rename = "$ignoreUnknownInstances")]
+	pub ignore_unknown_instances: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,7 +63,7 @@ impl Project {
 		let project = fs::read_to_string(project_path)?;
 		let mut project: Project = serde_json::from_str(&project)?;
 
-		let workspace_dir = workspace::get_dir(project_path.to_owned());
+		let workspace_dir = workspace::get_dir(project_path);
 
 		project.root_class = project.node.class_name.clone().unwrap_or(String::from("Folder"));
 		project.project_path = project_path.to_owned();
@@ -103,31 +111,29 @@ impl Project {
 	pub fn get_paths(&self) -> Vec<PathBuf> {
 		self.path_map.keys().cloned().collect()
 	}
+
+	pub fn is_place(&self) -> bool {
+		self.root_class == "DataModel"
+	}
 }
 
-pub fn resolve(mut project: String, default: &str) -> Result<PathBuf> {
-	if project.ends_with(MAIN_SEPARATOR) {
-		let mut project_path = PathBuf::from(project.clone());
+pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
+	let mut project_path = utils::resolve_path(path)?;
 
-		project.push_str("*.project.json");
-
-		if let Some(path) = Glob::new(&project)?.first() {
-			project_path = path;
-		} else {
-			let mut default_project = default.to_owned();
-			default_project.push_str(".project.json");
-
-			project_path = project_path.join(default_project);
-		}
-
-		project_path = utils::resolve_path(project_path)?;
-
+	if project_path.is_file() || utils::get_file_name(&project_path).ends_with(".project.json") {
 		return Ok(project_path);
 	}
 
-	if !project.ends_with(".project.json") {
-		project.push_str(".project.json")
+	let glob = project_path.clone().join("*.project.json");
+
+	if let Some(path) = Glob::new(glob.to_str().unwrap())?.first() {
+		project_path = path;
+	} else {
+		let mut default_project = default.to_owned();
+		default_project.push_str(".project.json");
+
+		project_path = project_path.join(default_project);
 	}
 
-	utils::resolve_path(PathBuf::from(project))
+	Ok(project_path)
 }

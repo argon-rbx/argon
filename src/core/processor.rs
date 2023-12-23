@@ -72,10 +72,6 @@ impl Processor {
 		}
 	}
 
-	fn is_place(&self) -> bool {
-		lock!(self.project).root_class == "DataModel"
-	}
-
 	fn is_service(&self, class: &str) -> bool {
 		let descriptor = rbx_reflection_database::get().classes.get(class);
 
@@ -220,7 +216,7 @@ impl Processor {
 						"Folder"
 					}
 				} else if let Some(rbx_path) = rbx_path {
-					if self.is_place() {
+					if lock!(self.project).is_place() {
 						let len = rbx_path.len();
 
 						if len == 2 && self.is_service(&rbx_path[1]) {
@@ -309,7 +305,7 @@ impl Processor {
 	}
 
 	pub fn init(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_extension(path);
+		let ext = utils::get_file_ext(path);
 		let is_dir = ext.is_empty();
 
 		if !self.is_valid(path, ext, is_dir) {
@@ -359,14 +355,14 @@ impl Processor {
 	}
 
 	pub fn create(&self, path: &Path, dom_only: bool) -> Result<()> {
-		let ext = utils::get_file_extension(path);
+		let ext = utils::get_file_ext(path);
 		let is_dir = path.is_dir();
 
 		if !self.is_valid(path, ext, is_dir) {
 			return Ok(());
 		}
 
-		let name = utils::get_file_name(path);
+		let name = utils::get_file_stem(path);
 		let rbx_paths = self.get_rbx_paths(path, name, ext)?;
 		let file_kind = self.get_file_kind(name, ext, is_dir)?;
 
@@ -457,13 +453,13 @@ impl Processor {
 	}
 
 	pub fn delete(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_extension(path);
+		let ext = utils::get_file_ext(path);
 
 		if !self.is_valid(path, ext, false) {
 			return Ok(());
 		}
 
-		let name = utils::get_file_name(path);
+		let name = utils::get_file_stem(path);
 		let rbx_path = self.get_rbx_paths(path, name, ext);
 		let mut queue = lock!(self.queue);
 
@@ -478,13 +474,13 @@ impl Processor {
 	}
 
 	pub fn write(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_extension(path);
+		let ext = utils::get_file_ext(path);
 
 		if !self.is_valid(path, ext, false) {
 			return Ok(());
 		}
 
-		let name = utils::get_file_name(path);
+		let name = utils::get_file_stem(path);
 		let is_dir = path.is_dir();
 
 		let rbx_path = self.get_rbx_paths(path, name, ext);

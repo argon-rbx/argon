@@ -32,7 +32,7 @@ macro_rules! argon_info {
     ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Info, $($arg)+))
 }
 
-// Shorter way of locking mutex
+// A shorter way to lock the Mutex
 #[macro_export]
 macro_rules! lock {
 	($mutex:expr) => {

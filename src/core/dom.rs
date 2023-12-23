@@ -107,7 +107,7 @@ impl Dom {
 	}
 
 	pub fn place_roots(&self) -> &[Ref] {
-		self.inner.get_by_ref(self.root()).unwrap().children()
+		self.inner.root().children()
 	}
 
 	pub fn inner(&self) -> &WeakDom {

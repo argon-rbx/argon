@@ -7,11 +7,11 @@ use crate::{argon_error, argon_info, argon_warn, session};
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
 pub struct Stop {
-	/// Server host name [type: string]
+	/// Server host name
 	#[arg(short = 'H', long)]
 	host: Option<String>,
 
-	/// Server port [type: int]
+	/// Server port
 	#[arg(short, long)]
 	port: Option<u16>,
 
