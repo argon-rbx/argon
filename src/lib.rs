@@ -12,7 +12,7 @@ pub mod messages;
 pub mod project;
 pub mod rbx_path;
 pub mod server;
-pub mod session;
+pub mod sessions;
 pub mod utils;
 pub mod workspace;
 

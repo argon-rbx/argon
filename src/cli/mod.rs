@@ -77,7 +77,7 @@ impl Cli {
 		match self.command {
 			Commands::Run(command) => command.main(self.verbose.log_level_filter()),
 			Commands::Stop(command) => command.main(),
-			Commands::Build(command) => command.main(),
+			Commands::Build(command) => command.main(self.verbose.log_level_filter()),
 			Commands::Config(command) => command.main(),
 			Commands::Init(command) => command.main(),
 		}

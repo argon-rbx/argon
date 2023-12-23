@@ -5,7 +5,7 @@ use std::{
 	fs::{self, File},
 	io::BufWriter,
 	path::Path,
-	sync::{Arc, Mutex, MutexGuard},
+	sync::{mpsc::Sender, Arc, Mutex, MutexGuard},
 	thread,
 };
 
@@ -14,7 +14,7 @@ use crate::{
 	fs::{Fs, FsEventKind},
 	lock,
 	messages::{Message, UpdateMeta},
-	project::{self, Project},
+	project::Project,
 };
 
 use self::{dom::Dom, processor::Processor, queue::Queue};
@@ -118,7 +118,7 @@ impl Core {
 		Ok(())
 	}
 
-	pub fn start(&self) {
+	pub fn watch(&self, sender: Option<Sender<()>>) {
 		let processor = self.processor.clone();
 		let project = self.project.clone();
 		let queue = self.queue.clone();
@@ -181,6 +181,10 @@ impl Core {
 						FsEventKind::Create => processor.create(&event.path, false)?,
 						FsEventKind::Delete => processor.delete(&event.path)?,
 						FsEventKind::Write => processor.write(&event.path)?,
+					}
+
+					if let Some(sender) = sender.clone() {
+						sender.send(()).unwrap();
 					}
 
 					Ok(())

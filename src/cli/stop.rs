@@ -1,18 +1,24 @@
+use std::process::{Command, Stdio};
+
 use anyhow::Result;
 use awc::Client;
 use clap::{ArgAction, Parser};
 
-use crate::{argon_error, argon_info, argon_warn, session};
+use crate::{argon_info, argon_warn, sessions};
 
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
 pub struct Stop {
+	/// Session indentifier
+	#[arg()]
+	session_id: Option<String>,
+
 	/// Server host name
 	#[arg(short = 'H', long)]
 	host: Option<String>,
 
 	/// Server port
-	#[arg(short, long)]
+	#[arg(short = 'P', long)]
 	port: Option<u16>,
 
 	/// Stop all running session
@@ -21,18 +27,25 @@ pub struct Stop {
 }
 
 impl Stop {
+	fn kill_process(pid: u32) {
+		Command::new("kill")
+			.arg(pid.to_string())
+			.stderr(Stdio::null())
+			.spawn()
+			.ok();
+
+		argon_info!("Killed Argon process {}", pid.to_string())
+	}
+
 	#[actix_web::main]
-	async fn make_request(client: &Client, address: &String, id: &u32) {
+	async fn make_request(client: &Client, address: &String, pid: u32) {
 		let mut url = String::from("http://");
 		url.push_str(address);
 		url.push_str("/stop");
 
-		let result = client.post(url).send().await;
-
-		match result {
-			Err(error) => {
-				argon_error!("Failed to stop Argon session: {}", error);
-				argon_warn!("You might wanna stop process manually using its PID: {}", id)
+		match client.post(url).send().await {
+			Err(_) => {
+				Self::kill_process(pid);
 			}
 			Ok(_) => argon_info!("Stopped Argon session {}", address),
 		}
@@ -40,7 +53,7 @@ impl Stop {
 
 	pub fn main(self) -> Result<()> {
 		if self.all {
-			let sessions = session::get_all();
+			let sessions = sessions::get_all()?;
 
 			if sessions.is_none() {
 				argon_warn!("There are no running sessions");
@@ -49,27 +62,31 @@ impl Stop {
 
 			let client = Client::default();
 
-			for session in sessions.unwrap().iter() {
-				let (address, id) = session;
-
-				Stop::make_request(&client, address, id);
+			for (_, session) in sessions.unwrap() {
+				if let Some(address) = session.get_address() {
+					Stop::make_request(&client, &address, session.pid);
+				} else {
+					Stop::kill_process(session.pid);
+				}
 			}
 
-			return session::remove_all();
+			return sessions::remove_all();
 		}
 
-		let session = session::get(self.host.clone(), self.port);
+		let session = sessions::get(self.session_id, self.host, self.port)?;
 
-		if session.is_none() {
+		if let Some(session) = session {
+			if let Some(address) = session.get_address() {
+				let client = Client::default();
+				Stop::make_request(&client, &address, session.pid);
+			} else {
+				Stop::kill_process(session.pid);
+			}
+
+			sessions::remove(&session)
+		} else {
 			argon_warn!("There is no running session on this address");
-			return Ok(());
+			Ok(())
 		}
-
-		let (address, id) = session.unwrap();
-		let client = Client::default();
-
-		Stop::make_request(&client, &address, &id);
-
-		session::remove(&address)
 	}
 }

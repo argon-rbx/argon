@@ -34,7 +34,7 @@ impl Server {
 	#[actix_web::main]
 	pub async fn start(&self) -> Result<()> {
 		let core = self.core.clone();
-		core.start();
+		core.watch(None);
 
 		HttpServer::new(move || {
 			App::new()

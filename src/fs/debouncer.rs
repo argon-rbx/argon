@@ -108,8 +108,6 @@ impl FsDebouncer {
 					let duration = event.time.duration_since(self.time);
 					let path = self.get_path(event);
 
-					println!("{:?}", duration);
-
 					if duration < DEBOUNCE_TIME && path == self.path {
 						return;
 					}

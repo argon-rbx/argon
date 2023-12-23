@@ -14,7 +14,7 @@ use crate::{
 	core::Core,
 	project::{self, Project},
 	server::Server,
-	session, workspace,
+	sessions, workspace,
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -31,6 +31,10 @@ pub struct Run {
 	/// Project path
 	#[arg()]
 	project: Option<PathBuf>,
+
+	/// Optional session indentifier
+	#[arg()]
+	session_id: Option<String>,
 
 	/// Actually run Argon, used to spawn new process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
@@ -68,31 +72,16 @@ impl Run {
 		}
 
 		let project = Project::load(&project_path)?;
-		let host: String;
-		let port: u16;
-
-		if self.host.is_some() {
-			host = self.host.unwrap();
-		} else if project.host.is_some() {
-			host = project.host.clone().unwrap();
-		} else {
-			host = config.host.clone();
-		}
-
-		if self.port.is_some() {
-			port = self.port.unwrap();
-		} else if project.port.is_some() {
-			port = project.port.unwrap();
-		} else {
-			port = config.port;
-		}
-
 		let mut core = Core::new(config, project)?;
+
+		let host = self.host.unwrap_or(core.host());
+		let port = self.port.unwrap_or(core.port());
+
 		core.load_dom()?;
 
 		let server = Server::new(core, &host, &port);
 
-		session::add(&host, &port, process::id())?;
+		sessions::add(self.session_id, Some(host.clone()), Some(port), process::id())?;
 
 		argon_info!(
 			"Serving on: {}:{}, project: {}",
@@ -134,11 +123,15 @@ impl Run {
 		}
 
 		if let Some(project) = self.project {
-			args.push(project.to_str().unwrap().to_string())
+			args.push(project.to_str().unwrap().to_string());
+		}
+
+		if let Some(session_id) = self.session_id {
+			args.push(session_id);
 		}
 
 		if !verbosity.is_empty() {
-			args.push(verbosity.to_string())
+			args.push(verbosity.to_string());
 		}
 
 		Command::new(program)
