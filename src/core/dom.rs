@@ -70,6 +70,16 @@ impl Dom {
 		dom_ref
 	}
 
+	pub fn remove(&mut self, rbx_path: &RbxPath) -> bool {
+		if let Some(refs) = self.ref_map.remove(rbx_path) {
+			self.inner.destroy(refs.dom_ref);
+
+			return true;
+		}
+
+		false
+	}
+
 	pub fn get(&self, rbx_path: &RbxPath) -> Option<&Instance> {
 		self.ref_map
 			.get(rbx_path)

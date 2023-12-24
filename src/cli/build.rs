@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use log::LevelFilter;
+use log::{info, LevelFilter};
 use roblox_install::RobloxStudio;
 use std::{
 	env,
@@ -11,6 +11,7 @@ use std::{
 };
 
 use crate::{
+	argon_info,
 	config::Config,
 	core::Core,
 	project::{self, Project},
@@ -40,7 +41,7 @@ pub struct Build {
 	#[arg(short, long, action = ArgAction::SetTrue)]
 	xml: bool,
 
-	/// Rebuild project every time files change (TODO)
+	/// Rebuild project every time files change
 	#[arg(short, long, action = ArgAction::SetTrue)]
 	watch: bool,
 
@@ -120,6 +121,8 @@ impl Build {
 		core.load_dom()?;
 		core.build(&path, xml)?;
 
+		argon_info!("Successfully built project: {}", project_path.to_str().unwrap().bold());
+
 		if self.watch {
 			sessions::add(self.session_id, None, None, process::id())?;
 
@@ -127,7 +130,11 @@ impl Build {
 
 			core.watch(Some(sender));
 
+			argon_info!("Watching for changes...");
+
 			for _ in receiver {
+				info!("Rebuilding project...");
+
 				core.build(&path, xml)?;
 			}
 		}

@@ -324,6 +324,7 @@ dependencies = [
  "env_logger",
  "glob",
  "globenv",
+ "json2lua",
  "log",
  "multimap",
  "notify",
@@ -1051,6 +1052,7 @@ checksum = "d530e1a18b1cb4c484e6e34556a0d948706958449fca0cab753d649f2bce3d1f"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.2",
+ "serde",
 ]
 
 [[package]]
@@ -1125,6 +1127,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c37f63953c4c63420ed5fd3d6d398c719489b9f872b9fa683262f8edd363c7d"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "json2lua"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1ff10926d689ce74d78b89701c091fbf244a26704bc88ba1366329f8113f99e"
+dependencies = [
+ "indexmap 2.1.0",
+ "serde_json",
 ]
 
 [[package]]
@@ -1827,6 +1839,7 @@ version = "1.0.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d1c7e3eac408d115102c4c24ad393e0821bb3a5df4d506a80f85f7a742a526b"
 dependencies = [
+ "indexmap 2.1.0",
  "itoa",
  "ryu",
  "serde",
