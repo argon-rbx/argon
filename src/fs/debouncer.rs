@@ -1,8 +1,9 @@
-use super::{FsEvent, FsEventKind};
 use crossbeam_channel::Sender;
 use notify::EventKind;
 use notify_debouncer_full::DebouncedEvent;
 use std::path::PathBuf;
+
+use super::{FsEvent, FsEventKind};
 
 #[cfg(target_os = "macos")]
 use notify::event::{DataChange, ModifyKind};

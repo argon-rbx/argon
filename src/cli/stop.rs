@@ -1,8 +1,7 @@
-use std::process::{Command, Stdio};
-
 use anyhow::Result;
 use awc::Client;
 use clap::{ArgAction, Parser};
+use std::process::{Command, Stdio};
 
 use crate::{argon_info, argon_warn, sessions};
 

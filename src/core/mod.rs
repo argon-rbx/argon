@@ -1,5 +1,6 @@
 use anyhow::Result;
 use log::{trace, warn};
+use rbx_dom_weak::types::Ref;
 use rbx_xml::EncodeOptions;
 use std::{
 	fs::{self, File},
@@ -13,7 +14,7 @@ use crate::{
 	config::Config,
 	fs::{Fs, FsEventKind},
 	lock,
-	messages::{Message, UpdateMeta},
+	messages::{Create, Message, SyncMeta},
 	project::Project,
 };
 
@@ -153,11 +154,14 @@ impl Core {
 
 								fs.watch_all(&project.get_paths())?;
 
-								queue.push(Message::UpdateMeta(UpdateMeta {
-									name: project.name.clone(),
-									game_id: project.game_id,
-									place_ids: project.place_ids.clone(),
-								}));
+								queue.push(
+									Message::SyncMeta(SyncMeta {
+										name: project.name.clone(),
+										game_id: project.game_id,
+										place_ids: project.place_ids.clone(),
+									}),
+									None,
+								);
 							}
 						}
 						_ => {
@@ -211,9 +215,9 @@ impl Core {
 		let dom = lock!(self.dom);
 
 		let root_refs = if project.is_place() {
-			dom.place_roots().to_vec()
+			dom.place_root_refs().to_vec()
 		} else {
-			vec![dom.root()]
+			vec![dom.root_ref()]
 		};
 
 		if xml {
@@ -223,5 +227,31 @@ impl Core {
 		}
 
 		Ok(())
+	}
+
+	pub fn sync_dom(&self, id: u64) {
+		let dom = lock!(self.dom);
+		let mut queue = lock!(self.queue);
+
+		fn walk(children: &[Ref], dom: &Dom, queue: &mut MutexGuard<'_, Queue>, id: &u64) {
+			for child in children {
+				let child = dom.get_by_ref(*child).unwrap();
+				let path = dom.get_rbx_path(child.referent()).unwrap();
+
+				queue.push(
+					Message::Create(Create {
+						name: child.name.clone(),
+						class: child.class.clone(),
+						path: path.clone(),
+						properties: child.properties.clone(),
+					}),
+					Some(id),
+				);
+
+				walk(child.children(), dom, queue, id);
+			}
+		}
+
+		walk(dom.root().children(), &dom, &mut queue, &id);
 	}
 }

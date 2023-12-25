@@ -1,8 +1,7 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
+use std::path::PathBuf;
 
 use crate::{argon_info, argon_warn, config::Config, project, workspace};
 

@@ -11,16 +11,15 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
+use super::{dom::Dom, instance::Instance, queue::Queue};
 use crate::{
 	config::Config,
 	lock,
-	messages::{Message, Sync, SyncAction},
+	messages::{Create, Delete, Message, Update},
 	project::Project,
 	rbx_path::RbxPath,
 	utils,
 };
-
-use super::{dom::Dom, instance::Instance, queue::Queue};
 
 const FILE_EXTENSIONS: [&str; 7] = ["lua", "luau", "json", "csv", "txt", "rbxm", "rbxmx"];
 
@@ -106,7 +105,7 @@ impl Processor {
 		true
 	}
 
-	fn get_rbx_paths(&self, path: &Path, name: &str, ext: &str) -> Result<Vec<RbxPath>> {
+	fn get_rbx_paths(&self, path: &Path, file_name: &str, ext: &str) -> Result<Vec<RbxPath>> {
 		let project = lock!(self.project);
 
 		for local_path in project.get_paths() {
@@ -124,17 +123,25 @@ impl Processor {
 
 					match ext {
 						"lua" | "luau" => {
-							if !name.starts_with(&self.config.src) {
+							if !file_name.starts_with(&self.config.src) {
+								let name = if file_name.ends_with(".server") {
+									&file_name[..file_name.rfind(".server").unwrap()]
+								} else if file_name.ends_with(".client") {
+									&file_name[..file_name.rfind(".client").unwrap()]
+								} else {
+									file_name
+								};
+
 								rbx_path.push(name);
 							}
 						}
 						"json" => {
-							if !name.starts_with(&self.config.data) {
-								rbx_path.push(name);
+							if !file_name.starts_with(&self.config.data) {
+								rbx_path.push(file_name);
 							}
 						}
 						_ => {
-							rbx_path.push(name);
+							rbx_path.push(file_name);
 						}
 					}
 				}
@@ -146,27 +153,27 @@ impl Processor {
 		bail!("{:?} does not exists in the project file", path)
 	}
 
-	fn get_file_kind(&self, name: &str, ext: &str, is_dir: bool) -> Result<FileKind> {
+	fn get_file_kind(&self, file_name: &str, ext: &str, is_dir: bool) -> Result<FileKind> {
 		if is_dir {
 			return Ok(FileKind::Dir);
 		}
 
 		if ext == "lua" || ext == "luau" {
-			let kind = if name.ends_with(".server") {
+			let kind = if file_name.ends_with(".server") {
 				ScriptKind::Server
-			} else if name.ends_with(".client") {
+			} else if file_name.ends_with(".client") {
 				ScriptKind::Client
 			} else {
 				ScriptKind::Module
 			};
 
-			if name.starts_with(&self.config.src) {
+			if file_name.starts_with(&self.config.src) {
 				return Ok(FileKind::ChildScript(kind));
 			} else {
 				return Ok(FileKind::Script(kind));
 			}
 		} else if ext == "json" {
-			if name == self.config.data {
+			if file_name == self.config.data {
 				return Ok(FileKind::InstanceData);
 			} else {
 				return Ok(FileKind::JsonModule);
@@ -243,23 +250,23 @@ impl Processor {
 		Ok(String::from(class))
 	}
 
-	fn get_name(&self, kind: &FileKind, rbx_path: &RbxPath, name: &str) -> String {
+	fn get_name(&self, kind: &FileKind, rbx_path: &RbxPath, file_name: &str) -> String {
 		match kind {
 			FileKind::Script(ref kind) => {
 				if *kind != ScriptKind::Module {
 					let pos = if *kind == ScriptKind::Server {
-						name.rfind(".server").unwrap()
+						file_name.rfind(".server").unwrap()
 					} else {
-						name.rfind(".client").unwrap()
+						file_name.rfind(".client").unwrap()
 					};
 
-					name[..pos].to_owned()
+					file_name[..pos].to_owned()
 				} else {
-					name.to_owned()
+					file_name.to_owned()
 				}
 			}
 			FileKind::ChildScript(_) => rbx_path.last().unwrap().clone(),
-			_ => name.to_owned(),
+			_ => file_name.to_owned(),
 		}
 	}
 
@@ -389,11 +396,12 @@ impl Processor {
 			return Ok(());
 		}
 
-		let name = utils::get_file_stem(path);
-		let rbx_paths = self.get_rbx_paths(path, name, ext)?;
-		let file_kind = self.get_file_kind(name, ext, is_dir)?;
+		let file_name = utils::get_file_stem(path);
+		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
+		let file_kind = self.get_file_kind(file_name, ext, is_dir)?;
 
 		let mut dom = lock!(self.dom);
+		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
 			let parent = self.get_parent(&rbx_path);
@@ -407,7 +415,19 @@ impl Processor {
 				| FileKind::Dir => {
 					let class = self.get_class(&file_kind, Some(path), None)?;
 					let properties = self.get_properties(&file_kind, path)?;
-					let name = self.get_name(&file_kind, &rbx_path, name);
+					let name = self.get_name(&file_kind, &rbx_path, file_name);
+
+					if !dom_only {
+						queue.push(
+							Message::Create(Create {
+								name: name.clone(),
+								class: class.clone(),
+								path: rbx_path.clone(),
+								properties: properties.clone(),
+							}),
+							None,
+						);
+					}
 
 					let instance = Instance::new(&name)
 						.with_class(&class)
@@ -417,15 +437,21 @@ impl Processor {
 
 					dom.insert(instance, &parent);
 				}
-				_ => bail!("Unimplemented!"),
-			}
+				FileKind::InstanceData => {
+					let instance = dom.get_mut(&rbx_path).unwrap();
+					let properties = self.get_properties(&file_kind, path)?;
 
-			if !dom_only {
-				// println!("{:?}", "message, rbx_path");
+					instance.properties = properties;
+				}
+				FileKind::Model(ref _kind) => {
+					// TODO: Implement
+					bail!("Unimplemented!")
+				}
 			}
 		}
 
 		drop(dom);
+		drop(queue);
 
 		if path.is_dir() {
 			for entry in fs::read_dir(path)? {
@@ -443,14 +469,15 @@ impl Processor {
 			return Ok(());
 		}
 
-		let name = utils::get_file_stem(path);
-		let rbx_paths = self.get_rbx_paths(path, name, ext)?;
+		let file_name = utils::get_file_stem(path);
+		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
 
 		let mut dom = lock!(self.dom);
+		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
 			if dom.remove(&rbx_path) {
-				// println!("{:?}", "message, rbx_path");
+				queue.push(Message::Delete(Delete { path: rbx_path }), None);
 			}
 		}
 
@@ -464,19 +491,26 @@ impl Processor {
 			return Ok(());
 		}
 
-		let name = utils::get_file_stem(path);
-		let rbx_paths = self.get_rbx_paths(path, name, ext)?;
-		let file_kind = self.get_file_kind(name, ext, false)?;
+		let file_name = utils::get_file_stem(path);
+		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
+		let file_kind = self.get_file_kind(file_name, ext, false)?;
 
 		let mut dom = lock!(self.dom);
+		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
 			let instance = dom.get_mut(&rbx_path).unwrap();
 			let properties = self.get_properties(&file_kind, path)?;
 
-			instance.properties = properties;
+			instance.properties = properties.clone();
 
-			// println!("{:?}", "message, rbx_path");
+			queue.push(
+				Message::Write(Update {
+					path: rbx_path,
+					properties,
+				}),
+				None,
+			);
 		}
 
 		Ok(())

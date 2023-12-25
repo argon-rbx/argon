@@ -3,12 +3,12 @@ use log::trace;
 use std::process;
 
 async fn stop() {
-	trace!("Argon stopped!");
+	trace!("Stopping Argon!");
 	process::exit(1);
 }
 
 #[post("stop")]
 async fn main() -> impl Responder {
 	tokio::spawn(stop());
-	HttpResponse::Ok().finish()
+	HttpResponse::Ok().body("Argon stopped")
 }

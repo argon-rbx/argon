@@ -112,11 +112,21 @@ impl Dom {
 		self.ref_map.get(rbx_path).map(|refs| &refs.local_path)
 	}
 
-	pub fn root(&self) -> Ref {
+	pub fn get_rbx_path(&self, dom_ref: Ref) -> Option<&RbxPath> {
+		self.ref_map
+			.iter()
+			.find_map(|(rbx_path, refs)| if refs.dom_ref == dom_ref { Some(rbx_path) } else { None })
+	}
+
+	pub fn root(&self) -> &Instance {
+		self.inner.root()
+	}
+
+	pub fn root_ref(&self) -> Ref {
 		self.inner.root_ref()
 	}
 
-	pub fn place_roots(&self) -> &[Ref] {
+	pub fn place_root_refs(&self) -> &[Ref] {
 		self.inner.root().children()
 	}
 

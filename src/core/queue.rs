@@ -16,9 +16,19 @@ impl Queue {
 		}
 	}
 
-	pub fn push(&mut self, message: Message) {
-		for id in &self.listeners {
-			self.queues.get_mut(id).unwrap().push(message.clone());
+	pub fn push(&mut self, message: Message, id: Option<&u64>) {
+		if let Some(id) = id {
+			if !self.is_subscribed(id) {
+				return;
+			}
+
+			self.queues.get_mut(id).unwrap().push(message);
+
+			return;
+		}
+
+		for listener in &self.listeners {
+			self.queues.get_mut(listener).unwrap().push(message.clone());
 		}
 	}
 
