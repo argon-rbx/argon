@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::messages::Message;
 
 #[derive(Debug, Clone)]
 pub struct Queue {
-	queues: HashMap<u64, Vec<Message>>,
+	queues: HashMap<u64, VecDeque<Message>>,
 	listeners: Vec<u64>,
 }
 
@@ -22,13 +22,13 @@ impl Queue {
 				return;
 			}
 
-			self.queues.get_mut(id).unwrap().push(message);
+			self.queues.get_mut(id).unwrap().push_back(message);
 
 			return;
 		}
 
 		for listener in &self.listeners {
-			self.queues.get_mut(listener).unwrap().push(message.clone());
+			self.queues.get_mut(listener).unwrap().push_back(message.clone());
 		}
 	}
 
@@ -43,7 +43,7 @@ impl Queue {
 			return;
 		}
 
-		queue.remove(0);
+		queue.pop_front();
 	}
 
 	pub fn get(&mut self, id: &u64) -> Option<&Message> {
@@ -60,7 +60,7 @@ impl Queue {
 		}
 
 		self.listeners.push(id.to_owned());
-		self.queues.insert(id.to_owned(), vec![]);
+		self.queues.insert(id.to_owned(), VecDeque::new());
 
 		true
 	}

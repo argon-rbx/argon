@@ -240,7 +240,6 @@ impl Core {
 
 				queue.push(
 					Message::Create(Create {
-						name: child.name.clone(),
 						class: child.class.clone(),
 						path: path.clone(),
 						properties: child.properties.clone(),

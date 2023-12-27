@@ -9,7 +9,7 @@ pub enum Message {
 	SyncMeta(SyncMeta),
 	Create(Create),
 	Delete(Delete),
-	Write(Update),
+	Update(Update),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -21,7 +21,6 @@ pub struct SyncMeta {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Create {
-	pub name: String,
 	pub class: String,
 	pub path: RbxPath,
 	pub properties: HashMap<String, Variant>,

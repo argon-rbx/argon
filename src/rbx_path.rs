@@ -26,6 +26,16 @@ impl RbxPath {
 		Self { components }
 	}
 
+	pub fn join(&self, path: &str) -> Self {
+		let mut components = self.components.clone();
+
+		for component in path.split(RBX_SEPARATOR) {
+			components.push(component.to_owned());
+		}
+
+		Self { components }
+	}
+
 	pub fn push(&mut self, path: &str) {
 		if path.is_empty() {
 			return;
@@ -57,6 +67,20 @@ impl RbxPath {
 	pub fn last(&self) -> Option<&String> {
 		self.components.last()
 	}
+
+	pub fn starts_with(&self, path: &RbxPath) -> bool {
+		if path.len() > self.len() {
+			return false;
+		}
+
+		for (index, component) in path.iter().enumerate() {
+			if self[index] != *component {
+				return false;
+			}
+		}
+
+		true
+	}
 }
 
 impl Index<usize> for RbxPath {
@@ -82,5 +106,11 @@ impl Display for RbxPath {
 impl Debug for RbxPath {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
+	}
+}
+
+impl Default for RbxPath {
+	fn default() -> Self {
+		Self::new()
 	}
 }

@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use pathsub::sub_paths;
 use rbx_dom_weak::types::{Enum, Variant};
 use rbx_reflection::ClassTag;
+use rbx_xml::DecodeOptions;
 use serde_json::{from_reader, Value};
 use std::{
 	collections::HashMap,
@@ -320,8 +321,12 @@ impl Processor {
 
 				properties.insert(String::from("Value"), Variant::String(value));
 			}
-			FileKind::Dir => {
-				let data_file = path.join(&self.data_file);
+			FileKind::Dir | FileKind::InstanceData => {
+				let data_file = if *kind == FileKind::Dir {
+					path.join(&self.data_file)
+				} else {
+					path.to_owned()
+				};
 
 				if data_file.exists() {
 					let reader = BufReader::new(File::open(data_file)?);
@@ -404,8 +409,6 @@ impl Processor {
 		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
-			let parent = self.get_parent(&rbx_path);
-
 			match file_kind {
 				FileKind::ChildScript(_)
 				| FileKind::Script(_)
@@ -416,36 +419,69 @@ impl Processor {
 					let class = self.get_class(&file_kind, Some(path), None)?;
 					let properties = self.get_properties(&file_kind, path)?;
 					let name = self.get_name(&file_kind, &rbx_path, file_name);
-
-					if !dom_only {
-						queue.push(
-							Message::Create(Create {
-								name: name.clone(),
-								class: class.clone(),
-								path: rbx_path.clone(),
-								properties: properties.clone(),
-							}),
-							None,
-						);
-					}
+					let parent = self.get_parent(&rbx_path);
 
 					let instance = Instance::new(&name)
 						.with_class(&class)
-						.with_properties(properties)
+						.with_properties(properties.clone())
 						.with_rbx_path(&rbx_path)
 						.with_path(path);
 
 					dom.insert(instance, &parent);
+
+					if !dom_only {
+						queue.push(
+							Message::Create(Create {
+								class,
+								path: rbx_path,
+								properties,
+							}),
+							None,
+						);
+					}
 				}
 				FileKind::InstanceData => {
 					let instance = dom.get_mut(&rbx_path).unwrap();
 					let properties = self.get_properties(&file_kind, path)?;
 
-					instance.properties = properties;
+					instance.properties = properties.clone();
+
+					if !dom_only {
+						queue.push(
+							Message::Update(Update {
+								path: rbx_path,
+								properties,
+							}),
+							None,
+						);
+					}
 				}
-				FileKind::Model(ref _kind) => {
-					// TODO: Implement
-					bail!("Unimplemented!")
+				FileKind::Model(ref kind) => {
+					let reader = BufReader::new(File::open(path)?);
+					let mut model = if *kind == ModelKind::Binary {
+						rbx_binary::from_reader(reader)?
+					} else {
+						rbx_xml::from_reader(reader, DecodeOptions::default())?
+					};
+
+					model.root_mut().name = file_name.to_owned();
+
+					let new_instances = dom.append(&mut model, &rbx_path, path);
+
+					if !dom_only {
+						for (path, instances) in new_instances {
+							for instance in instances {
+								queue.push(
+									Message::Create(Create {
+										class: instance.class.clone(),
+										path: path.to_owned(),
+										properties: instance.properties.clone(),
+									}),
+									None,
+								);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -476,7 +512,18 @@ impl Processor {
 		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
-			if dom.remove(&rbx_path) {
+			if file_name == self.config.data && ext == "json" {
+				let instance = dom.get_mut(&rbx_path).unwrap();
+				instance.properties = HashMap::new();
+
+				queue.push(
+					Message::Update(Update {
+						path: rbx_path.clone(),
+						properties: HashMap::new(),
+					}),
+					None,
+				);
+			} else if dom.remove(&rbx_path) {
 				queue.push(Message::Delete(Delete { path: rbx_path }), None);
 			}
 		}
@@ -499,18 +546,51 @@ impl Processor {
 		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
-			let instance = dom.get_mut(&rbx_path).unwrap();
-			let properties = self.get_properties(&file_kind, path)?;
+			match file_kind {
+				FileKind::Model(ref kind) => {
+					if dom.remove(&rbx_path) {
+						queue.push(Message::Delete(Delete { path: rbx_path.clone() }), None);
 
-			instance.properties = properties.clone();
+						let reader = BufReader::new(File::open(path)?);
+						let mut model = if *kind == ModelKind::Binary {
+							rbx_binary::from_reader(reader)?
+						} else {
+							rbx_xml::from_reader(reader, DecodeOptions::default())?
+						};
 
-			queue.push(
-				Message::Write(Update {
-					path: rbx_path,
-					properties,
-				}),
-				None,
-			);
+						model.root_mut().name = file_name.to_owned();
+
+						let new_instances = dom.append(&mut model, &rbx_path, path);
+
+						for (path, instances) in new_instances {
+							for instance in instances {
+								queue.push(
+									Message::Create(Create {
+										class: instance.class.clone(),
+										path: path.to_owned(),
+										properties: instance.properties.clone(),
+									}),
+									None,
+								);
+							}
+						}
+					}
+				}
+				_ => {
+					let instance = dom.get_mut(&rbx_path).unwrap();
+					let properties = self.get_properties(&file_kind, path)?;
+
+					instance.properties = properties.clone();
+
+					queue.push(
+						Message::Update(Update {
+							path: rbx_path,
+							properties,
+						}),
+						None,
+					);
+				}
+			}
 		}
 
 		Ok(())
