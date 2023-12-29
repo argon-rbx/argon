@@ -8,7 +8,7 @@ use std::{
 	path::PathBuf,
 };
 
-use crate::{glob::Glob, rbx_path::RbxPath, utils, workspace};
+use crate::{glob::Glob, rbx_path::RbxPath, util, workspace};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
@@ -76,7 +76,7 @@ impl Project {
 
 			project.parse_paths(&tree, &workspace_dir, &RbxPath::new());
 
-			let path = utils::resolve_path(path)?;
+			let path = util::resolve_path(path)?;
 			project.root_dir = Some(path);
 		} else {
 			let workspace_dir = project.workspace_dir.clone();
@@ -118,9 +118,9 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
-	let mut project_path = utils::resolve_path(path)?;
+	let mut project_path = util::resolve_path(path)?;
 
-	if project_path.is_file() || utils::get_file_name(&project_path).ends_with(".project.json") {
+	if project_path.is_file() || util::get_file_name(&project_path).ends_with(".project.json") {
 		return Ok(project_path);
 	}
 

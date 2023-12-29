@@ -1,6 +1,6 @@
 use serde::{Serialize, Serializer};
 use std::{
-	fmt::{self, Debug, Display},
+	fmt::{self, Debug, Display, Formatter},
 	ops::Index,
 };
 
@@ -98,13 +98,13 @@ impl Serialize for RbxPath {
 }
 
 impl Display for RbxPath {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
 	}
 }
 
 impl Debug for RbxPath {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.components.join(&RBX_SEPARATOR.to_string()))
 	}
 }

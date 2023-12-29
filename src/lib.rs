@@ -13,7 +13,7 @@ pub mod project;
 pub mod rbx_path;
 pub mod server;
 pub mod sessions;
-pub mod utils;
+pub mod util;
 pub mod workspace;
 
 // These Argon logs ignore verbosity level, aside of `Off`

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use toml;
 
-use crate::utils;
+use crate::util;
 
 #[optfield(GlobalConfig, attrs, merge_fn)]
 #[derive(Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl Config {
 	}
 
 	pub fn load_global(&mut self) -> Result<()> {
-		let home_dir = utils::get_home_dir()?;
+		let home_dir = util::get_home_dir()?;
 		let config_dir = home_dir.join(".argon").join("config.toml");
 
 		let config_toml = fs::read_to_string(config_dir)?;

@@ -3,7 +3,7 @@ use clap::Parser;
 use open;
 use std::fs::File;
 
-use crate::{logger, utils};
+use crate::{logger, util};
 
 /// Edit global config with default editor
 #[derive(Parser)]
@@ -11,7 +11,7 @@ pub struct Config {}
 
 impl Config {
 	pub fn main(self) -> Result<()> {
-		let home_dir = utils::get_home_dir()?;
+		let home_dir = util::get_home_dir()?;
 
 		let config_path = home_dir.join(".argon").join("config.toml");
 

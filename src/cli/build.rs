@@ -15,7 +15,7 @@ use crate::{
 	config::Config,
 	core::Core,
 	project::{self, Project},
-	sessions, utils,
+	sessions, util,
 };
 
 /// Build project into Roblox place or model
@@ -69,7 +69,7 @@ impl Build {
 
 		let mut xml = self.xml;
 		let mut path = if let Some(path) = self.output {
-			let ext = utils::get_file_ext(&path);
+			let ext = util::get_file_ext(&path);
 
 			if ext == "rbxlx" || ext == "rbxmx" {
 				xml = true;

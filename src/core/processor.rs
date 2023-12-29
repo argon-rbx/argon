@@ -19,7 +19,7 @@ use crate::{
 	messages::{Create, Delete, Message, Update},
 	project::Project,
 	rbx_path::RbxPath,
-	utils,
+	util,
 };
 
 const FILE_EXTENSIONS: [&str; 7] = ["lua", "luau", "json", "csv", "txt", "rbxm", "rbxmx"];
@@ -118,7 +118,7 @@ impl Processor {
 
 				for rbx_path in rbx_paths.iter_mut() {
 					for comp in parent.iter() {
-						let comp = utils::from_os_str(comp);
+						let comp = util::from_os_str(comp);
 						rbx_path.push(comp);
 					}
 
@@ -314,7 +314,9 @@ impl Processor {
 				properties.insert(String::from("Source"), Variant::String(source));
 			}
 			FileKind::LocalizationTable => {
-				// TODO: Implement
+				let contents = util::csv::read_localization_table(path)?;
+
+				properties.insert(String::from("Contents"), Variant::String(contents));
 			}
 			FileKind::StringValue => {
 				let value = fs::read_to_string(path)?;
@@ -344,7 +346,7 @@ impl Processor {
 	}
 
 	pub fn init(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_ext(path);
+		let ext = util::get_file_ext(path);
 		let is_dir = ext.is_empty();
 
 		if !self.is_valid(path, ext, is_dir) {
@@ -394,14 +396,14 @@ impl Processor {
 	}
 
 	pub fn create(&self, path: &Path, dom_only: bool) -> Result<()> {
-		let ext = utils::get_file_ext(path);
+		let ext = util::get_file_ext(path);
 		let is_dir = path.is_dir();
 
 		if !self.is_valid(path, ext, is_dir) {
 			return Ok(());
 		}
 
-		let file_name = utils::get_file_stem(path);
+		let file_name = util::get_file_stem(path);
 		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
 		let file_kind = self.get_file_kind(file_name, ext, is_dir)?;
 
@@ -499,13 +501,13 @@ impl Processor {
 	}
 
 	pub fn delete(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_ext(path);
+		let ext = util::get_file_ext(path);
 
 		if !self.is_valid(path, ext, true) {
 			return Ok(());
 		}
 
-		let file_name = utils::get_file_stem(path);
+		let file_name = util::get_file_stem(path);
 		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
 
 		let mut dom = lock!(self.dom);
@@ -532,13 +534,13 @@ impl Processor {
 	}
 
 	pub fn write(&self, path: &Path) -> Result<()> {
-		let ext = utils::get_file_ext(path);
+		let ext = util::get_file_ext(path);
 
 		if !self.is_valid(path, ext, false) {
 			return Ok(());
 		}
 
-		let file_name = utils::get_file_stem(path);
+		let file_name = util::get_file_stem(path);
 		let rbx_paths = self.get_rbx_paths(path, file_name, ext)?;
 		let file_kind = self.get_file_kind(file_name, ext, false)?;
 

@@ -7,10 +7,10 @@ use std::{
 	process::Command,
 };
 
-use crate::{argon_error, logger, utils};
+use crate::{argon_error, logger, util};
 
 pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
-	let home_dir = utils::get_home_dir()?;
+	let home_dir = util::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
 	let project_name = get_name(project);

@@ -7,7 +7,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::utils;
+use crate::util;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Session {
@@ -35,7 +35,7 @@ struct Sessions {
 }
 
 fn get_path() -> Result<PathBuf> {
-	let home_dir = utils::get_home_dir()?;
+	let home_dir = util::get_home_dir()?;
 	let session_path = home_dir.join(".argon").join("sessions.toml");
 
 	Ok(session_path)

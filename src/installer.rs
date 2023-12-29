@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::{env, fs};
 
-use crate::{logger, utils};
+use crate::{logger, util};
 
 const DEFAULT_PROJECT: &str = include_str!("../assets/templates/default/project.json");
 const DEFAULT_GITIGNORE: &str = include_str!("../assets/templates/default/.gitignore");
@@ -10,7 +10,7 @@ const DEFAULT_README: &str = include_str!("../assets/templates/default/README.md
 const COMPACT_PROJECT: &str = include_str!("../assets/templates/compact/project.json");
 
 pub fn install() -> Result<()> {
-	let home_dir = utils::get_home_dir()?;
+	let home_dir = util::get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
 	let bin_dir = argon_dir.join("bin");
