@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use directories::UserDirs;
+use rbx_reflection::ClassTag;
 use std::{
 	env,
 	ffi::OsStr,
@@ -45,4 +46,16 @@ pub fn get_index<T: PartialEq>(slice: &[T], item: &T) -> Option<usize> {
 
 pub fn from_os_str(str: &OsStr) -> &str {
 	str.to_str().unwrap_or_default()
+}
+
+pub fn is_service(class: &str) -> bool {
+	let descriptor = rbx_reflection_database::get().classes.get(class);
+
+	let has_tag = if let Some(descriptor) = descriptor {
+		descriptor.tags.contains(&ClassTag::Service)
+	} else {
+		false
+	};
+
+	has_tag || class == "StarterPlayerScripts" || class == "StarterCharacterScripts"
 }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{trace, warn};
+use log::{error, trace, warn};
 use rbx_dom_weak::types::Ref;
 use rbx_xml::EncodeOptions;
 use std::{
@@ -109,7 +109,7 @@ impl Core {
 							trace!("Processed path: {:?}", entry.path());
 						}
 						Err(err) => {
-							warn!("Failed to process path: {:?}, due to: {}", entry.path(), err);
+							error!("Failed to process path: {:?}, due to: {}", entry.path(), err);
 						}
 					}
 				}
@@ -199,7 +199,7 @@ impl Core {
 						trace!("Processed event: {:?}", event);
 					}
 					Err(err) => {
-						warn!("Failed to process event: {:?}, due to: {}", event, err);
+						error!("Failed to process event: {:?}, due to: {}", event, err);
 					}
 				}
 			}

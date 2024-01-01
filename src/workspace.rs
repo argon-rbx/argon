@@ -60,8 +60,8 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
 	match Command::new("git").arg("init").arg(directory).output() {
 		Ok(_) => trace!("Initialized Git repository"),
-		Err(error) => {
-			if error.kind() == io::ErrorKind::NotFound {
+		Err(err) => {
+			if err.kind() == io::ErrorKind::NotFound {
 				argon_error!(
 					"Failed to initialize repository: Git is not installed. To suppress this message disable {} setting.",
 					"git_init".bold()
@@ -73,7 +73,7 @@ pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
 					open::that("https://git-scm.com/downloads")?;
 				}
 			} else {
-				bail!("Failed to initialize Git repository: {}", error)
+				bail!("Failed to initialize Git repository: {}", err)
 			}
 		}
 	}

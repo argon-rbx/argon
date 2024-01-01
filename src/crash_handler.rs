@@ -83,7 +83,7 @@ pub fn hook() {
 			url.push_str(&report);
 
 			match open::that(url) {
-				Err(error) => argon_error!("Failed to launch system browser: {}", error),
+				Err(err) => argon_error!("Failed to launch system browser: {}", err),
 				Ok(()) => argon_info!("Browser launched successfully!"),
 			}
 		}

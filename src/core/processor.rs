@@ -1,9 +1,8 @@
 use anyhow::{bail, Result};
 use pathsub::sub_paths;
 use rbx_dom_weak::types::{Enum, Variant};
-use rbx_reflection::ClassTag;
 use rbx_xml::DecodeOptions;
-use serde_json::{from_reader, Value};
+use serde_json::Value;
 use std::{
 	collections::HashMap,
 	fs::{self, File},
@@ -74,18 +73,6 @@ impl Processor {
 			config,
 			data_file,
 		}
-	}
-
-	fn is_service(&self, class: &str) -> bool {
-		let descriptor = rbx_reflection_database::get().classes.get(class);
-
-		let has_tag = if let Some(descriptor) = descriptor {
-			descriptor.tags.contains(&ClassTag::Service)
-		} else {
-			false
-		};
-
-		has_tag || class == "StarterPlayerScripts" || class == "StarterCharacterScripts"
 	}
 
 	fn is_valid(&self, path: &Path, ext: &str, is_dir: bool) -> bool {
@@ -213,7 +200,7 @@ impl Processor {
 						|| -> Result<&str> {
 							let data_file = File::open(data_file)?;
 							let reader = BufReader::new(data_file);
-							let data: HashMap<String, Value> = from_reader(reader)?;
+							let data: HashMap<String, Value> = serde_json::from_reader(reader)?;
 
 							if data.contains_key("ClassName") && data["ClassName"].is_string() {
 								// Sketchy solution to get around borrow checker
@@ -231,9 +218,9 @@ impl Processor {
 					if lock!(self.project).is_place() {
 						let len = rbx_path.len();
 
-						if len == 2 && self.is_service(&rbx_path[1]) {
+						if len == 2 && util::is_service(&rbx_path[1]) {
 							&rbx_path[1]
-						} else if len == 3 && self.is_service(&rbx_path[1]) && self.is_service(&rbx_path[2]) {
+						} else if len == 3 && util::is_service(&rbx_path[1]) && util::is_service(&rbx_path[2]) {
 							&rbx_path[2]
 						} else {
 							"Folder"
@@ -304,12 +291,7 @@ impl Processor {
 				properties.insert(String::from("Source"), Variant::String(source));
 			}
 			FileKind::JsonModule => {
-				let mut source = String::from("return ");
-
-				let json = fs::read_to_string(path)?;
-				let lua = json2lua::parse(&json)?;
-
-				source.push_str(&lua);
+				let source = util::json::read_module(path)?;
 
 				properties.insert(String::from("Source"), Variant::String(source));
 			}
@@ -331,12 +313,7 @@ impl Processor {
 				};
 
 				if data_file.exists() {
-					let reader = BufReader::new(File::open(data_file)?);
-					let data: HashMap<String, Value> = from_reader(reader)?;
-
-					for (_key, _value) in data {
-						// TODO: Implement
-					}
+					properties.extend(util::json::read_properties(&data_file)?);
 				}
 			}
 			_ => bail!("Cannot get properties of {:?} file kind", kind),

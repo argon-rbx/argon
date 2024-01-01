@@ -34,11 +34,11 @@ fn main() {
 
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
-		Err(error) => warn!("Failed to verify Argon installation: {}", error),
+		Err(err) => warn!("Failed to verify Argon installation: {}", err),
 	}
 
 	match cli.main() {
 		Ok(()) => info!("Successfully executed command!"),
-		Err(error) => argon_error!("Command execution failed: {}", error),
+		Err(err) => argon_error!("Command execution failed: {}", err),
 	};
 }

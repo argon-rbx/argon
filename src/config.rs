@@ -44,7 +44,7 @@ impl Config {
 
 		match config.load_global() {
 			Ok(()) => info!("Config file loaded"),
-			Err(error) => warn!("Failed to load config file: {}", error),
+			Err(err) => warn!("Failed to load config file: {}", err),
 		}
 
 		config
