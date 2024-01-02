@@ -7,7 +7,7 @@ use std::{
 	process::Command,
 };
 
-use crate::{argon_error, logger, util};
+use crate::{argon_error, argon_info, logger, util};
 
 pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
@@ -55,6 +55,57 @@ pub fn init(project: &Path, template: &String, source: &String) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+pub fn init_ts(path: &Path) -> Result<bool> {
+	argon_info!("Waiting for npm...");
+
+	#[cfg(target_os = "windows")]
+	let npm = "npm.cmd";
+	#[cfg(not(target_os = "windows"))]
+	let npm = "npm";
+
+	let child = Command::new(npm)
+		.arg("init")
+		.arg("roblox-ts")
+		.arg("--")
+		.arg("--skipBuild")
+		.args(["--dir", &util::path_to_string(path)])
+		.spawn();
+
+	match child {
+		Ok(child) => {
+			trace!("Initializing roblox-ts project");
+
+			match child.wait_with_output() {
+				Ok(output) => {
+					if let Some(code) = output.status.code() {
+						return Ok(code == 0);
+					}
+
+					Ok(false)
+				}
+				Err(err) => {
+					bail!("Failed to initialize roblox-ts project: {}", err)
+				}
+			}
+		}
+		Err(err) => {
+			if err.kind() == io::ErrorKind::NotFound {
+				argon_error!("Failed to initialize roblox-ts project: npm is not installed");
+
+				let install_npm = logger::prompt("Do you want to install npm now?", false);
+
+				if install_npm {
+					open::that("https://nodejs.org/en/download/")?;
+				}
+
+				Ok(false)
+			} else {
+				bail!("Failed to initialize roblox-ts project: {}", err)
+			}
+		}
+	}
 }
 
 pub fn initialize_repo(directory: &PathBuf) -> Result<()> {

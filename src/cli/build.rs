@@ -160,11 +160,11 @@ impl Build {
 		let mut args = vec![String::from("build")];
 
 		if let Some(project) = self.project {
-			args.push(project.to_str().unwrap().to_string())
+			args.push(util::path_to_string(&project))
 		}
 
 		if let Some(output) = self.output {
-			args.push(output.to_str().unwrap().to_string())
+			args.push(util::path_to_string(&output))
 		}
 
 		if self.plugin {

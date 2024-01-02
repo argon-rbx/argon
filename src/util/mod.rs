@@ -28,6 +28,14 @@ pub fn resolve_path(mut path: PathBuf) -> Result<PathBuf> {
 	Ok(path)
 }
 
+pub fn path_to_string(path: &Path) -> String {
+	path.to_str().unwrap_or_default().to_owned()
+}
+
+pub fn from_os_str(str: &OsStr) -> &str {
+	str.to_str().unwrap_or_default()
+}
+
 pub fn get_file_name(path: &Path) -> &str {
 	path.file_name().unwrap().to_str().unwrap()
 }
@@ -42,10 +50,6 @@ pub fn get_file_ext(path: &Path) -> &str {
 
 pub fn get_index<T: PartialEq>(slice: &[T], item: &T) -> Option<usize> {
 	slice.iter().position(|i| i == item)
-}
-
-pub fn from_os_str(str: &OsStr) -> &str {
-	str.to_str().unwrap_or_default()
 }
 
 pub fn is_service(class: &str) -> bool {

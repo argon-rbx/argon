@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-	argon_info, argon_warn,
+	argon_error, argon_info, argon_warn,
 	config::Config,
 	core::Core,
 	project::{self, Project},
@@ -36,39 +36,59 @@ pub struct Run {
 	#[arg()]
 	session_id: Option<String>,
 
+	/// Whether to run using roblox-ts
+	#[arg(short, long, action = ArgAction::SetTrue)]
+	ts: bool,
+
 	/// Actually run Argon, used to spawn new process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
 	run: bool,
 }
 
 impl Run {
-	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
-		if !self.run {
-			return self.spawn(level_filter);
-		}
-
+	pub fn main(self, log_level: LevelFilter) -> Result<()> {
 		let config = Config::load();
 
-		let project = self.project.unwrap_or_default();
-		let project_path = project::resolve(project, &config.project_name)?;
-		let project_exists = project_path.exists();
+		let project = self.project.clone().unwrap_or_default();
+		let project_path = project::resolve(project.clone(), &config.project_name)?;
 
-		if !project_exists && config.auto_init {
-			argon_warn!("Cannot find the project, creating new one!");
-			workspace::init(&project_path, &config.template, &config.source_dir)?;
+		if !self.run {
+			let project_exists = project_path.exists();
 
-			if config.git_init {
-				let workspace_dir = workspace::get_dir(&project_path);
+			if !project_exists && config.auto_init {
+				argon_warn!("Cannot find the project, creating new one!");
 
-				workspace::initialize_repo(&workspace_dir)?;
+				if self.ts {
+					if !workspace::init_ts(&project)? {
+						bail!("Failed to initialize roblox-ts project!")
+					}
+				} else {
+					workspace::init(&project_path, &config.template, &config.source_dir)?;
+
+					if config.git_init {
+						let workspace_dir = workspace::get_dir(&project_path);
+
+						workspace::initialize_repo(&workspace_dir)?;
+					}
+				}
+			} else if !project_exists {
+				argon_error!(
+					"Project {} does not exist. Run {} or enable {} setting first.",
+					project_path.to_str().unwrap().bold(),
+					"argon init".bold(),
+					"auto_init".bold()
+				);
+
+				return Ok(());
 			}
-		} else if !project_exists {
-			bail!(
-				"Project {} does not exist. Run {} or enable {} setting first.",
-				project_path.to_str().unwrap().bold(),
-				"argon init".bold(),
-				"auto_init".bold()
-			)
+
+			return self.spawn(log_level);
+		}
+
+		if self.ts {
+			println!("{:?}", project_path);
+			// Command::new("npx").arg("rbxtsc").arg("--watch").spawn()?;
+			// TODO: Implement
 		}
 
 		let project = Project::load(&project_path)?;
@@ -84,7 +104,7 @@ impl Run {
 		sessions::add(self.session_id, Some(host.clone()), Some(port), process::id())?;
 
 		argon_info!(
-			"Serving on: {}:{}, project: {}",
+			"Running on: {}:{}, project: {}",
 			host,
 			port,
 			project_path.to_str().unwrap()
@@ -95,13 +115,13 @@ impl Run {
 		Ok(())
 	}
 
-	fn spawn(self, level_filter: LevelFilter) -> Result<()> {
+	fn spawn(self, log_level: LevelFilter) -> Result<()> {
 		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
 
 		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
 		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
 
-		let verbosity = match level_filter {
+		let verbosity = match log_level {
 			LevelFilter::Off => "-q",
 			LevelFilter::Error => "",
 			LevelFilter::Warn => "-v",
@@ -128,6 +148,10 @@ impl Run {
 
 		if let Some(session_id) = self.session_id {
 			args.push(session_id);
+		}
+
+		if self.ts {
+			args.push(String::from("--ts"));
 		}
 
 		if !verbosity.is_empty() {

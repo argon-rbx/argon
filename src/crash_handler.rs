@@ -22,7 +22,7 @@ pub fn hook() {
 		report.push_str("\n\nMessage:\n=======\n");
 		report.push_str(message);
 
-		argon_error!("{}: {}\n", "Message".bold(), message);
+		argon_error!("{}: {}", "Message".bold(), message);
 
 		report.push_str("\n\nLocation:\n=======\n");
 
@@ -31,7 +31,7 @@ pub fn hook() {
 			report.push_str(": ");
 			report.push_str(&location.line().to_string());
 
-			argon_error!("{}: {}: {}\n", "Location".bold(), location.file(), location.line());
+			argon_error!("{}: {}: {}", "Location".bold(), location.file(), location.line());
 		} else {
 			report.push_str("Failed to get panic info location");
 		}
@@ -41,7 +41,7 @@ pub fn hook() {
 		if backtrace_enabled {
 			let backtrace = Backtrace::new();
 
-			argon_error!("{}:{:?}\n", "Backtrace".bold(), backtrace);
+			argon_error!("{}:\n{:?}", "Backtrace".bold(), backtrace);
 
 			// Temporary solution for broken OsString parser
 			let mut backtrace = format!("{:?}", backtrace);
@@ -50,9 +50,6 @@ pub fn hook() {
 			backtrace = backtrace.replace("   ", "");
 			backtrace = backtrace.replace("  ", "");
 			backtrace = backtrace.replace('&', "ptr");
-
-			backtrace.push_str(&backtrace.clone());
-			backtrace.push_str(&backtrace.clone());
 
 			if backtrace.len() > MAX_BACKTRACE_LEN {
 				backtrace = backtrace[..MAX_BACKTRACE_LEN].to_string();

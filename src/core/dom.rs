@@ -1,5 +1,6 @@
 #![allow(clippy::unnecessary_to_owned)] // false positive detection
 
+use log::warn;
 use multimap::MultiMap;
 use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
@@ -8,7 +9,7 @@ use std::{
 };
 
 use super::instance::Instance as ArgonInstance;
-use crate::{argon_warn, project::Project, rbx_path::RbxPath};
+use crate::{project::Project, rbx_path::RbxPath};
 
 #[derive(Debug)]
 struct Refs {
@@ -99,10 +100,11 @@ impl Dom {
 	}
 
 	pub fn append(&mut self, dom: &mut WeakDom, rbx_path: &RbxPath, path: &Path) -> MultiMap<RbxPath, &Instance> {
-		fn insert_new_refs(
+		fn walk<'a>(
 			children: &[Ref],
-			dom: &WeakDom,
+			dom: &'a WeakDom,
 			ref_map: &mut HashMap<RbxPath, Refs>,
+			new_instances: &mut MultiMap<RbxPath, &'a Instance>,
 			rbx_path: &RbxPath,
 			path: &Path,
 		) {
@@ -111,30 +113,16 @@ impl Dom {
 				let instance_path = rbx_path.join(&instance.name);
 
 				ref_map.insert(
-					instance_path,
+					instance_path.clone(),
 					Refs {
 						dom_ref: child.to_owned(),
 						local_path: path.to_owned(),
 					},
 				);
 
-				insert_new_refs(instance.children(), dom, ref_map, rbx_path, path);
-			}
-		}
+				new_instances.insert(instance_path, instance);
 
-		fn get_new_instances<'a>(
-			instance: &'a Instance,
-			new_instances: &mut MultiMap<RbxPath, &'a Instance>,
-			rbx_path: &RbxPath,
-			dom: &'a WeakDom,
-		) {
-			let rbx_path = rbx_path.join(&instance.name);
-
-			new_instances.insert(rbx_path.clone(), instance);
-
-			for child in instance.children() {
-				let child = dom.get_by_ref(*child).unwrap();
-				get_new_instances(child, new_instances, &rbx_path, dom);
+				walk(instance.children(), dom, ref_map, new_instances, rbx_path, path);
 			}
 		}
 
@@ -145,7 +133,7 @@ impl Dom {
 		let parent = self.get_ref(&parent).unwrap();
 
 		if dom.root().children().is_empty() {
-			argon_warn!("Tried to append empty DOM");
+			warn!("Tried to append empty DOM");
 		} else if dom.root().children().len() == 1 {
 			let child_ref = *dom.root().children().first().unwrap();
 
@@ -162,19 +150,13 @@ impl Dom {
 				},
 			);
 
-			insert_new_refs(
-				&self.get_by_ref(child_ref).unwrap().children().to_vec(),
+			walk(
+				&self.get_by_ref(parent).unwrap().children().to_vec(),
 				&self.inner,
 				&mut self.ref_map,
-				rbx_path,
-				path,
-			);
-
-			get_new_instances(
-				self.get_by_ref(child_ref).unwrap(),
 				&mut new_instances,
 				rbx_path,
-				&self.inner,
+				path,
 			);
 		} else {
 			let instance = InstanceBuilder::new("Folder").with_name(dom.root().name.clone());
@@ -192,19 +174,13 @@ impl Dom {
 				},
 			);
 
-			insert_new_refs(
+			walk(
 				&self.get_by_ref(parent).unwrap().children().to_vec(),
 				&self.inner,
 				&mut self.ref_map,
-				rbx_path,
-				path,
-			);
-
-			get_new_instances(
-				self.get_by_ref(parent).unwrap(),
 				&mut new_instances,
 				rbx_path,
-				&self.inner,
+				path,
 			);
 		}
 
