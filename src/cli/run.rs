@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use log::LevelFilter;
+use log::{trace, LevelFilter};
 use std::{
 	env,
 	path::PathBuf,
@@ -12,6 +12,7 @@ use crate::{
 	argon_error, argon_info, argon_warn,
 	config::Config,
 	core::Core,
+	program::{self, Program},
 	project::{self, Project},
 	server::Server,
 	sessions, workspace,
@@ -40,9 +41,9 @@ pub struct Run {
 	#[arg(short, long, action = ArgAction::SetTrue)]
 	ts: bool,
 
-	/// Actually run Argon, used to spawn new process
+	/// Spawn the Argon child process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
-	run: bool,
+	spawn: bool,
 }
 
 impl Run {
@@ -52,20 +53,26 @@ impl Run {
 		let project = self.project.clone().unwrap_or_default();
 		let project_path = project::resolve(project.clone(), &config.project_name)?;
 
-		if !self.run {
+		if !self.spawn {
 			let project_exists = project_path.exists();
 
 			if !project_exists && config.auto_init {
 				argon_warn!("Cannot find the project, creating new one!");
 
 				if self.ts {
-					if !workspace::init_ts(&project)? {
-						bail!("Failed to initialize roblox-ts project!")
+					if !workspace::init_ts(&project, &config.template, config.use_git)? {
+						return Ok(());
 					}
 				} else {
-					workspace::init(&project_path, &config.template, &config.source_dir)?;
+					workspace::init(
+						&project_path,
+						&config.template,
+						&config.source_dir,
+						config.use_git,
+						config.include_docs,
+					)?;
 
-					if config.git_init {
+					if config.use_git {
 						let workspace_dir = workspace::get_dir(&project_path);
 
 						workspace::initialize_repo(&workspace_dir)?;
@@ -86,9 +93,27 @@ impl Run {
 		}
 
 		if self.ts {
-			println!("{:?}", project_path);
-			// Command::new("npx").arg("rbxtsc").arg("--watch").spawn()?;
-			// TODO: Implement
+			let mut working_dir = project_path.clone();
+			working_dir.pop();
+
+			let program = Command::new("npx")
+				.current_dir(&working_dir)
+				.arg("rbxtsc")
+				.arg("--watch")
+				.spawn();
+
+			let program = program::spawn(program, Program::Npm, "Failed to run roblox-ts project");
+
+			match program {
+				Ok(child) => {
+					if child.is_some() {
+						trace!("Starting roblox-ts");
+					} else {
+						return Ok(());
+					}
+				}
+				Err(err) => bail!("Failed to start roblox-ts: {}", err),
+			}
 		}
 
 		let project = Project::load(&project_path)?;
@@ -160,7 +185,8 @@ impl Run {
 
 		Command::new(program)
 			.args(args)
-			.arg("--run")
+			.arg("--yes")
+			.arg("--spawn")
 			.env("RUST_LOG_STYLE", log_style)
 			.env("RUST_BACKTRACE", backtrace)
 			.spawn()?;

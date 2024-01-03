@@ -5,6 +5,7 @@ use std::{
 	env,
 	ffi::OsStr,
 	path::{Path, PathBuf},
+	process::Command,
 };
 
 pub mod csv;
@@ -62,4 +63,12 @@ pub fn is_service(class: &str) -> bool {
 	};
 
 	has_tag || class == "StarterPlayerScripts" || class == "StarterCharacterScripts"
+}
+
+pub fn get_username() -> String {
+	if let Ok(output) = Command::new("git").arg("config").arg("user.name").output() {
+		return String::from_utf8_lossy(&output.stdout).trim().to_string();
+	}
+
+	whoami::username()
 }

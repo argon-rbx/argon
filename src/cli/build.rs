@@ -45,14 +45,14 @@ pub struct Build {
 	#[arg(short, long, action = ArgAction::SetTrue)]
 	watch: bool,
 
-	/// Actually run Argon, used to spawn new process
+	/// Spawn the Argon child process
 	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
-	run: bool,
+	spawn: bool,
 }
 
 impl Build {
 	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
-		if self.watch && !self.run {
+		if self.watch && !self.spawn {
 			return self.spawn(level_filter);
 		}
 
@@ -185,7 +185,8 @@ impl Build {
 
 		Command::new(program)
 			.args(args)
-			.arg("--run")
+			.arg("--yes")
+			.arg("--spawn")
 			.env("RUST_LOG_STYLE", log_style)
 			.env("RUST_BACKTRACE", backtrace)
 			.spawn()?;

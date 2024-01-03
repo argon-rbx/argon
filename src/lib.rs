@@ -9,6 +9,7 @@ pub mod glob;
 pub mod installer;
 pub mod logger;
 pub mod messages;
+pub mod program;
 pub mod project;
 pub mod rbx_path;
 pub mod resolution;

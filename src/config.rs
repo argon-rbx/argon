@@ -15,7 +15,8 @@ pub struct Config {
 	pub source_dir: String,
 	pub template: String,
 	pub auto_init: bool,
-	pub git_init: bool,
+	pub use_git: bool,
+	pub include_docs: bool,
 	pub rojo_mode: bool,
 
 	#[serde(skip)]
@@ -32,9 +33,10 @@ impl Config {
 			host: String::from("localhost"),
 			port: 8000,
 			source_dir: String::from("src"),
-			template: String::from("default"),
+			template: String::from("game"),
 			auto_init: false,
-			git_init: true,
+			use_git: true,
+			include_docs: true,
 			rojo_mode: false,
 
 			project_name: String::from(".argon"),

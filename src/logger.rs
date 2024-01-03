@@ -57,6 +57,10 @@ pub fn init(level_filter: LevelFilter, color_choice: WriteStyle) {
 }
 
 pub fn prompt(prompt: &str, default: bool) -> bool {
+	if env::var("ARGON_YES").is_ok() {
+		return default;
+	}
+
 	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("always".to_string());
 
 	let theme = match log_style.as_str() {

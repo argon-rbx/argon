@@ -4,7 +4,7 @@ use std::process;
 
 async fn stop() {
 	trace!("Stopping Argon!");
-	process::exit(1);
+	process::exit(0);
 }
 
 #[post("stop")]

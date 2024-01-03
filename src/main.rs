@@ -1,5 +1,5 @@
 use env_logger::WriteStyle;
-use log::{info, warn};
+use log::{info, trace, warn};
 use std::{
 	env,
 	io::{self, IsTerminal},
@@ -18,6 +18,8 @@ fn main() {
 	let cli = Cli::new();
 
 	let color_choice = cli.get_color_choice();
+	let yes = cli.yes();
+
 	if color_choice == WriteStyle::Auto && io::stdin().is_terminal() {
 		env::set_var("RUST_LOG_STYLE", "always");
 	} else {
@@ -30,6 +32,10 @@ fn main() {
 		)
 	}
 
+	if yes {
+		env::set_var("ARGON_YES", "1");
+	}
+
 	logger::init(cli.verbose.log_level_filter(), color_choice);
 
 	match installation {
@@ -38,7 +44,7 @@ fn main() {
 	}
 
 	match cli.main() {
-		Ok(()) => info!("Successfully executed command!"),
+		Ok(()) => trace!("Successfully executed command!"),
 		Err(err) => argon_error!("Command execution failed: {}", err),
 	};
 }
