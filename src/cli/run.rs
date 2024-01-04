@@ -15,7 +15,7 @@ use crate::{
 	program::{self, Program},
 	project::{self, Project},
 	server::Server,
-	sessions, workspace,
+	sessions, util, workspace,
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -33,7 +33,7 @@ pub struct Run {
 	#[arg()]
 	project: Option<PathBuf>,
 
-	/// Optional session indentifier
+	/// Session indentifier
 	#[arg()]
 	session_id: Option<String>,
 
@@ -106,8 +106,12 @@ impl Run {
 
 			match program {
 				Ok(child) => {
-					if child.is_some() {
+					if let Some(mut child) = child {
 						trace!("Starting roblox-ts");
+
+						util::handle_kill(move || {
+							child.kill().ok();
+						})?;
 					} else {
 						return Ok(());
 					}

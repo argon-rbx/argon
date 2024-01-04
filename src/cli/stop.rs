@@ -1,16 +1,15 @@
 use anyhow::Result;
 use awc::Client;
 use clap::{ArgAction, Parser};
-use std::process::{Command, Stdio};
 
-use crate::{argon_info, argon_warn, sessions};
+use crate::{argon_info, argon_warn, sessions, util};
 
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
 pub struct Stop {
 	/// Session indentifier
 	#[arg()]
-	session_id: Option<String>,
+	session: Option<String>,
 
 	/// Server host name
 	#[arg(short = 'H', long)]
@@ -27,12 +26,7 @@ pub struct Stop {
 
 impl Stop {
 	fn kill_process(pid: u32) {
-		Command::new("kill")
-			.arg(pid.to_string())
-			.stderr(Stdio::null())
-			.spawn()
-			.ok();
-
+		util::kill(pid);
 		argon_info!("Killed Argon process {}", pid.to_string())
 	}
 
@@ -72,7 +66,7 @@ impl Stop {
 			return sessions::remove_all();
 		}
 
-		let session = sessions::get(self.session_id, self.host, self.port)?;
+		let session = sessions::get(self.session, self.host, self.port)?;
 
 		if let Some(session) = session {
 			if let Some(address) = session.get_address() {

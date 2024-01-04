@@ -29,9 +29,9 @@ pub struct Build {
 	#[arg()]
 	output: Option<PathBuf>,
 
-	/// Optional session indentifier
+	/// Session indentifier
 	#[arg()]
-	session_id: Option<String>,
+	session: Option<String>,
 
 	/// Build plugin and place it into plugins folder
 	#[arg(short, long, action = ArgAction::SetTrue)]
@@ -40,6 +40,10 @@ pub struct Build {
 	/// Whether to build in XML format (.rbxlx or .rbxmx)
 	#[arg(short, long, action = ArgAction::SetTrue)]
 	xml: bool,
+
+	/// Whether to build using roblox-ts
+	#[arg(short, long, action = ArgAction::SetTrue)]
+	ts: bool,
 
 	/// Rebuild project every time files change
 	#[arg(short, long, action = ArgAction::SetTrue)]
@@ -124,7 +128,7 @@ impl Build {
 		argon_info!("Successfully built project: {}", project_path.to_str().unwrap().bold());
 
 		if self.watch {
-			sessions::add(self.session_id, None, None, process::id())?;
+			sessions::add(self.session, None, None, process::id())?;
 
 			let (sender, receiver) = mpsc::channel();
 
@@ -173,6 +177,10 @@ impl Build {
 
 		if self.xml {
 			args.push(String::from("--xml"))
+		}
+
+		if self.ts {
+			args.push(String::from("--ts"))
 		}
 
 		if self.watch {

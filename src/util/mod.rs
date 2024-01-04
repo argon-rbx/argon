@@ -5,7 +5,7 @@ use std::{
 	env,
 	ffi::OsStr,
 	path::{Path, PathBuf},
-	process::Command,
+	process::{self, Command},
 };
 
 pub mod csv;
@@ -71,4 +71,35 @@ pub fn get_username() -> String {
 	}
 
 	whoami::username()
+}
+
+pub fn kill(pid: u32) {
+	#[cfg(not(target_os = "windows"))]
+	{
+		Command::new("kill")
+			.args(["-s", "INT"])
+			.arg(pid.to_string())
+			.output()
+			.ok();
+	}
+
+	// TODO: needs improvement
+	#[cfg(target_os = "windows")]
+	{
+		Command::new("taskkill")
+			.arg("/F")
+			.args(["/pid", &pid.to_string()])
+			.output()
+			.ok();
+	}
+}
+
+pub fn handle_kill<F>(mut handler: F) -> std::result::Result<(), ctrlc::Error>
+where
+	F: FnMut() + 'static + Send,
+{
+	ctrlc::set_handler(move || {
+		handler();
+		process::exit(0);
+	})
 }
