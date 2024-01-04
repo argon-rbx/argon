@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
 use log::{trace, LevelFilter};
@@ -93,30 +93,27 @@ impl Run {
 		}
 
 		if self.ts {
+			trace!("Starting roblox-ts");
+
 			let mut working_dir = project_path.clone();
 			working_dir.pop();
 
-			let program = Command::new("npx")
-				.current_dir(&working_dir)
-				.arg("rbxtsc")
-				.arg("--watch")
-				.spawn();
+			let child = program::spawn(
+				Command::new("npx")
+					.current_dir(&working_dir)
+					.arg("rbxtsc")
+					.arg("--watch")
+					.spawn(),
+				Program::Npm,
+				"Failed to run roblox-ts project",
+			)?;
 
-			let program = program::spawn(program, Program::Npm, "Failed to run roblox-ts project");
-
-			match program {
-				Ok(child) => {
-					if let Some(mut child) = child {
-						trace!("Starting roblox-ts");
-
-						util::handle_kill(move || {
-							child.kill().ok();
-						})?;
-					} else {
-						return Ok(());
-					}
-				}
-				Err(err) => bail!("Failed to start roblox-ts: {}", err),
+			if let Some(mut child) = child {
+				util::handle_kill(move || {
+					child.kill().ok();
+				})?;
+			} else {
+				return Ok(());
 			}
 		}
 

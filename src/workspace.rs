@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use chrono::Datelike;
 use log::trace;
 use std::{
@@ -114,58 +114,46 @@ pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 		_ => "init",
 	};
 
-	let program = Command::new(npm)
-		.arg("init")
-		.arg("roblox-ts")
-		.arg(command)
-		.arg("--")
-		.arg("--yes")
-		.arg("--skipBuild")
-		.arg(format!("--git={}", git))
-		.args(["--dir", &util::path_to_string(path)])
-		.spawn();
+	let child = program::spawn(
+		Command::new(npm)
+			.arg("init")
+			.arg("roblox-ts")
+			.arg(command)
+			.arg("--")
+			.arg("--yes")
+			.arg("--skipBuild")
+			.arg(format!("--git={}", git))
+			.args(["--dir", &util::path_to_string(path)])
+			.spawn(),
+		Program::Npm,
+		"Failed to initialize roblox-ts project",
+	)?;
 
-	let program = program::spawn(program, Program::Npm, "Failed to initialize roblox-ts project");
+	if let Some(child) = child {
+		let output = child.wait_with_output()?;
 
-	match program {
-		Ok(child) => {
-			trace!("Initializing roblox-ts project");
-
-			if let Some(child) = child {
-				match child.wait_with_output() {
-					Ok(output) => {
-						if let Some(code) = output.status.code() {
-							return Ok(code == 0);
-						}
-
-						Ok(false)
-					}
-					Err(err) => {
-						bail!("Failed to initialize roblox-ts project: {}", err)
-					}
-				}
-			} else {
-				trace!("npm is not installed");
-				Ok(false)
-			}
+		if let Some(code) = output.status.code() {
+			return Ok(code == 0);
 		}
-		Err(err) => bail!("Failed to initialize roblox-ts project: {}", err),
+
+		Ok(false)
+	} else {
+		trace!("npm is not installed");
+		Ok(false)
 	}
 }
 
 pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
-	let program = Command::new("git").arg("init").arg(directory).output();
-	let program = program::output(program, Program::Git, "Failed to initialize repository");
+	let output = program::output(
+		Command::new("git").arg("init").arg(directory).output(),
+		Program::Git,
+		"Failed to initialize repository",
+	)?;
 
-	match program {
-		Ok(output) => {
-			if output.is_some() {
-				trace!("Initialized Git repository");
-			} else {
-				trace!("Git is not installed");
-			}
-		}
-		Err(err) => bail!("Failed to initialize Git repository: {}", err),
+	if output.is_some() {
+		trace!("Initialized Git repository");
+	} else {
+		trace!("Git is not installed");
 	}
 
 	Ok(())

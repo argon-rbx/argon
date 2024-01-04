@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use log::{info, LevelFilter};
+use log::{info, trace, LevelFilter};
 use roblox_install::RobloxStudio;
 use std::{
 	env,
@@ -14,6 +14,7 @@ use crate::{
 	argon_info,
 	config::Config,
 	core::Core,
+	program::{self, Program},
 	project::{self, Project},
 	sessions, util,
 };
@@ -120,6 +121,29 @@ impl Build {
 			path = plugins_path.join(name);
 		}
 
+		if self.ts {
+			argon_info!("Compiling TypeScript files...");
+
+			let mut working_dir = project_path.clone();
+			working_dir.pop();
+
+			let child = program::spawn(
+				Command::new("npx")
+					.current_dir(&working_dir)
+					.arg("rbxtsc")
+					.arg("build")
+					.spawn(),
+				Program::Npm,
+				"Failed to start roblox-ts",
+			)?;
+
+			if let Some(mut child) = child {
+				child.wait()?;
+			} else {
+				return Ok(());
+			}
+		}
+
 		let mut core = Core::new(config, project)?;
 
 		core.load_dom()?;
@@ -128,6 +152,23 @@ impl Build {
 		argon_info!("Successfully built project: {}", project_path.to_str().unwrap().bold());
 
 		if self.watch {
+			if self.ts {
+				trace!("Starting roblox-ts");
+
+				let mut working_dir = project_path.clone();
+				working_dir.pop();
+
+				let mut child = Command::new("npx")
+					.current_dir(&working_dir)
+					.arg("rbxtsc")
+					.arg("--watch")
+					.spawn()?;
+
+				util::handle_kill(move || {
+					child.kill().ok();
+				})?;
+			}
+
 			sessions::add(self.session, None, None, process::id())?;
 
 			let (sender, receiver) = mpsc::channel();

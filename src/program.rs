@@ -1,3 +1,4 @@
+use anyhow::{bail, Result};
 use colored::Colorize;
 use std::{
 	io::{Error, ErrorKind},
@@ -11,7 +12,7 @@ pub enum Program {
 	Npm,
 }
 
-pub fn spawn(result: Result<Child, Error>, program: Program, error: &str) -> Result<Option<Child>, Error> {
+pub fn spawn(result: Result<Child, Error>, program: Program, error: &str) -> Result<Option<Child>> {
 	match result {
 		Ok(child) => Ok(Some(child)),
 		Err(err) => {
@@ -24,13 +25,13 @@ pub fn spawn(result: Result<Child, Error>, program: Program, error: &str) -> Res
 
 				Ok(None)
 			} else {
-				Err(err)
+				bail!("{}: {}", error, err)
 			}
 		}
 	}
 }
 
-pub fn output(result: Result<Output, Error>, program: Program, error: &str) -> Result<Option<Output>, Error> {
+pub fn output(result: Result<Output, Error>, program: Program, error: &str) -> Result<Option<Output>> {
 	match result {
 		Ok(output) => Ok(Some(output)),
 		Err(err) => {
@@ -43,7 +44,7 @@ pub fn output(result: Result<Output, Error>, program: Program, error: &str) -> R
 
 				Ok(None)
 			} else {
-				Err(err)
+				bail!("{}: {}", error, err)
 			}
 		}
 	}
