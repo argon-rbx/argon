@@ -128,7 +128,7 @@ impl Build {
 			working_dir.pop();
 
 			let child = program::spawn(
-				Command::new("npx")
+				Command::new(program::NPX)
 					.current_dir(&working_dir)
 					.arg("rbxtsc")
 					.arg("build")
@@ -158,7 +158,7 @@ impl Build {
 				let mut working_dir = project_path.clone();
 				working_dir.pop();
 
-				let mut child = Command::new("npx")
+				let mut child = Command::new(program::NPX)
 					.current_dir(&working_dir)
 					.arg("rbxtsc")
 					.arg("--watch")

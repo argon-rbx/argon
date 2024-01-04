@@ -83,10 +83,10 @@ pub fn kill(pid: u32) {
 			.ok();
 	}
 
-	// TODO: needs improvement
 	#[cfg(target_os = "windows")]
 	{
 		Command::new("taskkill")
+			.arg("/T")
 			.arg("/F")
 			.args(["/pid", &pid.to_string()])
 			.output()

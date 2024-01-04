@@ -7,6 +7,16 @@ use std::{
 
 use crate::{argon_error, logger};
 
+#[cfg(not(target_os = "windows"))]
+pub const NPM: &str = "npm";
+#[cfg(not(target_os = "windows"))]
+pub const NPX: &str = "npx";
+
+#[cfg(target_os = "windows")]
+pub const NPM: &str = "npm.cmd";
+#[cfg(target_os = "windows")]
+pub const NPX: &str = "npx.cmd";
+
 pub enum Program {
 	Git,
 	Npm,

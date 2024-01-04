@@ -101,11 +101,6 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 	argon_info!("Waiting for npm...");
 
-	#[cfg(target_os = "windows")]
-	let npm = "npm.cmd";
-	#[cfg(not(target_os = "windows"))]
-	let npm = "npm";
-
 	let command = match template {
 		"game" => template,
 		"plugin" => template,
@@ -115,7 +110,7 @@ pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 	};
 
 	let child = program::spawn(
-		Command::new(npm)
+		Command::new(program::NPM)
 			.arg("init")
 			.arg("roblox-ts")
 			.arg(command)

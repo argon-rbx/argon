@@ -99,13 +99,13 @@ impl Run {
 			working_dir.pop();
 
 			let child = program::spawn(
-				Command::new("npx")
+				Command::new(program::NPX)
 					.current_dir(&working_dir)
 					.arg("rbxtsc")
 					.arg("--watch")
 					.spawn(),
 				Program::Npm,
-				"Failed to run roblox-ts project",
+				"Failed to serve roblox-ts project",
 			)?;
 
 			if let Some(mut child) = child {
