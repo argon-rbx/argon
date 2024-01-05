@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{ArgAction, ColorChoice, Parser, Subcommand};
+use clap::{ColorChoice, Parser, Subcommand};
 use clap_verbosity_flag::Verbosity;
 use env_logger::fmt::WriteStyle;
 use std::env;
@@ -43,7 +43,7 @@ pub struct Cli {
 	pub verbose: Verbosity,
 
 	/// Automatically answer to any prompts
-	#[arg(short, long, global = true, action = ArgAction::SetTrue)]
+	#[arg(short, long, global = true)]
 	yes: bool,
 
 	/// Output coloring: auto, always, never

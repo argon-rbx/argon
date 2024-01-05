@@ -1,6 +1,6 @@
 use anyhow::Result;
 use awc::Client;
-use clap::{ArgAction, Parser};
+use clap::Parser;
 
 use crate::{argon_info, argon_warn, sessions, util};
 
@@ -20,7 +20,7 @@ pub struct Stop {
 	port: Option<u16>,
 
 	/// Stop all running session
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	all: bool,
 }
 

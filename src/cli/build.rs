@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use colored::Colorize;
 use log::{info, trace, LevelFilter};
 use roblox_install::RobloxStudio;
@@ -35,23 +35,23 @@ pub struct Build {
 	session: Option<String>,
 
 	/// Build plugin and place it into plugins folder
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	plugin: bool,
 
 	/// Whether to build in XML format (.rbxlx or .rbxmx)
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	xml: bool,
 
 	/// Whether to build using roblox-ts
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	ts: bool,
 
 	/// Rebuild project every time files change
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	watch: bool,
 
 	/// Spawn the Argon child process
-	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
+	#[arg(short, long, hide = true)]
 	spawn: bool,
 }
 

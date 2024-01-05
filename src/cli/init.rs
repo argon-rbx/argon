@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use colored::Colorize;
 use std::path::PathBuf;
 
@@ -21,15 +21,15 @@ pub struct Init {
 	source: Option<String>,
 
 	/// Whether to configure Git
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	git: bool,
 
 	/// Whether to include docs (README, LICENSE, etc.)
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	docs: bool,
 
 	/// Whether to initialize using roblox-ts
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	ts: bool,
 }
 

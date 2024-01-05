@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use colored::Colorize;
 use log::{trace, LevelFilter};
 use std::{
@@ -38,11 +38,11 @@ pub struct Run {
 	session: Option<String>,
 
 	/// Whether to run using roblox-ts
-	#[arg(short, long, action = ArgAction::SetTrue)]
+	#[arg(short, long)]
 	ts: bool,
 
 	/// Spawn the Argon child process
-	#[arg(short, long, action = ArgAction::SetTrue, hide = true)]
+	#[arg(short, long, hide = true)]
 	spawn: bool,
 }
 
