@@ -6,9 +6,12 @@ use std::env;
 
 mod build;
 mod config;
+mod doc;
+mod exec;
 mod init;
 mod run;
 mod stop;
+mod studio;
 
 macro_rules! about {
 	() => {
@@ -83,20 +86,26 @@ impl Cli {
 
 	pub fn main(self) -> Result<()> {
 		match self.command {
+			Commands::Init(command) => command.main(),
 			Commands::Run(command) => command.main(self.verbose.log_level_filter()),
 			Commands::Stop(command) => command.main(),
 			Commands::Build(command) => command.main(self.verbose.log_level_filter()),
+			Commands::Studio(command) => command.main(),
+			Commands::Exec(command) => command.main(),
 			Commands::Config(command) => command.main(),
-			Commands::Init(command) => command.main(),
+			Commands::Doc(command) => command.main(),
 		}
 	}
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
+	Init(init::Init),
 	Run(run::Run),
 	Stop(stop::Stop),
 	Build(build::Build),
+	Studio(studio::Studio),
+	Exec(exec::Exec),
 	Config(config::Config),
-	Init(init::Init),
+	Doc(doc::Doc),
 }

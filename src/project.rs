@@ -129,10 +129,7 @@ pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
 	if let Some(path) = Glob::new(glob.to_str().unwrap())?.first() {
 		project_path = path;
 	} else {
-		let mut default_project = default.to_owned();
-		default_project.push_str(".project.json");
-
-		project_path = project_path.join(default_project);
+		project_path = project_path.join(format!("{}.project.json", default));
 	}
 
 	Ok(project_path)

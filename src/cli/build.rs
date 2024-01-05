@@ -90,21 +90,19 @@ impl Build {
 
 			path
 		} else {
-			let mut name = project.name.clone();
 			let ext = if project.is_place() {
 				if xml {
-					".rbxlx"
+					"rbxlx"
 				} else {
-					".rbxl"
+					"rbxl"
 				}
 			} else if xml {
-				".rbxmx"
+				"rbxmx"
 			} else {
-				".rbxm"
+				"rbxm"
 			};
 
-			name.push_str(ext);
-			PathBuf::from(name)
+			PathBuf::from(format!("{}.{}", project.name, ext))
 		};
 
 		if self.plugin {
@@ -113,12 +111,9 @@ impl Build {
 			}
 
 			let plugins_path = RobloxStudio::locate()?.plugins_path().to_owned();
+			let ext = if xml { "rbxmx" } else { "rbxm" };
 
-			let mut name = project.name.clone();
-			let ext = if xml { ".rbxmx" } else { ".rbxm" };
-
-			name.push_str(ext);
-			path = plugins_path.join(name);
+			path = plugins_path.join(format!("{}.{}", project.name, ext));
 		}
 
 		if self.ts {

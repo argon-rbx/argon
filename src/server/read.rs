@@ -15,7 +15,7 @@ struct Request {
 
 #[derive(Serialize)]
 struct Response {
-	changes: Vec<Message>,
+	queue: Vec<Message>,
 }
 
 #[get("/read")]
@@ -27,20 +27,20 @@ async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Res
 		return Err(error::ErrorBadRequest("Not subscribed"));
 	}
 
-	let mut changes = vec![];
+	let mut new_queue = vec![];
 
 	loop {
 		let message = queue.get(&id);
 
 		if let Some(message) = message {
-			changes.push(message.clone());
+			new_queue.push(message.clone());
 			queue.pop(&id);
 		} else {
 			break;
 		}
 	}
 
-	let response = Response { changes };
+	let response = Response { queue: new_queue };
 
 	Ok(Json(response))
 }

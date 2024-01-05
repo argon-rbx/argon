@@ -35,7 +35,7 @@ pub struct Run {
 
 	/// Session indentifier
 	#[arg()]
-	session_id: Option<String>,
+	session: Option<String>,
 
 	/// Whether to run using roblox-ts
 	#[arg(short, long, action = ArgAction::SetTrue)]
@@ -127,7 +127,7 @@ impl Run {
 
 		let server = Server::new(core, &host, &port);
 
-		sessions::add(self.session_id, Some(host.clone()), Some(port), process::id())?;
+		sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
 
 		argon_info!(
 			"Running on: {}:{}, project: {}",
@@ -172,8 +172,8 @@ impl Run {
 			args.push(project.to_str().unwrap().to_string());
 		}
 
-		if let Some(session_id) = self.session_id {
-			args.push(session_id);
+		if let Some(session) = self.session {
+			args.push(session);
 		}
 
 		if self.ts {

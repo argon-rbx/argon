@@ -63,8 +63,7 @@ impl Processor {
 		project: Arc<Mutex<Project>>,
 		config: Arc<Config>,
 	) -> Self {
-		let mut data_file = config.data.clone();
-		data_file.push_str(".json");
+		let data_file = format!("{}.json", config.data);
 
 		Self {
 			dom,

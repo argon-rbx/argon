@@ -6,6 +6,7 @@ use std::{io::Result, sync::Arc};
 
 use crate::core::Core;
 
+mod exec;
 mod home;
 mod read;
 mod read_all;
@@ -46,6 +47,7 @@ impl Server {
 				.service(stop::main)
 				.service(read::main)
 				.service(read_all::main)
+				.service(exec::main)
 				.default_service(web::to(default_redirect))
 		})
 		.bind((self.host.clone(), self.port))?

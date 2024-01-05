@@ -25,25 +25,6 @@ pub struct Stop {
 }
 
 impl Stop {
-	fn kill_process(pid: u32) {
-		util::kill(pid);
-		argon_info!("Killed Argon process {}", pid.to_string())
-	}
-
-	#[actix_web::main]
-	async fn make_request(client: &Client, address: &String, pid: u32) {
-		let mut url = String::from("http://");
-		url.push_str(address);
-		url.push_str("/stop");
-
-		match client.post(url).send().await {
-			Err(_) => {
-				Self::kill_process(pid);
-			}
-			Ok(_) => argon_info!("Stopped Argon session {}", address),
-		}
-	}
-
 	pub fn main(self) -> Result<()> {
 		if self.all {
 			let sessions = sessions::get_all()?;
@@ -57,9 +38,9 @@ impl Stop {
 
 			for (_, session) in sessions.unwrap() {
 				if let Some(address) = session.get_address() {
-					Stop::make_request(&client, &address, session.pid);
+					Self::make_request(&client, &address, session.pid);
 				} else {
-					Stop::kill_process(session.pid);
+					Self::kill_process(session.pid);
 				}
 			}
 
@@ -71,9 +52,9 @@ impl Stop {
 		if let Some(session) = session {
 			if let Some(address) = session.get_address() {
 				let client = Client::default();
-				Stop::make_request(&client, &address, session.pid);
+				Self::make_request(&client, &address, session.pid);
 			} else {
-				Stop::kill_process(session.pid);
+				Self::kill_process(session.pid);
 			}
 
 			sessions::remove(&session)
@@ -81,5 +62,22 @@ impl Stop {
 			argon_warn!("There is no running session on this address");
 			Ok(())
 		}
+	}
+
+	#[actix_web::main]
+	async fn make_request(client: &Client, address: &String, pid: u32) {
+		let url = format!("http://{}/stop", address);
+
+		match client.post(url).send().await {
+			Err(_) => {
+				Self::kill_process(pid);
+			}
+			Ok(_) => argon_info!("Stopped Argon session {}", address),
+		}
+	}
+
+	fn kill_process(pid: u32) {
+		util::kill(pid);
+		argon_info!("Killed Argon process {}", pid.to_string())
 	}
 }
