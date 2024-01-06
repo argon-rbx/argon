@@ -1,5 +1,3 @@
-#![allow(clippy::type_complexity)]
-
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use notify::{Error, RecommendedWatcher, RecursiveMode, Watcher};
@@ -21,6 +19,7 @@ use crate::lock;
 pub struct FsWatcher {
 	debouncer: Debouncer<RecommendedWatcher, FileIdMap>,
 	fs_debouncer: Arc<Mutex<FsDebouncer>>,
+	#[allow(clippy::type_complexity)]
 	receiver: Arc<Mutex<Receiver<Result<Vec<DebouncedEvent>, Vec<Error>>>>>,
 	watched_paths: Vec<PathBuf>,
 }

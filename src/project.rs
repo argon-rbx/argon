@@ -88,7 +88,6 @@ impl Project {
 		Ok(project)
 	}
 
-	#[allow(clippy::only_used_in_recursion)]
 	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
 		for (name, node) in tree.iter() {
 			let mut rbx_path = rbx_root.clone();

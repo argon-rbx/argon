@@ -1,4 +1,4 @@
-#![allow(clippy::unnecessary_to_owned)] // false positive detection
+#![allow(clippy::unnecessary_to_owned)]
 
 use log::warn;
 use multimap::MultiMap;
