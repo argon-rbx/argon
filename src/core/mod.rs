@@ -67,11 +67,11 @@ impl Core {
 	}
 
 	pub fn host(&self) -> String {
-		lock!(self.project).host.clone().unwrap_or(self.config.host.clone())
+		lock!(self.project).host.clone().unwrap_or(self.config.host().clone())
 	}
 
 	pub fn port(&self) -> u16 {
-		lock!(self.project).port.unwrap_or(self.config.port)
+		lock!(self.project).port.unwrap_or(self.config.port())
 	}
 
 	pub fn game_id(&self) -> Option<u64> {

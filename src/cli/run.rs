@@ -51,28 +51,28 @@ impl Run {
 		let config = Config::load();
 
 		let project = self.project.clone().unwrap_or_default();
-		let project_path = project::resolve(project.clone(), &config.project_name)?;
+		let project_path = project::resolve(project.clone(), config.project_name())?;
 
 		if !self.spawn {
 			let project_exists = project_path.exists();
 
-			if !project_exists && config.auto_init {
+			if !project_exists && config.auto_init() {
 				argon_warn!("Cannot find the project, creating new one!");
 
 				if self.ts {
-					if !workspace::init_ts(&project, &config.template, config.use_git)? {
+					if !workspace::init_ts(&project, config.template(), config.use_git())? {
 						return Ok(());
 					}
 				} else {
 					workspace::init(
 						&project_path,
-						&config.template,
-						&config.source_dir,
-						config.use_git,
-						config.include_docs,
+						config.template(),
+						config.source_dir(),
+						config.use_git(),
+						config.include_docs(),
 					)?;
 
-					if config.use_git {
+					if config.use_git() {
 						let workspace_dir = workspace::get_dir(&project_path);
 
 						workspace::initialize_repo(&workspace_dir)?;

@@ -38,10 +38,10 @@ impl Init {
 		let config = Config::load();
 
 		let project = self.project.unwrap_or_default();
-		let template = self.template.unwrap_or(config.template);
-		let source = self.source.unwrap_or(config.source_dir);
-		let git = self.git || config.use_git;
-		let docs = self.docs || config.include_docs;
+		let template = self.template.unwrap_or(config.template().clone());
+		let source = self.source.unwrap_or(config.source_dir().clone());
+		let git = self.git || config.use_git();
+		let docs = self.docs || config.include_docs();
 
 		if self.ts {
 			if workspace::init_ts(&project, &template, git)? {
@@ -51,7 +51,7 @@ impl Init {
 			return Ok(());
 		}
 
-		let project_path = project::resolve(project, &config.project_name)?;
+		let project_path = project::resolve(project, config.project_name())?;
 		let project_exists = project_path.exists();
 
 		if project_exists {

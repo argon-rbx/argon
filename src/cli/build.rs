@@ -64,7 +64,7 @@ impl Build {
 		let config = Config::load();
 
 		let project = self.project.unwrap_or_default();
-		let project_path = project::resolve(project, &config.project_name)?;
+		let project_path = project::resolve(project, config.project_name())?;
 
 		if !project_path.exists() {
 			bail!("Project {} does not exist", project_path.to_str().unwrap().bold(),)
