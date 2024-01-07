@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use colored::Colorize;
+use documented::DocumentedFields;
 use log::{info, warn};
 use optfield::optfield;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
@@ -59,15 +60,25 @@ pub enum ConfigField {
 // last 3 steps will be replaced with the derive in the future
 
 #[optfield(GlobalConfig, attrs, merge_fn)]
-#[derive(Deserialize)]
+#[derive(Deserialize, DocumentedFields)]
 pub struct Config {
+	/// Default server host name; localhost
 	host: ConfigField,
+	/// Default server port; 8000
 	port: ConfigField,
+	/// Default source directory; src
 	source_dir: ConfigField,
+	/// Default project template; game
 	template: ConfigField,
+	/// Whether to spawn the Argon child process; true
+	spawn: ConfigField,
+	/// Whether to automatically initialize the project; false
 	auto_init: ConfigField,
+	/// Whether to use git for project management; true
 	use_git: ConfigField,
+	/// Whether to include documentation in the project; true
 	include_docs: ConfigField,
+	/// Whether to use Rojo mode; false
 	rojo_mode: ConfigField,
 
 	#[serde(skip)]
@@ -105,6 +116,7 @@ impl Config {
 			port: ConfigField::Int(8000),
 			source_dir: ConfigField::String(String::from("src")),
 			template: ConfigField::String(String::from("game")),
+			spawn: ConfigField::Bool(true),
 			auto_init: ConfigField::Bool(false),
 			use_git: ConfigField::Bool(true),
 			include_docs: ConfigField::Bool(true),
@@ -181,15 +193,28 @@ impl Config {
 		let defaults = Self::load_default();
 		let mut settings = String::new();
 
-		for (k, v) in &defaults {
-			let value_type = match v {
-				ConfigField::String(_) => "string",
-				ConfigField::Bool(_) => "bool",
-				ConfigField::Int(_) => "int",
-				ConfigField::None => "none",
-			};
+		settings.push_str(&format!(
+			"| {0: <15} | {1: <10} | {2: <50} |\n",
+			"Setting".bold(),
+			"Default".bold(),
+			"Description".bold()
+		));
+		settings.push_str(&format!(
+			"| {0: <15} | {1: <10} | {2: <50} |\n",
+			"-".repeat(15),
+			"-".repeat(10),
+			"-".repeat(50)
+		));
 
-			settings.push_str(&format!("{}: {}\n", k.bold(), value_type));
+		for (field, _) in &defaults {
+			let doc: Vec<_> = Self::get_field_comment(&field).unwrap().split(';').collect();
+
+			settings.push_str(&format!(
+				"| {0: <15} | {1: <10} | {2: <50} |\n",
+				&field,
+				doc[1].trim(),
+				doc[0].trim()
+			));
 		}
 
 		settings.pop();
@@ -213,6 +238,7 @@ impl Config {
 	make_fn!(port, u16);
 	make_fn!(source_dir, String);
 	make_fn!(template, String);
+	make_fn!(spawn, bool);
 	make_fn!(auto_init, bool);
 	make_fn!(use_git, bool);
 	make_fn!(include_docs, bool);
@@ -228,6 +254,7 @@ impl Index<&str> for Config {
 			"port" => &self.port,
 			"source_dir" => &self.source_dir,
 			"template" => &self.template,
+			"spawn" => &self.spawn,
 			"auto_init" => &self.auto_init,
 			"use_git" => &self.use_git,
 			"include_docs" => &self.include_docs,
@@ -244,6 +271,7 @@ impl IndexMut<&str> for Config {
 			"port" => &mut self.port,
 			"source_dir" => &mut self.source_dir,
 			"template" => &mut self.template,
+			"spawn" => &mut self.spawn,
 			"auto_init" => &mut self.auto_init,
 			"use_git" => &mut self.use_git,
 			"include_docs" => &mut self.include_docs,
@@ -276,10 +304,11 @@ impl<'a> Iterator for ConfigIntoIterator<'a> {
 			1 => "port",
 			2 => "source_dir",
 			3 => "template",
-			4 => "auto_init",
-			5 => "use_git",
-			6 => "include_docs",
-			7 => "rojo_mode",
+			4 => "spawn",
+			5 => "auto_init",
+			6 => "use_git",
+			7 => "include_docs",
+			8 => "rojo_mode",
 			_ => return None,
 		};
 

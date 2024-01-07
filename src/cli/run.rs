@@ -42,8 +42,8 @@ pub struct Run {
 	ts: bool,
 
 	/// Spawn the Argon child process
-	#[arg(short, long, hide = true)]
-	spawn: bool,
+	#[arg(long, hide = true)]
+	argon_spawn: bool,
 }
 
 impl Run {
@@ -53,7 +53,7 @@ impl Run {
 		let project = self.project.clone().unwrap_or_default();
 		let project_path = project::resolve(project.clone(), config.project_name())?;
 
-		if !self.spawn {
+		if !self.argon_spawn {
 			let project_exists = project_path.exists();
 
 			if !project_exists && config.auto_init() {
@@ -89,7 +89,9 @@ impl Run {
 				return Ok(());
 			}
 
-			return self.spawn(log_level);
+			if config.spawn() {
+				return self.spawn(log_level);
+			}
 		}
 
 		if self.ts {

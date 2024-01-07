@@ -51,17 +51,17 @@ pub struct Build {
 	watch: bool,
 
 	/// Spawn the Argon child process
-	#[arg(short, long, hide = true)]
-	spawn: bool,
+	#[arg(long, hide = true)]
+	argon_spawn: bool,
 }
 
 impl Build {
 	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
-		if self.watch && !self.spawn {
+		let config = Config::load();
+
+		if self.watch && !self.argon_spawn && config.spawn() {
 			return self.spawn(level_filter);
 		}
-
-		let config = Config::load();
 
 		let project = self.project.unwrap_or_default();
 		let project_path = project::resolve(project, config.project_name())?;
