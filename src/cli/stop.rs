@@ -2,7 +2,7 @@ use anyhow::Result;
 use awc::Client;
 use clap::Parser;
 
-use crate::{argon_info, argon_warn, sessions, util};
+use crate::{argon_info, argon_warn, logger::Table, sessions, util};
 
 /// Stop Argon session by port or all running sessions
 #[derive(Parser)]
@@ -22,10 +22,46 @@ pub struct Stop {
 	/// Stop all running session
 	#[arg(short, long)]
 	all: bool,
+
+	/// List all running session
+	#[arg(short, long)]
+	list: bool,
 }
 
 impl Stop {
 	pub fn main(self) -> Result<()> {
+		if self.list {
+			let sessions = sessions::get_all()?;
+
+			if sessions.is_none() {
+				argon_warn!("There are no running sessions");
+				return Ok(());
+			}
+
+			let mut table = Table::new();
+			table.set_header(vec!["Id", "Host", "Port", "PID"]);
+
+			for (id, session) in sessions.unwrap() {
+				let port = if let Some(port) = session.port {
+					port.to_string()
+				} else {
+					String::from("None")
+				};
+
+				table.add_row(vec![
+					id,
+					session.host.unwrap_or(String::from("None")),
+					port,
+					session.pid.to_string(),
+				]);
+			}
+
+			argon_info!("All running sessions:\n");
+			println!("{}", table);
+
+			return Ok(());
+		}
+
 		if self.all {
 			let sessions = sessions::get_all()?;
 
@@ -78,6 +114,6 @@ impl Stop {
 
 	fn kill_process(pid: u32) {
 		util::kill(pid);
-		argon_info!("Killed Argon process {}", pid.to_string())
+		argon_info!("Stopped Argon process {}", pid.to_string())
 	}
 }

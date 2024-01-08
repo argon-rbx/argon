@@ -14,7 +14,7 @@ use crate::{
 	core::Core,
 	program::{self, Program},
 	project::{self, Project},
-	server::Server,
+	server::{self, Server},
 	sessions, util, workspace,
 };
 
@@ -119,11 +119,30 @@ impl Run {
 			}
 		}
 
+		let scan_ports = config.scan_ports();
 		let project = Project::load(&project_path)?;
 		let mut core = Core::new(config, project)?;
 
 		let host = self.host.unwrap_or(core.host());
-		let port = self.port.unwrap_or(core.port());
+		let mut port = self.port.unwrap_or(core.port());
+
+		if !server::is_port_free(&host, port) {
+			if scan_ports {
+				let new_port = server::get_free_port(&host, port);
+
+				argon_warn!("Port {} is already in use, using {} instead!", port, new_port);
+
+				port = new_port;
+			} else {
+				argon_error!(
+					"Port {} is already in use! Enable {} setting to use first available port automatically.",
+					port,
+					"scan_ports".bold()
+				);
+
+				return Ok(());
+			}
+		}
 
 		core.load_dom()?;
 
@@ -189,7 +208,7 @@ impl Run {
 		Command::new(program)
 			.args(args)
 			.arg("--yes")
-			.arg("--spawn")
+			.arg("--argon-spawn")
 			.env("RUST_LOG_STYLE", log_style)
 			.env("RUST_BACKTRACE", backtrace)
 			.spawn()?;

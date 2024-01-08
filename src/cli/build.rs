@@ -63,7 +63,7 @@ impl Build {
 			return self.spawn(level_filter);
 		}
 
-		let project = self.project.unwrap_or_default();
+		let project = self.project.clone().unwrap_or_default();
 		let project_path = project::resolve(project, config.project_name())?;
 
 		if !project_path.exists() {
@@ -73,36 +73,28 @@ impl Build {
 		let project = Project::load(&project_path)?;
 
 		let mut xml = self.xml;
-		let mut path = if let Some(path) = self.output {
-			let ext = util::get_file_ext(&path);
-
-			if ext == "rbxlx" || ext == "rbxmx" {
-				xml = true;
-			} else if ext == "rbxl" || ext == "rbxm" {
-				xml = false;
-			}
-
-			if ext.starts_with("rbxm") && project.is_place() {
-				bail!("Cannot build model or plugin from place project")
-			} else if ext.starts_with("rbxl") && !project.is_place() {
-				bail!("Cannot build place from plugin or model project")
-			}
-
-			path
-		} else {
-			let ext = if project.is_place() {
-				if xml {
-					"rbxlx"
-				} else {
-					"rbxl"
-				}
-			} else if xml {
-				"rbxmx"
+		let mut path = if let Some(path) = self.output.clone() {
+			if path.is_dir() {
+				path.join(self.get_default_file(&project))
 			} else {
-				"rbxm"
-			};
+				let ext = util::get_file_ext(&path);
 
-			PathBuf::from(format!("{}.{}", project.name, ext))
+				if ext == "rbxlx" || ext == "rbxmx" {
+					xml = true;
+				} else if ext == "rbxl" || ext == "rbxm" {
+					xml = false;
+				}
+
+				if ext.starts_with("rbxm") && project.is_place() {
+					bail!("Cannot build model or plugin from place project")
+				} else if ext.starts_with("rbxl") && !project.is_place() {
+					bail!("Cannot build place from plugin or model project")
+				}
+
+				path
+			}
+		} else {
+			self.get_default_file(&project)
 		};
 
 		if self.plugin {
@@ -182,6 +174,22 @@ impl Build {
 		Ok(())
 	}
 
+	fn get_default_file(&self, project: &Project) -> PathBuf {
+		let ext = if project.is_place() {
+			if self.xml {
+				"rbxlx"
+			} else {
+				"rbxl"
+			}
+		} else if self.xml {
+			"rbxmx"
+		} else {
+			"rbxm"
+		};
+
+		PathBuf::from(format!("{}.{}", project.name, ext))
+	}
+
 	fn spawn(self, level_filter: LevelFilter) -> Result<()> {
 		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
 
@@ -230,7 +238,7 @@ impl Build {
 		Command::new(program)
 			.args(args)
 			.arg("--yes")
-			.arg("--spawn")
+			.arg("--argon-spawn")
 			.env("RUST_LOG_STYLE", log_style)
 			.env("RUST_BACKTRACE", backtrace)
 			.spawn()?;

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use colored::Colorize;
 use open;
 use std::fs::File;
 
@@ -24,7 +25,7 @@ pub struct Config {
 impl Config {
 	pub fn main(self) -> Result<()> {
 		if self.list {
-			argon_info!("Available settings:\n");
+			argon_info!("List of all available config options:\n");
 			println!("{}", GlobalConfig::list());
 
 			return Ok(());
@@ -38,6 +39,8 @@ impl Config {
 					config.set(&setting, &value)?;
 
 					config.save()?;
+
+					argon_info!("Set {} to {}", setting.bold(), value.bold());
 				} else {
 					argon_error!("Setting '{}' does not exist", setting);
 					return Ok(());
@@ -52,6 +55,8 @@ impl Config {
 					config[&setting] = default[&setting].clone();
 
 					config.save()?;
+
+					argon_info!("Set {} to its default value", setting.bold());
 				} else {
 					argon_error!("Setting '{}' does not exist", setting);
 					return Ok(());
@@ -71,6 +76,8 @@ impl Config {
 						return Ok(());
 					}
 				}
+
+				argon_info!("Opening config file");
 
 				open::that(config_path)?;
 			}

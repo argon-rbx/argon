@@ -9,7 +9,7 @@ use std::{
 
 use crate::util;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct Session {
 	pub pid: u32,
 	pub host: Option<String>,

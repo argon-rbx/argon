@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use colored::Colorize;
 use documented::DocumentedFields;
 use log::{info, warn};
 use optfield::optfield;
@@ -10,7 +9,7 @@ use std::{
 };
 use toml;
 
-use crate::util;
+use crate::{logger::Table, util};
 
 macro_rules! make_fn {
 	($name:ident, String) => {
@@ -72,6 +71,8 @@ pub struct Config {
 	template: ConfigField,
 	/// Whether to spawn the Argon child process; true
 	spawn: ConfigField,
+	/// Whether to scan for the first available port; false
+	scan_ports: ConfigField,
 	/// Whether to automatically initialize the project; false
 	auto_init: ConfigField,
 	/// Whether to use git for project management; true
@@ -117,6 +118,7 @@ impl Config {
 			source_dir: ConfigField::String(String::from("src")),
 			template: ConfigField::String(String::from("game")),
 			spawn: ConfigField::Bool(true),
+			scan_ports: ConfigField::Bool(true),
 			auto_init: ConfigField::Bool(false),
 			use_git: ConfigField::Bool(true),
 			include_docs: ConfigField::Bool(true),
@@ -189,37 +191,18 @@ impl Config {
 		Ok(())
 	}
 
-	pub fn list() -> String {
+	pub fn list() -> Table {
 		let defaults = Self::load_default();
-		let mut settings = String::new();
+		let mut table = Table::new();
 
-		settings.push_str(&format!(
-			"| {0: <15} | {1: <10} | {2: <50} |\n",
-			"Setting".bold(),
-			"Default".bold(),
-			"Description".bold()
-		));
-		settings.push_str(&format!(
-			"| {0: <15} | {1: <10} | {2: <50} |\n",
-			"-".repeat(15),
-			"-".repeat(10),
-			"-".repeat(50)
-		));
+		table.set_header(vec!["Setting", "Default", "Description"]);
 
 		for (field, _) in &defaults {
 			let doc: Vec<_> = Self::get_field_comment(&field).unwrap().split(';').collect();
-
-			settings.push_str(&format!(
-				"| {0: <15} | {1: <10} | {2: <50} |\n",
-				&field,
-				doc[1].trim(),
-				doc[0].trim()
-			));
+			table.add_row(vec![field, doc[1].trim().to_string(), doc[0].trim().to_string()]);
 		}
 
-		settings.pop();
-
-		settings
+		table
 	}
 
 	pub fn project_name(&self) -> &String {
@@ -239,6 +222,7 @@ impl Config {
 	make_fn!(source_dir, String);
 	make_fn!(template, String);
 	make_fn!(spawn, bool);
+	make_fn!(scan_ports, bool);
 	make_fn!(auto_init, bool);
 	make_fn!(use_git, bool);
 	make_fn!(include_docs, bool);
@@ -255,6 +239,7 @@ impl Index<&str> for Config {
 			"source_dir" => &self.source_dir,
 			"template" => &self.template,
 			"spawn" => &self.spawn,
+			"scan_ports" => &self.scan_ports,
 			"auto_init" => &self.auto_init,
 			"use_git" => &self.use_git,
 			"include_docs" => &self.include_docs,
@@ -272,6 +257,7 @@ impl IndexMut<&str> for Config {
 			"source_dir" => &mut self.source_dir,
 			"template" => &mut self.template,
 			"spawn" => &mut self.spawn,
+			"scan_ports" => &mut self.scan_ports,
 			"auto_init" => &mut self.auto_init,
 			"use_git" => &mut self.use_git,
 			"include_docs" => &mut self.include_docs,
@@ -305,10 +291,11 @@ impl<'a> Iterator for ConfigIntoIterator<'a> {
 			2 => "source_dir",
 			3 => "template",
 			4 => "spawn",
-			5 => "auto_init",
-			6 => "use_git",
-			7 => "include_docs",
-			8 => "rojo_mode",
+			5 => "scan_ports",
+			6 => "auto_init",
+			7 => "use_git",
+			8 => "include_docs",
+			9 => "rojo_mode",
 			_ => return None,
 		};
 

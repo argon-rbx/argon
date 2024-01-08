@@ -1,8 +1,10 @@
+use colored::Colorize;
 use dialoguer::console::{style, Style, StyledObject};
 use dialoguer::theme::Theme;
 use dialoguer::Confirm;
 use env_logger::{fmt::Color, Builder, WriteStyle};
 use log::{Level, LevelFilter};
+use std::fmt::{Display, Formatter};
 use std::{env, fmt, io::Write};
 
 pub fn init(level_filter: LevelFilter, color_choice: WriteStyle) {
@@ -74,6 +76,65 @@ pub fn prompt(prompt: &str, default: bool) -> bool {
 		.interact();
 
 	result.unwrap_or(default)
+}
+
+pub struct Table {
+	rows: Vec<Vec<String>>,
+	columns: Vec<usize>,
+}
+
+impl Table {
+	pub fn new() -> Self {
+		Self {
+			rows: Vec::new(),
+			columns: Vec::new(),
+		}
+	}
+
+	pub fn add_row(&mut self, row: Vec<String>) {
+		for (i, column) in row.iter().enumerate() {
+			if self.columns.len() <= i {
+				self.columns.push(column.len());
+			} else if self.columns[i] < column.len() {
+				self.columns[i] = column.len();
+			}
+		}
+
+		self.rows.push(row);
+	}
+
+	pub fn set_header(&mut self, row: Vec<&str>) {
+		let row = row.iter().map(|s| s.to_string()).collect();
+
+		self.add_row(row);
+	}
+}
+
+impl Display for Table {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		let mut header = String::new();
+		let mut separator = String::new();
+
+		for (i, row) in self.rows[0].iter().enumerate() {
+			header.push_str(&format!("| {0: <1$} ", row.bold(), self.columns[i]));
+		}
+
+		for column in &self.columns {
+			separator.push_str(&format!("|{0:-<1$}", "", column + 2));
+		}
+
+		write!(f, "{}|\n{}|\n", header, separator)?;
+
+		for row in self.rows.iter().skip(1) {
+			for (i, column) in row.iter().enumerate() {
+				write!(f, "| {0: <1$} ", column, self.columns[i])?;
+			}
+
+			writeln!(f, "|")?;
+		}
+
+		Ok(())
+	}
 }
 
 pub struct PromptTheme {
