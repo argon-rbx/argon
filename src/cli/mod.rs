@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::{ColorChoice, Parser, Subcommand};
 use clap_verbosity_flag::Verbosity;
 use env_logger::fmt::WriteStyle;
+use log::LevelFilter;
 use std::env;
 
 mod build;
@@ -37,10 +38,10 @@ macro_rules! long_about {
 #[clap(about = about!(), long_about = long_about!(), version)]
 pub struct Cli {
 	#[command(subcommand)]
-	pub command: Commands,
+	command: Commands,
 
 	#[command(flatten)]
-	pub verbose: Verbosity,
+	verbose: Verbosity,
 
 	/// Automatically answer to any prompts
 	#[arg(short, long, global = true)]
@@ -68,7 +69,11 @@ impl Cli {
 		self.yes
 	}
 
-	pub fn get_color_choice(&self) -> WriteStyle {
+	pub fn log_level(&self) -> LevelFilter {
+		self.verbose.log_level_filter()
+	}
+
+	pub fn color_choice(&self) -> WriteStyle {
 		if let Ok(log_style) = env::var("RUST_LOG_STYLE") {
 			return match log_style.as_str() {
 				"always" => WriteStyle::Always,
@@ -87,9 +92,9 @@ impl Cli {
 	pub fn main(self) -> Result<()> {
 		match self.command {
 			Commands::Init(command) => command.main(),
-			Commands::Run(command) => command.main(self.verbose.log_level_filter()),
+			Commands::Run(command) => command.main(),
 			Commands::Stop(command) => command.main(),
-			Commands::Build(command) => command.main(self.verbose.log_level_filter()),
+			Commands::Build(command) => command.main(),
 			Commands::Studio(command) => command.main(),
 			Commands::Exec(command) => command.main(),
 			Commands::Config(command) => command.main(),

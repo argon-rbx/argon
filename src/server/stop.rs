@@ -6,7 +6,7 @@ use crate::util;
 
 async fn stop() {
 	trace!("Stopping Argon!");
-	util::kill(process::id());
+	util::kill_process(process::id());
 }
 
 #[post("/stop")]

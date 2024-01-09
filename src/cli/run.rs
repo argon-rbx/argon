@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
-use log::{trace, LevelFilter};
+use log::trace;
 use std::{
 	env,
 	path::PathBuf,
@@ -12,7 +12,7 @@ use crate::{
 	argon_error, argon_info, argon_warn,
 	config::Config,
 	core::Core,
-	program::{self, Program},
+	program::{Program, ProgramKind},
 	project::{self, Project},
 	server::{self, Server},
 	sessions, util, workspace,
@@ -47,7 +47,7 @@ pub struct Run {
 }
 
 impl Run {
-	pub fn main(self, log_level: LevelFilter) -> Result<()> {
+	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
 		let project = self.project.clone().unwrap_or_default();
@@ -90,7 +90,7 @@ impl Run {
 			}
 
 			if config.spawn() {
-				return self.spawn(log_level);
+				return self.spawn();
 			}
 		}
 
@@ -100,15 +100,12 @@ impl Run {
 			let mut working_dir = project_path.clone();
 			working_dir.pop();
 
-			let child = program::spawn(
-				Command::new(program::NPX)
-					.current_dir(&working_dir)
-					.arg("rbxtsc")
-					.arg("--watch")
-					.spawn(),
-				Program::Npm,
-				"Failed to serve roblox-ts project",
-			)?;
+			let child = Program::new(ProgramKind::Npx)
+				.message("Failed to serve roblox-ts project")
+				.current_dir(&working_dir)
+				.arg("rbxtsc")
+				.arg("--watch")
+				.spawn()?;
 
 			if let Some(mut child) = child {
 				util::handle_kill(move || {
@@ -162,22 +159,13 @@ impl Run {
 		Ok(())
 	}
 
-	fn spawn(self, log_level: LevelFilter) -> Result<()> {
+	fn spawn(self) -> Result<()> {
 		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
 
 		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
 		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
 
-		let verbosity = match log_level {
-			LevelFilter::Off => "-q",
-			LevelFilter::Error => "",
-			LevelFilter::Warn => "-v",
-			LevelFilter::Info => "-vv",
-			LevelFilter::Debug => "-vvv",
-			LevelFilter::Trace => "-vvvv",
-		};
-
-		let mut args = vec![String::from("run")];
+		let mut args = vec![String::from("run"), util::get_verbosity_flag()];
 
 		if let Some(host) = self.host {
 			args.push(String::from("--host"));
@@ -199,10 +187,6 @@ impl Run {
 
 		if self.ts {
 			args.push(String::from("--ts"));
-		}
-
-		if !verbosity.is_empty() {
-			args.push(verbosity.to_string());
 		}
 
 		Command::new(program)

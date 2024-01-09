@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use clap::Parser;
 use colored::Colorize;
-use log::{info, trace, LevelFilter};
+use log::{info, trace};
 use roblox_install::RobloxStudio;
 use std::{
 	env,
@@ -14,7 +14,7 @@ use crate::{
 	argon_info,
 	config::Config,
 	core::Core,
-	program::{self, Program},
+	program::{Program, ProgramKind},
 	project::{self, Project},
 	sessions, util,
 };
@@ -56,11 +56,11 @@ pub struct Build {
 }
 
 impl Build {
-	pub fn main(self, level_filter: LevelFilter) -> Result<()> {
+	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
 		if self.watch && !self.argon_spawn && config.spawn() {
-			return self.spawn(level_filter);
+			return self.spawn();
 		}
 
 		let project = self.project.clone().unwrap_or_default();
@@ -114,15 +114,14 @@ impl Build {
 			let mut working_dir = project_path.clone();
 			working_dir.pop();
 
-			let child = program::spawn(
-				Command::new(program::NPX)
-					.current_dir(&working_dir)
-					.arg("rbxtsc")
-					.arg("build")
-					.spawn(),
-				Program::Npm,
-				"Failed to start roblox-ts",
-			)?;
+			// println!("{:?}", log_level);
+
+			let child = Program::new(ProgramKind::Npx)
+				.message("Failed to start roblox-ts")
+				.current_dir(&working_dir)
+				.arg("rbxtsc")
+				.arg("build")
+				.spawn()?;
 
 			if let Some(mut child) = child {
 				child.wait()?;
@@ -145,11 +144,12 @@ impl Build {
 				let mut working_dir = project_path.clone();
 				working_dir.pop();
 
-				let mut child = Command::new(program::NPX)
+				let mut child = Program::new(ProgramKind::Npx)
 					.current_dir(&working_dir)
 					.arg("rbxtsc")
 					.arg("--watch")
-					.spawn()?;
+					.spawn()?
+					.unwrap();
 
 				util::handle_kill(move || {
 					child.kill().ok();
@@ -190,22 +190,13 @@ impl Build {
 		PathBuf::from(format!("{}.{}", project.name, ext))
 	}
 
-	fn spawn(self, level_filter: LevelFilter) -> Result<()> {
+	fn spawn(self) -> Result<()> {
 		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
 
 		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
 		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
 
-		let verbosity = match level_filter {
-			LevelFilter::Off => "-q",
-			LevelFilter::Error => "",
-			LevelFilter::Warn => "-v",
-			LevelFilter::Info => "-vv",
-			LevelFilter::Debug => "-vvv",
-			LevelFilter::Trace => "-vvvv",
-		};
-
-		let mut args = vec![String::from("build")];
+		let mut args = vec![String::from("build"), util::get_verbosity_flag()];
 
 		if let Some(project) = self.project {
 			args.push(util::path_to_string(&project))
@@ -229,10 +220,6 @@ impl Build {
 
 		if self.watch {
 			args.push(String::from("--watch"))
-		}
-
-		if !verbosity.is_empty() {
-			args.push(verbosity.to_string())
 		}
 
 		Command::new(program)

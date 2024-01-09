@@ -4,12 +4,11 @@ use log::trace;
 use std::{
 	fs,
 	path::{Path, PathBuf},
-	process::Command,
 };
 
 use crate::{
 	argon_info,
-	program::{self, Program},
+	program::{Program, ProgramKind},
 	util,
 };
 
@@ -113,20 +112,17 @@ pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 		_ => "init",
 	};
 
-	let child = program::spawn(
-		Command::new(program::NPM)
-			.arg("init")
-			.arg("roblox-ts")
-			.arg(command)
-			.arg("--")
-			.arg("--yes")
-			.arg("--skipBuild")
-			.arg(format!("--git={}", git))
-			.args(["--dir", &util::path_to_string(path)])
-			.spawn(),
-		Program::Npm,
-		"Failed to initialize roblox-ts project",
-	)?;
+	let child = Program::new(ProgramKind::Npm)
+		.message("Failed to initialize roblox-ts project")
+		.arg("init")
+		.arg("roblox-ts")
+		.arg(command)
+		.arg("--")
+		.arg("--skipBuild")
+		.arg(&format!("--git={}", git))
+		.args(&["--dir", &util::path_to_string(path)])
+		.arg(if util::get_yes() { "--yes" } else { "" })
+		.spawn()?;
 
 	if let Some(child) = child {
 		let output = child.wait_with_output()?;
@@ -142,12 +138,12 @@ pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 	}
 }
 
-pub fn initialize_repo(directory: &PathBuf) -> Result<()> {
-	let output = program::output(
-		Command::new("git").arg("init").arg(directory).output(),
-		Program::Git,
-		"Failed to initialize repository",
-	)?;
+pub fn initialize_repo(directory: &Path) -> Result<()> {
+	let output = Program::new(ProgramKind::Git)
+		.message("Failed to initialize repository")
+		.arg("init")
+		.arg(&util::path_to_string(directory))
+		.output()?;
 
 	if output.is_some() {
 		trace!("Initialized Git repository");

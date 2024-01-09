@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use directories::UserDirs;
+use log::LevelFilter;
 use rbx_reflection::ClassTag;
 use std::{
 	env,
@@ -73,7 +74,7 @@ pub fn get_username() -> String {
 	whoami::username()
 }
 
-pub fn kill(pid: u32) {
+pub fn kill_process(pid: u32) {
 	#[cfg(not(target_os = "windows"))]
 	{
 		Command::new("kill")
@@ -102,4 +103,38 @@ where
 		handler();
 		process::exit(0);
 	})
+}
+
+pub fn get_verbosity() -> LevelFilter {
+	let verbosity = env::var("ARGON_VERBOSITY").unwrap_or("ERROR".to_string());
+
+	match verbosity.as_str() {
+		"OFF" => LevelFilter::Off,
+		"ERROR" => LevelFilter::Error,
+		"WARN" => LevelFilter::Warn,
+		"INFO" => LevelFilter::Info,
+		"DEBUG" => LevelFilter::Debug,
+		"TRACE" => LevelFilter::Trace,
+		_ => LevelFilter::Error,
+	}
+}
+
+pub fn get_verbosity_flag() -> String {
+	let verbosity = env::var("ARGON_VERBOSITY").unwrap_or("ERROR".to_string());
+
+	let verbosity = match verbosity.as_str() {
+		"OFF" => "-q",
+		"ERROR" => "",
+		"WARN" => "-v",
+		"INFO" => "-vv",
+		"DEBUG" => "-vvv",
+		"TRACE" => "-vvvv",
+		_ => "",
+	};
+
+	String::from(verbosity)
+}
+
+pub fn get_yes() -> bool {
+	env::var("ARGON_YES").is_ok()
 }

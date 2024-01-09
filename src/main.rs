@@ -17,7 +17,8 @@ fn main() {
 	let installation = installer::install();
 	let cli = Cli::new();
 
-	let color_choice = cli.get_color_choice();
+	let log_level = cli.log_level();
+	let color_choice = cli.color_choice();
 	let yes = cli.yes();
 
 	if color_choice == WriteStyle::Auto && io::stdin().is_terminal() {
@@ -36,7 +37,9 @@ fn main() {
 		env::set_var("ARGON_YES", "1");
 	}
 
-	logger::init(cli.verbose.log_level_filter(), color_choice);
+	env::set_var("ARGON_VERBOSITY", log_level.as_str());
+
+	logger::init(log_level, color_choice);
 
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),

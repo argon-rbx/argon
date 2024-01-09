@@ -7,11 +7,13 @@ use log::{Level, LevelFilter};
 use std::fmt::{Display, Formatter};
 use std::{env, fmt, io::Write};
 
-pub fn init(level_filter: LevelFilter, color_choice: WriteStyle) {
+use crate::util;
+
+pub fn init(log_level: LevelFilter, color_choice: WriteStyle) {
 	let mut builder = Builder::new();
 
 	builder.format(move |buffer, record| {
-		if record.level() > level_filter && record.target() != "argon_log" {
+		if record.level() > log_level && record.target() != "argon_log" {
 			return Ok(());
 		}
 
@@ -45,12 +47,12 @@ pub fn init(level_filter: LevelFilter, color_choice: WriteStyle) {
 		}
 	});
 
-	if level_filter == LevelFilter::Off {
+	if log_level == LevelFilter::Off {
 		builder.filter_level(LevelFilter::Off);
-	} else if level_filter <= LevelFilter::Info {
+	} else if log_level <= LevelFilter::Info {
 		builder.filter_level(LevelFilter::Info);
 	} else {
-		builder.filter_level(level_filter);
+		builder.filter_level(log_level);
 	}
 
 	builder.write_style(color_choice);
@@ -59,7 +61,7 @@ pub fn init(level_filter: LevelFilter, color_choice: WriteStyle) {
 }
 
 pub fn prompt(prompt: &str, default: bool) -> bool {
-	if env::var("ARGON_YES").is_ok() {
+	if util::get_yes() {
 		return default;
 	}
 

@@ -112,7 +112,7 @@ impl Stop {
 	}
 
 	fn kill_process(pid: u32) {
-		util::kill(pid);
+		util::kill_process(pid);
 		argon_info!("Stopped Argon process {}", pid.to_string())
 	}
 }
