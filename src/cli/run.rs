@@ -50,7 +50,6 @@ pub struct Run {
 impl Run {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
-		let spawn = config.spawn();
 
 		let project = self.project.clone().unwrap_or_default();
 		let project_path = project::resolve(project.clone(), config.project_name())?;
@@ -62,7 +61,7 @@ impl Run {
 				argon_warn!("Cannot find the project, creating new one!");
 
 				if self.ts {
-					if !workspace::init_ts(&project, config.template(), config.use_git())? {
+					if !workspace::init_ts(&project_path, config.template(), config.use_git())? {
 						return Ok(());
 					}
 				} else {
@@ -89,12 +88,14 @@ impl Run {
 				);
 			}
 
-			if spawn {
+			if config.spawn() {
 				return self.spawn();
 			}
 		}
 
-		if self.ts {
+		let project = Project::load(&project_path)?;
+
+		if self.ts || project.is_ts() {
 			trace!("Starting roblox-ts");
 
 			let working_dir = project_path.parent().unwrap();
@@ -115,15 +116,12 @@ impl Run {
 			}
 		}
 
-		let scan_ports = config.scan_ports();
-		let project = Project::load(&project_path)?;
-		let mut core = Core::new(config, project)?;
-
+		let mut core = Core::new(config.clone(), project)?;
 		let host = self.host.unwrap_or(core.host());
 		let mut port = self.port.unwrap_or(core.port());
 
 		if !server::is_port_free(&host, port) {
-			if scan_ports {
+			if config.scan_ports() {
 				let new_port = server::get_free_port(&host, port);
 
 				argon_warn!("Port {} is already in use, using {} instead!", port, new_port);
@@ -142,7 +140,7 @@ impl Run {
 
 		let server = Server::new(core, &host, &port);
 
-		if !spawn {
+		if config.spawn() {
 			sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
 		}
 

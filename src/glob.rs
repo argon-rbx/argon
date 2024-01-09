@@ -1,8 +1,11 @@
 use glob::{glob, Paths, Pattern, PatternError};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use std::path::PathBuf;
+use std::{
+	fmt::{self, Debug, Formatter},
+	path::PathBuf,
+};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Glob {
 	pattern: Pattern,
 }
@@ -43,5 +46,11 @@ impl<'de> Deserialize<'de> for Glob {
 	fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
 		let pattern = String::deserialize(deserializer)?;
 		Self::new(&pattern).map_err(Error::custom)
+	}
+}
+
+impl Debug for Glob {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.pattern.as_str())
 	}
 }

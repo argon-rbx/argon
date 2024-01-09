@@ -3,9 +3,9 @@ use std::{env, fs};
 
 use crate::{logger, util};
 
-const GAME_PROJECT: &str = include_str!("../assets/templates/game/project.json");
-const GAME_GITIGNORE: &str = include_str!("../assets/templates/game/.gitignore");
-const GAME_README: &str = include_str!("../assets/templates/game/README.md");
+const PLACE_PROJECT: &str = include_str!("../assets/templates/place/project.json");
+const PLACE_GITIGNORE: &str = include_str!("../assets/templates/place/.gitignore");
+const PLACE_README: &str = include_str!("../assets/templates/place/README.md");
 
 const PLUGIN_PROJECT: &str = include_str!("../assets/templates/plugin/project.json");
 const PLUGIN_GITIGNORE: &str = include_str!("../assets/templates/plugin/.gitignore");
@@ -64,21 +64,21 @@ pub fn install() -> Result<()> {
 		}
 	}
 
-	let game_template = templates_dir.join("game");
+	let place_template = templates_dir.join("place");
 	let plugin_template = templates_dir.join("plugin");
 	let package_template = templates_dir.join("package");
 	let model_template = templates_dir.join("model");
 
-	if !game_template.exists() {
-		fs::create_dir(&game_template)?;
+	if !place_template.exists() {
+		fs::create_dir(&place_template)?;
 
-		let project = game_template.join("project.json");
-		let gitignore = game_template.join(".gitignore");
-		let readme = game_template.join("README.md");
+		let project = place_template.join("project.json");
+		let gitignore = place_template.join(".gitignore");
+		let readme = place_template.join("README.md");
 
-		fs::write(project, GAME_PROJECT)?;
-		fs::write(gitignore, GAME_GITIGNORE)?;
-		fs::write(readme, GAME_README)?;
+		fs::write(project, PLACE_PROJECT)?;
+		fs::write(gitignore, PLACE_GITIGNORE)?;
+		fs::write(readme, PLACE_README)?;
 	}
 
 	if !plugin_template.exists() {

@@ -59,7 +59,7 @@ pub enum ConfigField {
 // last 3 steps will be replaced with the derive in the future
 
 #[optfield(GlobalConfig, attrs, merge_fn)]
-#[derive(Deserialize, DocumentedFields)]
+#[derive(Clone, Deserialize, DocumentedFields)]
 pub struct Config {
 	/// Default server host name; localhost
 	host: ConfigField,
@@ -67,7 +67,7 @@ pub struct Config {
 	port: ConfigField,
 	/// Default source directory; src
 	source_dir: ConfigField,
-	/// Default project template; game
+	/// Default project template; place
 	template: ConfigField,
 	/// Whether to spawn the Argon child process; true
 	spawn: ConfigField,
@@ -116,7 +116,7 @@ impl Config {
 			host: ConfigField::String(String::from("localhost")),
 			port: ConfigField::Int(8000),
 			source_dir: ConfigField::String(String::from("src")),
-			template: ConfigField::String(String::from("game")),
+			template: ConfigField::String(String::from("place")),
 			spawn: ConfigField::Bool(true),
 			scan_ports: ConfigField::Bool(true),
 			auto_init: ConfigField::Bool(false),

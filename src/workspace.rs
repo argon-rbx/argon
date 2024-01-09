@@ -102,7 +102,7 @@ pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
 	argon_info!("Waiting for npm...");
 
 	let command = match template {
-		"game" => template,
+		"place" => "game",
 		"plugin" => template,
 		"package" => template,
 		"model" => template,

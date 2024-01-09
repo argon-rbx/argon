@@ -59,9 +59,8 @@ pub struct Build {
 impl Build {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
-		let spawn = config.spawn();
 
-		if self.watch && !self.argon_spawn && spawn {
+		if self.watch && !self.argon_spawn && config.spawn() {
 			return self.spawn();
 		}
 
@@ -73,6 +72,7 @@ impl Build {
 		}
 
 		let project = Project::load(&project_path)?;
+		let is_ts = project.is_ts();
 
 		let mut xml = self.xml;
 		let path = if self.plugin {
@@ -129,7 +129,7 @@ impl Build {
 			self.get_default_file(&project)
 		};
 
-		if self.ts {
+		if is_ts {
 			argon_info!("Compiling TypeScript files...");
 
 			let working_dir = project_path.parent().unwrap();
@@ -148,7 +148,7 @@ impl Build {
 			}
 		}
 
-		let mut core = Core::new(config, project)?;
+		let mut core = Core::new(config.clone(), project)?;
 
 		core.load_dom()?;
 		core.build(&path, xml)?;
@@ -160,7 +160,7 @@ impl Build {
 		);
 
 		if self.watch {
-			if self.ts {
+			if is_ts {
 				trace!("Starting roblox-ts");
 
 				let working_dir = project_path.parent().unwrap();
@@ -177,7 +177,7 @@ impl Build {
 				})?;
 			}
 
-			if !spawn {
+			if config.spawn() {
 				sessions::add(self.session, None, None, process::id())?;
 			}
 

@@ -114,6 +114,24 @@ impl Project {
 	pub fn is_place(&self) -> bool {
 		self.root_class == "DataModel"
 	}
+
+	pub fn is_ts(&self) -> bool {
+		if let Some(ignore_globs) = &self.ignore_globs {
+			for glob in ignore_globs {
+				if glob.matches("**/tsconfig.json") {
+					return true;
+				}
+			}
+		}
+
+		for path in self.path_map.keys() {
+			if path.ends_with("@rbxts") {
+				return true;
+			}
+		}
+
+		false
+	}
 }
 
 pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
