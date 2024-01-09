@@ -9,9 +9,10 @@ use std::{
 };
 
 use crate::{
-	argon_error, argon_info, argon_warn,
+	argon_info, argon_warn,
 	config::Config,
 	core::Core,
+	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
 	server::{self, Server},
@@ -49,6 +50,7 @@ pub struct Run {
 impl Run {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
+		let spawn = config.spawn();
 
 		let project = self.project.clone().unwrap_or_default();
 		let project_path = project::resolve(project.clone(), config.project_name())?;
@@ -75,21 +77,19 @@ impl Run {
 					if config.use_git() {
 						let workspace_dir = workspace::get_dir(&project_path);
 
-						workspace::initialize_repo(&workspace_dir)?;
+						workspace::initialize_repo(workspace_dir)?;
 					}
 				}
 			} else if !project_exists {
-				argon_error!(
+				exit!(
 					"Project {} does not exist. Run {} or enable {} setting first.",
 					project_path.to_str().unwrap().bold(),
 					"argon init".bold(),
 					"auto_init".bold()
 				);
-
-				return Ok(());
 			}
 
-			if config.spawn() {
+			if spawn {
 				return self.spawn();
 			}
 		}
@@ -97,12 +97,11 @@ impl Run {
 		if self.ts {
 			trace!("Starting roblox-ts");
 
-			let mut working_dir = project_path.clone();
-			working_dir.pop();
+			let working_dir = project_path.parent().unwrap();
 
 			let child = Program::new(ProgramKind::Npx)
 				.message("Failed to serve roblox-ts project")
-				.current_dir(&working_dir)
+				.current_dir(working_dir)
 				.arg("rbxtsc")
 				.arg("--watch")
 				.spawn()?;
@@ -131,13 +130,11 @@ impl Run {
 
 				port = new_port;
 			} else {
-				argon_error!(
+				exit!(
 					"Port {} is already in use! Enable {} setting to use first available port automatically.",
 					port,
 					"scan_ports".bold()
 				);
-
-				return Ok(());
 			}
 		}
 
@@ -145,7 +142,9 @@ impl Run {
 
 		let server = Server::new(core, &host, &port);
 
-		sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
+		if !spawn {
+			sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
+		}
 
 		argon_info!(
 			"Running on: {}:{}, project: {}",

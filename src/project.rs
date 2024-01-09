@@ -67,7 +67,7 @@ impl Project {
 
 		project.root_class = project.node.class_name.clone().unwrap_or(String::from("Folder"));
 		project.project_path = project_path.to_owned();
-		project.workspace_dir = workspace_dir;
+		project.workspace_dir = workspace_dir.to_owned();
 
 		if let Some(path) = project.node.path.clone() {
 			let workspace_dir = project.workspace_dir.clone();

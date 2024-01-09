@@ -98,9 +98,7 @@ impl Processor {
 		for local_path in project.get_paths() {
 			if let Some(diff) = sub_paths(path, &local_path) {
 				let mut rbx_paths = project.path_map.get_vec(&local_path).unwrap().clone();
-				let mut parent = diff.clone();
-
-				parent.pop();
+				let parent = diff.parent().unwrap();
 
 				for rbx_path in rbx_paths.iter_mut() {
 					for comp in parent.iter() {
@@ -256,10 +254,7 @@ impl Processor {
 	}
 
 	fn get_parent(&self, rbx_path: &RbxPath) -> RbxPath {
-		let mut parent = rbx_path.to_owned();
-		parent.pop();
-
-		parent
+		rbx_path.parent().unwrap()
 	}
 
 	fn get_properties(&self, kind: &FileKind, path: &Path) -> Result<HashMap<String, Variant>> {

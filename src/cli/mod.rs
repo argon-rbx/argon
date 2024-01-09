@@ -14,6 +14,23 @@ mod run;
 mod stop;
 mod studio;
 
+// Like `anyhow::bail!`, but exits gracefully, for CLI only!
+#[macro_export]
+macro_rules! exit {
+    ($msg:literal $(,)?) => {
+        $crate::argon_error!($msg);
+		return Ok(());
+    };
+    ($err:expr $(,)?) => {
+        $crate::argon_error!($err);
+		return Ok(());
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::argon_error!($fmt, $($arg)*);
+		return Ok(());
+    };
+}
+
 macro_rules! about {
 	() => {
 		concat!("Argon ", env!("CARGO_PKG_VERSION"))

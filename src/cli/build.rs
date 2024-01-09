@@ -1,10 +1,10 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 use log::{info, trace};
 use roblox_install::RobloxStudio;
 use std::{
-	env,
+	env, fs,
 	path::PathBuf,
 	process::{self, Command},
 	sync::mpsc,
@@ -14,6 +14,7 @@ use crate::{
 	argon_info,
 	config::Config,
 	core::Core,
+	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
 	sessions, util,
@@ -26,13 +27,13 @@ pub struct Build {
 	#[arg()]
 	project: Option<PathBuf>,
 
-	/// Output path
-	#[arg()]
-	output: Option<PathBuf>,
-
 	/// Session indentifier
 	#[arg()]
 	session: Option<String>,
+
+	/// Output path
+	#[arg(short, long)]
+	output: Option<PathBuf>,
 
 	/// Build plugin and place it into plugins folder
 	#[arg(short, long)]
@@ -58,8 +59,9 @@ pub struct Build {
 impl Build {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
+		let spawn = config.spawn();
 
-		if self.watch && !self.argon_spawn && config.spawn() {
+		if self.watch && !self.argon_spawn && spawn {
 			return self.spawn();
 		}
 
@@ -67,58 +69,74 @@ impl Build {
 		let project_path = project::resolve(project, config.project_name())?;
 
 		if !project_path.exists() {
-			bail!("Project {} does not exist", project_path.to_str().unwrap().bold(),)
+			exit!("Project {} does not exist", project_path.to_str().unwrap().bold());
 		}
 
 		let project = Project::load(&project_path)?;
 
 		let mut xml = self.xml;
-		let mut path = if let Some(path) = self.output.clone() {
-			if path.is_dir() {
-				path.join(self.get_default_file(&project))
-			} else {
-				let ext = util::get_file_ext(&path);
-
-				if ext == "rbxlx" || ext == "rbxmx" {
-					xml = true;
-				} else if ext == "rbxl" || ext == "rbxm" {
-					xml = false;
-				}
-
-				if ext.starts_with("rbxm") && project.is_place() {
-					bail!("Cannot build model or plugin from place project")
-				} else if ext.starts_with("rbxl") && !project.is_place() {
-					bail!("Cannot build place from plugin or model project")
-				}
-
-				path
-			}
-		} else {
-			self.get_default_file(&project)
-		};
-
-		if self.plugin {
+		let path = if self.plugin {
 			if project.is_place() {
-				bail!("Cannot build plugin from place project")
+				exit!("Cannot build plugin from place project");
 			}
 
 			let plugins_path = RobloxStudio::locate()?.plugins_path().to_owned();
 			let ext = if xml { "rbxmx" } else { "rbxm" };
 
-			path = plugins_path.join(format!("{}.{}", project.name, ext));
-		}
+			plugins_path.join(format!("{}.{}", project.name, ext))
+		} else if let Some(path) = self.output.clone() {
+			if path.is_dir() {
+				path.join(self.get_default_file(&project))
+			} else {
+				let ext = util::get_file_ext(&path);
+
+				if ext.is_empty() {
+					fs::create_dir_all(&path)?;
+
+					path.join(self.get_default_file(&project))
+				} else {
+					if ext == "rbxlx" || ext == "rbxmx" {
+						xml = true;
+					} else if ext == "rbxl" || ext == "rbxm" {
+						xml = false;
+					} else {
+						exit!(
+							"Invalid file extension: {}. Only {}, {}, {}, {} extensions are allowed.",
+							ext,
+							"rbxl".bold(),
+							"rbxlx".bold(),
+							"rbxm".bold(),
+							"rbxmx".bold(),
+						);
+					}
+
+					if ext.starts_with("rbxm") && project.is_place() {
+						exit!("Cannot build model or plugin from place project");
+					} else if ext.starts_with("rbxl") && !project.is_place() {
+						exit!("Cannot build place from plugin or model project");
+					}
+
+					let parent = path.parent().unwrap();
+
+					if !parent.exists() {
+						fs::create_dir_all(parent)?;
+					}
+
+					path
+				}
+			}
+		} else {
+			self.get_default_file(&project)
+		};
 
 		if self.ts {
 			argon_info!("Compiling TypeScript files...");
 
-			let mut working_dir = project_path.clone();
-			working_dir.pop();
-
-			// println!("{:?}", log_level);
+			let working_dir = project_path.parent().unwrap();
 
 			let child = Program::new(ProgramKind::Npx)
 				.message("Failed to start roblox-ts")
-				.current_dir(&working_dir)
+				.current_dir(working_dir)
 				.arg("rbxtsc")
 				.arg("build")
 				.spawn()?;
@@ -135,17 +153,20 @@ impl Build {
 		core.load_dom()?;
 		core.build(&path, xml)?;
 
-		argon_info!("Successfully built project: {}", project_path.to_str().unwrap().bold());
+		argon_info!(
+			"Successfully built project: {} to: {}",
+			project_path.to_str().unwrap().bold(),
+			path.to_str().unwrap().bold()
+		);
 
 		if self.watch {
 			if self.ts {
 				trace!("Starting roblox-ts");
 
-				let mut working_dir = project_path.clone();
-				working_dir.pop();
+				let working_dir = project_path.parent().unwrap();
 
 				let mut child = Program::new(ProgramKind::Npx)
-					.current_dir(&working_dir)
+					.current_dir(working_dir)
 					.arg("rbxtsc")
 					.arg("--watch")
 					.spawn()?
@@ -156,7 +177,9 @@ impl Build {
 				})?;
 			}
 
-			sessions::add(self.session, None, None, process::id())?;
+			if !spawn {
+				sessions::add(self.session, None, None, process::id())?;
+			}
 
 			let (sender, receiver) = mpsc::channel();
 

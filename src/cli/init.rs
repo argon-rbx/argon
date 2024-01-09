@@ -64,7 +64,7 @@ impl Init {
 		if git {
 			let workspace_dir = workspace::get_dir(&project_path);
 
-			workspace::initialize_repo(&workspace_dir)?;
+			workspace::initialize_repo(workspace_dir)?;
 		}
 
 		argon_info!(

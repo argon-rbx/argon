@@ -40,10 +40,9 @@ pub fn read_properties(path: &Path) -> Result<HashMap<String, Variant>> {
 
 			class.unwrap().to_owned()
 		} else {
-			let mut path = path.to_owned();
-			path.pop();
+			let path = path.parent().unwrap();
 
-			let name = util::get_file_name(&path);
+			let name = util::get_file_name(path);
 			let is_service = util::is_service(name);
 
 			if !is_service {

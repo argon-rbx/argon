@@ -128,8 +128,7 @@ impl Dom {
 
 		let mut new_instances = MultiMap::new();
 
-		let mut parent = rbx_path.clone();
-		parent.pop();
+		let parent = rbx_path.parent().unwrap();
 		let parent = self.get_ref(&parent).unwrap();
 
 		if dom.root().children().is_empty() {

@@ -4,7 +4,7 @@ use colored::Colorize;
 use open;
 use std::fs::File;
 
-use crate::{argon_error, argon_info, config::Config as GlobalConfig, logger, util};
+use crate::{argon_info, config::Config as GlobalConfig, exit, logger, util};
 
 /// Edit global config with default editor
 #[derive(Parser)]
@@ -41,8 +41,7 @@ impl Config {
 
 					argon_info!("Set {} to {}", setting.bold(), value.bold());
 				} else {
-					argon_error!("Setting '{}' does not exist", setting);
-					return Ok(());
+					exit!("Setting '{}' does not exist", setting);
 				}
 			}
 			(Some(setting), None) => {
@@ -57,8 +56,7 @@ impl Config {
 
 					argon_info!("Set {} to its default value", setting.bold());
 				} else {
-					argon_error!("Setting '{}' does not exist", setting);
-					return Ok(());
+					exit!("Setting '{}' does not exist", setting);
 				}
 			}
 			_ => {

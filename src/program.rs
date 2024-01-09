@@ -33,7 +33,7 @@ impl Program {
 		}
 	}
 
-	pub fn arg(mut self, arg: &str) -> Self {
+	pub fn arg(&mut self, arg: &str) -> &mut Self {
 		if arg.is_empty() {
 			return self;
 		}
@@ -42,22 +42,24 @@ impl Program {
 		self
 	}
 
-	pub fn args(mut self, args: &[&str]) -> Self {
-		self.args.extend(args.iter().map(|&arg| arg.to_owned()));
+	pub fn args(&mut self, args: &[&str]) -> &mut Self {
+		for &arg in args {
+			self.arg(arg);
+		}
 		self
 	}
 
-	pub fn current_dir(mut self, dir: &Path) -> Self {
+	pub fn current_dir(&mut self, dir: &Path) -> &mut Self {
 		self.current_dir = dir.to_owned();
 		self
 	}
 
-	pub fn message(mut self, message: &str) -> Self {
+	pub fn message(&mut self, message: &str) -> &mut Self {
 		self.message = message.to_owned();
 		self
 	}
 
-	pub fn spawn(self) -> Result<Option<Child>> {
+	pub fn spawn(&mut self) -> Result<Option<Child>> {
 		let result = self.get_command().spawn();
 
 		match result {
@@ -66,7 +68,7 @@ impl Program {
 		}
 	}
 
-	pub fn output(self) -> Result<Option<Output>> {
+	pub fn output(&mut self) -> Result<Option<Output>> {
 		let result = self.get_command().output();
 
 		match result {

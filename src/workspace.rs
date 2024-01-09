@@ -1,10 +1,7 @@
 use anyhow::{bail, Result};
 use chrono::Datelike;
 use log::trace;
-use std::{
-	fs,
-	path::{Path, PathBuf},
-};
+use std::{fs, path::Path};
 
 use crate::{
 	argon_info,
@@ -24,7 +21,7 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 	let workspace_dir = get_dir(project);
 
 	if !workspace_dir.exists() {
-		fs::create_dir_all(&workspace_dir)?;
+		fs::create_dir_all(workspace_dir)?;
 	}
 
 	for entry in fs::read_dir(template_dir)? {
@@ -154,16 +151,10 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 	Ok(())
 }
 
-pub fn get_dir(project_path: &Path) -> PathBuf {
-	let mut workspace_dir = project_path.to_owned();
-	workspace_dir.pop();
-
-	workspace_dir
+pub fn get_dir(project_path: &Path) -> &Path {
+	project_path.parent().unwrap()
 }
 
 pub fn get_name(project_path: &Path) -> String {
-	let mut name = project_path.to_owned();
-	name.pop();
-
-	name.file_name().unwrap().to_str().unwrap().to_owned()
+	util::path_to_string(project_path.parent().unwrap())
 }

@@ -48,6 +48,12 @@ impl RbxPath {
 		self.components.pop()
 	}
 
+	pub fn parent(&self) -> Option<Self> {
+		let mut parent = self.clone();
+
+		parent.pop().map(|_| parent)
+	}
+
 	pub fn len(&self) -> usize {
 		self.components.len()
 	}
