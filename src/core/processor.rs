@@ -111,10 +111,8 @@ impl Processor {
 					match ext {
 						"lua" | "luau" => {
 							if !file_name.starts_with(self.config.src()) {
-								let name = if file_name.ends_with(".server") {
-									&file_name[..file_name.rfind(".server").unwrap()]
-								} else if file_name.ends_with(".client") {
-									&file_name[..file_name.rfind(".client").unwrap()]
+								let name = if file_name.ends_with(".server") || file_name.ends_with(".client") {
+									&file_name[..file_name.len() - 7]
 								} else {
 									file_name
 								};
@@ -347,8 +345,15 @@ impl Processor {
 					let class = self.get_class(&FileKind::Dir, None, Some(&cur_rbx_path))?;
 					let parent = self.get_parent(&cur_rbx_path);
 
+					let properties = if path.exists() {
+						self.get_properties(&FileKind::Dir, path)?
+					} else {
+						HashMap::new()
+					};
+
 					let instance = Instance::new(comp)
 						.with_class(&class)
+						.with_properties(properties)
 						.with_rbx_path(&cur_rbx_path)
 						.with_path(path);
 
@@ -358,8 +363,15 @@ impl Processor {
 					let class = self.get_class(&kind, None, Some(&cur_rbx_path))?;
 					let parent = self.get_parent(&cur_rbx_path);
 
+					let properties = if path.is_file() {
+						self.get_properties(&kind, path)?
+					} else {
+						HashMap::new()
+					};
+
 					let instance = Instance::new(comp)
 						.with_class(&class)
+						.with_properties(properties)
 						.with_rbx_path(&cur_rbx_path)
 						.with_path(path);
 

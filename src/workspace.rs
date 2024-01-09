@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::Datelike;
 use log::trace;
 use std::{
@@ -16,6 +16,10 @@ use crate::{
 pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bool) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
+
+	if !template_dir.exists() {
+		bail!("Template {} does not exist", template)
+	}
 
 	let project_name = get_name(project);
 	let workspace_dir = get_dir(project);

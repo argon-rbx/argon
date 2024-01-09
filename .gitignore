@@ -2,3 +2,7 @@
 .vscode
 /target
 /test
+*.rbxm
+*.rbxmx
+*.rbxl
+*.rbxlx

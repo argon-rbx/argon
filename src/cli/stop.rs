@@ -56,8 +56,7 @@ impl Stop {
 				]);
 			}
 
-			argon_info!("All running sessions:\n");
-			println!("{}", table);
+			argon_info!("All running sessions:\n\n{}", table);
 
 			return Ok(());
 		}

@@ -91,14 +91,11 @@ impl Core {
 
 		let project = lock!(self.project);
 		let local_paths = project.get_paths();
-		let has_root_dir = project.root_dir.is_some();
 
 		drop(project);
 
 		for path in &local_paths {
-			if !has_root_dir {
-				processor.init(path)?;
-			}
+			processor.init(path)?;
 
 			if let Ok(read_dir) = fs::read_dir(path) {
 				for entry in read_dir {
