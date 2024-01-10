@@ -1,10 +1,12 @@
 #![allow(clippy::unnecessary_to_owned)]
+#![allow(dead_code)]
 
 use log::warn;
 use multimap::MultiMap;
 use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
 	collections::HashMap,
+	mem,
 	path::{Path, PathBuf},
 };
 
@@ -214,7 +216,7 @@ impl Dom {
 		self.ref_map.get(rbx_path).map(|refs| refs.dom_ref)
 	}
 
-	pub fn get_local_paths(&self, rbx_path: &RbxPath) -> Option<&PathBuf> {
+	pub fn get_local_path(&self, rbx_path: &RbxPath) -> Option<&PathBuf> {
 		self.ref_map.get(rbx_path).map(|refs| &refs.local_path)
 	}
 
@@ -238,5 +240,11 @@ impl Dom {
 
 	pub fn inner(&self) -> &WeakDom {
 		&self.inner
+	}
+
+	pub fn reload(&mut self, project: &Project) {
+		let new = Self::new(project);
+
+		drop(mem::replace(self, new));
 	}
 }

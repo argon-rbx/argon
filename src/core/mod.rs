@@ -10,15 +10,15 @@ use std::{
 	thread,
 };
 
+use self::{dom::Dom, processor::Processor, queue::Queue};
 use crate::{
+	argon_warn,
 	config::Config,
 	fs::{Fs, FsEventKind},
 	lock,
 	messages::{Create, Message, SyncMeta},
 	project::Project,
 };
-
-use self::{dom::Dom, processor::Processor, queue::Queue};
 
 mod dom;
 mod instance;
@@ -31,7 +31,7 @@ pub struct Core {
 	fs: Arc<Mutex<Fs>>,
 	processor: Arc<Mutex<Processor>>,
 	queue: Arc<Mutex<Queue>>,
-	pub dom: Arc<Mutex<Dom>>,
+	dom: Arc<Mutex<Dom>>,
 }
 
 impl Core {
@@ -88,13 +88,9 @@ impl Core {
 
 	pub fn load_dom(&mut self) -> Result<()> {
 		let processor = lock!(self.processor);
+		let project_paths = lock!(self.project).get_paths();
 
-		let project = lock!(self.project);
-		let local_paths = project.get_paths();
-
-		drop(project);
-
-		for path in &local_paths {
+		for path in &project_paths {
 			processor.init(path)?;
 
 			if let Ok(read_dir) = fs::read_dir(path) {
@@ -113,6 +109,8 @@ impl Core {
 			}
 		}
 
+		println!("{:?}", "doe");
+
 		Ok(())
 	}
 
@@ -120,54 +118,100 @@ impl Core {
 		let processor = self.processor.clone();
 		let project = self.project.clone();
 		let queue = self.queue.clone();
+		let dom = self.dom.clone();
 		let fs = self.fs.clone();
 
 		thread::spawn(move || -> Result<()> {
 			let receiver = lock!(fs).receiver();
 
-			// Start watching for file changes
+			// Start watching for the file changes
 			lock!(fs).watch_all(&lock!(project).get_paths())?;
 
-			for event in receiver.iter() {
+			for event in receiver {
 				if event.root {
 					match event.kind {
 						FsEventKind::Write => {
 							if event.path == lock!(project).project_path {
-								let new_project = Project::load(&lock!(project).project_path);
+								let result = lock!(project).reload();
 
-								if new_project.is_err() {
-									warn!("Failed to reload project: {:?}", new_project);
-									continue;
+								match result {
+									Ok(changes) => {
+										if changes.address {
+											argon_warn!(
+												"The project address has changed! Restart Argon to apply changes."
+											)
+										}
+
+										if changes.paths {
+											warn!("Rebuilding DOM - project paths changed! This might take a while..");
+
+											lock!(dom).reload(&lock!(project));
+
+											let mut fs = lock!(fs);
+											let processor = lock!(processor);
+											let project_paths = lock!(project).get_paths();
+
+											for path in &project_paths {
+												processor.init(path)?;
+
+												if let Ok(read_dir) = fs::read_dir(path) {
+													for entry in read_dir {
+														let entry = entry?;
+
+														match processor.create(&entry.path(), true) {
+															Ok(_) => {
+																trace!("Reloaded path: {:?}", entry.path());
+															}
+															Err(err) => {
+																error!(
+																	"Failed to reload path: {:?}, due to: {}",
+																	entry.path(),
+																	err
+																);
+															}
+														}
+													}
+												}
+											}
+
+											fs.unwatch_all(&project_paths)?;
+											fs.watch_all(&project_paths)?;
+
+											if let Some(sender) = sender.clone() {
+												sender.send(()).unwrap();
+											}
+
+											println!("{:?}", "DONE!");
+										}
+
+										if changes.meta {
+											let mut queue = lock!(queue);
+											let project = lock!(project);
+
+											queue.push(
+												Message::SyncMeta(SyncMeta {
+													name: project.name.clone(),
+													game_id: project.game_id,
+													place_ids: project.place_ids.clone(),
+												}),
+												None,
+											);
+										}
+									}
+									Err(err) => {
+										warn!("Failed to reload the project: {}", err);
+										continue;
+									}
 								}
-
-								let mut queue = lock!(queue);
-								let mut fs = lock!(fs);
-
-								fs.unwatch_all(&lock!(project).get_paths())?;
-
-								*lock!(project) = new_project.unwrap();
-
-								let project = lock!(project);
-
-								fs.watch_all(&project.get_paths())?;
-
-								queue.push(
-									Message::SyncMeta(SyncMeta {
-										name: project.name.clone(),
-										game_id: project.game_id,
-										place_ids: project.place_ids.clone(),
-									}),
-									None,
-								);
 							}
 						}
 						_ => {
-							let project = lock!(project);
+							let project_paths = lock!(project).get_paths();
 							let mut fs = lock!(fs);
 
-							if event.path.is_dir() && project.get_paths().contains(&event.path) {
-								fs.unwatch_all(&project.get_paths())?;
-								fs.watch_all(&project.get_paths())?;
+							if event.path.is_dir() && project_paths.contains(&event.path) {
+								fs.unwatch_all(&project_paths)?;
+								fs.watch_all(&project_paths)?;
 							}
 						}
 					}

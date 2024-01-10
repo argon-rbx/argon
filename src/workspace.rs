@@ -44,7 +44,7 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 		match name {
 			"project.json" => {
 				let content = fs::read_to_string(path)?;
-				let content = content.replace("$name", &project_name);
+				let content = content.replace("$name", project_name);
 				let content = content.replace("$src", source);
 
 				fs::write(new_path, content)?;
@@ -56,7 +56,7 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 			}
 			"wally.toml" => {
 				let content = fs::read_to_string(path)?;
-				let content = content.replace("$name", &project_name);
+				let content = content.replace("$name", project_name);
 				let content = content.replace("$author", &util::get_username());
 
 				fs::write(new_path, content)?;
@@ -65,7 +65,7 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 				"README" | "CHANGELOG" => {
 					if docs {
 						let content = fs::read_to_string(path)?;
-						let content = content.replace("$name", &project_name);
+						let content = content.replace("$name", project_name);
 
 						fs::write(new_path, content)?;
 					}
@@ -99,7 +99,7 @@ pub fn init(project: &Path, template: &str, source: &String, git: bool, docs: bo
 }
 
 pub fn init_ts(path: &Path, template: &str, git: bool) -> Result<bool> {
-	argon_info!("Waiting for npm...");
+	argon_info!("Waiting for npm..");
 
 	let command = match template {
 		"place" => "game",
@@ -155,6 +155,8 @@ pub fn get_dir(project_path: &Path) -> &Path {
 	project_path.parent().unwrap()
 }
 
-pub fn get_name(project_path: &Path) -> String {
-	util::path_to_string(project_path.parent().unwrap())
+pub fn get_name(project_path: &Path) -> &str {
+	let name = project_path.parent().unwrap();
+
+	util::from_os_str(name.file_name().unwrap())
 }

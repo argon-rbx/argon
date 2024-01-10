@@ -130,7 +130,7 @@ impl Build {
 		};
 
 		if is_ts {
-			argon_info!("Compiling TypeScript files...");
+			argon_info!("Compiling TypeScript files..");
 
 			let working_dir = project_path.parent().unwrap();
 
@@ -185,10 +185,10 @@ impl Build {
 
 			core.watch(Some(sender));
 
-			argon_info!("Watching for changes...");
+			argon_info!("Watching for changes..");
 
 			for _ in receiver {
-				info!("Rebuilding project...");
+				info!("Rebuilding project..");
 
 				core.build(&path, xml)?;
 			}

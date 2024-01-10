@@ -1,10 +1,11 @@
 mod debouncer;
-pub mod watcher;
+mod watcher;
 
-use self::watcher::FsWatcher;
 use anyhow::Result;
 use crossbeam_channel::Receiver;
 use std::path::PathBuf;
+
+use self::watcher::FsWatcher;
 
 #[derive(Debug)]
 pub struct FsEvent {

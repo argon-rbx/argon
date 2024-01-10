@@ -59,7 +59,7 @@ pub fn read_properties(path: &Path) -> Result<HashMap<String, Variant>> {
 				properties.insert(property, value);
 			}
 			Err(err) => {
-				error!("{err}");
+				error!("Failed to parse property: {}", err);
 			}
 		}
 	}

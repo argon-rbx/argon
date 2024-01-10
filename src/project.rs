@@ -1,14 +1,20 @@
 use anyhow::Result;
 use multimap::MultiMap;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::{
 	collections::{BTreeMap, HashMap},
-	fs,
+	fs, mem,
 	path::PathBuf,
 };
 
-use crate::{glob::Glob, rbx_path::RbxPath, util, workspace};
+use crate::{glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
+
+#[derive(Debug)]
+pub struct ProjectChanges {
+	pub address: bool,
+	pub paths: bool,
+	pub meta: bool,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
@@ -22,14 +28,14 @@ pub struct ProjectNode {
 	pub tree: BTreeMap<String, ProjectNode>,
 
 	#[serde(rename = "$properties")]
-	pub properties: Option<HashMap<String, Value>>,
+	pub properties: Option<HashMap<String, UnresolvedValue>>,
 	#[serde(rename = "$attributes")]
-	pub attributes: Option<HashMap<String, Value>>,
+	pub attributes: Option<HashMap<String, UnresolvedValue>>,
 	#[serde(rename = "$ignoreUnknownInstances")]
 	pub ignore_unknown_instances: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
@@ -42,7 +48,7 @@ pub struct Project {
 	pub game_id: Option<u64>,
 	#[serde(rename = "placeIds", alias = "servePlaceIds")]
 	pub place_ids: Option<Vec<u64>>,
-	#[serde(alias = "globIgnorePaths")]
+	#[serde(rename = "ignoreGlobs", alias = "globIgnorePaths")]
 	pub ignore_globs: Option<Vec<Glob>>,
 
 	#[serde(skip)]
@@ -88,23 +94,18 @@ impl Project {
 		Ok(project)
 	}
 
-	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
-		for (name, node) in tree.iter() {
-			let mut rbx_path = rbx_root.clone();
-			rbx_path.push(name);
+	pub fn reload(&mut self) -> Result<ProjectChanges> {
+		let new = Self::load(&self.project_path)?;
 
-			if let Some(path) = &node.path {
-				let mut local_path = path.clone();
+		let changes = ProjectChanges {
+			address: self.host != new.host || self.port != new.port,
+			paths: self.path_map != new.path_map,
+			meta: self.name != new.name || self.game_id != new.game_id || self.place_ids != new.place_ids,
+		};
 
-				if !local_path.is_absolute() {
-					local_path = local_root.join(local_path);
-				}
+		drop(mem::replace(self, new));
 
-				self.path_map.insert(local_path, rbx_path.clone());
-			}
-
-			self.parse_paths(&node.tree, local_root, &rbx_path);
-		}
+		Ok(changes)
 	}
 
 	pub fn get_paths(&self) -> Vec<PathBuf> {
@@ -131,6 +132,25 @@ impl Project {
 		}
 
 		false
+	}
+
+	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
+		for (name, node) in tree {
+			let mut rbx_path = rbx_root.clone();
+			rbx_path.push(name);
+
+			if let Some(path) = &node.path {
+				let mut local_path = path.clone();
+
+				if !local_path.is_absolute() {
+					local_path = local_root.join(local_path);
+				}
+
+				self.path_map.insert(local_path, rbx_path.clone());
+			}
+
+			self.parse_paths(&node.tree, local_root, &rbx_path);
+		}
 	}
 }
 

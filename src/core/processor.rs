@@ -101,7 +101,7 @@ impl Processor {
 				let parent = diff.parent().unwrap();
 
 				for rbx_path in rbx_paths.iter_mut() {
-					for comp in parent.iter() {
+					for comp in parent {
 						let comp = util::from_os_str(comp);
 						rbx_path.push(comp);
 					}
@@ -322,10 +322,7 @@ impl Processor {
 			return Ok(());
 		}
 
-		let project = lock!(self.project);
-		let rbx_paths = project.path_map.get_vec(path).unwrap().clone();
-
-		drop(project);
+		let rbx_paths = lock!(self.project).path_map.get_vec(path).unwrap().clone();
 
 		for rbx_path in rbx_paths {
 			let mut dom = lock!(self.dom);
