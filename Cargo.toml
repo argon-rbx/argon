@@ -53,5 +53,7 @@ log = "0.4.20"
 awc = "3.2.0"
 csv = "1.3.0"
 
+config-derive = { version = "*", path = "crates/config-derive" }
+
 [patch.crates-io]
 notify-debouncer-full = { git = "https://github.com/argon-rbx/notify-debouncer-full.git" }
