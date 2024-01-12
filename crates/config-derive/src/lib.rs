@@ -1,51 +1,194 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields};
+use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(Get)]
-pub fn derive_index(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+mod util;
+
+#[proc_macro_derive(Val)]
+pub fn derive_val(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let fields = util::get_fields(&input.data);
+
+	let (variants, impls) = {
+		let mut defined = vec![];
+
+		let mut variants = TokenStream::new();
+		let mut impls = TokenStream::new();
+
+		for field in fields {
+			let ty = &field.ty;
+
+			let ident = util::get_type_ident(ty).unwrap();
+
+			if defined.contains(&ident) {
+				continue;
+			} else {
+				defined.push(ident.clone());
+			}
+
+			let variant = {
+				let variant = ident.to_string();
+				let variant = variant[0..1].to_uppercase() + &variant[1..];
+				Ident::new(&variant, ident.span())
+			};
+
+			variants.extend(quote! {
+				#variant(#ty),
+			});
+
+			impls.extend(quote!(
+				impl From<#ty> for Value {
+					fn from(value: #ty) -> Self {
+						Value::#variant(value)
+					}
+				}
+			))
+		}
+
+		(variants, impls)
+	};
+
+	let expanded = quote! {
+		#[derive(Clone, Debug, PartialEq)]
+		pub enum Value {
+			#variants
+		}
+
+		#impls
+	};
+
+	proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Iter)]
+pub fn derive_iter(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let input = parse_macro_input!(input as DeriveInput);
 
 	let name = &input.ident;
+	let data = input.data;
+	let fields = util::get_fields(&data);
 
-	let arms = match input.data {
-		Data::Struct(data) => {
-			let mut arms = TokenStream::new();
+	let arms = {
+		let mut arms = TokenStream::new();
 
-			match data.fields {
-				Fields::Named(named) => {
-					for field in named.named {
-						match field.ident {
-							Some(ident) => {
-								let index = ident.to_string();
+		for (index, field) in fields.iter().enumerate() {
+			let ident = field.ident.as_ref().unwrap().to_string();
 
-								let arm = quote! {
-									#index => Some(&self.#ident),
-								};
+			arms.extend(quote! {
+				#index => #ident,
+			});
+		}
 
-								arms.extend(arm);
-							}
-							None => unimplemented!("Tuples are not supported"),
-						}
-					}
-				}
-				_ => unimplemented!("Only named fields are supported"),
+		arms
+	};
+
+	let expanded = quote! {
+		pub struct IntoIter<'a> {
+			inner: &'a #name,
+			index: usize,
+		}
+
+		impl<'a> Iterator for IntoIter<'a> {
+			type Item = (&'a str, Value);
+
+			fn next(&mut self) -> Option<Self::Item> {
+				let index = match self.index {
+					#arms
+					_ => return None,
+				};
+
+				self.index += 1;
+
+				Some((index, self.inner.get(index).unwrap()))
 			}
+		}
 
-			arms
+		impl<'a> IntoIterator for &'a #name {
+			type Item = (&'a str, Value);
+			type IntoIter = IntoIter<'a>;
+
+			fn into_iter(self) -> Self::IntoIter {
+				IntoIter {
+					inner: self,
+					index: 0,
+				}
+			}
 		}
-		_ => {
-			unimplemented!("Only flat structs are supported")
+	};
+
+	proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Get)]
+pub fn derive_get(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let name = &input.ident;
+	let data = input.data;
+	let fields = util::get_fields(&data);
+
+	let arms = {
+		let mut arms = TokenStream::new();
+
+		for field in fields {
+			let ident = field.ident.as_ref().unwrap();
+			let index = ident.to_string();
+
+			arms.extend(quote! {
+				#index => Some(self.#ident.clone().into()),
+			});
 		}
+
+		arms
 	};
 
 	let expanded = quote! {
 		impl #name {
-			fn get(&self, index: &str) -> Option<&i32> {
+			pub fn get(&self, index: &str) -> Option<Value> {
 				match index {
 					#arms
 					_ => None,
 				}
+			}
+		}
+	};
+
+	proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Set)]
+pub fn derive_set(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let name = &input.ident;
+	let data = input.data;
+	let fields = util::get_fields(&data);
+
+	let arms = {
+		let mut arms = TokenStream::new();
+
+		for field in fields {
+			let ident = field.ident.as_ref().unwrap();
+			let index = ident.to_string();
+
+			arms.extend(quote! {
+				#index => self.#ident = value.parse()?,
+			});
+		}
+
+		arms
+	};
+
+	let expanded = quote! {
+		impl #name {
+			pub fn set(&mut self, index: &str, value: &str) -> Result<(), Box<dyn std::error::Error>> {
+				match index {
+					#arms
+					_ => return Err(format!("Field: {} does not exist", index).into()),
+				}
+
+				Ok(())
 			}
 		}
 	};
