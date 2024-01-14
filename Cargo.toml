@@ -19,9 +19,13 @@ rbx_binary = "0.7.3"
 rbx_dom_weak = "2.6.0"
 rbx_reflection = "4.4.0"
 rbx_reflection_database = "0.2.9"
+
+config-derive = { version = "*", path = "crates/config-derive" }
+
 clap = { version = "4.4.1", features = ["derive", "cargo"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }
+
 notify-debouncer-full = "0.3.1"
 clap-verbosity-flag = "2.1.0"
 crossbeam-channel = "0.5.8"
@@ -35,11 +39,13 @@ backtrace = "0.3.69"
 documented = "0.2.0"
 dialoguer = "0.11.0"
 actix-web = "4.4.0"
-json2lua = "0.1.2"
 multimap = "0.9.1"
 optfield = "0.3.0"
+
+json2lua = "0.1.2"
 globenv = "0.2.1"
 pathsub = "0.1.1"
+
 colored = "2.0.4"
 anyhow = "1.0.75"
 chrono = "0.4.31"
@@ -53,7 +59,5 @@ log = "0.4.20"
 awc = "3.2.0"
 csv = "1.3.0"
 
-config-derive = { version = "*", path = "crates/config-derive" }
-
 [patch.crates-io]
-notify-debouncer-full = { git = "https://github.com/argon-rbx/notify-debouncer-full.git" }
+notify-debouncer-full = { path = "crates/notify-debouncer-full" }
