@@ -8,9 +8,19 @@ pub fn get_fields(data: &Data) -> Vec<&Field> {
 			Fields::Named(named) => {
 				let mut fields = vec![];
 
-				for field in &named.named {
+				'outer: for field in &named.named {
 					match field.ident {
 						Some(_) => {
+							if let Some(attr) = field.attrs.first() {
+								for tree in attr.meta.to_token_stream() {
+									if let TokenTree::Ident(ident) = tree {
+										if ident == "serde" {
+											continue 'outer;
+										}
+									}
+								}
+							}
+
 							fields.push(field);
 						}
 						None => unimplemented!("Tuples are not supported"),

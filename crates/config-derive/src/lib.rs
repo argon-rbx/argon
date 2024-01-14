@@ -10,10 +10,11 @@ pub fn derive_val(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 	let fields = util::get_fields(&input.data);
 
-	let (variants, impls) = {
+	let (variants, fmts, impls) = {
 		let mut defined = vec![];
 
 		let mut variants = TokenStream::new();
+		let mut fmts = TokenStream::new();
 		let mut impls = TokenStream::new();
 
 		for field in fields {
@@ -37,6 +38,10 @@ pub fn derive_val(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 				#variant(#ty),
 			});
 
+			fmts.extend(quote! {
+				Value::#variant(v) => write!(f, "{}", v.to_string()),
+			});
+
 			impls.extend(quote!(
 				impl From<#ty> for Value {
 					fn from(value: #ty) -> Self {
@@ -46,13 +51,22 @@ pub fn derive_val(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 			))
 		}
 
-		(variants, impls)
+		(variants, fmts, impls)
 	};
 
 	let expanded = quote! {
-		#[derive(Clone, Debug, PartialEq)]
+		#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+		#[serde(untagged)]
 		pub enum Value {
 			#variants
+		}
+
+		impl std::fmt::Display for Value {
+			fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+				match self {
+					#fmts
+				}
+			}
 		}
 
 		#impls
