@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::{
 	collections::{BTreeMap, HashMap},
 	fs, mem,
-	path::PathBuf,
+	path::{Path, PathBuf},
 };
+use walkdir::WalkDir;
 
 use crate::{glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
 
@@ -65,7 +66,7 @@ pub struct Project {
 }
 
 impl Project {
-	pub fn load(project_path: &PathBuf) -> Result<Self> {
+	pub fn load(project_path: &Path) -> Result<Self> {
 		let project = fs::read_to_string(project_path)?;
 		let mut project: Project = serde_json::from_str(&project)?;
 
@@ -132,6 +133,31 @@ impl Project {
 		}
 
 		false
+	}
+
+	pub fn is_rojo(&self) -> bool {
+		let mut rojo_files = 0;
+
+		if util::get_file_name(&self.project_path) == ".argon" {
+			return false;
+		}
+
+		for path in self.path_map.keys() {
+			for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+				let stem = util::get_file_stem(entry.path());
+				let ext = util::get_file_ext(entry.path());
+
+				if ext == "lua" || ext == "luau" {
+					if stem.starts_with(".src") || stem.starts_with(".data") {
+						return false;
+					} else if stem.starts_with("init") || stem.starts_with("meta") {
+						rojo_files += 1;
+					}
+				}
+			}
+		}
+
+		rojo_files != 0
 	}
 
 	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {

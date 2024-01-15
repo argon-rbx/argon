@@ -35,7 +35,9 @@ impl Config {
 				let mut config = GlobalConfig::load();
 
 				if config.has_setting(&setting) {
-					config.set(&setting, &value)?;
+					if let Err(err) = config.set(&setting, &value) {
+						exit!("Failed to parse value: {}", err);
+					}
 
 					config.save()?;
 
@@ -45,12 +47,14 @@ impl Config {
 				}
 			}
 			(Some(setting), None) => {
-				let default = GlobalConfig::load_default();
+				let default = GlobalConfig::default();
 
 				if default.has_setting(&setting) {
 					let mut config = GlobalConfig::load();
 
-					config[&setting] = default[&setting].clone();
+					config
+						.set(&setting, &default.get(&setting).unwrap().to_string())
+						.unwrap();
 
 					config.save()?;
 

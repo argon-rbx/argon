@@ -46,6 +46,7 @@ json2lua = "0.1.2"
 globenv = "0.2.1"
 pathsub = "0.1.1"
 
+walkdir = "2.4.0"
 colored = "2.0.4"
 anyhow = "1.0.75"
 chrono = "0.4.31"

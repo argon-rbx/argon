@@ -9,6 +9,22 @@ use std::{env, fmt, io::Write};
 
 use crate::util;
 
+// These Argon logs ignore verbosity level, aside of `Off`
+#[macro_export]
+macro_rules! argon_error {
+    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Error, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! argon_warn {
+    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Warn, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! argon_info {
+    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Info, $($arg)+))
+}
+
 pub fn init(log_level: LevelFilter, color_choice: WriteStyle) {
 	let mut builder = Builder::new();
 

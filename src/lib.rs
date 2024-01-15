@@ -18,22 +18,6 @@ pub mod sessions;
 pub mod util;
 pub mod workspace;
 
-// These Argon logs ignore verbosity level, aside of `Off`
-#[macro_export]
-macro_rules! argon_error {
-    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Error, $($arg)+))
-}
-
-#[macro_export]
-macro_rules! argon_warn {
-    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Warn, $($arg)+))
-}
-
-#[macro_export]
-macro_rules! argon_info {
-    ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Info, $($arg)+))
-}
-
 // A shorter way to lock the Mutex
 #[macro_export]
 macro_rules! lock {

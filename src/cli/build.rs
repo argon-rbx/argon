@@ -35,6 +35,10 @@ pub struct Build {
 	#[arg(short, long)]
 	output: Option<PathBuf>,
 
+	/// Rebuild project every time files change
+	#[arg(short, long)]
+	watch: bool,
+
 	/// Build plugin and place it into plugins folder
 	#[arg(short, long)]
 	plugin: bool,
@@ -47,9 +51,9 @@ pub struct Build {
 	#[arg(short, long)]
 	ts: bool,
 
-	/// Rebuild project every time files change
+	/// Whether to build using Rojo namespace
 	#[arg(short, long)]
-	watch: bool,
+	rojo: bool,
 
 	/// Spawn the Argon child process
 	#[arg(long, hide = true)]
@@ -58,21 +62,19 @@ pub struct Build {
 
 impl Build {
 	pub fn main(self) -> Result<()> {
-		let config = Config::load();
+		let mut config = Config::load();
 
-		if self.watch && !self.argon_spawn && config.spawn() {
+		if self.watch && !self.argon_spawn && config.spawn {
 			return self.spawn();
 		}
 
-		let project = self.project.clone().unwrap_or_default();
-		let project_path = project::resolve(project, config.project_name())?;
+		let project_path = project::resolve(self.project.clone().unwrap_or_default(), &config.project_name)?;
 
 		if !project_path.exists() {
 			exit!("Project {} does not exist", project_path.to_str().unwrap().bold());
 		}
 
 		let project = Project::load(&project_path)?;
-		let is_ts = project.is_ts();
 
 		let mut xml = self.xml;
 		let path = if self.plugin {
@@ -129,7 +131,10 @@ impl Build {
 			self.get_default_file(&project)
 		};
 
-		if is_ts {
+		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
+		let use_rojo = self.rojo || config.rojo_mode || if config.auto_detect { project.is_rojo() } else { false };
+
+		if use_ts {
 			argon_info!("Compiling TypeScript files..");
 
 			let working_dir = project_path.parent().unwrap();
@@ -148,6 +153,10 @@ impl Build {
 			}
 		}
 
+		if use_rojo {
+			config.make_rojo();
+		}
+
 		let mut core = Core::new(config.clone(), project)?;
 
 		core.load_dom()?;
@@ -160,7 +169,7 @@ impl Build {
 		);
 
 		if self.watch {
-			if is_ts {
+			if use_ts {
 				trace!("Starting roblox-ts");
 
 				let working_dir = project_path.parent().unwrap();
@@ -177,7 +186,7 @@ impl Build {
 				})?;
 			}
 
-			if config.spawn() {
+			if config.spawn {
 				sessions::add(self.session, None, None, process::id())?;
 			}
 

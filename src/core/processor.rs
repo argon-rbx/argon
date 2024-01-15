@@ -63,7 +63,7 @@ impl Processor {
 		project: Arc<Mutex<Project>>,
 		config: Arc<Config>,
 	) -> Self {
-		let data_file = format!("{}.json", config.data());
+		let data_file = format!("{}.json", config.data);
 
 		Self {
 			dom,
@@ -108,7 +108,7 @@ impl Processor {
 
 					match ext {
 						"lua" | "luau" => {
-							if !file_name.starts_with(self.config.src()) {
+							if !file_name.starts_with(&self.config.src) {
 								let name = if file_name.ends_with(".server") || file_name.ends_with(".client") {
 									&file_name[..file_name.len() - 7]
 								} else {
@@ -119,7 +119,7 @@ impl Processor {
 							}
 						}
 						"json" => {
-							if !file_name.starts_with(self.config.data()) {
+							if !file_name.starts_with(&self.config.data) {
 								rbx_path.push(file_name);
 							}
 						}
@@ -150,13 +150,13 @@ impl Processor {
 				ScriptKind::Module
 			};
 
-			if file_name.starts_with(self.config.src()) {
+			if file_name.starts_with(&self.config.src) {
 				return Ok(FileKind::ChildScript(kind));
 			} else {
 				return Ok(FileKind::Script(kind));
 			}
 		} else if ext == "json" {
-			if file_name == self.config.data() {
+			if file_name == self.config.data {
 				return Ok(FileKind::InstanceData);
 			} else {
 				return Ok(FileKind::JsonModule);
@@ -494,7 +494,7 @@ impl Processor {
 		let mut queue = lock!(self.queue);
 
 		for rbx_path in rbx_paths {
-			if file_name == self.config.data() && ext == "json" {
+			if file_name == self.config.data && ext == "json" {
 				let instance = dom.get_mut(&rbx_path).unwrap();
 				instance.properties = HashMap::new();
 

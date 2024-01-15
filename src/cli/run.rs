@@ -16,20 +16,12 @@ use crate::{
 	program::{Program, ProgramKind},
 	project::{self, Project},
 	server::{self, Server},
-	sessions, util, workspace,
+	sessions, util,
 };
 
 /// Run Argon, start local server and looking for file changes
 #[derive(Parser)]
 pub struct Run {
-	/// Server host name
-	#[arg(short = 'H', long)]
-	host: Option<String>,
-
-	/// Server port
-	#[arg(short = 'P', long)]
-	port: Option<u16>,
-
 	/// Project path
 	#[arg()]
 	project: Option<PathBuf>,
@@ -38,9 +30,21 @@ pub struct Run {
 	#[arg()]
 	session: Option<String>,
 
+	/// Server host name
+	#[arg(short = 'H', long)]
+	host: Option<String>,
+
+	/// Server port
+	#[arg(short = 'P', long)]
+	port: Option<u16>,
+
 	/// Whether to run using roblox-ts
 	#[arg(short, long)]
 	ts: bool,
+
+	/// Whether to run using Rojo namespace
+	#[arg(short, long)]
+	rojo: bool,
 
 	/// Spawn the Argon child process
 	#[arg(long, hide = true)]
@@ -49,53 +53,28 @@ pub struct Run {
 
 impl Run {
 	pub fn main(self) -> Result<()> {
-		let config = Config::load();
+		let mut config = Config::load();
 
-		let project = self.project.clone().unwrap_or_default();
-		let project_path = project::resolve(project.clone(), config.project_name())?;
+		if !self.argon_spawn && config.spawn {
+			return self.spawn();
+		}
 
-		if !self.argon_spawn {
-			let project_exists = project_path.exists();
+		let project_path = project::resolve(self.project.clone().unwrap_or_default(), &config.project_name)?;
 
-			if !project_exists && config.auto_init() {
-				argon_warn!("Cannot find the project, creating new one!");
-
-				if self.ts {
-					if !workspace::init_ts(&project_path, config.template(), config.use_git())? {
-						return Ok(());
-					}
-				} else {
-					workspace::init(
-						&project_path,
-						config.template(),
-						config.source_dir(),
-						config.use_git(),
-						config.include_docs(),
-					)?;
-
-					if config.use_git() {
-						let workspace_dir = workspace::get_dir(&project_path);
-
-						workspace::initialize_repo(workspace_dir)?;
-					}
-				}
-			} else if !project_exists {
-				exit!(
-					"Project {} does not exist. Run {} or enable {} setting first.",
-					project_path.to_str().unwrap().bold(),
-					"argon init".bold(),
-					"auto_init".bold()
-				);
-			}
-
-			if config.spawn() {
-				return self.spawn();
-			}
+		if !project_path.exists() {
+			exit!(
+				"Project {} does not exist. Run {} to create new one.",
+				project_path.to_str().unwrap().bold(),
+				"argon init".bold(),
+			);
 		}
 
 		let project = Project::load(&project_path)?;
 
-		if self.ts || project.is_ts() {
+		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
+		let use_rojo = self.rojo || config.rojo_mode || if config.auto_detect { project.is_rojo() } else { false };
+
+		if use_ts {
 			trace!("Starting roblox-ts");
 
 			let working_dir = project_path.parent().unwrap();
@@ -116,12 +95,16 @@ impl Run {
 			}
 		}
 
+		if use_rojo {
+			config.make_rojo();
+		}
+
 		let mut core = Core::new(config.clone(), project)?;
 		let host = self.host.unwrap_or(core.host());
 		let mut port = self.port.unwrap_or(core.port());
 
 		if !server::is_port_free(&host, port) {
-			if config.scan_ports() {
+			if config.scan_ports {
 				let new_port = server::get_free_port(&host, port);
 
 				argon_warn!("Port {} is already in use, using {} instead!", port, new_port);
@@ -140,7 +123,7 @@ impl Run {
 
 		let server = Server::new(core, &host, &port);
 
-		if config.spawn() {
+		if config.spawn {
 			sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
 		}
 
