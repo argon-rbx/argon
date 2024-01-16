@@ -17,7 +17,8 @@ use crate::{
 	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
-	sessions, util,
+	sessions,
+	util::{self, resolve_path},
 };
 
 /// Build project into Roblox place or model
@@ -130,9 +131,11 @@ impl Build {
 		} else {
 			self.get_default_file(&project)
 		};
+		let path = resolve_path(path)?;
 
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
-		let use_rojo = self.rojo || config.rojo_mode || if config.auto_detect { project.is_rojo() } else { false };
+		let use_rojo =
+			self.rojo || config.rojo_mode || use_ts || if config.auto_detect { project.is_rojo() } else { false };
 
 		if use_ts {
 			argon_info!("Compiling TypeScript files..");

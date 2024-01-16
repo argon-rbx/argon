@@ -72,7 +72,8 @@ impl Run {
 		let project = Project::load(&project_path)?;
 
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
-		let use_rojo = self.rojo || config.rojo_mode || if config.auto_detect { project.is_rojo() } else { false };
+		let use_rojo =
+			self.rojo || config.rojo_mode || use_ts || if config.auto_detect { project.is_rojo() } else { false };
 
 		if use_ts {
 			trace!("Starting roblox-ts");

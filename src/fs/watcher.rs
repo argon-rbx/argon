@@ -79,8 +79,8 @@ impl FsWatcher {
 			#[cfg(target_os = "linux")]
 			let mut fs_debouncer = lock!(fs_debouncer);
 
-			for response in receiver.iter() {
-				for event in response.unwrap() {
+			for events in receiver.iter() {
+				for event in events.unwrap() {
 					fs_debouncer.debounce(&event);
 				}
 			}

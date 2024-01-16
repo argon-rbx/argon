@@ -136,8 +136,6 @@ impl Project {
 	}
 
 	pub fn is_rojo(&self) -> bool {
-		let mut rojo_files = 0;
-
 		if util::get_file_name(&self.project_path) == ".argon" {
 			return false;
 		}
@@ -148,16 +146,22 @@ impl Project {
 				let ext = util::get_file_ext(entry.path());
 
 				if ext == "lua" || ext == "luau" {
-					if stem.starts_with(".src") || stem.starts_with(".data") {
+					if stem.starts_with(".src") {
 						return false;
-					} else if stem.starts_with("init") || stem.starts_with("meta") {
-						rojo_files += 1;
+					} else if stem.starts_with("init") {
+						return true;
+					}
+				} else if ext == "json" {
+					if stem == ".data" {
+						return false;
+					} else if stem == "meta" {
+						return true;
 					}
 				}
 			}
 		}
 
-		rojo_files != 0
+		false
 	}
 
 	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {

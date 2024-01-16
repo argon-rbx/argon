@@ -21,23 +21,23 @@ pub struct Config {
 	pub host: String,
 	/// Default server port
 	pub port: u16,
-	/// Default source directory
-	pub source_dir: String,
 	/// Default project template
 	pub template: String,
-	/// Whether to spawn the Argon child process
+	/// Default project license
+	pub license: String,
+	/// Spawn Argon as child process, freeing up the terminal
 	pub spawn: bool,
-	/// Whether to scan for the first available port
+	/// Scan for the first available port if the default is taken
 	pub scan_ports: bool,
-	/// Whether to automatically detect Rojo or roblox-ts
+	/// Automatically detect if project is Rojo or roblox-ts
 	pub auto_detect: bool,
-	/// Whether to use git for project management
+	/// Use git for project management
 	pub use_git: bool,
-	/// Whether to include documentation in the project
+	/// Include documentation in the project (README, LICENSE, etc.)
 	pub include_docs: bool,
-	/// Whether to use Rojo namespace by default
+	/// Use Rojo namespace by default
 	pub rojo_mode: bool,
-	/// Whether to use roblox-ts by default
+	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
 	#[serde(skip)]
@@ -53,8 +53,8 @@ impl Default for Config {
 		Self {
 			host: String::from("localhost"),
 			port: 8000,
-			source_dir: String::from("src"),
 			template: String::from("place"),
+			license: String::from("Apache-2.0"),
 			spawn: true,
 			scan_ports: true,
 			auto_detect: true,

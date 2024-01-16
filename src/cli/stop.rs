@@ -1,6 +1,6 @@
 use anyhow::Result;
-use awc::Client;
 use clap::Parser;
+use reqwest::blocking::Client;
 
 use crate::{argon_info, argon_warn, logger::Table, sessions, util};
 
@@ -69,11 +69,9 @@ impl Stop {
 				return Ok(());
 			}
 
-			let client = Client::default();
-
 			for (_, session) in sessions.unwrap() {
 				if let Some(address) = session.get_address() {
-					Self::make_request(&client, &address, session.pid);
+					Self::make_request(&address, session.pid);
 				} else {
 					Self::kill_process(session.pid);
 				}
@@ -86,8 +84,7 @@ impl Stop {
 
 		if let Some(session) = session {
 			if let Some(address) = session.get_address() {
-				let client = Client::default();
-				Self::make_request(&client, &address, session.pid);
+				Self::make_request(&address, session.pid);
 			} else {
 				Self::kill_process(session.pid);
 			}
@@ -99,11 +96,10 @@ impl Stop {
 		}
 	}
 
-	#[actix_web::main]
-	async fn make_request(client: &Client, address: &String, pid: u32) {
+	fn make_request(address: &String, pid: u32) {
 		let url = format!("http://{}/stop", address);
 
-		match client.post(url).send().await {
+		match Client::new().post(url).send() {
 			Err(_) => {
 				Self::kill_process(pid);
 			}

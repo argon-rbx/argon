@@ -5,6 +5,7 @@ use rbx_reflection::ClassTag;
 use std::{
 	env,
 	ffi::OsStr,
+	fs,
 	path::{Path, PathBuf},
 	process::{self, Command},
 };
@@ -137,4 +138,25 @@ pub fn get_verbosity_flag() -> String {
 
 pub fn get_yes() -> bool {
 	env::var("ARGON_YES").is_ok()
+}
+
+pub fn copy_dir(from: &Path, to: &Path) -> Result<()> {
+	if !to.exists() {
+		fs::create_dir_all(to)?;
+	}
+
+	for entry in fs::read_dir(from)? {
+		let entry = entry?;
+
+		let path = entry.path();
+		let name = get_file_name(&path);
+
+		if path.is_dir() {
+			copy_dir(&path, &to.join(name))?;
+		} else {
+			fs::copy(&path, &to.join(name))?;
+		}
+	}
+
+	Ok(())
 }

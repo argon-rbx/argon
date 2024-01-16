@@ -3,7 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::path::PathBuf;
 
-use crate::{argon_info, argon_warn, config::Config, project, workspace};
+use crate::{argon_error, argon_info, config::Config, project, workspace};
 
 /// Initialize new Argon project
 #[derive(Parser)]
@@ -16,23 +16,23 @@ pub struct Init {
 	#[arg(short = 'T', long)]
 	template: Option<String>,
 
-	/// Source folder
+	/// Workspace license
 	#[arg(short, long)]
-	source: Option<String>,
+	license: Option<String>,
 
-	/// Whether to configure Git
+	/// Configure Git
 	#[arg(short, long)]
 	git: bool,
 
-	/// Whether to include docs (README, LICENSE, etc.)
+	/// Include docs (README, LICENSE, etc.)
 	#[arg(short, long)]
 	docs: bool,
 
-	/// Whether to initialize using roblox-ts
+	/// Initialize using roblox-ts
 	#[arg(short, long)]
 	ts: bool,
 
-	/// Whether to initialize using Rojo namespace
+	/// Initialize using Rojo namespace
 	#[arg(short, long)]
 	rojo: bool,
 }
@@ -43,14 +43,14 @@ impl Init {
 
 		let project = self.project.unwrap_or_default();
 		let template = self.template.unwrap_or(config.template.clone());
-		let source = self.source.unwrap_or(config.source_dir.clone());
+		let license = self.license.unwrap_or(config.license.clone());
 		let git = self.git || config.use_git;
 		let docs = self.docs || config.include_docs;
 		let ts = self.ts || config.ts_mode;
 		let rojo = self.rojo || config.rojo_mode;
 
 		if ts {
-			if workspace::init_ts(&project, &template, git)? {
+			if workspace::init_ts(&project, &template, &license, git, docs)? {
 				argon_info!("Successfully initialized roblox-ts project!");
 			}
 
@@ -64,17 +64,11 @@ impl Init {
 		let project_path = project::resolve(project, &config.project_name)?;
 
 		if project_path.exists() {
-			argon_warn!("Project {} already exists!", project_path.to_str().unwrap().bold());
+			argon_error!("Project {} already exists!", project_path.to_str().unwrap().bold());
 			return Ok(());
 		}
 
-		workspace::init(&project_path, &template, &source, git, docs)?;
-
-		if git {
-			let workspace_dir = workspace::get_dir(&project_path);
-
-			workspace::initialize_repo(workspace_dir)?;
-		}
+		workspace::init(&project_path, &template, &license, git, docs)?;
 
 		argon_info!(
 			"Successfully initialized project: {}",

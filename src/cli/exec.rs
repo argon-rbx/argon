@@ -1,6 +1,6 @@
 use anyhow::Result;
-use awc::Client;
 use clap::Parser;
+use reqwest::blocking::Client;
 use serde_json::json;
 use std::{fs, path::MAIN_SEPARATOR};
 
@@ -61,15 +61,14 @@ impl Exec {
 		true
 	}
 
-	#[actix_web::main]
-	async fn make_request(address: &String, code: &str) {
+	fn make_request(address: &String, code: &str) {
 		let url = format!("http://{}/exec", address);
 
 		let data = json!({
 			"code": code,
 		});
 
-		match Client::default().post(url).send_json(&data).await {
+		match Client::default().post(url).json(&data).send() {
 			Ok(_) => argon_info!("Code executed successfully!"),
 			Err(err) => {
 				argon_error!("Code execution failed: {}", err);

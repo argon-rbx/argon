@@ -1,29 +1,13 @@
 use anyhow::Result;
-use std::{env, fs};
+use include_dir::{include_dir, Dir};
+use std::{env, fs, path::Path};
 
 use crate::{logger, util};
 
-const PLACE_PROJECT: &str = include_str!("../assets/templates/place/project.json");
-const PLACE_GITIGNORE: &str = include_str!("../assets/templates/place/.gitignore");
-const PLACE_README: &str = include_str!("../assets/templates/place/README.md");
-
-const PLUGIN_PROJECT: &str = include_str!("../assets/templates/plugin/project.json");
-const PLUGIN_GITIGNORE: &str = include_str!("../assets/templates/plugin/.gitignore");
-const PLUGIN_README: &str = include_str!("../assets/templates/plugin/README.md");
-const PLUGIN_LICENSE: &str = include_str!("../assets/templates/plugin/LICENSE.md");
-const PLUGIN_CHANGELOG: &str = include_str!("../assets/templates/plugin/CHANGELOG.md");
-
-const PACKAGE_PROJECT: &str = include_str!("../assets/templates/package/project.json");
-const PACKAGE_GITIGNORE: &str = include_str!("../assets/templates/package/.gitignore");
-const PACKAGE_README: &str = include_str!("../assets/templates/package/README.md");
-const PACKAGE_LICENSE: &str = include_str!("../assets/templates/package/LICENSE.md");
-const PACKAGE_CHANGELOG: &str = include_str!("../assets/templates/package/CHANGELOG.md");
-const PACKAGE_WALLY: &str = include_str!("../assets/templates/package/wally.toml");
-
-const MODEL_PROJECT: &str = include_str!("../assets/templates/model/project.json");
-const MODEL_GITIGNORE: &str = include_str!("../assets/templates/model/.gitignore");
-const MODEL_README: &str = include_str!("../assets/templates/model/README.md");
-const MODEL_LICENSE: &str = include_str!("../assets/templates/model/LICENSE.md");
+const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/place");
+const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
+const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
+const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
 
 pub fn install() -> Result<()> {
 	let home_dir = util::get_home_dir()?;
@@ -71,62 +55,35 @@ pub fn install() -> Result<()> {
 
 	if !place_template.exists() {
 		fs::create_dir(&place_template)?;
-
-		let project = place_template.join("project.json");
-		let gitignore = place_template.join(".gitignore");
-		let readme = place_template.join("README.md");
-
-		fs::write(project, PLACE_PROJECT)?;
-		fs::write(gitignore, PLACE_GITIGNORE)?;
-		fs::write(readme, PLACE_README)?;
+		install_template(&PLACE_TEMPLATE, &place_template)?;
 	}
 
 	if !plugin_template.exists() {
 		fs::create_dir(&plugin_template)?;
-
-		let project = plugin_template.join("project.json");
-		let gitignore = plugin_template.join(".gitignore");
-		let readme = plugin_template.join("README.md");
-		let license = plugin_template.join("LICENSE.md");
-		let changelog = plugin_template.join("CHANGELOG.md");
-
-		fs::write(project, PLUGIN_PROJECT)?;
-		fs::write(gitignore, PLUGIN_GITIGNORE)?;
-		fs::write(readme, PLUGIN_README)?;
-		fs::write(license, PLUGIN_LICENSE)?;
-		fs::write(changelog, PLUGIN_CHANGELOG)?;
+		install_template(&PLUGIN_TEMPLATE, &plugin_template)?;
 	}
 
 	if !package_template.exists() {
 		fs::create_dir(&package_template)?;
-
-		let project = package_template.join("project.json");
-		let gitignore = package_template.join(".gitignore");
-		let readme = package_template.join("README.md");
-		let license = package_template.join("LICENSE.md");
-		let changelog = package_template.join("CHANGELOG.md");
-		let wally = package_template.join("wally.toml");
-
-		fs::write(project, PACKAGE_PROJECT)?;
-		fs::write(gitignore, PACKAGE_GITIGNORE)?;
-		fs::write(readme, PACKAGE_README)?;
-		fs::write(license, PACKAGE_LICENSE)?;
-		fs::write(changelog, PACKAGE_CHANGELOG)?;
-		fs::write(wally, PACKAGE_WALLY)?;
+		install_template(&PACKAGE_TEMPLATE, &package_template)?;
 	}
 
 	if !model_template.exists() {
 		fs::create_dir(&model_template)?;
+		install_template(&MODEL_TEMPLATE, &model_template)?;
+	}
 
-		let project = model_template.join("project.json");
-		let gitignore = model_template.join(".gitignore");
-		let readme = model_template.join("README.md");
-		let license = model_template.join("LICENSE.md");
+	Ok(())
+}
 
-		fs::write(project, MODEL_PROJECT)?;
-		fs::write(gitignore, MODEL_GITIGNORE)?;
-		fs::write(readme, MODEL_README)?;
-		fs::write(license, MODEL_LICENSE)?;
+fn install_template(template: &Dir, path: &Path) -> Result<()> {
+	for file in template.files() {
+		fs::write(path.join(file.path()), file.contents())?;
+	}
+
+	for dir in template.dirs() {
+		fs::create_dir(&path.join(dir.path()))?;
+		install_template(dir, path)?;
 	}
 
 	Ok(())
