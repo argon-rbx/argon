@@ -8,7 +8,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use crate::{glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
+use crate::{argon_error, argon_warn, glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
 
 #[derive(Debug)]
 pub struct ProjectChanges {
@@ -166,10 +166,32 @@ impl Project {
 
 	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
 		for (name, node) in tree {
-			let mut rbx_path = rbx_root.clone();
-			rbx_path.push(name);
+			let rbx_path = rbx_root.join(name);
 
 			if let Some(path) = &node.path {
+				if util::get_file_name(path).ends_with("project.json") {
+					let project = Self::load(&local_root.join(path));
+
+					match project {
+						Ok(project) => {
+							if project.is_place() {
+								argon_warn!("Cannot append place project, only model-like projects are supported!");
+								continue;
+							}
+
+							let mut tree = BTreeMap::new();
+							tree.insert(project.name, project.node);
+
+							self.parse_paths(&tree, local_root, &rbx_path);
+						}
+						Err(err) => {
+							argon_error!("Failed to load sub project: {}", err);
+						}
+					}
+
+					continue;
+				}
+
 				let mut local_path = path.clone();
 
 				if !local_path.is_absolute() {
