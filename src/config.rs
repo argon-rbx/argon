@@ -31,21 +31,16 @@ pub struct Config {
 	pub scan_ports: bool,
 	/// Automatically detect if project is Rojo or roblox-ts
 	pub auto_detect: bool,
-	/// Use git for project management
+	/// Use git for source control
 	pub use_git: bool,
+	/// Use Wally for package management
+	pub use_wally: bool,
 	/// Include documentation in the project (README, LICENSE, etc.)
 	pub include_docs: bool,
 	/// Use Rojo namespace by default
 	pub rojo_mode: bool,
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
-
-	#[serde(skip)]
-	pub project_name: String,
-	#[serde(skip)]
-	pub src: String,
-	#[serde(skip)]
-	pub data: String,
 }
 
 impl Default for Config {
@@ -59,13 +54,10 @@ impl Default for Config {
 			scan_ports: true,
 			auto_detect: true,
 			use_git: true,
+			use_wally: false,
 			include_docs: true,
 			rojo_mode: false,
 			ts_mode: false,
-
-			project_name: String::from(".argon"),
-			src: String::from(".src"),
-			data: String::from(".data"),
 		}
 	}
 }
@@ -89,14 +81,6 @@ impl Config {
 		fs::write(config_dir, toml::to_string(self)?)?;
 
 		Ok(())
-	}
-
-	pub fn make_rojo(&mut self) {
-		self.rojo_mode = true;
-
-		self.project_name = String::from("default");
-		self.src = String::from("init");
-		self.data = String::from("meta");
 	}
 
 	pub fn has_setting(&self, setting: &str) -> bool {
@@ -126,10 +110,6 @@ impl Config {
 		let config: GlobalConfig = toml::from_str(&config_toml)?;
 
 		self.merge_opt(config);
-
-		if self.rojo_mode {
-			self.make_rojo();
-		}
 
 		Ok(())
 	}

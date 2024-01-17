@@ -206,7 +206,7 @@ impl Project {
 	}
 }
 
-pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
+pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	let mut project_path = util::resolve_path(path)?;
 
 	if project_path.is_file() || util::get_file_name(&project_path).ends_with(".project.json") {
@@ -218,7 +218,7 @@ pub fn resolve(path: PathBuf, default: &str) -> Result<PathBuf> {
 	if let Some(path) = Glob::new(glob.to_str().unwrap())?.first() {
 		project_path = path;
 	} else {
-		project_path = project_path.join(format!("{}.project.json", default));
+		project_path = project_path.join(".argon.project.json");
 	}
 
 	Ok(project_path)

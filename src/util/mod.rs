@@ -44,11 +44,19 @@ pub fn get_file_name(path: &Path) -> &str {
 }
 
 pub fn get_file_stem(path: &Path) -> &str {
-	path.file_stem().unwrap().to_str().unwrap()
+	if !path.is_dir() {
+		path.file_stem().unwrap().to_str().unwrap()
+	} else {
+		get_file_name(path)
+	}
 }
 
 pub fn get_file_ext(path: &Path) -> &str {
-	path.extension().unwrap_or_default().to_str().unwrap_or_default()
+	if !path.is_dir() {
+		path.extension().unwrap_or_default().to_str().unwrap_or_default()
+	} else {
+		""
+	}
 }
 
 pub fn get_index<T: PartialEq>(slice: &[T], item: &T) -> Option<usize> {

@@ -42,10 +42,6 @@ pub struct Run {
 	#[arg(short, long)]
 	ts: bool,
 
-	/// Whether to run using Rojo namespace
-	#[arg(short, long)]
-	rojo: bool,
-
 	/// Spawn the Argon child process
 	#[arg(long, hide = true)]
 	argon_spawn: bool,
@@ -53,27 +49,24 @@ pub struct Run {
 
 impl Run {
 	pub fn main(self) -> Result<()> {
-		let mut config = Config::load();
+		let config = Config::load();
 
 		if !self.argon_spawn && config.spawn {
 			return self.spawn();
 		}
 
-		let project_path = project::resolve(self.project.clone().unwrap_or_default(), &config.project_name)?;
+		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 
 		if !project_path.exists() {
 			exit!(
-				"Project {} does not exist. Run {} to create new one.",
-				project_path.to_str().unwrap().bold(),
+				"No project files found in {}. Run {} to create new one.",
+				project_path.parent().unwrap().to_str().unwrap().bold(),
 				"argon init".bold(),
 			);
 		}
 
 		let project = Project::load(&project_path)?;
-
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
-		let use_rojo =
-			self.rojo || config.rojo_mode || use_ts || if config.auto_detect { project.is_rojo() } else { false };
 
 		if use_ts {
 			trace!("Starting roblox-ts");
@@ -94,10 +87,6 @@ impl Run {
 			} else {
 				return Ok(());
 			}
-		}
-
-		if use_rojo {
-			config.make_rojo();
 		}
 
 		let mut core = Core::new(config.clone(), project)?;

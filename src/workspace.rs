@@ -58,7 +58,7 @@ fn add_license(path: &Path, license: &str) -> Result<()> {
 	Ok(())
 }
 
-pub fn init(project: &Path, template: &str, license: &str, git: bool, docs: bool) -> Result<()> {
+pub fn init(project: &Path, template: &str, license: &str, git: bool, wally: bool, docs: bool) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
@@ -103,12 +103,14 @@ pub fn init(project: &Path, template: &str, license: &str, git: bool, docs: bool
 				}
 			}
 			"wally.toml" => {
-				let content = fs::read_to_string(path)?;
-				let content = content.replace("$name", project_name);
-				let content = content.replace("$author", &util::get_username());
-				let content = content.replace("$license", license);
+				if wally || template == "package" {
+					let content = fs::read_to_string(path)?;
+					let content = content.replace("$name", project_name);
+					let content = content.replace("$author", &util::get_username());
+					let content = content.replace("$license", license);
 
-				fs::write(new_path, content)?;
+					fs::write(new_path, content)?;
+				}
 			}
 			_ => match stem {
 				"README" | "CHANGELOG" => {
@@ -142,7 +144,7 @@ pub fn init(project: &Path, template: &str, license: &str, git: bool, docs: bool
 	Ok(())
 }
 
-pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, docs: bool) -> Result<bool> {
+pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: bool, docs: bool) -> Result<bool> {
 	argon_info!("Waiting for npm..");
 
 	let command = match template {
@@ -214,6 +216,15 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, docs: b
 				}
 				"LICENSE" => {
 					add_license(&new_path, license)?;
+				}
+				"wally" => {
+					if wally {
+						let content = fs::read_to_string(path)?;
+						let content = content.replace("$name", project_name);
+						let content = content.replace("$author", &util::get_username());
+
+						fs::write(new_path, content)?;
+					}
 				}
 				_ => {}
 			}

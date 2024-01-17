@@ -22,6 +22,7 @@ use crate::{
 
 mod dom;
 mod instance;
+mod middleware;
 mod processor;
 mod queue;
 
@@ -45,12 +46,7 @@ impl Core {
 		let dom = Arc::new(Mutex::new(dom));
 
 		let queue = Arc::new(Mutex::new(Queue::new()));
-		let processor = Arc::new(Mutex::new(Processor::new(
-			dom.clone(),
-			queue.clone(),
-			project.clone(),
-			config.clone(),
-		)));
+		let processor = Arc::new(Mutex::new(Processor::new(dom.clone(), queue.clone(), project.clone())));
 
 		Ok(Self {
 			config,
