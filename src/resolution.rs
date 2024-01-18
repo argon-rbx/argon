@@ -7,7 +7,7 @@ use rbx_dom_weak::types::{
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{Deserialize, Serialize};
-use std::{borrow::Borrow, fmt::Write};
+use std::{borrow::Borrow, collections::HashMap, fmt::Write};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -46,6 +46,7 @@ pub enum AmbiguousValue {
 	String(String),
 	StringArray(Vec<String>),
 	Number(f64),
+	Object(HashMap<String, UnresolvedValue>),
 	Array2([f64; 2]),
 	Array3([f64; 3]),
 	Array4([f64; 4]),
@@ -136,6 +137,15 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Attributes, AmbiguousValue::Attributes(value)) => Ok(value.into()),
+				(VariantType::Attributes, AmbiguousValue::Object(value)) => {
+					let mut attributes = Attributes::new();
+
+					for (key, unresolved) in value {
+						attributes.insert(key, unresolved.resolve_unambiguous()?);
+					}
+
+					Ok(attributes.into())
+				}
 
 				(VariantType::Font, AmbiguousValue::Font(value)) => Ok(value.into()),
 
@@ -169,6 +179,7 @@ impl AmbiguousValue {
 			AmbiguousValue::String(_) => "a string",
 			AmbiguousValue::StringArray(_) => "an array of strings",
 			AmbiguousValue::Number(_) => "a number",
+			AmbiguousValue::Object(_) => "a generic object",
 			AmbiguousValue::Array2(_) => "an array of two numbers",
 			AmbiguousValue::Array3(_) => "an array of three numbers",
 			AmbiguousValue::Array4(_) => "an array of four numbers",

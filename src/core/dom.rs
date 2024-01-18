@@ -1,11 +1,16 @@
 #![allow(clippy::unnecessary_to_owned)]
 #![allow(dead_code)]
 
-use log::warn;
+use colored::Colorize;
+use log::{error, warn};
 use multimap::MultiMap;
-use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
+use rbx_dom_weak::{
+	types::{Ref, Variant},
+	Instance, InstanceBuilder, WeakDom,
+};
 use std::{
 	collections::HashMap,
+	fmt::Debug,
 	mem,
 	path::{Path, PathBuf},
 };
@@ -47,6 +52,24 @@ impl Dom {
 		);
 
 		Self { inner: dom, ref_map }
+	}
+
+	pub fn init(&mut self, rbx_path: &RbxPath, properties: HashMap<String, Variant>) {
+		if self.contains(rbx_path) {
+			self.get_mut(rbx_path).unwrap().properties = properties;
+		} else if let Some(Variant::String(class)) = properties.get("ClassName") {
+			let name = rbx_path.last().unwrap();
+			let parent = self.get_ref(&rbx_path.parent().unwrap()).unwrap();
+
+			let builder = InstanceBuilder::new(class).with_name(name).with_properties(properties);
+
+			self.inner.insert(parent, builder);
+		} else {
+			error!(
+				"Failed to create instance {}: ClassName does not exist or is not a string!",
+				rbx_path.to_string().bold()
+			)
+		}
 	}
 
 	pub fn insert(&mut self, instance: ArgonInstance, parent: &RbxPath) -> Ref {

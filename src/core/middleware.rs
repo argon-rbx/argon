@@ -166,6 +166,8 @@ impl Processor {
 	}
 
 	pub fn get_class(&self, kind: &FileKind, path: Option<&Path>, rbx_path: Option<&RbxPath>) -> Result<String> {
+		// Sketchy solution to get around borrow checker
+
 		#[allow(unused_assignments)]
 		let mut temp = String::new();
 
@@ -186,9 +188,13 @@ impl Processor {
 							let reader = BufReader::new(data_file);
 							let data: HashMap<String, Value> = serde_json::from_reader(reader)?;
 
+							// .data.json files
 							if data.contains_key("ClassName") && data["ClassName"].is_string() {
-								// Sketchy solution to get around borrow checker
 								temp = data["ClassName"].as_str().unwrap().to_owned();
+								Ok(&temp)
+							// meta.json files
+							} else if data.contains_key("className") && data["className"].is_string() {
+								temp = data["className"].as_str().unwrap().to_owned();
 								Ok(&temp)
 							} else {
 								Ok("Folder")
@@ -286,10 +292,13 @@ impl Processor {
 
 				properties.insert(String::from("Value"), Variant::String(value));
 			}
-			FileKind::Dir | FileKind::InstanceData => {
+			FileKind::Dir => {
 				if let Some(data_file) = self.get_data_file(path) {
-					properties.extend(util::json::read_properties(&data_file)?);
+					properties.extend(util::properties::from_json(&data_file)?);
 				}
+			}
+			FileKind::InstanceData => {
+				properties.extend(util::properties::from_json(path)?);
 			}
 			_ => bail!("Cannot get properties of {:?} file kind", kind),
 		}

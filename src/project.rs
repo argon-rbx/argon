@@ -1,5 +1,7 @@
 use anyhow::Result;
+use indexmap::IndexMap;
 use multimap::MultiMap;
+use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::{BTreeMap, HashMap},
@@ -8,12 +10,13 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use crate::{argon_error, argon_warn, glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
+use crate::{argon_warn, glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
 
 #[derive(Debug)]
 pub struct ProjectChanges {
 	pub address: bool,
 	pub paths: bool,
+	pub data: bool,
 	pub meta: bool,
 }
 
@@ -21,10 +24,8 @@ pub struct ProjectChanges {
 pub struct ProjectNode {
 	#[serde(rename = "$className")]
 	pub class_name: Option<String>,
-
 	#[serde(rename = "$path")]
 	pub path: Option<PathBuf>,
-
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
@@ -32,11 +33,16 @@ pub struct ProjectNode {
 	pub properties: Option<HashMap<String, UnresolvedValue>>,
 	#[serde(rename = "$attributes")]
 	pub attributes: Option<HashMap<String, UnresolvedValue>>,
-	#[serde(rename = "$ignoreUnknownInstances")]
+	#[serde(rename = "$tags")]
+	pub tags: Option<Vec<String>>,
+
+	// This field is not actually used by Argon
+	#[serde(rename = "$ignoreUnknownInstances", skip_serializing)]
 	pub ignore_unknown_instances: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
@@ -45,11 +51,10 @@ pub struct Project {
 	pub host: Option<String>,
 	#[serde(alias = "servePort")]
 	pub port: Option<u16>,
-	#[serde(rename = "gameId")]
 	pub game_id: Option<u64>,
-	#[serde(rename = "placeIds", alias = "servePlaceIds")]
+	#[serde(alias = "servePlaceIds")]
 	pub place_ids: Option<Vec<u64>>,
-	#[serde(rename = "ignoreGlobs", alias = "globIgnorePaths")]
+	#[serde(alias = "globIgnorePaths")]
 	pub ignore_globs: Option<Vec<Glob>>,
 
 	#[serde(skip)]
@@ -63,6 +68,8 @@ pub struct Project {
 
 	#[serde(skip)]
 	pub path_map: MultiMap<PathBuf, RbxPath>,
+	#[serde(skip)]
+	pub data_map: IndexMap<RbxPath, HashMap<String, Variant>>,
 }
 
 impl Project {
@@ -81,7 +88,7 @@ impl Project {
 			let mut tree = BTreeMap::new();
 			tree.insert(project.name.clone(), project.node.clone());
 
-			project.parse_paths(&tree, &workspace_dir, &RbxPath::new());
+			project.parse_tree(&tree, &workspace_dir, &RbxPath::new())?;
 
 			let path = util::resolve_path(path)?;
 			project.root_dir = Some(path);
@@ -89,7 +96,7 @@ impl Project {
 			let workspace_dir = project.workspace_dir.clone();
 			let tree = project.node.tree.clone();
 
-			project.parse_paths(&tree, &workspace_dir, &RbxPath::from(&project.name));
+			project.parse_tree(&tree, &workspace_dir, &RbxPath::from(&project.name))?;
 		}
 
 		Ok(project)
@@ -101,6 +108,7 @@ impl Project {
 		let changes = ProjectChanges {
 			address: self.host != new.host || self.port != new.port,
 			paths: self.path_map != new.path_map,
+			data: self.data_map != new.data_map,
 			meta: self.name != new.name || self.game_id != new.game_id || self.place_ids != new.place_ids,
 		};
 
@@ -164,30 +172,28 @@ impl Project {
 		false
 	}
 
-	fn parse_paths(&mut self, tree: &BTreeMap<String, ProjectNode>, local_root: &PathBuf, rbx_root: &RbxPath) {
+	fn parse_tree(
+		&mut self,
+		tree: &BTreeMap<String, ProjectNode>,
+		local_root: &PathBuf,
+		rbx_root: &RbxPath,
+	) -> Result<()> {
 		for (name, node) in tree {
 			let rbx_path = rbx_root.join(name);
 
 			if let Some(path) = &node.path {
 				if util::get_file_name(path).ends_with("project.json") {
-					let project = Self::load(&local_root.join(path));
+					let project = Self::load(&local_root.join(path))?;
 
-					match project {
-						Ok(project) => {
-							if project.is_place() {
-								argon_warn!("Cannot append place project, only model-like projects are supported!");
-								continue;
-							}
-
-							let mut tree = BTreeMap::new();
-							tree.insert(project.name, project.node);
-
-							self.parse_paths(&tree, local_root, &rbx_path);
-						}
-						Err(err) => {
-							argon_error!("Failed to load sub project: {}", err);
-						}
+					if project.is_place() {
+						argon_warn!("Cannot append place project, only model-like projects are supported!");
+						continue;
 					}
+
+					let mut tree = BTreeMap::new();
+					tree.insert(project.name, project.node);
+
+					self.parse_tree(&tree, local_root, &rbx_path)?;
 
 					continue;
 				}
@@ -201,8 +207,19 @@ impl Project {
 				self.path_map.insert(local_path, rbx_path.clone());
 			}
 
-			self.parse_paths(&node.tree, local_root, &rbx_path);
+			if node.class_name.is_some()
+				|| node.properties.is_some()
+				|| node.attributes.is_some()
+				|| node.tags.is_some()
+			{
+				let properties = util::properties::from_node(node.clone(), name)?;
+				self.data_map.insert(rbx_path.clone(), properties);
+			}
+
+			self.parse_tree(&node.tree, local_root, &rbx_path)?;
 		}
+
+		Ok(())
 	}
 }
 

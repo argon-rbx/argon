@@ -82,13 +82,24 @@ impl Core {
 		lock!(self.queue)
 	}
 
+	// Load all instances declared in the project
 	pub fn load_dom(&mut self) -> Result<()> {
-		let processor = lock!(self.processor);
 		let project_paths = lock!(self.project).get_paths();
+		let processor = lock!(self.processor);
+		let mut dom = lock!(self.dom);
 
+		// Initialize all instances without paths or with paths but with other properties set
+		for (rbx_path, properties) in &lock!(self.project).data_map {
+			dom.init(rbx_path, properties.clone());
+		}
+
+		drop(dom);
+
+		// Initialize all instances, whose paths are declared but may not exist
 		for path in &project_paths {
 			processor.init(path)?;
 
+			// Initialize all instances, whose paths are declared and exist
 			if let Ok(read_dir) = fs::read_dir(path) {
 				for entry in read_dir {
 					let entry = entry?;
@@ -136,18 +147,29 @@ impl Core {
 											)
 										}
 
-										if changes.paths {
+										if changes.paths || changes.data {
 											warn!("Rebuilding DOM - project paths changed! This might take a while..");
 
+											// Reset DOM
 											lock!(dom).reload(&lock!(project));
 
 											let mut fs = lock!(fs);
+											let mut dom = lock!(dom);
 											let processor = lock!(processor);
 											let project_paths = lock!(project).get_paths();
 
+											// Initialize all instances without paths or with paths but with other properties set
+											for (rbx_path, properties) in &lock!(project).data_map {
+												dom.init(rbx_path, properties.clone());
+											}
+
+											drop(dom);
+
+											// Initialize all instances, whose paths are declared but may not exist
 											for path in &project_paths {
 												processor.init(path)?;
 
+												// Initialize all instances, whose paths are declared and exist
 												if let Ok(read_dir) = fs::read_dir(path) {
 													for entry in read_dir {
 														let entry = entry?;
@@ -168,14 +190,14 @@ impl Core {
 												}
 											}
 
-											fs.unwatch_all(&project_paths)?;
-											fs.watch_all(&project_paths)?;
+											if changes.paths {
+												fs.unwatch_all(&project_paths)?;
+												fs.watch_all(&project_paths)?;
+											}
 
 											if let Some(sender) = sender.clone() {
 												sender.send(()).unwrap();
 											}
-
-											println!("{:?}", "DONE!");
 										}
 
 										if changes.meta {

@@ -18,10 +18,11 @@ pub mod sessions;
 pub mod util;
 pub mod workspace;
 
-// A shorter way to lock the Mutex
+/// A shorter way to lock the Mutex.
+/// Will panic if the Mutex is already locked.
 #[macro_export]
 macro_rules! lock {
 	($mutex:expr) => {
-		$mutex.lock().unwrap()
+		$mutex.try_lock().unwrap()
 	};
 }

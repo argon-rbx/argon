@@ -324,6 +324,7 @@ dependencies = [
  "glob",
  "globenv",
  "include_dir",
+ "indexmap 2.1.0",
  "json2lua",
  "log",
  "multimap",

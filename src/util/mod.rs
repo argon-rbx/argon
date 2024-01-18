@@ -12,6 +12,7 @@ use std::{
 
 pub mod csv;
 pub mod json;
+pub mod properties;
 
 pub fn get_home_dir() -> Result<PathBuf> {
 	let user_dirs = UserDirs::new().context("Failed to get user directory")?;
