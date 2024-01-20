@@ -182,7 +182,7 @@ impl Project {
 			let rbx_path = rbx_root.join(name);
 
 			if let Some(path) = &node.path {
-				if util::get_file_name(path).ends_with("project.json") {
+				if util::get_file_name(path).ends_with(".project.json") {
 					let project = Self::load(&local_root.join(path))?;
 
 					if project.is_place() {

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{error, trace, warn};
+use log::{debug, error, trace, warn};
 use rbx_dom_weak::types::Ref;
 use rbx_xml::EncodeOptions;
 use std::{
@@ -97,6 +97,8 @@ impl Core {
 
 		// Initialize all instances, whose paths are declared but may not exist
 		for path in &project_paths {
+			debug!("Processing path: {:?}", path);
+
 			processor.init(path)?;
 
 			// Initialize all instances, whose paths are declared and exist
@@ -133,6 +135,8 @@ impl Core {
 			lock!(fs).watch_all(&lock!(project).get_paths())?;
 
 			for event in receiver {
+				debug!("Processing event: {:?}", event);
+
 				if event.root {
 					match event.kind {
 						FsEventKind::Write => {
@@ -238,14 +242,16 @@ impl Core {
 				let result = || -> Result<()> {
 					let processor = lock!(processor);
 
-					match event.kind {
+					let valid = match event.kind {
 						FsEventKind::Create => processor.create(&event.path, false)?,
 						FsEventKind::Delete => processor.delete(&event.path)?,
 						FsEventKind::Write => processor.write(&event.path)?,
-					}
+					};
 
-					if let Some(sender) = sender.clone() {
-						sender.send(()).unwrap();
+					if valid {
+						if let Some(sender) = sender.clone() {
+							sender.send(()).unwrap();
+						}
 					}
 
 					Ok(())

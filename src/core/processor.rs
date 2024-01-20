@@ -94,12 +94,12 @@ impl Processor {
 		Ok(())
 	}
 
-	pub fn create(&self, path: &Path, dom_only: bool) -> Result<()> {
+	pub fn create(&self, path: &Path, dom_only: bool) -> Result<bool> {
 		let ext = util::get_file_ext(path);
 		let is_dir = path.is_dir();
 
 		if !self.is_valid(path, ext, is_dir) {
-			return Ok(());
+			return Ok(false);
 		}
 
 		let file_stem = util::get_file_stem(path);
@@ -157,6 +157,19 @@ impl Processor {
 						);
 					}
 				}
+				FileKind::Project => {
+					// let project = Project::load(path)?;
+
+					// if project.is_place() {
+					// 	error!("Cannot append place project, only model-like projects are supported!");
+					// 	continue;
+					// }
+
+					// let mut tree = HashMap::new();
+					// tree.insert(project.name, project.node);
+
+					// self.parse_tree(&tree, path, &rbx_path)?;
+				}
 				FileKind::Model(ref kind) => {
 					let reader = BufReader::new(File::open(path)?);
 					let mut model = if *kind == ModelKind::Binary {
@@ -196,18 +209,25 @@ impl Processor {
 			}
 		}
 
-		Ok(())
+		Ok(true)
 	}
 
-	pub fn delete(&self, path: &Path) -> Result<()> {
+	pub fn delete(&self, path: &Path) -> Result<bool> {
 		let ext = util::get_file_ext(path);
 
 		if !self.is_valid(path, ext, true) {
-			return Ok(());
+			return Ok(false);
 		}
 
 		let file_stem = util::get_file_stem(path);
-		let rbx_paths = self.get_rbx_paths(path, file_stem, ext)?;
+		let file_name = util::get_file_name(path);
+
+		let mut rbx_paths = self.get_rbx_paths(path, file_stem, ext)?;
+
+		// We need to make sure that directories are handled properly either
+		for rbx_path in self.get_rbx_paths(path, file_name, "")? {
+			rbx_paths.push(rbx_path);
+		}
 
 		let mut dom = lock!(self.dom);
 		let mut queue = lock!(self.queue);
@@ -229,14 +249,14 @@ impl Processor {
 			}
 		}
 
-		Ok(())
+		Ok(true)
 	}
 
-	pub fn write(&self, path: &Path) -> Result<()> {
+	pub fn write(&self, path: &Path) -> Result<bool> {
 		let ext = util::get_file_ext(path);
 
 		if !self.is_valid(path, ext, false) {
-			return Ok(());
+			return Ok(false);
 		}
 
 		let file_stem = util::get_file_stem(path);
@@ -294,6 +314,6 @@ impl Processor {
 			}
 		}
 
-		Ok(())
+		Ok(true)
 	}
 }

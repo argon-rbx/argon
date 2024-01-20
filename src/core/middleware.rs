@@ -31,6 +31,7 @@ pub enum ModelKind {
 pub enum FileKind {
 	Script(ScriptKind),      // *.lua(u)
 	ChildScript(ScriptKind), // .src.lua(u)
+	Project,                 // .project.json
 	InstanceData,            // .data.json
 	JsonModule,              // .json
 	LocalizationTable,       // .csv
@@ -67,6 +68,10 @@ impl Processor {
 
 	pub fn is_instance_data(&self, file_stem: &str) -> bool {
 		matches!(file_stem, ".data" | "meta")
+	}
+
+	pub fn is_project(&self, file_stem: &str) -> bool {
+		file_stem.ends_with(".project")
 	}
 
 	pub fn get_data_file(&self, path: &Path) -> Option<PathBuf> {
@@ -141,7 +146,9 @@ impl Processor {
 				ScriptKind::Module
 			};
 
-			if self.is_child_script(file_stem) {
+			if self.is_project(file_stem) {
+				return Ok(FileKind::Project);
+			} else if self.is_child_script(file_stem) {
 				return Ok(FileKind::ChildScript(kind));
 			} else {
 				return Ok(FileKind::Script(kind));
@@ -167,7 +174,6 @@ impl Processor {
 
 	pub fn get_class(&self, kind: &FileKind, path: Option<&Path>, rbx_path: Option<&RbxPath>) -> Result<String> {
 		// Sketchy solution to get around borrow checker
-
 		#[allow(unused_assignments)]
 		let mut temp = String::new();
 

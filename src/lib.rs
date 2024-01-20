@@ -9,6 +9,7 @@ pub mod glob;
 pub mod installer;
 pub mod logger;
 pub mod messages;
+pub mod middleware;
 pub mod program;
 pub mod project;
 pub mod rbx_path;
@@ -16,6 +17,7 @@ pub mod resolution;
 pub mod server;
 pub mod sessions;
 pub mod util;
+mod vfs;
 pub mod workspace;
 
 /// A shorter way to lock the Mutex.
@@ -23,6 +25,8 @@ pub mod workspace;
 #[macro_export]
 macro_rules! lock {
 	($mutex:expr) => {
-		$mutex.try_lock().unwrap()
+		$mutex
+			.try_lock()
+			.unwrap_or_else(|_| panic!("Tried to lock Mutex that is already locked!"))
 	};
 }
