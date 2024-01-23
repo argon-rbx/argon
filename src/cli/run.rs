@@ -89,9 +89,9 @@ impl Run {
 			}
 		}
 
-		let mut core = Core::new(config.clone(), project)?;
-		let host = self.host.unwrap_or(core.host());
-		let mut port = self.port.unwrap_or(core.port());
+		let core = Core::new(project)?;
+		let host = self.host.unwrap_or(core.host().unwrap_or(config.host.clone()));
+		let mut port = self.port.unwrap_or(core.port().unwrap_or(config.port));
 
 		if !server::is_port_free(&host, port) {
 			if config.scan_ports {
@@ -109,7 +109,7 @@ impl Run {
 			}
 		}
 
-		core.load_dom()?;
+		// core.load_dom()?;
 
 		let server = Server::new(core, &host, &port);
 

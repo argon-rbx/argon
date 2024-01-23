@@ -2,7 +2,7 @@ use glob::{glob, Paths, Pattern, PatternError};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
 	fmt::{self, Debug, Formatter},
-	path::PathBuf,
+	path::{Path, PathBuf},
 };
 
 #[derive(Clone)]
@@ -19,6 +19,10 @@ impl Glob {
 
 	pub fn matches(&self, path: &str) -> bool {
 		self.pattern.matches(path)
+	}
+
+	pub fn matches_path(&self, path: &Path) -> bool {
+		self.pattern.matches_path(path)
 	}
 
 	pub fn first(&self) -> Option<PathBuf> {

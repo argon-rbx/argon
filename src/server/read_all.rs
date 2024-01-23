@@ -21,7 +21,7 @@ async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
 		return HttpResponse::BadRequest().body("Not subscribed");
 	}
 
-	core.sync_dom(id);
+	// core.sync_dom(id);
 
 	HttpResponse::Ok().body("Started syncing DOM")
 }

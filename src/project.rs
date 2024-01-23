@@ -10,7 +10,9 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use crate::{argon_warn, glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace};
+use crate::{
+	argon_warn, core::meta::SyncRule, glob::Glob, rbx_path::RbxPath, resolution::UnresolvedValue, util, workspace,
+};
 
 #[derive(Debug)]
 pub struct ProjectChanges {
@@ -56,6 +58,7 @@ pub struct Project {
 	pub place_ids: Option<Vec<u64>>,
 	#[serde(alias = "globIgnorePaths")]
 	pub ignore_globs: Option<Vec<Glob>>,
+	pub sync_rules: Option<Vec<SyncRule>>,
 
 	#[serde(skip)]
 	pub root_class: String,

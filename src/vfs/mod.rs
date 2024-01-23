@@ -1,12 +1,16 @@
 use anyhow::Result;
 use crossbeam_channel::Receiver;
-use std::path::{Path, PathBuf};
+use std::{
+	collections::HashMap,
+	path::{Path, PathBuf},
+};
 
 use self::watcher::VfsWatcher;
 
 pub mod debouncer;
 pub mod watcher;
 
+#[derive(Debug, Clone)]
 pub enum VfsEvent {
 	Create(PathBuf),
 	Delete(PathBuf),
@@ -15,26 +19,20 @@ pub enum VfsEvent {
 
 pub struct Vfs {
 	watcher: VfsWatcher,
-	watched_paths: Vec<PathBuf>,
+	watch_map: HashMap<PathBuf, bool>,
 }
 
 impl Vfs {
-	pub fn new(auto_watch: bool) -> Result<Self> {
+	pub fn new() -> Result<Self> {
 		Ok(Self {
 			watcher: VfsWatcher::new()?,
-			watched_paths: Vec::new(),
+			watch_map: HashMap::new(),
 		})
 	}
 
 	pub fn watch(&mut self, path: &Path) -> Result<()> {
 		self.watcher.watch(path)?;
-		self.watched_paths.push(path.to_owned());
-
-		if path.is_dir() {
-			for entry in path.read_dir()? {
-				self.watch(&entry?.path())?;
-			}
-		}
+		self.watch_map.insert(path.to_owned(), path.is_dir());
 
 		Ok(())
 	}
@@ -44,22 +42,36 @@ impl Vfs {
 
 		let mut unwatched = vec![];
 
-		for (index, path) in self.watched_paths.iter().enumerate() {
+		for path in self.watch_map.keys() {
 			if path.starts_with(path) {
 				self.watcher.unwatch(path)?;
 
-				unwatched.push(index);
+				unwatched.push(path.to_owned());
 			}
 		}
 
-		for index in unwatched {
-			self.watched_paths.remove(index);
+		for path in unwatched {
+			self.watch_map.remove(&path);
 		}
 
 		Ok(())
 	}
 
+	pub fn is_dir(&self, path: &Path) -> bool {
+		self.watch_map.get(path).cloned().unwrap_or_else(|| path.is_dir())
+	}
+
+	pub fn is_file(&self, path: &Path) -> bool {
+		!self.is_dir(path)
+	}
+
 	pub fn receiver(&self) -> Receiver<VfsEvent> {
 		self.watcher.receiver()
+	}
+
+	pub fn process_event(&mut self, event: &VfsEvent) {
+		if let VfsEvent::Delete(path) = event {
+			self.unwatch(path).ok();
+		}
 	}
 }
