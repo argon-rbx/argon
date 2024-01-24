@@ -41,7 +41,17 @@ impl SyncRule {
 	}
 }
 
-pub struct Context {
+#[derive(Debug)]
+pub struct Meta {
 	pub ignore_globs: Vec<Glob>,
 	pub sync_rules: Vec<SyncRule>,
+}
+
+impl Meta {
+	pub fn empty() -> Self {
+		Self {
+			ignore_globs: Vec::new(),
+			sync_rules: Vec::new(),
+		}
+	}
 }

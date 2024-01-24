@@ -4,7 +4,7 @@ use std::{
 	thread,
 };
 
-use super::{dom::Dom, queue::Queue};
+use super::{queue::Queue, tree::Tree};
 use crate::{
 	lock, middleware,
 	vfs::{Vfs, VfsEvent},
@@ -16,12 +16,12 @@ pub struct Processor {
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, dom: Arc<Mutex<Dom>>, vfs: Arc<Mutex<Vfs>>) -> Self {
+	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>) -> Self {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		let handler = Arc::new(Handler {
 			queue: queue.clone(),
-			dom: dom.clone(),
+			tree: tree.clone(),
 			vfs: vfs.clone(),
 			sender,
 		});
@@ -51,16 +51,16 @@ impl Processor {
 
 struct Handler {
 	queue: Arc<Mutex<Queue>>,
-	dom: Arc<Mutex<Dom>>,
+	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Mutex<Vfs>>,
 	sender: Sender<()>,
 }
 
 impl Handler {
-	fn new(queue: Arc<Mutex<Queue>>, dom: Arc<Mutex<Dom>>, vfs: Arc<Mutex<Vfs>>, sender: Sender<()>) -> Self {
+	fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>, sender: Sender<()>) -> Self {
 		Self {
 			queue,
-			dom,
+			tree,
 			vfs,
 			sender,
 		}
@@ -68,15 +68,33 @@ impl Handler {
 
 	fn on_vfs_event(&self, event: VfsEvent) {
 		let mut vfs = lock!(self.vfs);
-		let mut dom = lock!(self.dom);
+		let mut tree = lock!(self.tree);
 		let mut queue = lock!(self.queue);
 
 		vfs.process_event(&event);
 
 		let changed = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
-				// middleware::from_path(&path, &context, &vfs, &dom);
-				println!("{:?}", path);
+				let ids = {
+					let mut current_path = path.as_path();
+
+					loop {
+						if let Some(ids) = tree.get_ids(current_path) {
+							break ids.to_owned();
+						}
+
+						match current_path.parent() {
+							Some(parent) => current_path = parent,
+							None => break vec![],
+						}
+					}
+				};
+
+				for id in ids {
+					let meta = tree.get_meta(id).unwrap();
+					let snapshot = middleware::from_path(&path, meta, &vfs);
+					println!("{:?}", snapshot);
+				}
 
 				true
 			}
