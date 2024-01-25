@@ -1,10 +1,17 @@
+use anyhow::{bail, Result};
+use log::error;
+use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use crate::{
-	core::{dom::Tree, meta::Meta, snapshot::Snapshot},
+	core::{meta::Meta, snapshot::Snapshot},
+	project::ProjectNode,
+	util,
 	vfs::Vfs,
 };
+
+use self::project::snapshot_project;
 
 pub mod project;
 
@@ -17,7 +24,9 @@ pub enum FileType {
 	ServerScript,
 	ClientScript,
 	ModuleScript,
+
 	JsonModule,
+	TomlModule,
 	LocalizationTable,
 	StringValue,
 	RbxmModel,
@@ -25,10 +34,10 @@ pub enum FileType {
 }
 
 impl FileType {
-	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Option<Snapshot> {
+	fn middleware(&self, name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
 		match self {
-			FileType::Project => project::main(path, meta, vfs),
-			_ => None,
+			FileType::Project => snapshot_project(name, path, meta, vfs),
+			_ => bail!("Unsupported file type! (TEMP)"),
 			// FileType::InstanceData => {}
 			// FileType::ServerScript => {}
 			// FileType::ClientScript => {}
@@ -42,33 +51,23 @@ impl FileType {
 	}
 }
 
-pub fn from_path(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<Snapshot> {
-	let is_file = vfs.is_file(path);
+pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if !vfs.exists(path) {
+		return Ok(None);
+	}
 
-	if let Some(file_type) = get_file_type(path, meta, is_file) {
-		file_type.middleware(path, meta, vfs)
-	} else if !is_file {
+	let is_dir = vfs.is_dir(path);
+
+	if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path, is_dir)) {
+		let file_type = resolved.file_type;
+		let path = resolved.path;
+		let name = resolved.name;
+
+		file_type.middleware(&name, &path, meta, vfs)
+	} else if is_dir {
 		//dir
-		Some(Snapshot::new()) //TEMP
+		Ok(Some(Snapshot::new("temp"))) //TEMP
 	} else {
-		None
+		Ok(None)
 	}
-}
-
-fn get_file_type<'a>(path: &Path, meta: &'a Meta, is_file: bool) -> Option<&'a FileType> {
-	if is_file {
-		for rule in &meta.sync_rules {
-			if rule.matches(path) {
-				return Some(&rule.file_type);
-			}
-		}
-	} else {
-		for rule in &meta.sync_rules {
-			if rule.matches_child(path) {
-				return Some(&rule.file_type);
-			}
-		}
-	}
-
-	None
 }

@@ -5,9 +5,8 @@ use std::{
 	path::{Path, PathBuf},
 };
 
+use super::meta::Meta;
 use crate::project::Project;
-
-use super::meta::{self, Meta};
 
 pub struct Tree {
 	dom: WeakDom,
@@ -30,7 +29,11 @@ impl Tree {
 		self.path_to_ids.get_vec(path)
 	}
 
-	pub fn get_meta(&self, id: Ref) -> Option<&Meta> {
-		self.ids_to_meta.get(&id)
+	pub fn get_meta(&self, id: Ref) -> &Meta {
+		if let Some(meta) = self.ids_to_meta.get(&id) {
+			return meta;
+		}
+
+		self.get_meta(self.dom.get_by_ref(id).unwrap().referent())
 	}
 }

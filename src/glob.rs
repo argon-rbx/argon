@@ -11,14 +11,18 @@ pub struct Glob {
 }
 
 impl Glob {
-	pub fn new(glob: &str) -> Result<Self, PatternError> {
+	pub fn new(pattern: &str) -> Result<Self, PatternError> {
 		Ok(Self {
-			pattern: Pattern::new(glob)?,
+			pattern: Pattern::new(pattern)?,
 		})
 	}
 
-	pub fn matches(&self, path: &str) -> bool {
-		self.pattern.matches(path)
+	pub fn from_path(path: &Path) -> Result<Self, PatternError> {
+		Self::new(path.to_str().unwrap_or_default())
+	}
+
+	pub fn matches(&self, str: &str) -> bool {
+		self.pattern.matches(str)
 	}
 
 	pub fn matches_path(&self, path: &Path) -> bool {
@@ -37,6 +41,10 @@ impl Glob {
 
 	pub fn iter(&self) -> Paths {
 		glob(self.pattern.as_str()).unwrap()
+	}
+
+	pub fn as_str(&self) -> &str {
+		self.pattern.as_str()
 	}
 }
 

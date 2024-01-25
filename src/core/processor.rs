@@ -91,9 +91,8 @@ impl Handler {
 				};
 
 				for id in ids {
-					let meta = tree.get_meta(id).unwrap();
-					let snapshot = middleware::from_path(&path, meta, &vfs);
-					println!("{:?}", snapshot);
+					let meta = tree.get_meta(id);
+					let snapshot = middleware::new_snapshot(&path, meta, &vfs);
 				}
 
 				true

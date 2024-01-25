@@ -25,8 +25,6 @@ pub mod workspace;
 #[macro_export]
 macro_rules! lock {
 	($mutex:expr) => {
-		$mutex
-			.try_lock()
-			.unwrap_or_else(|_| panic!("Tried to lock Mutex that is already locked!"))
+		$mutex.try_lock().expect("Tried to lock Mutex that is already locked!")
 	};
 }

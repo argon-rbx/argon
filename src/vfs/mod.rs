@@ -57,6 +57,10 @@ impl Vfs {
 		Ok(())
 	}
 
+	pub fn exists(&self, path: &Path) -> bool {
+		path.exists()
+	}
+
 	pub fn is_dir(&self, path: &Path) -> bool {
 		self.watch_map.get(path).cloned().unwrap_or_else(|| path.is_dir())
 	}

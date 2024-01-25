@@ -25,12 +25,12 @@ struct Refs {
 }
 
 #[derive(Debug)]
-pub struct Tree {
+pub struct Dom {
 	inner: WeakDom,
 	ref_map: HashMap<RbxPath, Refs>,
 }
 
-impl Tree {
+impl Dom {
 	pub fn new(project: &Project) -> Self {
 		let builder = InstanceBuilder::new(&project.root_class).with_name(&project.name);
 		let dom = WeakDom::new(builder);

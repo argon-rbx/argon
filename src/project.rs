@@ -235,7 +235,7 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 
 	let glob = project_path.clone().join("*.project.json");
 
-	if let Some(path) = Glob::new(glob.to_str().unwrap())?.first() {
+	if let Some(path) = Glob::from_path(&glob)?.first() {
 		project_path = path;
 	} else {
 		project_path = project_path.join(".argon.project.json");

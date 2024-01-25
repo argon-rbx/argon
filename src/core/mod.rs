@@ -4,7 +4,6 @@ use std::sync::{mpsc::Sender, Arc, Mutex, MutexGuard};
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{lock, middleware, project::Project, vfs::Vfs};
 
-pub mod dom;
 pub mod instance;
 pub mod meta;
 pub mod processor;
@@ -23,14 +22,14 @@ pub struct Core {
 impl Core {
 	pub fn new(project: Project) -> Result<Self> {
 		let vfs = Vfs::new()?;
-		let dom = Tree::new(&project);
+		let tree = Tree::new(&project);
 		let queue = Queue::new();
 
-		let snapshot = middleware::from_path(&project.workspace_dir, &Meta::empty(), &vfs);
-		println!("{:?}", snapshot);
+		let snapshot = middleware::new_snapshot(&project.workspace_dir, &Meta::default(), &vfs)?;
+		println!("{:#?}", snapshot);
 
 		let vfs = Arc::new(Mutex::new(vfs));
-		let tree = Arc::new(Mutex::new(dom));
+		let tree = Arc::new(Mutex::new(tree));
 		let queue = Arc::new(Mutex::new(queue));
 
 		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone());
