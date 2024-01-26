@@ -1,5 +1,11 @@
 use anyhow::Result;
-use std::sync::{mpsc::Sender, Arc, Mutex, MutexGuard};
+use rbx_xml::EncodeOptions;
+use std::{
+	fs::File,
+	io::BufWriter,
+	path::Path,
+	sync::{mpsc::Sender, Arc, Mutex, MutexGuard},
+};
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{lock, middleware, project::Project, vfs::Vfs};
@@ -22,15 +28,12 @@ pub struct Core {
 impl Core {
 	pub fn new(project: Project) -> Result<Self> {
 		let vfs = Vfs::new()?;
-		let tree = Tree::new(&project);
-		let queue = Queue::new();
 
 		let snapshot = middleware::new_snapshot(&project.workspace_dir, &Meta::default(), &vfs)?;
-		println!("{:#?}", snapshot);
 
 		let vfs = Arc::new(Mutex::new(vfs));
-		let tree = Arc::new(Mutex::new(tree));
-		let queue = Arc::new(Mutex::new(queue));
+		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
+		let queue = Arc::new(Mutex::new(Queue::new()));
 
 		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone());
 
@@ -41,10 +44,6 @@ impl Core {
 			tree,
 			vfs,
 		})
-	}
-
-	pub fn watch(&self, sender: Option<Sender<()>>) {
-		lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
 	}
 
 	pub fn name(&self) -> String {
@@ -69,5 +68,29 @@ impl Core {
 
 	pub fn queue(&self) -> MutexGuard<'_, Queue> {
 		lock!(self.queue)
+	}
+
+	pub fn watch(&self, sender: Option<Sender<()>>) {
+		lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
+	}
+
+	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {
+		let writer = BufWriter::new(File::create(path)?);
+
+		let tree = lock!(self.tree);
+
+		let root_refs = if self.project.is_place() {
+			tree.place_root_refs().to_vec()
+		} else {
+			vec![tree.root_ref()]
+		};
+
+		if xml {
+			rbx_xml::to_writer(writer, tree.inner(), &root_refs, EncodeOptions::default())?;
+		} else {
+			rbx_binary::to_writer(writer, tree.inner(), &root_refs)?;
+		}
+
+		Ok(())
 	}
 }

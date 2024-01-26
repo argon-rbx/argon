@@ -1,18 +1,16 @@
 use anyhow::{bail, Result};
-use log::error;
-use rbx_dom_weak::types::{Attributes, Tags, Variant};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use crate::{
 	core::{meta::Meta, snapshot::Snapshot},
-	project::ProjectNode,
-	util,
 	vfs::Vfs,
 };
 
-use self::project::snapshot_project;
+use self::{dir::snapshot_dir, lua::snapshot_lua, project::snapshot_project};
 
+pub mod dir;
+pub mod lua;
 pub mod project;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -36,12 +34,13 @@ pub enum FileType {
 impl FileType {
 	fn middleware(&self, name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
 		match self {
-			FileType::Project => snapshot_project(name, path, meta, vfs),
-			_ => bail!("Unsupported file type! (TEMP)"),
+			FileType::Project => snapshot_project(path, meta, vfs),
 			// FileType::InstanceData => {}
-			// FileType::ServerScript => {}
-			// FileType::ClientScript => {}
-			// FileType::ModuleScript => {}
+			//
+			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
+				snapshot_lua(name, path, vfs, self.clone().into())
+			}
+			_ => bail!("Unsupported file type! (TEMP)"),
 			// FileType::JsonModule => {}
 			// FileType::LocalizationTable => {}
 			// FileType::StringValue => {}
@@ -56,6 +55,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
+	// Check if the path is not ignored here
+
 	let is_dir = vfs.is_dir(path);
 
 	if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path, is_dir)) {
@@ -65,8 +66,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 		file_type.middleware(&name, &path, meta, vfs)
 	} else if is_dir {
-		//dir
-		Ok(Some(Snapshot::new("temp"))) //TEMP
+		snapshot_dir(path, meta, vfs)
 	} else {
 		Ok(None)
 	}

@@ -109,8 +109,6 @@ impl Run {
 			}
 		}
 
-		// core.load_dom()?;
-
 		let server = Server::new(core, &host, &port);
 
 		if config.spawn {

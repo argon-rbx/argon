@@ -19,7 +19,6 @@ use crate::{
 	project::{self, Project},
 	sessions,
 	util::{self, resolve_path},
-	vfs::VfsEvent,
 };
 
 /// Build project into Roblox place or model
@@ -156,8 +155,7 @@ impl Build {
 
 		let mut core = Core::new(project)?;
 
-		// core.load_dom()?;
-		// core.build(&path, xml)?;
+		core.build(&path, xml)?;
 
 		argon_info!(
 			"Successfully built project: {} to: {}",
@@ -187,16 +185,16 @@ impl Build {
 				sessions::add(self.session, None, None, process::id())?;
 			}
 
-			let (sender, receiver) = mpsc::channel::<VfsEvent>();
+			let (sender, receiver) = mpsc::channel();
 
-			// core.watch(Some(sender));
+			core.watch(Some(sender));
 
 			argon_info!("Watching for changes..");
 
 			for _ in receiver {
 				info!("Rebuilding project..");
 
-				// core.build(&path, xml)?;
+				core.build(&path, xml)?;
 			}
 		}
 

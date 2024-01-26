@@ -2,6 +2,7 @@ use anyhow::Result;
 use crossbeam_channel::Receiver;
 use std::{
 	collections::HashMap,
+	fs,
 	path::{Path, PathBuf},
 };
 
@@ -55,6 +56,21 @@ impl Vfs {
 		}
 
 		Ok(())
+	}
+
+	pub fn read(&self, path: &Path) -> Result<String> {
+		let file = fs::read_to_string(path)?;
+		Ok(file)
+	}
+
+	pub fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
+		let mut paths = vec![];
+
+		for entry in fs::read_dir(path)? {
+			paths.push(entry?.path());
+		}
+
+		Ok(paths)
 	}
 
 	pub fn exists(&self, path: &Path) -> bool {

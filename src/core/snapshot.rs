@@ -4,10 +4,13 @@ use std::{
 	path::{Path, PathBuf},
 };
 
+use super::meta::Meta;
+
 #[derive(Debug)]
 pub struct Snapshot {
-	pub id: Ref,
-	pub path: PathBuf,
+	pub id: Option<Ref>,
+	pub meta: Option<Meta>,
+	pub path: Option<PathBuf>,
 
 	pub name: String,
 	pub class: String,
@@ -18,22 +21,28 @@ pub struct Snapshot {
 impl Snapshot {
 	pub fn new(name: &str) -> Self {
 		Self {
-			id: Ref::none(),
-			path: PathBuf::new(),
+			id: None,
+			meta: None,
+			path: None,
 			name: name.to_string(),
-			class: String::new(),
+			class: String::from("Folder"),
 			properties: HashMap::new(),
 			children: Vec::new(),
 		}
 	}
 
 	pub fn with_id(mut self, id: Ref) -> Self {
-		self.id = id;
+		self.id = Some(id);
+		self
+	}
+
+	pub fn with_meta(mut self, meta: Meta) -> Self {
+		self.meta = Some(meta);
 		self
 	}
 
 	pub fn with_path(mut self, path: &Path) -> Self {
-		self.path = path.into();
+		self.path = Some(path.into());
 		self
 	}
 

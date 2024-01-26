@@ -210,14 +210,14 @@ impl Project {
 				self.path_map.insert(local_path, rbx_path.clone());
 			}
 
-			if node.class_name.is_some()
-				|| node.properties.is_some()
-				|| node.attributes.is_some()
-				|| node.tags.is_some()
-			{
-				let properties = util::properties::from_node(node.clone(), name)?;
-				self.data_map.insert(rbx_path.clone(), properties);
-			}
+			// if node.class_name.is_some()
+			// 	|| node.properties.is_some()
+			// 	|| node.attributes.is_some()
+			// 	|| node.tags.is_some()
+			// {
+			// 	let properties = util::properties::from_node(node.clone(), name)?;
+			// 	self.data_map.insert(rbx_path.clone(), properties);
+			// }
 
 			self.parse_tree(&node.tree, local_root, &rbx_path)?;
 		}

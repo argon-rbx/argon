@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use crate::{glob::Glob, middleware::FileType, util};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SyncRule {
 	#[serde(rename = "type")]
 	pub file_type: FileType,
@@ -15,7 +15,7 @@ pub struct SyncRule {
 	pub suffix: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
 	pub file_type: FileType,
 	pub path: PathBuf,
@@ -55,7 +55,7 @@ impl SyncRule {
 	pub fn get_name(&self, path: &Path) -> String {
 		if let Some(suffix) = &self.suffix {
 			let name = util::get_file_name(path);
-			name.strip_prefix(suffix).unwrap_or(name).into()
+			name.strip_suffix(suffix).unwrap_or(name).into()
 		} else {
 			util::get_file_stem(path).into()
 		}
@@ -93,7 +93,7 @@ impl SyncRule {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Meta {
 	pub ignore_globs: Vec<Glob>,
 	pub sync_rules: Vec<SyncRule>,
@@ -105,6 +105,10 @@ impl Meta {
 			ignore_globs: Vec::new(),
 			sync_rules: Vec::new(),
 		}
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.ignore_globs.is_empty() && self.sync_rules.is_empty()
 	}
 }
 
