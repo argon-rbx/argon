@@ -60,6 +60,25 @@ impl Tree {
 		referent
 	}
 
+	pub fn remove(&mut self, id: Ref) {
+		self.dom.destroy(id);
+		self.ids_to_meta.remove(&id);
+
+		let mut removed = vec![];
+
+		for (path, ids) in self.path_to_ids.iter_all_mut() {
+			ids.retain(|&referent| referent != id);
+
+			if ids.is_empty() {
+				removed.push(path.to_owned());
+			}
+		}
+
+		for path in removed {
+			self.path_to_ids.remove(&path);
+		}
+	}
+
 	pub fn inner(&self) -> &WeakDom {
 		&self.dom
 	}
@@ -81,6 +100,6 @@ impl Tree {
 			return meta;
 		}
 
-		self.get_meta(self.dom.get_by_ref(id).unwrap().referent())
+		self.get_meta(self.dom.get_by_ref(id).unwrap().parent())
 	}
 }

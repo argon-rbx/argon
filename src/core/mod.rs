@@ -1,14 +1,15 @@
 use anyhow::Result;
+use crossbeam_channel::Receiver;
 use rbx_xml::EncodeOptions;
 use std::{
 	fs::File,
 	io::BufWriter,
 	path::Path,
-	sync::{mpsc::Sender, Arc, Mutex, MutexGuard},
+	sync::{Arc, Mutex, MutexGuard},
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
-use crate::{lock, middleware, project::Project, vfs::Vfs};
+use crate::{lock, middleware::new_snapshot, project::Project, vfs::Vfs};
 
 pub mod instance;
 pub mod meta;
@@ -27,9 +28,9 @@ pub struct Core {
 
 impl Core {
 	pub fn new(project: Project) -> Result<Self> {
-		let vfs = Vfs::new()?;
+		let vfs = Vfs::new();
 
-		let snapshot = middleware::new_snapshot(&project.workspace_dir, &Meta::default(), &vfs)?;
+		let snapshot = new_snapshot(&project.workspace_dir, &Meta::default(), &vfs)?;
 
 		let vfs = Arc::new(Mutex::new(vfs));
 		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
@@ -70,8 +71,10 @@ impl Core {
 		lock!(self.queue)
 	}
 
-	pub fn watch(&self, sender: Option<Sender<()>>) {
+	pub fn watch(&self) -> Receiver<()> {
 		lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
+
+		self.processor.callback()
 	}
 
 	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {

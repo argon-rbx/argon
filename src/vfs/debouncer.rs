@@ -1,4 +1,3 @@
-use anyhow::Result;
 use crossbeam_channel::Sender;
 use notify::{
 	event::{DataChange, ModifyKind},
@@ -20,9 +19,9 @@ pub struct VfsDebouncer {
 }
 
 impl VfsDebouncer {
-	pub fn new(handler: Sender<VfsEvent>) -> Result<Self> {
+	pub fn new(handler: Sender<VfsEvent>) -> Self {
 		let (sender, receiver) = mpsc::channel();
-		let debouncer = new_debouncer(Duration::from_millis(100), None, sender, false)?;
+		let debouncer = new_debouncer(Duration::from_millis(100), None, sender, false).unwrap();
 
 		thread::spawn(move || {
 			for events in receiver {
@@ -34,7 +33,7 @@ impl VfsDebouncer {
 			}
 		});
 
-		Ok(Self { inner: debouncer })
+		Self { inner: debouncer }
 	}
 
 	#[cfg(target_os = "macos")]

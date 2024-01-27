@@ -3,10 +3,7 @@ use rbx_dom_weak::types::{Enum, Variant};
 use std::{collections::HashMap, path::Path};
 
 use super::FileType;
-use crate::{
-	core::{meta::Meta, snapshot::Snapshot},
-	vfs::Vfs,
-};
+use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScriptType {

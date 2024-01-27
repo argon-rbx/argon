@@ -85,9 +85,10 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 		let path = path.join(node_path);
 
 		if let Some(path_snapshot) = new_snapshot(&path, meta, vfs)? {
-			snapshot = path_snapshot.with_name(&snapshot.name);
+			let properties = snapshot.properties.clone();
 
-			// Properties shoiuld be merged here
+			snapshot = path_snapshot.with_name(&snapshot.name).with_class(&snapshot.class);
+			snapshot.properties.extend(properties);
 		}
 
 		snapshot.path = Some(path);

@@ -1,4 +1,5 @@
 use crossbeam_channel::{select, Receiver, Sender};
+use log::{error, trace};
 use std::{
 	sync::{Arc, Mutex},
 	thread,
@@ -6,7 +7,8 @@ use std::{
 
 use super::{queue::Queue, tree::Tree};
 use crate::{
-	lock, middleware,
+	lock,
+	middleware::{self, new_snapshot},
 	vfs::{Vfs, VfsEvent},
 };
 
@@ -23,7 +25,7 @@ impl Processor {
 			queue: queue.clone(),
 			tree: tree.clone(),
 			vfs: vfs.clone(),
-			sender,
+			callback: sender,
 		});
 
 		{
@@ -47,22 +49,26 @@ impl Processor {
 			handler,
 		}
 	}
+
+	pub fn callback(&self) -> Receiver<()> {
+		self.callback.clone()
+	}
 }
 
 struct Handler {
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Mutex<Vfs>>,
-	sender: Sender<()>,
+	callback: Sender<()>,
 }
 
 impl Handler {
-	fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>, sender: Sender<()>) -> Self {
+	fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>, callback: Sender<()>) -> Self {
 		Self {
 			queue,
 			tree,
 			vfs,
-			sender,
+			callback,
 		}
 	}
 
@@ -75,6 +81,7 @@ impl Handler {
 
 		let changed = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
+				let is_new = tree.get_ids(&path).is_none();
 				let ids = {
 					let mut current_path = path.as_path();
 
@@ -92,7 +99,26 @@ impl Handler {
 
 				for id in ids {
 					let meta = tree.get_meta(id);
-					let snapshot = middleware::new_snapshot(&path, meta, &vfs);
+					let snapshot = match new_snapshot(&path, meta, &vfs) {
+						Ok(snapshot) => snapshot,
+						Err(err) => {
+							error!("Failed to create snapshot: {}, path: {:?}", err, path);
+							continue;
+						}
+					};
+
+					if let Some(snapshot) = snapshot {
+						if is_new {
+							trace!("Inserting {:?}", path);
+							tree.insert(snapshot, id);
+						} else {
+							trace!("Updating {:?}", path);
+							println!("{:?}", snapshot);
+						}
+					} else if !is_new {
+						trace!("Removing {:?}", path);
+						tree.remove(id);
+					}
 				}
 
 				true
@@ -100,7 +126,7 @@ impl Handler {
 		};
 
 		if changed {
-			self.sender.send(()).unwrap();
+			self.callback.send(()).unwrap();
 		}
 	}
 }

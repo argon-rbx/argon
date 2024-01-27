@@ -4,7 +4,10 @@ use std::{
 	collections::HashMap,
 	fs,
 	path::{Path, PathBuf},
+	sync::Mutex,
 };
+
+use crate::lock;
 
 use self::watcher::VfsWatcher;
 
@@ -18,20 +21,25 @@ pub enum VfsEvent {
 	Write(PathBuf),
 }
 
-pub struct Vfs {
+struct VfsInner {
 	watcher: VfsWatcher,
+	// bool - is_dir?
 	watch_map: HashMap<PathBuf, bool>,
 }
 
-impl Vfs {
-	pub fn new() -> Result<Self> {
-		Ok(Self {
-			watcher: VfsWatcher::new()?,
+impl VfsInner {
+	pub fn new() -> Self {
+		Self {
+			watcher: VfsWatcher::new(),
 			watch_map: HashMap::new(),
-		})
+		}
 	}
 
 	pub fn watch(&mut self, path: &Path) -> Result<()> {
+		if self.watch_map.contains_key(path) {
+			return Ok(());
+		}
+
 		self.watcher.watch(path)?;
 		self.watch_map.insert(path.to_owned(), path.is_dir());
 
@@ -39,6 +47,10 @@ impl Vfs {
 	}
 
 	pub fn unwatch(&mut self, path: &Path) -> Result<()> {
+		if !self.watch_map.contains_key(path) {
+			return Ok(());
+		}
+
 		self.watcher.unwatch(path)?;
 
 		let mut unwatched = vec![];
@@ -93,5 +105,53 @@ impl Vfs {
 		if let VfsEvent::Delete(path) = event {
 			self.unwatch(path).ok();
 		}
+	}
+}
+
+pub struct Vfs {
+	inner: Mutex<VfsInner>,
+}
+
+impl Vfs {
+	pub fn new() -> Self {
+		Self {
+			inner: Mutex::new(VfsInner::new()),
+		}
+	}
+
+	pub fn watch(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).watch(path)
+	}
+
+	pub fn unwatch(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).unwatch(path)
+	}
+
+	pub fn read(&self, path: &Path) -> Result<String> {
+		lock!(self.inner).read(path)
+	}
+
+	pub fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
+		lock!(self.inner).read_dir(path)
+	}
+
+	pub fn exists(&self, path: &Path) -> bool {
+		lock!(self.inner).exists(path)
+	}
+
+	pub fn is_dir(&self, path: &Path) -> bool {
+		lock!(self.inner).is_dir(path)
+	}
+
+	pub fn is_file(&self, path: &Path) -> bool {
+		lock!(self.inner).is_file(path)
+	}
+
+	pub fn receiver(&self) -> Receiver<VfsEvent> {
+		lock!(self.inner).receiver()
+	}
+
+	pub fn process_event(&self, event: &VfsEvent) {
+		lock!(self.inner).process_event(event)
 	}
 }

@@ -7,7 +7,6 @@ use std::{
 	env, fs,
 	path::PathBuf,
 	process::{self, Command},
-	sync::mpsc,
 };
 
 use crate::{
@@ -153,7 +152,7 @@ impl Build {
 			}
 		}
 
-		let mut core = Core::new(project)?;
+		let core = Core::new(project)?;
 
 		core.build(&path, xml)?;
 
@@ -185,9 +184,7 @@ impl Build {
 				sessions::add(self.session, None, None, process::id())?;
 			}
 
-			let (sender, receiver) = mpsc::channel();
-
-			core.watch(Some(sender));
+			let receiver = core.watch();
 
 			argon_info!("Watching for changes..");
 

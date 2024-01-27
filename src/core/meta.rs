@@ -15,13 +15,6 @@ pub struct SyncRule {
 	pub suffix: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ResolvedSyncRule {
-	pub file_type: FileType,
-	pub path: PathBuf,
-	pub name: String,
-}
-
 impl SyncRule {
 	pub fn matches(&self, path: &Path) -> bool {
 		if let Some(pattern) = &self.pattern {
@@ -61,35 +54,8 @@ impl SyncRule {
 		}
 	}
 
-	pub fn resolve(&self, path: &Path, is_dir: bool) -> Option<ResolvedSyncRule> {
-		if is_dir {
-			if let Some(child_pattern) = &self.child_pattern {
-				let path = path.join(child_pattern.as_str());
-				let child_pattern = Glob::from_path(&path).unwrap();
-
-				if let Some(path) = child_pattern.first() {
-					if self.is_excluded(&path) {
-						return None;
-					}
-
-					return Some(ResolvedSyncRule {
-						file_type: self.file_type.clone(),
-						name: self.get_name(&path),
-						path,
-					});
-				}
-			}
-		} else if let Some(pattern) = &self.pattern {
-			if pattern.matches_path(path) && !self.is_excluded(path) {
-				return Some(ResolvedSyncRule {
-					file_type: self.file_type.clone(),
-					path: path.to_path_buf(),
-					name: self.get_name(path),
-				});
-			}
-		}
-
-		None
+	pub fn get_path(&self, path: &Path) -> PathBuf {
+		unimplemented!()
 	}
 }
 
@@ -167,14 +133,15 @@ impl Default for Meta {
 			//
 			sync_rule!("*.server.lua", ".src.server.lua", ServerScript, ".server.lua"),
 			sync_rule!("*.client.lua", ".src.client.lua", ClientScript, ".client.lua"),
+			sync_rule!("*.lua", ".src.lua", ModuleScript),
 			sync_rule!("*.server.luau", ".src.server.luau", ServerScript, ".server.luau"),
 			sync_rule!("*.client.luau", ".src.client.luau", ClientScript, ".client.luau"),
-			sync_rule!("*.{lua, luau}", ".src.{lua, luau}", ModuleScript),
+			sync_rule!("*.luau", ".src.luau", ModuleScript),
 			//
+			sync_rule!("*.txt", ".src.txt", StringValue),
+			sync_rule!("*.csv", ".src.csv", LocalizationTable),
 			sync_rule!("*.json", ".src.json", JsonModule, ".data.json"),
 			sync_rule!("*.toml", ".src.toml", TomlModule),
-			sync_rule!("*.csv", ".src.csv", LocalizationTable),
-			sync_rule!("*.txt", ".src.txt", StringValue),
 			sync_rule!("*.rbxm", ".src.rbxm", RbxmModel),
 			sync_rule!("*.rbxmx", ".src.rbxmx", RbxmxModel),
 		];

@@ -11,11 +11,11 @@ pub struct VfsWatcher {
 }
 
 impl VfsWatcher {
-	pub fn new() -> Result<Self> {
+	pub fn new() -> Self {
 		let (sender, receiver) = crossbeam_channel::unbounded();
-		let debouncer = VfsDebouncer::new(sender)?;
+		let debouncer = VfsDebouncer::new(sender);
 
-		Ok(Self { debouncer, receiver })
+		Self { debouncer, receiver }
 	}
 
 	pub fn watch(&mut self, path: &Path) -> Result<()> {
