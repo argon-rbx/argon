@@ -11,7 +11,6 @@ use std::{
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{lock, middleware::new_snapshot, project::Project, vfs::Vfs};
 
-pub mod instance;
 pub mod meta;
 pub mod processor;
 pub mod queue;
@@ -72,7 +71,7 @@ impl Core {
 	}
 
 	pub fn watch(&self) -> Receiver<()> {
-		lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
+		// lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
 
 		self.processor.callback()
 	}

@@ -11,7 +11,7 @@ use crate::{
 	vfs::Vfs,
 };
 
-pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 	let project = fs::read_to_string(path)?;
 	let project: Project = serde_json::from_str(&project)?;
 
@@ -21,7 +21,7 @@ pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Sn
 		.with_meta(meta.to_owned())
 		.with_path(path);
 
-	Ok(Some(snapshot))
+	Ok(snapshot)
 }
 
 pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
@@ -86,8 +86,13 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 
 		if let Some(path_snapshot) = new_snapshot(&path, meta, vfs)? {
 			let properties = snapshot.properties.clone();
+			let class = if path_snapshot.class == "Folder" {
+				class
+			} else {
+				path_snapshot.class.clone()
+			};
 
-			snapshot = path_snapshot.with_name(&snapshot.name).with_class(&snapshot.class);
+			snapshot = path_snapshot.with_name(&snapshot.name).with_class(&class);
 			snapshot.properties.extend(properties);
 		}
 

@@ -3,6 +3,13 @@ use std::path::{Path, PathBuf};
 
 use crate::{glob::Glob, middleware::FileType, util};
 
+#[derive(Debug, Clone)]
+pub struct ResolvedSyncRule {
+	pub file_type: FileType,
+	pub path: PathBuf,
+	pub name: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SyncRule {
 	#[serde(rename = "type")]
@@ -54,8 +61,41 @@ impl SyncRule {
 		}
 	}
 
-	pub fn get_path(&self, path: &Path) -> PathBuf {
-		unimplemented!()
+	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
+		if let Some(pattern) = &self.pattern {
+			if pattern.matches_path(path) && !self.is_excluded(path) {
+				return Some(ResolvedSyncRule {
+					file_type: self.file_type.clone(),
+					path: path.to_path_buf(),
+					name: self.get_name(path),
+				});
+			}
+		}
+
+		None
+	}
+
+	pub fn resolve_child(&self, path: &Path) -> Option<ResolvedSyncRule> {
+		if let Some(child_pattern) = &self.child_pattern {
+			let path = path.join(child_pattern.as_str());
+			let child_pattern = Glob::from_path(&path).unwrap();
+
+			if let Some(path) = child_pattern.first() {
+				if self.is_excluded(&path) {
+					return None;
+				}
+
+				let name = util::get_file_name(path.parent().unwrap());
+
+				return Some(ResolvedSyncRule {
+					file_type: self.file_type.clone(),
+					name: name.to_string(),
+					path,
+				});
+			}
+		}
+
+		None
 	}
 }
 

@@ -8,7 +8,7 @@ use std::{
 use super::{queue::Queue, tree::Tree};
 use crate::{
 	lock,
-	middleware::{self, new_snapshot},
+	middleware::new_snapshot,
 	vfs::{Vfs, VfsEvent},
 };
 

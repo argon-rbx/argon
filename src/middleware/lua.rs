@@ -33,7 +33,7 @@ impl From<FileType> for ScriptType {
 	}
 }
 
-pub fn snapshot_lua(name: &str, path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<Option<Snapshot>> {
+pub fn snapshot_lua(name: &str, path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
 	let mut snapshot = Snapshot::new(name).with_class(script_type.as_class()).with_path(path);
 	let mut properties = HashMap::new();
 
@@ -61,5 +61,5 @@ pub fn snapshot_lua(name: &str, path: &Path, vfs: &Vfs, script_type: ScriptType)
 
 	snapshot.properties = properties;
 
-	Ok(Some(snapshot))
+	Ok(snapshot)
 }

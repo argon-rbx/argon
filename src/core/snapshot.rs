@@ -1,12 +1,12 @@
 use rbx_dom_weak::types::{Ref, Variant};
 use std::{
 	collections::HashMap,
+	fmt::Debug,
 	path::{Path, PathBuf},
 };
 
 use super::meta::Meta;
 
-#[derive(Debug)]
 pub struct Snapshot {
 	pub id: Option<Ref>,
 	pub meta: Option<Meta>,
@@ -64,5 +64,44 @@ impl Snapshot {
 	pub fn with_children(mut self, children: Vec<Snapshot>) -> Self {
 		self.children = children;
 		self
+	}
+}
+
+impl Debug for Snapshot {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let mut debug = f.debug_struct("Snapshot");
+
+		debug.field("name", &self.name);
+		debug.field("class", &self.class);
+
+		if let Some(path) = &self.path {
+			debug.field("path", &path);
+		}
+
+		if let Some(id) = self.id {
+			debug.field("id", &id);
+		}
+
+		if let Some(meta) = &self.meta {
+			debug.field("meta", &meta);
+		}
+
+		if !self.properties.is_empty() {
+			let mut properties = self.properties.clone();
+
+			if let Some(property) = properties.get_mut("Source") {
+				if let Variant::String(source) = property {
+					*property = Variant::String(format!("Truncated... ({} lines)", source.lines().count()));
+				}
+			}
+
+			debug.field("properties", &properties);
+		}
+
+		if !self.children.is_empty() {
+			debug.field("children", &self.children);
+		}
+
+		debug.finish()
 	}
 }
