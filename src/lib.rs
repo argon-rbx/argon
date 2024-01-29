@@ -4,7 +4,6 @@ pub mod cli;
 pub mod config;
 pub mod core;
 pub mod crash_handler;
-pub mod fs;
 pub mod glob;
 pub mod installer;
 pub mod logger;
