@@ -17,7 +17,7 @@ pub mod resolution;
 pub mod server;
 pub mod sessions;
 pub mod util;
-mod vfs;
+pub mod vfs;
 pub mod workspace;
 
 /// A shorter way to lock the Mutex.

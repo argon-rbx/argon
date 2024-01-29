@@ -11,6 +11,7 @@ use crate::{
 	vfs::Vfs,
 };
 
+#[profiling::function]
 pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 	let project = fs::read_to_string(path)?;
 	let project: Project = serde_json::from_str(&project)?;
@@ -96,7 +97,9 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 			snapshot.properties.extend(properties);
 		}
 
-		snapshot.path = Some(path);
+		if snapshot.path.is_none() {
+			snapshot.path = Some(path);
+		}
 	}
 
 	for (name, node) in node.tree {

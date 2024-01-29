@@ -1,0 +1,11 @@
+[package]
+name = "profiling"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+profiling-procmacros = { path = "../profiling-procmacros" }
+
+[dev-dependencies]
+puffin_http = "0.16.0"
+puffin = "0.19.0"

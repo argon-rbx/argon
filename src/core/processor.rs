@@ -1,14 +1,15 @@
 use crossbeam_channel::{select, Receiver, Sender};
-use log::{error, trace};
+use log::error;
+use rbx_dom_weak::types::Ref;
 use std::{
 	sync::{Arc, Mutex},
-	thread,
+	thread::Builder,
 };
 
 use super::{queue::Queue, tree::Tree};
 use crate::{
 	lock,
-	middleware::new_snapshot,
+	middleware::{new_snapshot, FileType},
 	vfs::{Vfs, VfsEvent},
 };
 
@@ -18,7 +19,7 @@ pub struct Processor {
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>) -> Self {
+	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>) -> Self {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		let handler = Arc::new(Handler {
@@ -31,17 +32,20 @@ impl Processor {
 		{
 			let handler = handler.clone();
 
-			thread::spawn(move || {
-				let vfs_receiver = lock!(vfs).receiver();
+			Builder::new()
+				.name("processor".into())
+				.spawn(move || {
+					let vfs_receiver = vfs.receiver();
 
-				loop {
-					select! {
-						recv(vfs_receiver) -> event => {
-							handler.on_vfs_event(event.unwrap());
+					loop {
+						select! {
+							recv(vfs_receiver) -> event => {
+								handler.on_vfs_event(event.unwrap());
+							}
 						}
 					}
-				}
-			});
+				})
+				.unwrap();
 		}
 
 		Self {
@@ -58,30 +62,19 @@ impl Processor {
 struct Handler {
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
-	vfs: Arc<Mutex<Vfs>>,
+	vfs: Arc<Vfs>,
 	callback: Sender<()>,
 }
 
 impl Handler {
-	fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Mutex<Vfs>>, callback: Sender<()>) -> Self {
-		Self {
-			queue,
-			tree,
-			vfs,
-			callback,
-		}
-	}
-
 	fn on_vfs_event(&self, event: VfsEvent) {
-		let mut vfs = lock!(self.vfs);
 		let mut tree = lock!(self.tree);
 		let mut queue = lock!(self.queue);
 
-		vfs.process_event(&event);
+		self.vfs.process_event(&event);
 
 		let changed = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
-				let is_new = tree.get_ids(&path).is_none();
 				let ids = {
 					let mut current_path = path.as_path();
 
@@ -98,27 +91,7 @@ impl Handler {
 				};
 
 				for id in ids {
-					let meta = tree.get_meta(id);
-					let snapshot = match new_snapshot(&path, meta, &vfs) {
-						Ok(snapshot) => snapshot,
-						Err(err) => {
-							error!("Failed to create snapshot: {}, path: {:?}", err, path);
-							continue;
-						}
-					};
-
-					if let Some(snapshot) = snapshot {
-						if is_new {
-							trace!("Inserting {:?}", path);
-							tree.insert(snapshot, id);
-						} else {
-							trace!("Updating {:?}", path);
-							println!("{:?}", snapshot);
-						}
-					} else if !is_new {
-						trace!("Removing {:?}", path);
-						tree.remove(id);
-					}
+					process_changes(id, &tree, &self.vfs);
 				}
 
 				true
@@ -130,3 +103,47 @@ impl Handler {
 		}
 	}
 }
+
+#[profiling::function]
+fn process_changes(id: Ref, tree: &Tree, vfs: &Vfs) {
+	profiling::start_frame!();
+
+	let path = tree.get_path(id).unwrap();
+	let meta = tree.get_meta(id);
+
+	// println!("{:?}", path);
+
+	let snapshot = match new_snapshot(path, meta, vfs) {
+		Ok(snapshot) => snapshot,
+		Err(err) => {
+			error!("Failed to create snapshot: {}, path: {:?}", err, path);
+			return;
+		}
+	};
+
+	if let Some(snapshot) = snapshot {
+		let instance = tree.get_instance(id).unwrap();
+
+		if snapshot.name != instance.name
+			|| snapshot.class != instance.class
+			|| snapshot.properties != instance.properties
+		{
+			//update
+		}
+
+	// match snapshot.file_type.clone().unwrap() {
+	// 	FileType::Project | FileType::RbxmModel | FileType::RbxmxModel => {
+	// 		process_child_changes();
+	// 	}
+	// 	_ => {}
+	// }
+
+	// println!("{:#?}", snapshot);
+	// println!("{:#?}", instance);
+	} else {
+
+		//delete
+	}
+}
+
+fn process_child_changes() {}

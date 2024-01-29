@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-use crate::{glob::Glob, middleware::FileType, util};
+use crate::{glob::Glob, middleware::FileType, project::Project, util};
 
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
@@ -101,20 +101,27 @@ impl SyncRule {
 
 #[derive(Debug, Clone)]
 pub struct Meta {
-	pub ignore_globs: Vec<Glob>,
 	pub sync_rules: Vec<SyncRule>,
+	pub ignore_globs: Vec<Glob>,
 }
 
 impl Meta {
 	pub fn empty() -> Self {
 		Self {
-			ignore_globs: Vec::new(),
 			sync_rules: Vec::new(),
+			ignore_globs: Vec::new(),
+		}
+	}
+
+	pub fn from_project(project: &Project) -> Self {
+		Self {
+			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Meta::default().sync_rules),
+			ignore_globs: project.ignore_globs.clone().unwrap_or_default(),
 		}
 	}
 
 	pub fn is_empty(&self) -> bool {
-		self.ignore_globs.is_empty() && self.sync_rules.is_empty()
+		self.sync_rules.is_empty() && self.ignore_globs.is_empty()
 	}
 }
 
@@ -187,8 +194,8 @@ impl Default for Meta {
 		];
 
 		Self {
-			ignore_globs: vec![],
 			sync_rules,
+			ignore_globs: vec![],
 		}
 	}
 }

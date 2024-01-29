@@ -6,12 +6,18 @@ use std::{
 };
 
 use super::meta::Meta;
+use crate::middleware::FileType;
 
 pub struct Snapshot {
+	// For change processing
 	pub id: Option<Ref>,
+	pub file_type: Option<FileType>,
+
+	// For middleware
 	pub meta: Option<Meta>,
 	pub path: Option<PathBuf>,
 
+	// Roblox related
 	pub name: String,
 	pub class: String,
 	pub properties: HashMap<String, Variant>,
@@ -22,6 +28,7 @@ impl Snapshot {
 	pub fn new(name: &str) -> Self {
 		Self {
 			id: None,
+			file_type: None,
 			meta: None,
 			path: None,
 			name: name.to_string(),
@@ -33,6 +40,11 @@ impl Snapshot {
 
 	pub fn with_id(mut self, id: Ref) -> Self {
 		self.id = Some(id);
+		self
+	}
+
+	pub fn with_file_type(mut self, file_type: FileType) -> Self {
+		self.file_type = Some(file_type);
 		self
 	}
 

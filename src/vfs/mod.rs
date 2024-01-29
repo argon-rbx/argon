@@ -89,6 +89,10 @@ impl VfsInner {
 		path.exists()
 	}
 
+	pub fn is_watched(&self, path: &Path) -> bool {
+		self.watch_map.contains_key(path)
+	}
+
 	pub fn is_dir(&self, path: &Path) -> bool {
 		self.watch_map.get(path).cloned().unwrap_or_else(|| path.is_dir())
 	}
@@ -137,6 +141,10 @@ impl Vfs {
 
 	pub fn exists(&self, path: &Path) -> bool {
 		lock!(self.inner).exists(path)
+	}
+
+	pub fn is_watched(&self, path: &Path) -> bool {
+		lock!(self.inner).is_watched(path)
 	}
 
 	pub fn is_dir(&self, path: &Path) -> bool {

@@ -58,14 +58,17 @@ impl FileType {
 	}
 }
 
+/// Returns a snapshot of the given path, `None` if no longer exists, and a bool indicating if the path is included in the project
 pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if meta.ignore_globs.iter().any(|glob| glob.matches_path(path)) {
+		return Ok(None);
+	}
+
 	if !vfs.exists(path) {
 		vfs.unwatch(path)?;
 
 		return Ok(None);
 	}
-
-	// Check if the path is not ignored here
 
 	if vfs.is_file(path) {
 		if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
@@ -73,13 +76,11 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 			let resolved_path = resolved.path;
 			let name = resolved.name;
 
-			let t = file_type.middleware(&name, &resolved_path, meta, vfs)?;
+			let snapshot = file_type
+				.middleware(&name, &resolved_path, meta, vfs)?
+				.with_file_type(file_type);
 
-			if name == "lib" {
-				println!("{:#?}", t);
-			}
-
-			Ok(Some(t))
+			Ok(Some(snapshot))
 		} else {
 			Ok(None)
 		}
@@ -90,11 +91,12 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		let resolved_path = resolved.path;
 		let name = resolved.name;
 
-		let mut snapshot = file_type.middleware(&name, &resolved_path, meta, vfs)?;
+		let mut snapshot = file_type
+			.middleware(&name, &resolved_path, meta, vfs)?
+			.with_file_type(file_type.clone())
+			.with_path(path);
 
 		if file_type != FileType::Project {
-			// println!("{:#?}", path);
-
 			for path in vfs.read_dir(path)? {
 				if path == resolved_path {
 					continue;
@@ -109,6 +111,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		Ok(Some(snapshot))
 	} else {
 		vfs.watch(path)?;
+
 		snapshot_dir(path, meta, vfs)
 	}
 }

@@ -1,8 +1,10 @@
 use env_logger::WriteStyle;
-use log::{info, trace, warn};
+use log::{error, info, trace, warn};
+use puffin_http::Server;
 use std::{
 	env,
 	io::{self, IsTerminal},
+	mem::ManuallyDrop,
 };
 
 use argon::argon_error;
@@ -10,6 +12,8 @@ use argon::cli::Cli;
 use argon::crash_handler;
 use argon::installer;
 use argon::logger;
+
+const PROFILER_ADDRESS: &str = "localhost:8888";
 
 fn main() {
 	crash_handler::hook();
@@ -44,6 +48,21 @@ fn main() {
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
 		Err(err) => warn!("Failed to verify Argon installation: {}", err),
+	}
+
+	if cfg!(debug_assertions) {
+		match Server::new(PROFILER_ADDRESS) {
+			Ok(server) => {
+				let _ = ManuallyDrop::new(server);
+
+				info!("Profiler started at {}", PROFILER_ADDRESS);
+			}
+			Err(err) => {
+				error!("Failed to start profiler: {}", err);
+			}
+		}
+
+		puffin::set_scopes_on(true);
 	}
 
 	match cli.main() {

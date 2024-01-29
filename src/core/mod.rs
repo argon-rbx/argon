@@ -11,6 +11,7 @@ use std::{
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{lock, middleware::new_snapshot, project::Project, vfs::Vfs};
 
+pub mod change;
 pub mod meta;
 pub mod processor;
 pub mod queue;
@@ -22,16 +23,20 @@ pub struct Core {
 	processor: Arc<Processor>,
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
-	vfs: Arc<Mutex<Vfs>>,
+	vfs: Arc<Vfs>,
 }
 
 impl Core {
+	#[profiling::function]
 	pub fn new(project: Project) -> Result<Self> {
+		profiling::start_frame!();
+
 		let vfs = Vfs::new();
 
-		let snapshot = new_snapshot(&project.workspace_dir, &Meta::default(), &vfs)?;
+		let meta = Meta::from_project(&project);
+		let snapshot = new_snapshot(&project.workspace_dir, &meta, &vfs)?;
 
-		let vfs = Arc::new(Mutex::new(vfs));
+		let vfs = Arc::new(vfs);
 		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
 		let queue = Arc::new(Mutex::new(Queue::new()));
 

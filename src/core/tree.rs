@@ -1,5 +1,5 @@
 use multimap::MultiMap;
-use rbx_dom_weak::{types::Ref, InstanceBuilder, WeakDom};
+use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
 	collections::HashMap,
 	path::{Path, PathBuf},
@@ -79,8 +79,20 @@ impl Tree {
 		}
 	}
 
+	pub fn get_instance(&self, id: Ref) -> Option<&Instance> {
+		self.dom.get_by_ref(id)
+	}
+
 	pub fn inner(&self) -> &WeakDom {
 		&self.dom
+	}
+
+	pub fn meta_map(&self) -> &HashMap<Ref, Meta> {
+		&self.ids_to_meta
+	}
+
+	pub fn id_map(&self) -> &MultiMap<PathBuf, Ref> {
+		&self.path_to_ids
 	}
 
 	pub fn root_ref(&self) -> Ref {
@@ -101,5 +113,12 @@ impl Tree {
 		}
 
 		self.get_meta(self.dom.get_by_ref(id).unwrap().parent())
+	}
+
+	pub fn get_path(&self, id: Ref) -> Option<&PathBuf> {
+		self.path_to_ids
+			.iter_all()
+			.find(|(_, ids)| ids.contains(&id))
+			.map(|(path, _)| path)
 	}
 }

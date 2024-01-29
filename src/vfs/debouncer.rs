@@ -4,7 +4,7 @@ use notify::{
 	EventKind, RecommendedWatcher,
 };
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
-use std::{sync::mpsc, thread, time::Duration};
+use std::{sync::mpsc, thread::Builder, time::Duration};
 
 use super::VfsEvent;
 
@@ -23,15 +23,18 @@ impl VfsDebouncer {
 		let (sender, receiver) = mpsc::channel();
 		let debouncer = new_debouncer(Duration::from_millis(100), None, sender, false).unwrap();
 
-		thread::spawn(move || {
-			for events in receiver {
-				for event in events.unwrap() {
-					if let Some(event) = Self::debounce(&event) {
-						handler.send(event).unwrap();
+		Builder::new()
+			.name("debouncer".into())
+			.spawn(move || {
+				for events in receiver {
+					for event in events.unwrap() {
+						if let Some(event) = Self::debounce(&event) {
+							handler.send(event).unwrap();
+						}
 					}
 				}
-			}
-		});
+			})
+			.unwrap();
 
 		Self { inner: debouncer }
 	}

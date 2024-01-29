@@ -9,6 +9,7 @@ use crate::{
 
 use super::new_snapshot;
 
+#[profiling::function]
 pub fn snapshot_dir(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	let name = util::get_file_name(path);
 	let mut snapshot = Snapshot::new(name).with_path(path);
