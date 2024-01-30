@@ -91,7 +91,7 @@ impl Tree {
 		self.path_to_ids.get_vec(path)
 	}
 
-	/// Returns first meta that contains sync rules
+	/// Get all meta associated with the given `Ref` in order from root to leaf
 	pub fn get_meta(&self, id: Ref) -> VecDeque<&Meta> {
 		let mut metas = VecDeque::new();
 		let mut id = id;

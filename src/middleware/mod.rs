@@ -70,6 +70,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
+	// Get snapshot of a regular file
 	if vfs.is_file(path) {
 		if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
 			let file_type = resolved.file_type;
@@ -85,6 +86,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		} else {
 			Ok(None)
 		}
+	// Get snapshot of directory that contains child source
 	} else if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve_child(path)) {
 		vfs.watch(path)?;
 
@@ -111,6 +113,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		}
 
 		Ok(Some(snapshot))
+	// Get snapshot of a directory
 	} else {
 		vfs.watch(path)?;
 

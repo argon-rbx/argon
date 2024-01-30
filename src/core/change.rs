@@ -53,4 +53,14 @@ impl Changes {
 	pub fn remove(&mut self, id: Ref) {
 		self.removals.push(id);
 	}
+
+	pub fn extend(&mut self, changes: Self) {
+		self.additions.extend(changes.additions);
+		self.modifications.extend(changes.modifications);
+		self.removals.extend(changes.removals);
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.additions.is_empty() && self.modifications.is_empty() && self.removals.is_empty()
+	}
 }

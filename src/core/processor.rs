@@ -1,6 +1,6 @@
 use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
-use rbx_dom_weak::{types::Ref, Instance};
+use rbx_dom_weak::types::Ref;
 use std::{
 	collections::VecDeque,
 	sync::{Arc, Mutex},
@@ -82,7 +82,7 @@ impl Handler {
 
 		self.vfs.process_event(&event);
 
-		let changed = match event {
+		let changes = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
 				if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted)) {
 					return;
@@ -103,16 +103,20 @@ impl Handler {
 					}
 				};
 
+				let mut changes = Changes::new();
+
 				for id in ids {
-					process_changes(id, &mut tree, &self.vfs);
+					changes.extend(process_changes(id, &mut tree, &self.vfs));
 				}
 
-				true
+				changes
 			}
 		};
 
-		if changed {
+		if !changes.is_empty() {
 			self.callback.send(()).unwrap();
+
+			// TODO: add to the queue here
 		}
 	}
 }
@@ -134,22 +138,20 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		}
 	};
 
-	println!("{:#?}", snapshot);
-
+	// Handle additions, modifications and removals
+	// of instances with child source
 	if let Some(snapshot) = snapshot {
 		process_child_changes(id, snapshot, &mut changes, tree);
+	// Handle removals of regular instances
 	} else {
 		tree.remove(id);
 		changes.remove(id);
 	}
 
-	println!("{:?}", "--------------------------");
-	println!("{:?}", changes);
-
 	changes
 }
 
-fn process_child_changes(id: Ref, snapshot: Snapshot, chnages: &mut Changes, tree: &mut Tree) {
+fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes, tree: &mut Tree) {
 	let instance = tree.get_instance_mut(id).unwrap();
 
 	let mut modified_snapshot = ModifiedSnapshot::new(id);
@@ -177,32 +179,40 @@ fn process_child_changes(id: Ref, snapshot: Snapshot, chnages: &mut Changes, tre
 		chnages.modify(modified_snapshot);
 	}
 
-	let snapshot_children = snapshot.children.len();
-	let instance_children = instance.children().len();
-
-	// println!("{:?}", snapshot_children);
-	// println!("{:?}", instance_children);
-
+	// Find removed children
 	#[allow(clippy::unnecessary_to_owned)]
-	for child in instance.children().to_owned() {
-		let child = tree.get_instance(child).unwrap();
-		// println!("{:?}", child);
+	for child_id in instance.children().to_owned() {
+		// We only care about instances with path as other ones
+		// can only be modified from the project or model files
+		// which are guaranteed to have path assigned
+		if let Some(path) = tree.get_path(child_id) {
+			let mut exists = false;
 
-		// if let Some(path) = child.p
+			for child in snapshot.children.iter_mut() {
+				if child.path == Some(path.to_owned()) {
+					child.set_id(child_id);
+
+					exists = true;
+					break;
+				}
+			}
+
+			if !exists {
+				tree.remove(child_id);
+				chnages.remove(child_id);
+			}
+		}
 	}
 
-	// match snapshot_children.cmp(&instance_children) {
-	// 	// Child added
-	// 	Ordering::Greater => {
-	// 		for child in snapshot.children {
-	// 			println!("{:?}", tree.exists(&snapshot.path.clone().unwrap()));
-	// 			//TODO: what if snapshot.path is None?
-	// 		}
-	// 	}
-	// 	// Child removed
-	// 	Ordering::Less => for child in instance.children() {},
-	// 	_ => {}
-	// }
+	// Find new children
+	for child in snapshot.children {
+		if child.id.is_none() {
+			let child_id = tree.insert(child.clone(), id);
+			let child = child.clone().with_id(child_id);
+
+			chnages.add(child);
+		}
+	}
 }
 
 fn meta_from_vec(meta: VecDeque<&Meta>) -> Meta {

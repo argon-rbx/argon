@@ -8,6 +8,7 @@ use std::{
 use super::meta::Meta;
 use crate::middleware::FileType;
 
+#[derive(Clone)]
 pub struct Snapshot {
 	// For change processing
 	pub id: Option<Ref>,
