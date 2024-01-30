@@ -1,7 +1,7 @@
 use multimap::MultiMap;
 use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
-	collections::HashMap,
+	collections::{HashMap, VecDeque},
 	path::{Path, PathBuf},
 };
 
@@ -45,12 +45,12 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		if let Some(path) = snapshot.path {
-			self.path_to_ids.insert(path, referent);
-		}
-
 		if let Some(meta) = snapshot.meta {
 			self.ids_to_meta.insert(referent, meta);
+		}
+
+		if let Some(path) = snapshot.path {
+			self.path_to_ids.insert(path, referent);
 		}
 
 		for child in snapshot.children {
@@ -83,6 +83,43 @@ impl Tree {
 		self.dom.get_by_ref(id)
 	}
 
+	pub fn get_instance_mut(&mut self, id: Ref) -> Option<&mut Instance> {
+		self.dom.get_by_ref_mut(id)
+	}
+
+	pub fn get_ids(&self, path: &Path) -> Option<&Vec<Ref>> {
+		self.path_to_ids.get_vec(path)
+	}
+
+	/// Returns first meta that contains sync rules
+	pub fn get_meta(&self, id: Ref) -> VecDeque<&Meta> {
+		let mut metas = VecDeque::new();
+		let mut id = id;
+
+		loop {
+			if let Some(meta) = self.ids_to_meta.get(&id) {
+				metas.push_front(meta);
+			}
+
+			if id == self.dom.root_ref() {
+				break metas;
+			}
+
+			id = self.dom.get_by_ref(id).unwrap().parent();
+		}
+	}
+
+	pub fn get_path(&self, id: Ref) -> Option<&PathBuf> {
+		self.path_to_ids
+			.iter_all()
+			.find(|(_, ids)| ids.contains(&id))
+			.map(|(path, _)| path)
+	}
+
+	pub fn exists(&self, path: &Path) -> bool {
+		self.path_to_ids.contains_key(path)
+	}
+
 	pub fn inner(&self) -> &WeakDom {
 		&self.dom
 	}
@@ -101,24 +138,5 @@ impl Tree {
 
 	pub fn place_root_refs(&self) -> &[Ref] {
 		self.dom.root().children()
-	}
-
-	pub fn get_ids(&self, path: &Path) -> Option<&Vec<Ref>> {
-		self.path_to_ids.get_vec(path)
-	}
-
-	pub fn get_meta(&self, id: Ref) -> &Meta {
-		if let Some(meta) = self.ids_to_meta.get(&id) {
-			return meta;
-		}
-
-		self.get_meta(self.dom.get_by_ref(id).unwrap().parent())
-	}
-
-	pub fn get_path(&self, id: Ref) -> Option<&PathBuf> {
-		self.path_to_ids
-			.iter_all()
-			.find(|(_, ids)| ids.contains(&id))
-			.map(|(path, _)| path)
 	}
 }

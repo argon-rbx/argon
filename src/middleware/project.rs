@@ -5,7 +5,10 @@ use std::{collections::HashMap, fs, path::Path};
 
 use super::new_snapshot;
 use crate::{
-	core::{meta::Meta, snapshot::Snapshot},
+	core::{
+		meta::{Meta, ProjectData},
+		snapshot::Snapshot,
+	},
 	project::{Project, ProjectNode},
 	util,
 	vfs::Vfs,
@@ -85,26 +88,40 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 	if let Some(node_path) = node.path {
 		let path = path.join(node_path);
 
-		if let Some(path_snapshot) = new_snapshot(&path, meta, vfs)? {
-			let properties = snapshot.properties.clone();
-			let class = if path_snapshot.class == "Folder" {
-				class
-			} else {
-				path_snapshot.class.clone()
+		if let Some(mut path_snapshot) = new_snapshot(&path, meta, vfs)? {
+			let meta = {
+				let mut project_data = ProjectData::new(name, &path);
+
+				if class != "Folder" {
+					project_data.set_class(class.clone());
+				}
+
+				if !snapshot.properties.is_empty() {
+					project_data.set_properties(snapshot.properties.clone());
+				}
+
+				Meta::new().with_project_data(project_data)
 			};
 
-			snapshot = path_snapshot.with_name(&snapshot.name).with_class(&class);
-			snapshot.properties.extend(properties);
+			path_snapshot.set_meta(meta);
+			path_snapshot.set_name(&snapshot.name);
+			path_snapshot.extend_properties(snapshot.properties);
+
+			if path_snapshot.class == "Folder" {
+				path_snapshot.set_class(&snapshot.class);
+			}
+
+			snapshot = path_snapshot
 		}
 
 		if snapshot.path.is_none() {
-			snapshot.path = Some(path);
+			snapshot.set_path(&path);
 		}
 	}
 
 	for (name, node) in node.tree {
 		let child = snapshot_project_node(&name, path, meta, vfs, node)?;
-		snapshot.children.push(child);
+		snapshot.add_child(child);
 	}
 
 	Ok(snapshot)

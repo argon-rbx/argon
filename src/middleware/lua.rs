@@ -60,7 +60,7 @@ pub fn snapshot_lua(name: &str, path: &Path, vfs: &Vfs, script_type: ScriptType)
 
 	properties.insert(String::from("Source"), Variant::String(source));
 
-	snapshot.properties = properties;
+	snapshot.set_properties(properties);
 
 	Ok(snapshot)
 }

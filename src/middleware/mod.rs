@@ -58,7 +58,7 @@ impl FileType {
 	}
 }
 
-/// Returns a snapshot of the given path, `None` if no longer exists, and a bool indicating if the path is included in the project
+/// Returns a snapshot of the given path, `None` if path no longer exists
 pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if meta.ignore_globs.iter().any(|glob| glob.matches_path(path)) {
 		return Ok(None);
@@ -78,7 +78,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 			let snapshot = file_type
 				.middleware(&name, &resolved_path, meta, vfs)?
-				.with_file_type(file_type);
+				.with_file_type(file_type)
+				.apply_project_data(meta, path);
 
 			Ok(Some(snapshot))
 		} else {
@@ -94,7 +95,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		let mut snapshot = file_type
 			.middleware(&name, &resolved_path, meta, vfs)?
 			.with_file_type(file_type.clone())
-			.with_path(path);
+			.with_path(path)
+			.apply_project_data(meta, path);
 
 		if file_type != FileType::Project {
 			for path in vfs.read_dir(path)? {
@@ -103,7 +105,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 				}
 
 				if let Some(child_snapshot) = new_snapshot(&path, meta, vfs)? {
-					snapshot.children.push(child_snapshot);
+					snapshot.add_child(child_snapshot);
 				}
 			}
 		}
@@ -112,6 +114,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 	} else {
 		vfs.watch(path)?;
 
-		snapshot_dir(path, meta, vfs)
+		let snapshot = snapshot_dir(path, meta, vfs)?.apply_project_data(meta, path);
+
+		Ok(Some(snapshot))
 	}
 }

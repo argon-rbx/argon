@@ -1,4 +1,5 @@
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::types::{Ref, Variant};
+use std::collections::HashMap;
 
 use super::snapshot::Snapshot;
 
@@ -7,34 +8,49 @@ pub struct ModifiedSnapshot {
 	pub id: Ref,
 	pub name: Option<String>,
 	pub class: Option<String>,
-	pub properties: Option<Vec<String>>,
+	pub properties: Option<HashMap<String, Variant>>,
 }
 
-#[derive(Debug)]
-pub struct ChangeList {
-	pub added: Vec<Snapshot>,
-	pub modified: Vec<ModifiedSnapshot>,
-	pub removed: Vec<Ref>,
-}
-
-impl ChangeList {
-	fn new() -> Self {
+impl ModifiedSnapshot {
+	pub fn new(id: Ref) -> Self {
 		Self {
-			added: Vec::new(),
-			modified: Vec::new(),
-			removed: Vec::new(),
+			id,
+			name: None,
+			class: None,
+			properties: None,
 		}
 	}
 
-	fn add(&mut self, snapshot: Snapshot) {
-		self.added.push(snapshot);
+	pub fn is_empty(&self) -> bool {
+		self.name.is_none() && self.class.is_none() && self.properties.is_none()
+	}
+}
+
+#[derive(Debug)]
+pub struct Changes {
+	pub additions: Vec<Snapshot>,
+	pub modifications: Vec<ModifiedSnapshot>,
+	pub removals: Vec<Ref>,
+}
+
+impl Changes {
+	pub fn new() -> Self {
+		Self {
+			additions: Vec::new(),
+			modifications: Vec::new(),
+			removals: Vec::new(),
+		}
 	}
 
-	fn modify(&mut self, modified_snapshot: ModifiedSnapshot) {
-		self.modified.push(modified_snapshot);
+	pub fn add(&mut self, snapshot: Snapshot) {
+		self.additions.push(snapshot);
 	}
 
-	fn remove(&mut self, id: Ref) {
-		self.removed.push(id);
+	pub fn modify(&mut self, modified_snapshot: ModifiedSnapshot) {
+		self.modifications.push(modified_snapshot);
+	}
+
+	pub fn remove(&mut self, id: Ref) {
+		self.removals.push(id);
 	}
 }

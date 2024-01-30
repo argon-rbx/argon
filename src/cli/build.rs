@@ -191,7 +191,7 @@ impl Build {
 			for _ in receiver {
 				info!("Rebuilding project..");
 
-				core.build(&path, xml)?;
+				// core.build(&path, xml)?; temp
 			}
 		}
 

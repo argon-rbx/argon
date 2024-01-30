@@ -25,6 +25,8 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
+	// Creating new snapshot
+
 	pub fn new(name: &str) -> Self {
 		Self {
 			id: None,
@@ -75,6 +77,90 @@ impl Snapshot {
 
 	pub fn with_children(mut self, children: Vec<Snapshot>) -> Self {
 		self.children = children;
+		self
+	}
+
+	// Overwriting snapshot fields
+
+	pub fn set_id(&mut self, id: Ref) {
+		self.id = Some(id);
+	}
+
+	pub fn set_file_type(&mut self, file_type: FileType) {
+		self.file_type = Some(file_type);
+	}
+
+	pub fn set_meta(&mut self, meta: Meta) {
+		self.meta = Some(meta);
+	}
+
+	pub fn set_path(&mut self, path: &Path) {
+		self.path = Some(path.into());
+	}
+
+	pub fn set_name(&mut self, name: &str) {
+		self.name = name.into();
+	}
+
+	pub fn set_class(&mut self, class: &str) {
+		self.class = class.into();
+	}
+
+	pub fn set_properties(&mut self, properties: HashMap<String, Variant>) {
+		self.properties = properties;
+	}
+
+	pub fn set_children(&mut self, children: Vec<Snapshot>) {
+		self.children = children;
+	}
+
+	// Adding to snapshot fields
+
+	pub fn add_property(&mut self, name: &str, value: Variant) {
+		self.properties.insert(name.into(), value);
+	}
+
+	pub fn add_child(&mut self, child: Snapshot) {
+		self.children.push(child);
+	}
+
+	// Joining snapshot fields
+
+	pub fn extend_properties(&mut self, properties: HashMap<String, Variant>) {
+		self.properties.extend(properties);
+	}
+
+	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
+		self.children.extend(children);
+	}
+
+	pub fn extend_meta(&mut self, meta: Meta) {
+		if let Some(snapshot_meta) = &mut self.meta {
+			snapshot_meta.extend(meta);
+		} else {
+			self.meta = Some(meta);
+		}
+	}
+
+	// Misc
+
+	pub fn apply_project_data(mut self, meta: &Meta, path: &Path) -> Self {
+		if let Some(project_data) = &meta.project_data {
+			if path != project_data.applies_to {
+				return self;
+			}
+
+			self.set_name(&project_data.name);
+
+			if let Some(class) = &project_data.class {
+				self.set_class(class);
+			}
+
+			if let Some(properties) = &project_data.properties {
+				self.extend_properties(properties.clone());
+			}
+		}
+
 		self
 	}
 }
