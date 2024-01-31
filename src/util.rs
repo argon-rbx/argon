@@ -10,10 +10,6 @@ use std::{
 	process::{self, Command},
 };
 
-pub mod csv;
-pub mod json;
-pub mod properties;
-
 pub fn get_home_dir() -> Result<PathBuf> {
 	let user_dirs = UserDirs::new().context("Failed to get user directory")?;
 	let home_dir = user_dirs.home_dir().to_path_buf();

@@ -43,7 +43,6 @@ backtrace = "0.3.69"
 documented = "0.2.0"
 dialoguer = "0.11.0"
 actix-web = "4.4.0"
-indexmap = "2.1.0"
 multimap = "0.9.1"
 optfield = "0.3.0"
 
