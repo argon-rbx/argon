@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use log::error;
-use rbx_dom_weak::types::{Attributes, Tags};
+use rbx_dom_weak::types::Tags;
 use std::{collections::HashMap, fs, path::Path};
 
 use super::new_snapshot;
@@ -46,8 +46,8 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 	let properties = {
 		let mut properties = HashMap::new();
 
-		if let Some(meta_properties) = node.properties {
-			for (property, value) in meta_properties {
+		if let Some(node_properties) = node.properties {
+			for (property, value) in node_properties {
 				match value.resolve(&class, &property) {
 					Ok(value) => {
 						properties.insert(property, value);
@@ -59,21 +59,15 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 			}
 		}
 
-		if let Some(node_attributes) = node.attributes {
-			let mut attributes = Attributes::new();
-
-			for (key, unresolved) in node_attributes {
-				match unresolved.resolve_unambiguous() {
-					Ok(value) => {
-						attributes.insert(key, value);
-					}
-					Err(err) => {
-						error!("Failed to parse attribute: {}", err);
-					}
+		if let Some(attributes) = node.attributes {
+			match attributes.resolve(&class, "Attributes") {
+				Ok(value) => {
+					properties.insert(String::from("Attributes"), value);
+				}
+				Err(err) => {
+					error!("Failed to parse attributes: {}", err);
 				}
 			}
-
-			properties.insert(String::from("Attributes"), attributes.into());
 		}
 
 		if let Some(tags) = node.tags {
@@ -83,29 +77,33 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 		properties
 	};
 
-	let mut snapshot = Snapshot::new(name).with_class(&class).with_properties(properties);
+	let mut snapshot = Snapshot::new()
+		.with_name(name)
+		.with_class(&class)
+		.with_properties(properties);
 
 	if let Some(node_path) = node.path {
 		let path = path.join(node_path);
 
-		if let Some(mut path_snapshot) = new_snapshot(&path, meta, vfs)? {
-			let meta = {
-				let mut project_data = ProjectData::new(name, &path);
+		let meta = {
+			let mut project_data = ProjectData::new(name, &path);
+			let mut meta = meta.clone();
 
-				if class != "Folder" {
-					project_data.set_class(class.clone());
-				}
+			if class != "Folder" {
+				project_data.set_class(class.clone());
+			}
 
-				if !snapshot.properties.is_empty() {
-					project_data.set_properties(snapshot.properties.clone());
-				}
+			if !snapshot.properties.is_empty() {
+				project_data.set_properties(snapshot.properties.clone());
+			}
 
-				Meta::new().with_project_data(project_data)
-			};
+			meta.set_project_data(project_data);
+			meta
+		};
 
-			path_snapshot.set_meta(meta);
-			path_snapshot.set_name(&snapshot.name);
+		if let Some(mut path_snapshot) = new_snapshot(&path, &meta, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
+			path_snapshot.set_name(&snapshot.name);
 
 			if path_snapshot.class == "Folder" {
 				path_snapshot.set_class(&snapshot.class);

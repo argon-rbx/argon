@@ -34,8 +34,8 @@ impl From<FileType> for ScriptType {
 }
 
 #[profiling::function]
-pub fn snapshot_lua(name: &str, path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
-	let mut snapshot = Snapshot::new(name).with_class(script_type.as_class()).with_path(path);
+pub fn snapshot_lua(path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
+	let mut snapshot = Snapshot::new().with_class(script_type.as_class());
 	let mut properties = HashMap::new();
 
 	let source = vfs.read(path)?;

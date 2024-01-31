@@ -28,13 +28,13 @@ pub struct Snapshot {
 impl Snapshot {
 	// Creating new snapshot
 
-	pub fn new(name: &str) -> Self {
+	pub fn new() -> Self {
 		Self {
 			id: None,
 			file_type: None,
 			meta: None,
 			path: None,
-			name: name.to_string(),
+			name: String::from("Folder"),
 			class: String::from("Folder"),
 			properties: HashMap::new(),
 			children: Vec::new(),

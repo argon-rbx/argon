@@ -7,8 +7,9 @@ use crate::{
 	vfs::Vfs,
 };
 
-use self::{dir::snapshot_dir, lua::snapshot_lua, project::snapshot_project};
+use self::{data::snapshot_data, dir::snapshot_dir, lua::snapshot_lua, project::snapshot_project};
 
+pub mod data;
 pub mod dir;
 pub mod lua;
 pub mod project;
@@ -40,13 +41,13 @@ pub struct ResolvedSyncRule {
 }
 
 impl FileType {
-	fn middleware(&self, name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
+	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		match self {
 			FileType::Project => snapshot_project(path, meta, vfs),
-			// FileType::InstanceData => {}
+			FileType::InstanceData => snapshot_data(path, meta, vfs),
 			//
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
-				snapshot_lua(name, path, vfs, self.clone().into())
+				snapshot_lua(path, vfs, self.clone().into())
 			}
 			_ => bail!("Unsupported file type! (TEMP)"),
 			// FileType::JsonModule => {}
@@ -70,6 +71,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
+	// println!("{:#?}", meta.project_data);
+
 	// Get snapshot of a regular file
 	if vfs.is_file(path) {
 		if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
@@ -78,7 +81,9 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 			let name = resolved.name;
 
 			let snapshot = file_type
-				.middleware(&name, &resolved_path, meta, vfs)?
+				.middleware(&resolved_path, meta, vfs)?
+				.with_name(&name)
+				.with_path(path)
 				.with_file_type(file_type)
 				.apply_project_data(meta, path);
 
@@ -95,9 +100,10 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		let name = resolved.name;
 
 		let mut snapshot = file_type
-			.middleware(&name, &resolved_path, meta, vfs)?
-			.with_file_type(file_type.clone())
+			.middleware(&resolved_path, meta, vfs)?
+			.with_name(&name)
 			.with_path(path)
+			.with_file_type(file_type.clone())
 			.apply_project_data(meta, path);
 
 		if file_type != FileType::Project {
