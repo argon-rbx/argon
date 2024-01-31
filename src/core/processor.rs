@@ -116,6 +116,8 @@ impl Handler {
 		if !changes.is_empty() {
 			self.callback.send(()).unwrap();
 
+			println!("{:#?}", changes);
+
 			// TODO: add to the queue here
 		}
 	}

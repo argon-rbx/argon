@@ -7,12 +7,18 @@ use crate::{
 	vfs::Vfs,
 };
 
-use self::{data::snapshot_data, dir::snapshot_dir, lua::snapshot_lua, project::snapshot_project};
+use self::{
+	csv::snapshot_csv, data::snapshot_data, dir::snapshot_dir, json::snapshot_json, lua::snapshot_lua,
+	project::snapshot_project, txt::snapshot_txt,
+};
 
+pub mod csv;
 pub mod data;
 pub mod dir;
+pub mod json;
 pub mod lua;
 pub mod project;
+pub mod txt;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -25,7 +31,8 @@ pub enum FileType {
 	ModuleScript,
 
 	JsonModule,
-	TomlModule,
+	JsonModel,
+	TomlModel,
 	LocalizationTable,
 	StringValue,
 	RbxmModel,
@@ -49,12 +56,15 @@ impl FileType {
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
 				snapshot_lua(path, vfs, self.clone().into())
 			}
-			_ => bail!("Unsupported file type! (TEMP)"),
-			// FileType::JsonModule => {}
-			// FileType::LocalizationTable => {}
-			// FileType::StringValue => {}
+			//
+			FileType::JsonModule => snapshot_json(path, vfs),
+			FileType::StringValue => snapshot_txt(path, vfs),
+			FileType::LocalizationTable => snapshot_csv(path),
+			// FileType::JsonModel => {}
+			// FileType::TomlModel => {}
 			// FileType::RbxmModel => {}
 			// FileType::RbxmxModel => {}
+			_ => bail!("Unsupported file type! (TEMP)"),
 		}
 	}
 }
@@ -70,8 +80,6 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 		return Ok(None);
 	}
-
-	// println!("{:#?}", meta.project_data);
 
 	// Get snapshot of a regular file
 	if vfs.is_file(path) {

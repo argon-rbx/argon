@@ -284,7 +284,7 @@ impl Default for Meta {
 			sync_rule!("*.txt", ".src.txt", StringValue),
 			sync_rule!("*.csv", ".src.csv", LocalizationTable),
 			sync_rule!("*.json", ".src.json", JsonModule, ".data.json"),
-			sync_rule!("*.toml", ".src.toml", TomlModule),
+			sync_rule!("*.toml", ".src.toml", TomlModel),
 			sync_rule!("*.rbxm", ".src.rbxm", RbxmModel),
 			sync_rule!("*.rbxmx", ".src.rbxmx", RbxmxModel),
 		];
