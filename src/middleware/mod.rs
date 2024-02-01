@@ -9,7 +9,7 @@ use crate::{
 
 use self::{
 	csv::snapshot_csv, data::snapshot_data, dir::snapshot_dir, json::snapshot_json, lua::snapshot_lua,
-	project::snapshot_project, txt::snapshot_txt,
+	project::snapshot_project, toml::snapshot_toml, txt::snapshot_txt,
 };
 
 pub mod csv;
@@ -18,6 +18,7 @@ pub mod dir;
 pub mod json;
 pub mod lua;
 pub mod project;
+pub mod toml;
 pub mod txt;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -30,11 +31,12 @@ pub enum FileType {
 	ClientScript,
 	ModuleScript,
 
-	JsonModule,
-	JsonModel,
-	TomlModel,
-	LocalizationTable,
 	StringValue,
+	LocalizationTable,
+	JsonModule,
+	TomlModule,
+
+	JsonModel,
 	RbxmModel,
 	RbxmxModel,
 }
@@ -58,10 +60,10 @@ impl FileType {
 			}
 			//
 			FileType::JsonModule => snapshot_json(path, vfs),
+			FileType::TomlModule => snapshot_toml(path, vfs),
 			FileType::StringValue => snapshot_txt(path, vfs),
 			FileType::LocalizationTable => snapshot_csv(path),
 			// FileType::JsonModel => {}
-			// FileType::TomlModel => {}
 			// FileType::RbxmModel => {}
 			// FileType::RbxmxModel => {}
 			_ => bail!("Unsupported file type! (TEMP)"),
@@ -71,7 +73,7 @@ impl FileType {
 
 /// Returns a snapshot of the given path, `None` if path no longer exists
 pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	if meta.ignore_globs.iter().any(|glob| glob.matches_path(path)) {
+	if meta.ignore_rules.iter().any(|rule| rule.matches(path)) {
 		return Ok(None);
 	}
 
@@ -80,6 +82,8 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 		return Ok(None);
 	}
+
+	// println!("{:#?}", meta.project_data);
 
 	// Get snapshot of a regular file
 	if vfs.is_file(path) {

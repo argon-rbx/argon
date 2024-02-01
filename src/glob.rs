@@ -12,8 +12,10 @@ pub struct Glob {
 
 impl Glob {
 	pub fn new(pattern: &str) -> Result<Self, PatternError> {
+		let pattern = pattern.replace('\\', "/");
+
 		Ok(Self {
-			pattern: Pattern::new(pattern)?,
+			pattern: Pattern::new(&pattern)?,
 		})
 	}
 

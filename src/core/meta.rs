@@ -104,6 +104,21 @@ impl SyncRule {
 }
 
 #[derive(Debug, Clone)]
+pub struct IgnoreRule {
+	pattern: Glob,
+	path: PathBuf,
+}
+
+impl IgnoreRule {
+	pub fn matches(&self, path: &Path) -> bool {
+		match path.strip_prefix(&self.path) {
+			Ok(suffix) => self.pattern.matches_path(suffix),
+			Err(_) => false,
+		}
+	}
+}
+
+#[derive(Debug, Clone)]
 pub struct ProjectData {
 	pub name: String,
 	pub applies_to: PathBuf,
@@ -133,7 +148,7 @@ impl ProjectData {
 #[derive(Debug, Clone)]
 pub struct Meta {
 	pub sync_rules: Vec<SyncRule>,
-	pub ignore_globs: Vec<Glob>,
+	pub ignore_rules: Vec<IgnoreRule>,
 	pub project_data: Option<ProjectData>,
 }
 
@@ -143,15 +158,26 @@ impl Meta {
 	pub fn new() -> Self {
 		Self {
 			sync_rules: Vec::new(),
-			ignore_globs: Vec::new(),
+			ignore_rules: Vec::new(),
 			project_data: None,
 		}
 	}
 
 	pub fn from_project(project: &Project) -> Self {
+		let ignore_rules = project
+			.ignore_globs
+			.clone()
+			.unwrap_or_default()
+			.into_iter()
+			.map(|glob| IgnoreRule {
+				pattern: glob,
+				path: project.workspace_dir.clone(),
+			})
+			.collect();
+
 		Self {
 			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Meta::default().sync_rules),
-			ignore_globs: project.ignore_globs.clone().unwrap_or_default(),
+			ignore_rules,
 			project_data: None,
 		}
 	}
@@ -161,8 +187,8 @@ impl Meta {
 		self
 	}
 
-	pub fn with_ignore_globs(mut self, ignore_globs: Vec<Glob>) -> Self {
-		self.ignore_globs = ignore_globs;
+	pub fn with_ignore_rules(mut self, ignore_rules: Vec<IgnoreRule>) -> Self {
+		self.ignore_rules = ignore_rules;
 		self
 	}
 
@@ -177,8 +203,8 @@ impl Meta {
 		self.sync_rules = sync_rules;
 	}
 
-	pub fn set_ignore_globs(&mut self, ignore_globs: Vec<Glob>) {
-		self.ignore_globs = ignore_globs;
+	pub fn set_ignore_rules(&mut self, ignore_rules: Vec<IgnoreRule>) {
+		self.ignore_rules = ignore_rules;
 	}
 
 	pub fn set_project_data(&mut self, project_data: ProjectData) {
@@ -191,8 +217,8 @@ impl Meta {
 		self.sync_rules.push(sync_rule);
 	}
 
-	pub fn add_ignore_glob(&mut self, ignore_glob: Glob) {
-		self.ignore_globs.push(ignore_glob);
+	pub fn add_ignore_rule(&mut self, ignore_rule: IgnoreRule) {
+		self.ignore_rules.push(ignore_rule);
 	}
 
 	// Joining meta fields
@@ -201,13 +227,13 @@ impl Meta {
 		self.sync_rules.extend(sync_rules);
 	}
 
-	pub fn extend_ignore_globs(&mut self, ignore_globs: Vec<Glob>) {
-		self.ignore_globs.extend(ignore_globs);
+	pub fn extend_ignore_rules(&mut self, ignore_rules: Vec<IgnoreRule>) {
+		self.ignore_rules.extend(ignore_rules);
 	}
 
 	pub fn extend(&mut self, meta: Meta) {
 		self.extend_sync_rules(meta.sync_rules);
-		self.extend_ignore_globs(meta.ignore_globs);
+		self.extend_ignore_rules(meta.ignore_rules);
 
 		if let Some(project_data) = meta.project_data {
 			self.project_data = Some(project_data);
@@ -217,11 +243,22 @@ impl Meta {
 	// Misc
 
 	pub fn is_empty(&self) -> bool {
-		self.sync_rules.is_empty() && self.ignore_globs.is_empty() && self.project_data.is_none()
+		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
 	}
 }
 
 macro_rules! sync_rule {
+	($child_pattern:expr, $file_type:ident) => {
+		SyncRule {
+			file_type: FileType::$file_type,
+
+			pattern: None,
+			child_pattern: Some(Glob::new($child_pattern).unwrap()),
+			exclude: None,
+
+			suffix: None,
+		}
+	};
 	($pattern:expr, $child_pattern:expr, $file_type:ident) => {
 		SyncRule {
 			file_type: FileType::$file_type,
@@ -244,24 +281,16 @@ macro_rules! sync_rule {
 			suffix: Some($suffix.to_string()),
 		}
 	};
-	($pattern:expr, $child_pattern:expr, $file_type:ident, $suffix:expr, $exclude:expr) => {
+}
+
+macro_rules! sync_rule_exclude {
+	($pattern:expr, $child_pattern:expr, $file_type:ident, $exclude:expr) => {
 		SyncRule {
 			file_type: FileType::$file_type,
 
 			pattern: Some(Glob::new($pattern).unwrap()),
 			child_pattern: Some(Glob::new($child_pattern).unwrap()),
 			exclude: Some(Glob::new($exclude).unwrap()),
-
-			suffix: Some($suffix.to_string()),
-		}
-	};
-	($child_pattern:expr, $file_type:ident) => {
-		SyncRule {
-			file_type: FileType::$file_type,
-
-			pattern: None,
-			child_pattern: Some(Glob::new($child_pattern).unwrap()),
-			exclude: None,
 
 			suffix: None,
 		}
@@ -283,15 +312,17 @@ impl Default for Meta {
 			//
 			sync_rule!("*.txt", ".src.txt", StringValue),
 			sync_rule!("*.csv", ".src.csv", LocalizationTable),
-			sync_rule!("*.json", ".src.json", JsonModule, ".data.json"),
-			sync_rule!("*.toml", ".src.toml", TomlModel),
+			sync_rule_exclude!("*.json", ".src.json", JsonModule, "*.model.json"),
+			sync_rule!("*.toml", ".src.toml", TomlModule),
+			//
+			sync_rule!("*.model.json", ".src.model.json", JsonModel),
 			sync_rule!("*.rbxm", ".src.rbxm", RbxmModel),
 			sync_rule!("*.rbxmx", ".src.rbxmx", RbxmxModel),
 		];
 
 		Self {
 			sync_rules,
-			ignore_globs: vec![],
+			ignore_rules: vec![],
 			project_data: None,
 		}
 	}
