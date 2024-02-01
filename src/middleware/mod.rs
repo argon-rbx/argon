@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -8,16 +8,20 @@ use crate::{
 };
 
 use self::{
-	csv::snapshot_csv, data::snapshot_data, dir::snapshot_dir, json::snapshot_json, lua::snapshot_lua,
-	project::snapshot_project, toml::snapshot_toml, txt::snapshot_txt,
+	csv::snapshot_csv, data::snapshot_data, dir::snapshot_dir, json::snapshot_json, json_model::snapshot_json_model,
+	lua::snapshot_lua, project::snapshot_project, rbxm::snapshot_rbxm, rbxmx::snapshot_rbxmx, toml::snapshot_toml,
+	txt::snapshot_txt,
 };
 
 pub mod csv;
 pub mod data;
 pub mod dir;
 pub mod json;
+pub mod json_model;
 pub mod lua;
 pub mod project;
+pub mod rbxm;
+pub mod rbxmx;
 pub mod toml;
 pub mod txt;
 
@@ -59,14 +63,14 @@ impl FileType {
 				snapshot_lua(path, vfs, self.clone().into())
 			}
 			//
+			FileType::StringValue => snapshot_txt(path, vfs),
+			FileType::LocalizationTable => snapshot_csv(path, vfs),
 			FileType::JsonModule => snapshot_json(path, vfs),
 			FileType::TomlModule => snapshot_toml(path, vfs),
-			FileType::StringValue => snapshot_txt(path, vfs),
-			FileType::LocalizationTable => snapshot_csv(path),
-			// FileType::JsonModel => {}
-			// FileType::RbxmModel => {}
-			// FileType::RbxmxModel => {}
-			_ => bail!("Unsupported file type! (TEMP)"),
+			//
+			FileType::JsonModel => snapshot_json_model(path, vfs),
+			FileType::RbxmModel => snapshot_rbxm(path, vfs),
+			FileType::RbxmxModel => snapshot_rbxmx(path, vfs),
 		}
 	}
 }
@@ -83,8 +87,6 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
-	// println!("{:#?}", meta.project_data);
-
 	// Get snapshot of a regular file
 	if vfs.is_file(path) {
 		if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
@@ -96,7 +98,6 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 				.middleware(&resolved_path, meta, vfs)?
 				.with_name(&name)
 				.with_path(path)
-				.with_file_type(file_type)
 				.apply_project_data(meta, path);
 
 			Ok(Some(snapshot))
@@ -113,12 +114,12 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 		let mut snapshot = file_type
 			.middleware(&resolved_path, meta, vfs)?
-			.with_name(&name)
 			.with_path(path)
-			.with_file_type(file_type.clone())
 			.apply_project_data(meta, path);
 
 		if file_type != FileType::Project {
+			snapshot.set_name(&name);
+
 			for path in vfs.read_dir(path)? {
 				if path == resolved_path {
 					continue;

@@ -315,7 +315,7 @@ impl Default for Meta {
 			sync_rule_exclude!("*.json", ".src.json", JsonModule, "*.model.json"),
 			sync_rule!("*.toml", ".src.toml", TomlModule),
 			//
-			sync_rule!("*.model.json", ".src.model.json", JsonModel),
+			sync_rule!("*.model.json", ".src.model.json", JsonModel, ".model.json"),
 			sync_rule!("*.rbxm", ".src.rbxm", RbxmModel),
 			sync_rule!("*.rbxmx", ".src.rbxmx", RbxmxModel),
 		];

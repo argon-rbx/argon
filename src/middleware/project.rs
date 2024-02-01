@@ -21,14 +21,14 @@ pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot>
 
 	let super_path = path.parent().unwrap();
 
-	let snapshot = snapshot_project_node(&project.name, super_path, meta, vfs, project.node)?
+	let snapshot = walk(&project.name, super_path, meta, vfs, project.node)?
 		.with_meta(meta.to_owned())
 		.with_path(path);
 
 	Ok(snapshot)
 }
 
-pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
+fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
 	if node.class_name.is_some() && node.path.is_some() {
 		bail!("Failed to load project: $className and $path cannot be set at the same time");
 	}
@@ -118,7 +118,7 @@ pub fn snapshot_project_node(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, no
 	}
 
 	for (name, node) in node.tree {
-		let child = snapshot_project_node(&name, path, meta, vfs, node)?;
+		let child = walk(&name, path, meta, vfs, node)?;
 		snapshot.add_child(child);
 	}
 

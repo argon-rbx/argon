@@ -18,19 +18,10 @@ struct ArgonData(HashMap<String, UnresolvedValue>);
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct RojoData {
-	// Obtained before Deserialization of this struct
-	#[allow(dead_code)]
-	pub class_name: Option<String>,
-
 	pub properties: Option<HashMap<String, UnresolvedValue>>,
 	pub attributes: Option<UnresolvedValue>,
 	// For consistency
 	pub tags: Option<Vec<String>>,
-
-	// This field is not actually used by Argon
-	#[allow(dead_code)]
-	#[serde(skip_serializing)]
-	pub ignore_unknown_instances: Option<bool>,
 }
 
 #[profiling::function]
@@ -54,7 +45,7 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		}) {
 			class.to_owned()
 		// Get the class from the data file if one exists
-		} else if let Some(class) = data.get("ClassName") {
+		} else if let Some(class) = data.get("ClassName").or(data.get("className")) {
 			let class = class.as_str();
 
 			if class.is_none() {

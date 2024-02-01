@@ -4,7 +4,7 @@ use rbx_dom_weak::types::Variant;
 use serde::Serialize;
 use std::{collections::HashMap, path::Path};
 
-use crate::core::snapshot::Snapshot;
+use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
 #[derive(Default, Serialize, Debug)]
 struct LocalizationEntry {
@@ -16,10 +16,13 @@ struct LocalizationEntry {
 }
 
 #[profiling::function]
-pub fn snapshot_csv(path: &Path) -> Result<Snapshot> {
-	let mut reader = ReaderBuilder::new().has_headers(true).flexible(true).from_path(path)?;
-	let headers = reader.headers()?.clone();
+pub fn snapshot_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+	let mut reader = ReaderBuilder::new()
+		.has_headers(true)
+		.flexible(true)
+		.from_reader(vfs.reader(path)?);
 
+	let headers = reader.headers()?.clone();
 	let mut entries = vec![];
 
 	for record in reader.records() {
