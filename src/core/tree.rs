@@ -35,7 +35,7 @@ impl Tree {
 			tree.insert(child, root_ref);
 		}
 
-		// println!("{:#?}", tree.id_map().keys());
+		println!("{:#?}", tree.id_map().keys());
 
 		tree
 	}
@@ -48,7 +48,9 @@ impl Tree {
 		let referent = self.dom.insert(parent, builder);
 
 		if let Some(meta) = snapshot.meta {
-			self.ids_to_meta.insert(referent, meta);
+			if !meta.is_empty() {
+				self.ids_to_meta.insert(referent, meta);
+			}
 		}
 
 		if let Some(path) = snapshot.path {

@@ -1,13 +1,12 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::{
 	core::{
 		meta::{Meta, ResolvedSyncRule},
 		snapshot::Snapshot,
 	},
-	util,
 	vfs::Vfs,
 };
 
@@ -29,6 +28,12 @@ pub mod rbxmx;
 pub mod toml;
 pub mod txt;
 
+#[derive(Debug, Clone)]
+struct RelevantRules {
+	pub source_rule: Option<ResolvedSyncRule>,
+	pub data_rule: Option<ResolvedSyncRule>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum FileType {
@@ -47,12 +52,6 @@ pub enum FileType {
 	JsonModel,
 	RbxmModel,
 	RbxmxModel,
-}
-
-#[derive(Debug, Clone)]
-struct ResolvedPaths {
-	pub source_path: Option<PathBuf>,
-	pub data_path: Option<PathBuf>,
 }
 
 impl FileType {
@@ -91,25 +90,57 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 
 	// Get snapshot of a regular file
 	if vfs.is_file(path) {
-		println!("{:#?}", resolve_paths(meta, path, vfs));
-		if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
-			let file_type = resolved.file_type;
-			let resolved_path = resolved.path;
-			let name = resolved.name;
+		if let Some(resolved_rules) = resolve_relevant_rules(path, meta, vfs) {
+			match (resolved_rules.source_rule, resolved_rules.data_rule) {
+				(Some(source_rule), Some(data_rule)) => {
+					// We don't want to create same snapshot twice
+					if meta.included_data_paths.contains(&data_rule.path)
+						|| meta.included_data_paths.contains(&source_rule.path)
+					{
+						return Ok(None);
+					}
 
-			println!("{:#?}", name);
+					let data_snapshot = {
+						let file_type = data_rule.file_type;
+						let path = data_rule.path;
+						let name = data_rule.name;
 
-			// println!("{:#?}", path);
-			// println!("{:#?}", resolve_pat hs(meta, path, false));
-			// println!("{:#?}", "---------------------------------------");
+						file_type
+							.middleware(&path, meta, vfs)?
+							.with_name(&name)
+							.with_path(&path)
+					};
 
-			let snapshot = file_type
-				.middleware(&resolved_path, meta, vfs)?
-				.with_name(&name)
-				.with_path(path)
-				.apply_project_data(meta, path);
+					let source_snapshot = {
+						let file_type = source_rule.file_type;
+						let path = source_rule.path;
+						let name = source_rule.name;
 
-			Ok(Some(snapshot))
+						file_type
+							.middleware(&path, meta, vfs)?
+							.with_name(&name)
+							.with_path(&path)
+							.with_data(data_snapshot)
+							.apply_project_data(meta, &path)
+					};
+
+					Ok(Some(source_snapshot))
+				}
+				(Some(rule), None) | (None, Some(rule)) => {
+					let file_type = rule.file_type;
+					let path = rule.path;
+					let name = rule.name;
+
+					let snapshot = file_type
+						.middleware(&path, meta, vfs)?
+						.with_name(&name)
+						.with_path(&path)
+						.apply_project_data(meta, &path);
+
+					Ok(Some(snapshot))
+				}
+				_ => unreachable!(),
+			}
 		} else {
 			Ok(None)
 		}
@@ -151,27 +182,38 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 	}
 }
 
-#[derive(Debug, Clone)]
-struct ResolvedRules {
-	pub source_rule: Option<ResolvedSyncRule>,
-	pub data_rule: Option<ResolvedSyncRule>,
-}
-
-fn resolve_paths(meta: &Meta, path: &Path, vfs: &Vfs) -> Option<ResolvedRules> {
+fn resolve_relevant_rules(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<RelevantRules> {
 	let mut source_resolved_rule = None;
 	let mut data_resolved_rule = None;
 
-	let rule = meta.sync_rules.iter().find_map(|rule| rule.resolve(path))?;
+	let resolved_rule = meta.sync_rules.iter().find_map(|rule| rule.resolve(path))?;
 
-	if rule.file_type == FileType::InstanceData {
-		data_resolved_rule = Some(rule);
+	if resolved_rule.file_type == FileType::InstanceData {
+		for rule in &meta.sync_rules {
+			if rule.file_type == FileType::InstanceData {
+				continue;
+			}
+
+			if let Some(full_name) = rule.full_name(&resolved_rule.name) {
+				let path = path.parent().unwrap().join(full_name);
+
+				if let Some(resolved) = rule.resolve(&path) {
+					if vfs.exists(&resolved.path) {
+						source_resolved_rule = Some(resolved);
+						break;
+					}
+				}
+			}
+		}
+
+		data_resolved_rule = Some(resolved_rule);
 	} else {
 		if let Some(data_rule) = meta
 			.sync_rules
 			.iter()
 			.find(|rule| rule.file_type == FileType::InstanceData)
 		{
-			if let Some(data_name) = data_rule.full_name(&rule.name) {
+			if let Some(data_name) = data_rule.full_name(&resolved_rule.name) {
 				let path = path.parent().unwrap().join(data_name);
 
 				if vfs.exists(&path) {
@@ -180,39 +222,40 @@ fn resolve_paths(meta: &Meta, path: &Path, vfs: &Vfs) -> Option<ResolvedRules> {
 			}
 		}
 
-		source_resolved_rule = Some(rule);
+		source_resolved_rule = Some(resolved_rule);
 	}
 
-	Some(ResolvedRules {
+	Some(RelevantRules {
 		source_rule: source_resolved_rule,
 		data_rule: data_resolved_rule,
 	})
 }
 
-// fn resolve_child_paths(meta: &Meta, path: &Path, is_file: bool) -> Option<ResolvedPaths> {
-// 	let mut source_path = None;
-// 	let mut data_path = None;
+fn resolve_child_paths(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<RelevantRules> {
+	let mut source_resolved_rule = None;
+	let mut data_resolved_rule = None;
 
-// 	for rule in &meta.sync_rules {
-// 		let resolved_rule = if is_file {
-// 			rule.resolve_child(path)
-// 		} else {
-// 			rule.resolve(path)
-// 		};
+	let resolved_rule = meta.sync_rules.iter().find_map(|rule| rule.resolve(path))?;
 
-// 		if let Some(resolved) = resolved_rule {
-// 			if resolved.file_type == FileType::InstanceData {
-// 				data_path = Some(resolved.path);
-// 			} else {
-// 				source_path = Some(resolved.path);
-// 				break;
-// 			}
-// 		}
-// 	}
+	// for rule in &meta.sync_rules {
+	// 	let resolved_rule = if is_file {
+	// 		rule.resolve_child(path)
+	// 	} else {
+	// 		rule.resolve(path)
+	// 	};
 
-// 	if source_path.is_none() && data_path.is_none() {
-// 		return None;
-// 	}
+	// 	if let Some(resolved) = resolved_rule {
+	// 		if resolved.file_type == FileType::InstanceData {
+	// 			data_path = Some(resolved.path);
+	// 		} else {
+	// 			source_path = Some(resolved.path);
+	// 			break;
+	// 		}
+	// 	}
+	// }
 
-// 	Some(ResolvedPaths { source_path, data_path })
-// }
+	Some(RelevantRules {
+		source_rule: source_resolved_rule,
+		data_rule: data_resolved_rule,
+	})
+}

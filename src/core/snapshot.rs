@@ -74,6 +74,22 @@ impl Snapshot {
 		self
 	}
 
+	pub fn with_data(mut self, data: Self) -> Self {
+		if self.class == "Folder" {
+			self.class = data.class;
+		}
+
+		if let Some(meta) = &mut self.meta {
+			meta.add_included_data_path(data.path.unwrap());
+		} else {
+			self.set_meta(Meta::new().with_included_data_paths(vec![data.path.unwrap()]));
+		}
+
+		self.extend_properties(data.properties);
+
+		self
+	}
+
 	// Overwriting snapshot fields
 
 	pub fn set_id(&mut self, id: Ref) {

@@ -168,9 +168,15 @@ impl ProjectData {
 
 #[derive(Debug, Clone)]
 pub struct Meta {
+	/// List of rules that define how files are synced
 	pub sync_rules: Vec<SyncRule>,
+	/// List of rules that define which files are ignored
 	pub ignore_rules: Vec<IgnoreRule>,
+	/// Project data that is included in the project node in `*.project.json`
 	pub project_data: Option<ProjectData>,
+	/// List of extra `*.data.json` files that were
+	/// included when snapshot was created
+	pub included_data_paths: Vec<PathBuf>,
 }
 
 impl Meta {
@@ -181,6 +187,7 @@ impl Meta {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
 			project_data: None,
+			included_data_paths: Vec::new(),
 		}
 	}
 
@@ -200,6 +207,7 @@ impl Meta {
 			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Meta::default().sync_rules),
 			ignore_rules,
 			project_data: None,
+			included_data_paths: Vec::new(),
 		}
 	}
 
@@ -218,6 +226,11 @@ impl Meta {
 		self
 	}
 
+	pub fn with_included_data_paths(mut self, included_data_paths: Vec<PathBuf>) -> Self {
+		self.included_data_paths = included_data_paths;
+		self
+	}
+
 	// Overwriting meta fields
 
 	pub fn set_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
@@ -232,6 +245,10 @@ impl Meta {
 		self.project_data = Some(project_data);
 	}
 
+	pub fn set_included_data_paths(&mut self, included_data_paths: Vec<PathBuf>) {
+		self.included_data_paths = included_data_paths;
+	}
+
 	// Adding to meta fields
 
 	pub fn add_sync_rule(&mut self, sync_rule: SyncRule) {
@@ -240,6 +257,10 @@ impl Meta {
 
 	pub fn add_ignore_rule(&mut self, ignore_rule: IgnoreRule) {
 		self.ignore_rules.push(ignore_rule);
+	}
+
+	pub fn add_included_data_path(&mut self, included_data_path: PathBuf) {
+		self.included_data_paths.push(included_data_path);
 	}
 
 	// Joining meta fields
@@ -252,9 +273,14 @@ impl Meta {
 		self.ignore_rules.extend(ignore_rules);
 	}
 
+	pub fn extend_included_data_paths(&mut self, included_data_paths: Vec<PathBuf>) {
+		self.included_data_paths.extend(included_data_paths);
+	}
+
 	pub fn extend(&mut self, meta: Meta) {
 		self.extend_sync_rules(meta.sync_rules);
 		self.extend_ignore_rules(meta.ignore_rules);
+		self.extend_included_data_paths(meta.included_data_paths);
 
 		if let Some(project_data) = meta.project_data {
 			self.project_data = Some(project_data);
@@ -264,6 +290,9 @@ impl Meta {
 	// Misc
 
 	pub fn is_empty(&self) -> bool {
+		// We intentionally omit `included_data_paths` here
+		// as it's a temporary field used only in middleware
+		// so there is no need to keep it in the tree
 		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
 	}
 }
@@ -345,6 +374,7 @@ impl Default for Meta {
 			sync_rules,
 			ignore_rules: vec![],
 			project_data: None,
+			included_data_paths: vec![],
 		}
 	}
 }
