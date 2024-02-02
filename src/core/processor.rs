@@ -23,7 +23,6 @@ use crate::{
 const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
 pub struct Processor {
-	handler: Arc<Handler>,
 	callback: Receiver<()>,
 }
 
@@ -57,10 +56,7 @@ impl Processor {
 				.unwrap();
 		}
 
-		Self {
-			callback: receiver,
-			handler,
-		}
+		Self { callback: receiver }
 	}
 
 	pub fn callback(&self) -> Receiver<()> {
@@ -79,8 +75,6 @@ impl Handler {
 	fn on_vfs_event(&self, event: VfsEvent) {
 		let mut tree = lock!(self.tree);
 		let mut queue = lock!(self.queue);
-
-		self.vfs.process_event(&event);
 
 		let changes = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {

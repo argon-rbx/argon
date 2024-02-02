@@ -10,21 +10,23 @@ use std::{
 use super::{watcher::VfsWatcher, VfsEvent};
 
 pub struct VfsBackend {
+	watching: bool,
 	watcher: VfsWatcher,
 	// bool - is_dir?
 	watch_map: HashMap<PathBuf, bool>,
 }
 
 impl VfsBackend {
-	pub fn new() -> Self {
+	pub fn new(watch: bool) -> Self {
 		Self {
+			watching: watch,
 			watcher: VfsWatcher::new(),
 			watch_map: HashMap::new(),
 		}
 	}
 
 	pub fn watch(&mut self, path: &Path) -> Result<()> {
-		if self.watch_map.contains_key(path) {
+		if !self.watching || self.watch_map.contains_key(path) {
 			return Ok(());
 		}
 
@@ -39,15 +41,13 @@ impl VfsBackend {
 			return Ok(());
 		}
 
-		self.watcher.unwatch(path)?;
-
 		let mut unwatched = vec![];
 
-		for path in self.watch_map.keys() {
-			if path.starts_with(path) {
-				self.watcher.unwatch(path)?;
+		for watched_path in self.watch_map.keys() {
+			if watched_path.starts_with(path) {
+				self.watcher.unwatch(watched_path)?;
 
-				unwatched.push(path.to_owned());
+				unwatched.push(watched_path.to_owned());
 			}
 		}
 
@@ -98,11 +98,5 @@ impl VfsBackend {
 
 	pub fn receiver(&self) -> Receiver<VfsEvent> {
 		self.watcher.receiver()
-	}
-
-	pub fn process_event(&mut self, event: &VfsEvent) {
-		if let VfsEvent::Delete(path) = event {
-			self.unwatch(path).ok();
-		}
 	}
 }

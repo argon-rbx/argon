@@ -1,11 +1,12 @@
 use anyhow::Result;
 use crossbeam_channel::Receiver;
-use rbx_xml::EncodeOptions;
 use std::{
 	fs::File,
 	io::BufWriter,
 	path::Path,
 	sync::{Arc, Mutex, MutexGuard},
+	thread,
+	time::Duration,
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
@@ -23,15 +24,19 @@ pub struct Core {
 	processor: Arc<Processor>,
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
-	vfs: Arc<Vfs>,
+	_vfs: Arc<Vfs>,
 }
 
 impl Core {
 	#[profiling::function]
-	pub fn new(project: Project) -> Result<Self> {
+	pub fn new(project: Project, watch: bool) -> Result<Self> {
 		profiling::start_frame!();
 
-		let vfs = Vfs::new();
+		let vfs = Vfs::new(watch);
+
+		if watch {
+			vfs.watch(&project.workspace_dir)?;
+		}
 
 		let meta = Meta::from_project(&project);
 		let snapshot = new_snapshot(&project.workspace_dir, &meta, &vfs)?;
@@ -47,7 +52,7 @@ impl Core {
 			processor: Arc::new(processor),
 			queue,
 			tree,
-			vfs,
+			_vfs: vfs,
 		})
 	}
 
@@ -75,16 +80,25 @@ impl Core {
 		lock!(self.queue)
 	}
 
-	pub fn watch(&self) -> Receiver<()> {
-		// lock!(self.vfs).watch(&self.project.workspace_dir).unwrap();
-
+	pub fn tree_changed(&self) -> Receiver<()> {
 		self.processor.callback()
 	}
 
 	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {
 		let writer = BufWriter::new(File::create(path)?);
 
-		let tree = lock!(self.tree);
+		// We want to proritize event processing over building
+		// so we can wait for the Mutex lock to release
+		let tree = loop {
+			match self.tree.try_lock() {
+				Ok(guard) => {
+					break guard;
+				}
+				Err(_) => {
+					thread::sleep(Duration::from_millis(1));
+				}
+			}
+		};
 
 		let root_refs = if self.project.is_place() {
 			tree.place_root_refs().to_vec()
@@ -93,7 +107,7 @@ impl Core {
 		};
 
 		if xml {
-			rbx_xml::to_writer(writer, tree.inner(), &root_refs, EncodeOptions::default())?;
+			rbx_xml::to_writer_default(writer, tree.inner(), &root_refs)?;
 		} else {
 			rbx_binary::to_writer(writer, tree.inner(), &root_refs)?;
 		}

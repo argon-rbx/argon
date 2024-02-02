@@ -66,8 +66,22 @@ impl SyncRule {
 	}
 
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
+		fn matches_child_pattern(pattern: &Option<Glob>, path: &Path) -> bool {
+			if let Some(child_pattern) = &pattern {
+				let child_path = path.parent().unwrap().join(child_pattern.as_str());
+				let child_pattern = Glob::from_path(&child_path).unwrap();
+
+				return child_pattern.matches_path(path);
+			}
+
+			false
+		}
+
 		if let Some(pattern) = &self.pattern {
-			if pattern.matches_path(path) && !self.is_excluded(path) {
+			if pattern.matches_path(path)
+				&& !matches_child_pattern(&self.child_pattern, path)
+				&& !self.is_excluded(path)
+			{
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
 					path: path.to_path_buf(),
@@ -100,6 +114,13 @@ impl SyncRule {
 		}
 
 		None
+	}
+
+	pub fn full_name(&self, stem: &str) -> Option<String> {
+		let pattern = self.pattern.as_ref()?.as_str();
+		let name = pattern.replacen('*', stem, 1);
+
+		Some(name)
 	}
 }
 
@@ -301,7 +322,7 @@ impl Default for Meta {
 	fn default() -> Self {
 		let sync_rules = vec![
 			sync_rule!("*.project.json", Project),
-			sync_rule!(".data.json", InstanceData),
+			sync_rule!("*.data.json", ".data.json", InstanceData, ".data.json"),
 			//
 			sync_rule!("*.server.lua", ".src.server.lua", ServerScript, ".server.lua"),
 			sync_rule!("*.client.lua", ".src.client.lua", ClientScript, ".client.lua"),

@@ -35,6 +35,8 @@ impl Tree {
 			tree.insert(child, root_ref);
 		}
 
+		// println!("{:#?}", tree.id_map().keys());
+
 		tree
 	}
 

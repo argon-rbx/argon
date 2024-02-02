@@ -12,7 +12,11 @@ pub struct Glob {
 
 impl Glob {
 	pub fn new(pattern: &str) -> Result<Self, PatternError> {
+		#[cfg(not(target_os = "windows"))]
 		let pattern = pattern.replace('\\', "/");
+
+		#[cfg(target_os = "windows")]
+		let pattern = pattern.replace("/", "\\");
 
 		Ok(Self {
 			pattern: Pattern::new(&pattern)?,

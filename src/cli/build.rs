@@ -152,7 +152,7 @@ impl Build {
 			}
 		}
 
-		let core = Core::new(project)?;
+		let core = Core::new(project, self.watch)?;
 
 		core.build(&path, xml)?;
 
@@ -184,14 +184,12 @@ impl Build {
 				sessions::add(self.session, None, None, process::id())?;
 			}
 
-			let receiver = core.watch();
-
 			argon_info!("Watching for changes..");
 
-			for _ in receiver {
+			for _ in core.tree_changed() {
 				info!("Rebuilding project..");
 
-				// core.build(&path, xml)?; temp
+				core.build(&path, xml)?;
 			}
 		}
 

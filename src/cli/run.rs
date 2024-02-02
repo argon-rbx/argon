@@ -89,7 +89,7 @@ impl Run {
 			}
 		}
 
-		let core = Core::new(project)?;
+		let core = Core::new(project, true)?;
 		let host = self.host.unwrap_or(core.host().unwrap_or(config.host.clone()));
 		let mut port = self.port.unwrap_or(core.port().unwrap_or(config.port));
 

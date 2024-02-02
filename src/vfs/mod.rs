@@ -26,9 +26,9 @@ pub struct Vfs {
 }
 
 impl Vfs {
-	pub fn new() -> Self {
+	pub fn new(watch: bool) -> Self {
 		Self {
-			inner: Mutex::new(VfsBackend::new()),
+			inner: Mutex::new(VfsBackend::new(watch)),
 		}
 	}
 
@@ -70,9 +70,5 @@ impl Vfs {
 
 	pub fn receiver(&self) -> Receiver<VfsEvent> {
 		lock!(self.inner).receiver()
-	}
-
-	pub fn process_event(&self, event: &VfsEvent) {
-		lock!(self.inner).process_event(event)
 	}
 }
