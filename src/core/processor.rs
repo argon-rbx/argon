@@ -1,5 +1,6 @@
 use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
+use pathsub::sub_paths;
 use rbx_dom_weak::types::Ref;
 use std::{
 	collections::VecDeque,
@@ -178,23 +179,22 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 
 	// Find removed children
 	#[allow(clippy::unnecessary_to_owned)]
-	for child_id in instance.children().to_owned() {
+	'outer: for child_id in instance.children().to_owned() {
 		// We only care about instances with path as other ones
 		// can only be modified from the project or model files
 		// which are guaranteed to have path assigned
 		if let Some(path) = tree.get_path(child_id) {
-			let mut exists = false;
-
 			for child in snapshot.children.iter_mut() {
 				if child.path == Some(path.to_owned()) {
 					child.set_id(child_id);
 
-					exists = true;
-					break;
+					continue 'outer;
 				}
 			}
 
-			if !exists {
+			// In theory this is unreachable for regular instances
+			// so after some testing this could be removed
+			if sub_paths(path, snapshot.path.as_ref().unwrap()).is_some() {
 				tree.remove(child_id);
 				chnages.remove(child_id);
 			}

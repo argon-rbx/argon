@@ -102,8 +102,12 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		};
 
 		if let Some(mut path_snapshot) = new_snapshot(&path, &meta, vfs)? {
+			// We want to keep project data only
+			let meta = Meta::new().with_project_data(meta.project_data.unwrap());
+
 			path_snapshot.extend_properties(snapshot.properties);
 			path_snapshot.set_name(&snapshot.name);
+			path_snapshot.extend_meta(meta);
 
 			if path_snapshot.class == "Folder" {
 				path_snapshot.set_class(&snapshot.class);

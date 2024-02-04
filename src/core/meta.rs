@@ -145,6 +145,7 @@ pub struct ProjectData {
 	pub name: String,
 	pub class: Option<String>,
 	pub properties: Option<HashMap<String, Variant>>,
+	pub children: Option<Vec<ProjectData>>,
 }
 
 impl ProjectData {
@@ -154,6 +155,7 @@ impl ProjectData {
 			affects: applies_to.to_path_buf(),
 			class: None,
 			properties: None,
+			children: None,
 		}
 	}
 
@@ -308,6 +310,17 @@ macro_rules! sync_rule {
 			suffix: Some($suffix.to_string()),
 		}
 	};
+	($pattern:expr, $child_pattern:expr, $file_type:ident, $suffix:expr, $exclude:expr) => {
+		SyncRule {
+			file_type: FileType::$file_type,
+
+			pattern: Some(Glob::new($pattern).unwrap()),
+			child_pattern: Some(Glob::new($child_pattern).unwrap()),
+			exclude: Some(Glob::new($exclude).unwrap()),
+
+			suffix: Some($suffix.to_string()),
+		}
+	};
 }
 
 macro_rules! sync_rule_exclude {
@@ -329,10 +342,28 @@ impl Default for Meta {
 		let sync_rules = vec![
 			sync_rule!("*.project.json", Project),
 			sync_rule!(".data.json", InstanceData),
+			sync_rule!("init.meta.json", InstanceData), // Rojo
 			//
-			sync_rule!("*.server.lua", ".src.server.lua", ServerScript, ".server.lua"),
-			sync_rule!("*.client.lua", ".src.client.lua", ClientScript, ".client.lua"),
-			sync_rule!("*.lua", ".src.lua", ModuleScript),
+			sync_rule!(
+				"*.server.lua",
+				".src.server.lua",
+				ServerScript,
+				".server.lua",
+				"init.server.lua"
+			),
+			sync_rule!(
+				"*.client.lua",
+				".src.client.lua",
+				ClientScript,
+				".client.lua",
+				"init.client.lua"
+			),
+			sync_rule_exclude!("*.lua", ".src.lua", ModuleScript, "init.lua"),
+			// Rojo
+			sync_rule!("*.server.lua", "init.server.lua", ServerScript, ".server.lua"),
+			sync_rule!("*.client.lua", "init.client.lua", ClientScript, ".client.lua"),
+			sync_rule!("*.lua", "init.lua", ModuleScript),
+			//
 			sync_rule!("*.server.luau", ".src.server.luau", ServerScript, ".server.luau"),
 			sync_rule!("*.client.luau", ".src.client.luau", ClientScript, ".client.luau"),
 			sync_rule!("*.luau", ".src.luau", ModuleScript),
