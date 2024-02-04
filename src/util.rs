@@ -1,10 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use directories::UserDirs;
 use log::LevelFilter;
 use rbx_reflection::ClassTag;
 use std::{
 	env,
 	ffi::OsStr,
+	fmt::Display,
 	fs,
 	path::{Path, PathBuf},
 	process::{self, Command},
@@ -164,4 +165,45 @@ pub fn copy_dir(from: &Path, to: &Path) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+pub trait Desc<T, E> {
+	fn desc<D>(self, desc: D) -> Result<T, anyhow::Error>
+	where
+		D: Display + Send + Sync + 'static;
+
+	fn with_desc<C, F>(self, f: F) -> Result<T, anyhow::Error>
+	where
+		C: Display + Send + Sync + 'static,
+		F: FnOnce() -> C;
+}
+
+impl<T, E> Desc<T, E> for Result<T, E>
+where
+	E: Display + Send + Sync + 'static,
+{
+	fn desc<D>(self, desc: D) -> Result<T, anyhow::Error>
+	where
+		D: Display + Send + Sync + 'static,
+	{
+		match self {
+			Ok(ok) => Ok(ok),
+			Err(error) => {
+				bail!("{}: {}", desc, error);
+			}
+		}
+	}
+
+	fn with_desc<C, F>(self, desc: F) -> Result<T, anyhow::Error>
+	where
+		C: Display + Send + Sync + 'static,
+		F: FnOnce() -> C,
+	{
+		match self {
+			Ok(ok) => Ok(ok),
+			Err(error) => {
+				bail!("{}: {}", desc(), error);
+			}
+		}
+	}
 }

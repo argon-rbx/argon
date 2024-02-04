@@ -1,12 +1,17 @@
 use anyhow::Result;
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{
+	fmt::{self, Display, Formatter},
+	path::Path,
+};
 
 use crate::{
 	core::{
 		meta::{Meta, ResolvedSyncRule},
 		snapshot::Snapshot,
 	},
+	util::Desc,
 	vfs::Vfs,
 };
 
@@ -48,9 +53,15 @@ pub enum FileType {
 	RbxmxModel,
 }
 
+impl Display for FileType {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "{:?}", self)
+	}
+}
+
 impl FileType {
 	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
-		match self {
+		let snapshot = match self {
 			FileType::Project => snapshot_project(path, meta, vfs),
 			FileType::InstanceData => snapshot_data(path, meta, vfs),
 			//
@@ -66,7 +77,15 @@ impl FileType {
 			FileType::JsonModel => snapshot_json_model(path, vfs),
 			FileType::RbxmModel => snapshot_rbxm(path, vfs),
 			FileType::RbxmxModel => snapshot_rbxmx(path, vfs),
-		}
+		};
+
+		snapshot.with_desc(|| {
+			format!(
+				"Failed to snapshot {} at {}",
+				self.to_string().bold(),
+				path.display().to_string().bold()
+			)
+		})
 	}
 }
 
