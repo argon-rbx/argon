@@ -37,7 +37,7 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		// Get the class from meta if there was one
 		// specified in the project for this path
 		if let Some(class) = meta.project_data.as_ref().and_then(|project_data| {
-			if project_data.applies_to == parent {
+			if project_data.affects == parent {
 				project_data.class.as_ref()
 			} else {
 				None

@@ -135,7 +135,7 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	};
 
 	// Handle additions, modifications and removals
-	// of instances with child source
+	// of instances with child source or data
 	if let Some(snapshot) = snapshot {
 		process_child_changes(id, snapshot, &mut changes, tree);
 	// Handle removals of regular instances
@@ -147,6 +147,7 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	changes
 }
 
+// TODO: should be recursive in case of nested snapshots like projects or models
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes, tree: &mut Tree) {
 	let instance = tree.get_instance_mut(id).unwrap();
 

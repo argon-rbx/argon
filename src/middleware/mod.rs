@@ -28,12 +28,6 @@ pub mod rbxmx;
 pub mod toml;
 pub mod txt;
 
-#[derive(Debug, Clone)]
-struct RelevantRules {
-	pub source_rule: Option<ResolvedSyncRule>,
-	pub data_rule: Option<ResolvedSyncRule>,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum FileType {
@@ -88,105 +82,117 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
-	// Get snapshot of a regular file
 	if vfs.is_file(path) {
-		if let Some(resolved_rules) = resolve_relevant_rules(path, meta, vfs) {
-			match (resolved_rules.source_rule, resolved_rules.data_rule) {
-				(Some(source_rule), Some(data_rule)) => {
-					// We don't want to create same snapshot twice
-					if meta.included_data_paths.contains(&data_rule.path)
-						|| meta.included_data_paths.contains(&source_rule.path)
-					{
-						return Ok(None);
-					}
-
-					let data_snapshot = {
-						let file_type = data_rule.file_type;
-						let path = data_rule.path;
-						let name = data_rule.name;
-
-						file_type
-							.middleware(&path, meta, vfs)?
-							.with_name(&name)
-							.with_path(&path)
-					};
-
-					let source_snapshot = {
-						let file_type = source_rule.file_type;
-						let path = source_rule.path;
-						let name = source_rule.name;
-
-						file_type
-							.middleware(&path, meta, vfs)?
-							.with_name(&name)
-							.with_path(&path)
-							.with_data(data_snapshot)
-							.apply_project_data(meta, &path)
-					};
-
-					Ok(Some(source_snapshot))
-				}
-				(Some(rule), None) | (None, Some(rule)) => {
-					let file_type = rule.file_type;
-					let path = rule.path;
-					let name = rule.name;
-
-					let snapshot = file_type
-						.middleware(&path, meta, vfs)?
-						.with_name(&name)
-						.with_path(&path)
-						.apply_project_data(meta, &path);
-
-					Ok(Some(snapshot))
-				}
-				_ => unreachable!(),
-			}
+		// Get a snapshot of a regular file
+		if let Some(snapshot) = new_snapshot_file(path, meta, vfs)? {
+			Ok(Some(snapshot))
+		// If file does not match any rule it might be child source or data so we need
+		// to get a snapshot of the parent directory
+		} else if let Some(snapshot) = new_snapshot_file_child(path.parent().unwrap(), meta, vfs)? {
+			Ok(Some(snapshot))
+		// If file does not match any rule and its parent does not have child source or data
+		// we are 100% sure that this file shouldn't be processed by Argon
 		} else {
 			Ok(None)
 		}
-	// Get snapshot of directory that contains child source or data
-	} else if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve_child(path)) {
+	// Get a snapshot of a directory that might contain child source or data
+	} else if let Some(snapshot) = new_snapshot_file_child(path, meta, vfs)? {
 		vfs.watch(path)?;
+		Ok(Some(snapshot))
+	// Get a snapshot of a directory
+	} else {
+		vfs.watch(path)?;
+		new_snapshot_dir(path, meta, vfs)
+	}
+}
 
+/// Create a snapshot of a regular file,
+/// example: `foo/bar.lua`
+fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
 		let file_type = resolved.file_type;
 		let resolved_path = resolved.path;
 		let name = resolved.name;
 
-		let mut snapshot = file_type
+		let snapshot = file_type
 			.middleware(&resolved_path, meta, vfs)?
+			.with_name(&name)
 			.with_path(path)
 			.apply_project_data(meta, path);
 
-		if file_type != FileType::Project {
-			snapshot.set_name(&name);
-
-			for path in vfs.read_dir(path)? {
-				if path == resolved_path {
-					continue;
-				}
-
-				if let Some(child_snapshot) = new_snapshot(&path, meta, vfs)? {
-					snapshot.add_child(child_snapshot);
-				}
-			}
-		}
-
 		Ok(Some(snapshot))
-	// Get snapshot of a directory
 	} else {
-		vfs.watch(path)?;
-
-		let snapshot = snapshot_dir(path, meta, vfs)?.apply_project_data(meta, path);
-
-		Ok(Some(snapshot))
+		Ok(None)
 	}
 }
 
-fn resolve_relevant_rules(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<RelevantRules> {
+/// Create a snapshot of a directory that has a child source or data,
+/// example: `foo/bar` that contains: `foo/bar/.src.lua`
+fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if let Some(resolved_rules) = resolve_child_rules(path, meta) {
+		match (resolved_rules.source_rule, resolved_rules.data_rule) {
+			(Some(source_rule), Some(data_rule)) => {
+				let data_snapshot = {
+					let file_type = data_rule.file_type;
+					let path = data_rule.path;
+
+					file_type.middleware(&path, meta, vfs)?
+				};
+
+				let source_snapshot = {
+					let file_type = source_rule.file_type;
+					let resolved_path = source_rule.path;
+					let name = source_rule.name;
+
+					file_type
+						.middleware(&resolved_path, meta, vfs)?
+						.with_name(&name)
+						.with_path(path)
+						.with_data(data_snapshot)
+						.apply_project_data(meta, path)
+				};
+
+				Ok(Some(source_snapshot))
+			}
+			(Some(rule), None) | (None, Some(rule)) => {
+				let file_type = rule.file_type;
+				let resolved_path = rule.path;
+				let name = rule.name;
+
+				let snapshot = file_type
+					.middleware(&resolved_path, meta, vfs)?
+					.with_name(&name)
+					.with_path(path)
+					.apply_project_data(meta, path);
+
+				Ok(Some(snapshot))
+			}
+			_ => unreachable!(),
+		}
+	} else {
+		Ok(None)
+	}
+}
+
+/// Create snapshot of a directory,
+/// example: `foo/bar`
+fn new_snapshot_dir(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	let snapshot = snapshot_dir(path, meta, vfs)?.apply_project_data(meta, path);
+
+	Ok(Some(snapshot))
+}
+
+#[derive(Debug, Clone)]
+struct ResolvedChildRules {
+	pub source_rule: Option<ResolvedSyncRule>,
+	pub data_rule: Option<ResolvedSyncRule>,
+}
+
+fn resolve_child_rules(path: &Path, meta: &Meta) -> Option<ResolvedChildRules> {
 	let mut source_resolved_rule = None;
 	let mut data_resolved_rule = None;
 
-	let resolved_rule = meta.sync_rules.iter().find_map(|rule| rule.resolve(path))?;
+	let resolved_rule = meta.sync_rules.iter().find_map(|rule| rule.resolve_child(path))?;
 
 	if resolved_rule.file_type == FileType::InstanceData {
 		for rule in &meta.sync_rules {
@@ -194,15 +200,9 @@ fn resolve_relevant_rules(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<Relevan
 				continue;
 			}
 
-			if let Some(full_name) = rule.full_name(&resolved_rule.name) {
-				let path = path.parent().unwrap().join(full_name);
-
-				if let Some(resolved) = rule.resolve(&path) {
-					if vfs.exists(&resolved.path) {
-						source_resolved_rule = Some(resolved);
-						break;
-					}
-				}
+			if let Some(source_rule) = rule.resolve_child(path) {
+				source_resolved_rule = Some(source_rule);
+				break;
 			}
 		}
 
@@ -213,48 +213,15 @@ fn resolve_relevant_rules(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<Relevan
 			.iter()
 			.find(|rule| rule.file_type == FileType::InstanceData)
 		{
-			if let Some(data_name) = data_rule.full_name(&resolved_rule.name) {
-				let path = path.parent().unwrap().join(data_name);
-
-				if vfs.exists(&path) {
-					data_resolved_rule = data_rule.resolve(&path);
-				}
+			if let Some(data_rule) = data_rule.resolve_child(path) {
+				data_resolved_rule = Some(data_rule);
 			}
 		}
 
 		source_resolved_rule = Some(resolved_rule);
 	}
 
-	Some(RelevantRules {
-		source_rule: source_resolved_rule,
-		data_rule: data_resolved_rule,
-	})
-}
-
-fn resolve_child_paths(path: &Path, meta: &Meta, vfs: &Vfs) -> Option<RelevantRules> {
-	let mut source_resolved_rule = None;
-	let mut data_resolved_rule = None;
-
-	let resolved_rule = meta.sync_rules.iter().find_map(|rule| rule.resolve(path))?;
-
-	// for rule in &meta.sync_rules {
-	// 	let resolved_rule = if is_file {
-	// 		rule.resolve_child(path)
-	// 	} else {
-	// 		rule.resolve(path)
-	// 	};
-
-	// 	if let Some(resolved) = resolved_rule {
-	// 		if resolved.file_type == FileType::InstanceData {
-	// 			data_path = Some(resolved.path);
-	// 		} else {
-	// 			source_path = Some(resolved.path);
-	// 			break;
-	// 		}
-	// 	}
-	// }
-
-	Some(RelevantRules {
+	Some(ResolvedChildRules {
 		source_rule: source_resolved_rule,
 		data_rule: data_resolved_rule,
 	})

@@ -79,12 +79,6 @@ impl Snapshot {
 			self.class = data.class;
 		}
 
-		if let Some(meta) = &mut self.meta {
-			meta.add_included_data_path(data.path.unwrap());
-		} else {
-			self.set_meta(Meta::new().with_included_data_paths(vec![data.path.unwrap()]));
-		}
-
 		self.extend_properties(data.properties);
 
 		self
@@ -152,7 +146,7 @@ impl Snapshot {
 
 	pub fn apply_project_data(mut self, meta: &Meta, path: &Path) -> Self {
 		if let Some(project_data) = &meta.project_data {
-			if path != project_data.applies_to {
+			if path != project_data.affects {
 				return self;
 			}
 
