@@ -11,7 +11,6 @@ pub mod messages;
 pub mod middleware;
 pub mod program;
 pub mod project;
-pub mod rbx_path;
 pub mod resolution;
 pub mod server;
 pub mod sessions;

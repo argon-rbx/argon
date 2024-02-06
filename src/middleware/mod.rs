@@ -148,8 +148,12 @@ fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snaps
 /// Create a snapshot of a directory that has a child source or data,
 /// example: `foo/bar` that contains: `foo/bar/.src.lua`
 fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if meta.is_recursive {
+		return Ok(None);
+	}
+
 	if let Some(resolved_rules) = resolve_child_rules(path, meta) {
-		match (resolved_rules.source_rule, resolved_rules.data_rule) {
+		let (mut snapshot, file_type, resolved_path) = match (resolved_rules.source_rule, resolved_rules.data_rule) {
 			(Some(source_rule), Some(data_rule)) => {
 				let data_snapshot = {
 					let file_type = data_rule.file_type;
@@ -158,36 +162,54 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 					file_type.middleware(&path, meta, vfs)?
 				};
 
-				let source_snapshot = {
-					let file_type = source_rule.file_type;
-					let resolved_path = source_rule.path;
-					let name = source_rule.name;
+				let file_type = source_rule.file_type;
+				let resolved_path = source_rule.path;
+				let name = source_rule.name;
 
+				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
 						.with_name(&name)
 						.with_path(path)
 						.with_data(data_snapshot)
-						.apply_project_data(meta, path)
-				};
-
-				Ok(Some(source_snapshot))
+						.apply_project_data(meta, path),
+					file_type,
+					resolved_path,
+				)
 			}
 			(Some(rule), None) | (None, Some(rule)) => {
 				let file_type = rule.file_type;
 				let resolved_path = rule.path;
 				let name = rule.name;
 
-				let snapshot = file_type
-					.middleware(&resolved_path, meta, vfs)?
-					.with_name(&name)
-					.with_path(path)
-					.apply_project_data(meta, path);
-
-				Ok(Some(snapshot))
+				(
+					file_type
+						.middleware(&resolved_path, meta, vfs)?
+						.with_name(&name)
+						.with_path(path)
+						.apply_project_data(meta, path),
+					file_type,
+					resolved_path,
+				)
 			}
 			_ => unreachable!(),
+		};
+
+		if file_type != FileType::Project {
+			let meta = meta.clone().with_recursive(true);
+
+			for path in vfs.read_dir(path)? {
+				if path == resolved_path {
+					continue;
+				}
+
+				if let Some(child_snapshot) = new_snapshot(&path, &meta, vfs)? {
+					snapshot.add_child(child_snapshot);
+				}
+			}
 		}
+
+		Ok(Some(snapshot))
 	} else {
 		Ok(None)
 	}

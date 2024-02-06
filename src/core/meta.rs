@@ -176,6 +176,8 @@ pub struct Meta {
 	pub ignore_rules: Vec<IgnoreRule>,
 	/// Project data that is included in the project node in `*.project.json`
 	pub project_data: Option<ProjectData>,
+	/// Keeps track if `new_snapshot_file_child` fn should be called again
+	pub is_recursive: bool,
 }
 
 impl Meta {
@@ -186,6 +188,7 @@ impl Meta {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
 			project_data: None,
+			is_recursive: false,
 		}
 	}
 
@@ -204,7 +207,7 @@ impl Meta {
 		Self {
 			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Meta::default().sync_rules),
 			ignore_rules,
-			project_data: None,
+			..Self::new()
 		}
 	}
 
@@ -223,6 +226,11 @@ impl Meta {
 		self
 	}
 
+	pub fn with_recursive(mut self, is_recursive: bool) -> Self {
+		self.is_recursive = is_recursive;
+		self
+	}
+
 	// Overwriting meta fields
 
 	pub fn set_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
@@ -235,6 +243,10 @@ impl Meta {
 
 	pub fn set_project_data(&mut self, project_data: ProjectData) {
 		self.project_data = Some(project_data);
+	}
+
+	pub fn set_recursive(&mut self, is_recursive: bool) {
+		self.is_recursive = is_recursive;
 	}
 
 	// Adding to meta fields
@@ -269,7 +281,7 @@ impl Meta {
 	// Misc
 
 	pub fn is_empty(&self) -> bool {
-		// We intentionally omit `included_data_paths` here
+		// We intentionally omit `is_recursive` here
 		// as it's a temporary field used only in middleware
 		// so there is no need to keep it in the tree
 		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
@@ -380,8 +392,7 @@ impl Default for Meta {
 
 		Self {
 			sync_rules,
-			ignore_rules: vec![],
-			project_data: None,
+			..Self::new()
 		}
 	}
 }

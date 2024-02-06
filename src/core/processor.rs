@@ -160,12 +160,14 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 	} else {
 		None
 	};
+
 	modified_snapshot.class = if snapshot.class != instance.class {
 		instance.class = snapshot.class.clone();
 		Some(snapshot.class)
 	} else {
 		None
 	};
+
 	modified_snapshot.properties = if snapshot.properties != instance.properties {
 		instance.properties = snapshot.properties.clone();
 		Some(snapshot.properties)
@@ -198,6 +200,8 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 				tree.remove(child_id);
 				chnages.remove(child_id);
 			}
+		} else {
+			println!("{:#?}", tree.get_instance(child_id));
 		}
 	}
 
