@@ -214,7 +214,11 @@ impl Debug for Snapshot {
 
 			if let Some(property) = properties.get_mut("Source") {
 				if let Variant::String(source) = property {
-					*property = Variant::String(format!("Truncated... ({} lines)", source.lines().count()));
+					let lines = source.lines().count();
+
+					if lines > 1 {
+						*property = Variant::String(format!("Truncated... ({} lines)", lines));
+					}
 				}
 			}
 

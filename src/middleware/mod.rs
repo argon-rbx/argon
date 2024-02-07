@@ -148,7 +148,7 @@ fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snaps
 /// Create a snapshot of a directory that has a child source or data,
 /// example: `foo/bar` that contains: `foo/bar/.src.lua`
 fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	if meta.is_recursive {
+	if meta.was_processed(path) {
 		return Ok(None);
 	}
 
@@ -196,7 +196,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 		};
 
 		if file_type != FileType::Project {
-			let meta = meta.clone().with_recursive(true);
+			let meta = meta.clone().with_processed_path(path);
 
 			for path in vfs.read_dir(path)? {
 				if path == resolved_path {

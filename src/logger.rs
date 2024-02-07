@@ -57,8 +57,8 @@ pub fn init(log_level: LevelFilter, color_choice: WriteStyle) {
 				"{}: {:?} [{}:{}]",
 				style.value(record.level().to_string()),
 				record.args(),
-				record.module_path().unwrap_or("error").replace("::", "."),
-				record.line().unwrap_or(0)
+				record.module_path().unwrap(),
+				record.line().unwrap()
 			)
 		}
 	});

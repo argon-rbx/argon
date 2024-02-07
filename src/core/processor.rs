@@ -1,6 +1,5 @@
 use crossbeam_channel::{select, Receiver, Sender};
 use log::error;
-use pathsub::sub_paths;
 use rbx_dom_weak::types::Ref;
 use std::{
 	collections::VecDeque,
@@ -21,6 +20,9 @@ use crate::{
 	vfs::{Vfs, VfsEvent},
 };
 
+// Paths that should be ignored before they are even processed
+// useful to save ton of computing time, however users won't
+// be able to set them in `sync_rules` or project `$path`
 const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
 pub struct Processor {
@@ -124,8 +126,15 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 
 	let mut changes = Changes::new();
 
-	let path = tree.get_path(id).unwrap();
-	let meta = meta_from_vec(tree.get_meta(id));
+	let path = match tree.get_path(id) {
+		Some(path) => path,
+		None => {
+			error!("Failed to get path for instance: {:?}. You shouldn't see this error message, please report this problem!", id);
+			return changes;
+		}
+	};
+
+	let meta = join_meta_entries(tree.get_meta(id));
 
 	let snapshot = match new_snapshot(path, &meta, vfs) {
 		Ok(snapshot) => snapshot,
@@ -135,8 +144,8 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		}
 	};
 
-	// Handle additions, modifications and removals
-	// of instances with child source or data
+	// Handle additions, modifications and
+	// removals of instances without paths
 	if let Some(snapshot) = snapshot {
 		process_child_changes(id, snapshot, &mut changes, tree);
 	// Handle removals of regular instances
@@ -148,7 +157,6 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	changes
 }
 
-// TODO: should be recursive in case of nested snapshots like projects or models
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes, tree: &mut Tree) {
 	let instance = tree.get_instance_mut(id).unwrap();
 
@@ -179,12 +187,12 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 		chnages.modify(modified_snapshot);
 	}
 
-	// Find removed children
+	let mut hydrated = vec![false; instance.children().len()];
+
+	// Pair instances and find removed children
 	#[allow(clippy::unnecessary_to_owned)]
 	'outer: for child_id in instance.children().to_owned() {
-		// We only care about instances with path as other ones
-		// can only be modified from the project or model files
-		// which are guaranteed to have path assigned
+		// Assign instances with known path to snapshot children
 		if let Some(path) = tree.get_path(child_id) {
 			for child in snapshot.children.iter_mut() {
 				if child.path == Some(path.to_owned()) {
@@ -193,30 +201,45 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 					continue 'outer;
 				}
 			}
+		// Hydrate instances without path by their name and class
+		} else {
+			let instance = tree.get_instance(child_id).unwrap();
+			let snapshot = snapshot.children.iter_mut().enumerate().find(|(index, child)| {
+				if hydrated[*index] {
+					return false;
+				}
 
-			// In theory this is unreachable for regular instances
-			// so after some testing this could be removed
-			if sub_paths(path, snapshot.path.as_ref().unwrap()).is_some() {
+				if child.name == instance.name && child.class == instance.class {
+					hydrated[*index] = true;
+					return true;
+				}
+
+				false
+			});
+
+			if let Some((_, child)) = snapshot {
+				child.set_id(child_id);
+			} else {
 				tree.remove(child_id);
 				chnages.remove(child_id);
 			}
-		} else {
-			println!("{:#?}", tree.get_instance(child_id));
 		}
 	}
 
-	// Find new children
+	// Process child changes and find new children
 	for child in snapshot.children {
-		if child.id.is_none() {
+		if let Some(child_id) = child.id {
+			process_child_changes(child_id, child, chnages, tree);
+		} else {
 			let child_id = tree.insert(child.clone(), id);
-			let child = child.clone().with_id(child_id);
+			let child = child.with_id(child_id);
 
 			chnages.add(child);
 		}
 	}
 }
 
-fn meta_from_vec(meta: VecDeque<&Meta>) -> Meta {
+fn join_meta_entries(meta: VecDeque<&Meta>) -> Meta {
 	meta.into_iter().fold(Meta::new(), |mut acc, meta| {
 		acc.extend(meta.clone());
 		acc

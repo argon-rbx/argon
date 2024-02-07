@@ -176,8 +176,9 @@ pub struct Meta {
 	pub ignore_rules: Vec<IgnoreRule>,
 	/// Project data that is included in the project node in `*.project.json`
 	pub project_data: Option<ProjectData>,
-	/// Keeps track if `new_snapshot_file_child` fn should be called again
-	pub is_recursive: bool,
+	/// List of paths that already have been processed by middleware,
+	/// used for computing `.src.*` files in `new_snapshot_file_child` fn
+	pub processed_paths: Vec<PathBuf>,
 }
 
 impl Meta {
@@ -188,7 +189,7 @@ impl Meta {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
 			project_data: None,
-			is_recursive: false,
+			processed_paths: Vec::new(),
 		}
 	}
 
@@ -226,8 +227,8 @@ impl Meta {
 		self
 	}
 
-	pub fn with_recursive(mut self, is_recursive: bool) -> Self {
-		self.is_recursive = is_recursive;
+	pub fn with_processed_path(mut self, path: &Path) -> Self {
+		self.processed_paths.push(path.to_path_buf());
 		self
 	}
 
@@ -243,10 +244,6 @@ impl Meta {
 
 	pub fn set_project_data(&mut self, project_data: ProjectData) {
 		self.project_data = Some(project_data);
-	}
-
-	pub fn set_recursive(&mut self, is_recursive: bool) {
-		self.is_recursive = is_recursive;
 	}
 
 	// Adding to meta fields
@@ -281,10 +278,14 @@ impl Meta {
 	// Misc
 
 	pub fn is_empty(&self) -> bool {
-		// We intentionally omit `is_recursive` here
+		// We intentionally omit `processed` here
 		// as it's a temporary field used only in middleware
 		// so there is no need to keep it in the tree
 		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
+	}
+
+	pub fn was_processed(&self, path: &Path) -> bool {
+		self.processed_paths.contains(&path.to_path_buf())
 	}
 }
 
