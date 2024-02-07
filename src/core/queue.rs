@@ -16,16 +16,21 @@ impl Queue {
 		}
 	}
 
-	pub fn push(&mut self, message: Message, id: Option<&u64>) {
+	pub fn push<M>(&mut self, message: M, id: Option<&u64>)
+	where
+		M: Into<Message>,
+	{
 		if let Some(id) = id {
 			if !self.is_subscribed(id) {
 				return;
 			}
 
-			self.queues.get_mut(id).unwrap().push_back(message);
+			self.queues.get_mut(id).unwrap().push_back(message.into());
 
 			return;
 		}
+
+		let message: Message = message.into();
 
 		for listener in &self.listeners {
 			self.queues.get_mut(listener).unwrap().push_back(message.clone());

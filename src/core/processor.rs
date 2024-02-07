@@ -15,7 +15,7 @@ use super::{
 	tree::Tree,
 };
 use crate::{
-	lock,
+	lock, messages,
 	middleware::new_snapshot,
 	vfs::{Vfs, VfsEvent},
 };
@@ -113,9 +113,27 @@ impl Handler {
 		if !changes.is_empty() {
 			self.callback.send(()).unwrap();
 
-			println!("{:#?}", changes);
+			for snapshot in changes.additions {
+				queue.push(
+					messages::Create {
+						parent: snapshot.id.unwrap(),
+						name: snapshot.name,
+						class: snapshot.class,
+						properties: snapshot.properties,
+					},
+					None,
+				)
+			}
 
-			// TODO: add to the queue here
+			for modified_snapshot in changes.modifications {
+				queue.push(messages::Update(modified_snapshot), None);
+			}
+
+			for id in changes.removals {
+				queue.push(messages::Remove { id }, None);
+			}
+
+			// println!("{:#?}", changes);
 		}
 	}
 }

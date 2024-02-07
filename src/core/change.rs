@@ -1,9 +1,10 @@
 use rbx_dom_weak::types::{Ref, Variant};
+use serde::Serialize;
 use std::collections::HashMap;
 
 use super::snapshot::Snapshot;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ModifiedSnapshot {
 	pub id: Ref,
 	pub name: Option<String>,

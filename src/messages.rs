@@ -1,13 +1,16 @@
-use rbx_dom_weak::types::Variant;
+use derive_from_one::FromOne;
+use rbx_dom_weak::types::{Ref, Variant};
 use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize)]
+use crate::core::change::ModifiedSnapshot;
+
+#[derive(Debug, Clone, Serialize, FromOne)]
 pub enum Message {
 	SyncMeta(SyncMeta),
 	Execute(Execute),
 	Create(Create),
-	Delete(Delete),
+	Remove(Remove),
 	Update(Update),
 }
 
@@ -25,18 +28,16 @@ pub struct Execute {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Create {
+	pub parent: Ref,
+	pub name: String,
 	pub class: String,
-	// pub path: RbxPath,
 	pub properties: HashMap<String, Variant>,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Delete {
-	// pub path: RbxPath,
+pub struct Remove {
+	pub id: Ref,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Update {
-	// pub path: RbxPath,
-	pub properties: HashMap<String, Variant>,
-}
+pub struct Update(pub ModifiedSnapshot);
