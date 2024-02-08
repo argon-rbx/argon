@@ -163,7 +163,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		.arg("--")
 		.arg("--skipBuild")
 		.arg(&format!("--git={}", git))
-		.args(&["--dir", &util::path_to_string(project)])
+		.args(["--dir", &util::path_to_string(project)])
 		.arg(if util::get_yes() { "--yes" } else { "" })
 		.spawn()?;
 

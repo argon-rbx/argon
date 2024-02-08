@@ -1,15 +1,11 @@
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
-use log::trace;
-use std::{
-	env,
-	path::PathBuf,
-	process::{self, Command},
-};
+use log::{info, trace};
+use std::{path::PathBuf, process, sync::Arc, thread};
 
 use crate::{
-	argon_info, argon_warn,
+	argon_error, argon_info, argon_warn,
 	config::Config,
 	core::Core,
 	exit,
@@ -38,6 +34,10 @@ pub struct Run {
 	#[arg(short = 'P', long)]
 	port: Option<u16>,
 
+	/// Generate sourcemap every time files change
+	#[arg(short, long)]
+	sourcemap: bool,
+
 	/// Whether to run using roblox-ts
 	#[arg(short, long)]
 	ts: bool,
@@ -56,6 +56,13 @@ impl Run {
 		}
 
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
+		let sourcemap_path = {
+			if self.sourcemap {
+				Some(project_path.parent().unwrap().join("sourcemap.json"))
+			} else {
+				None
+			}
+		};
 
 		if !project_path.exists() {
 			exit!(
@@ -109,11 +116,40 @@ impl Run {
 			}
 		}
 
-		let server = Server::new(core, &host, &port);
+		if let Some(path) = &sourcemap_path {
+			core.sourcemap(Some(path.clone()), false)?;
+
+			argon_info!("Generated sourcemap in: {}", path.to_str().unwrap().bold());
+		}
+
+		let core = Arc::new(core);
+
+		{
+			let core = core.clone();
+
+			thread::spawn(move || {
+				for path_changed in core.tree_changed() {
+					if path_changed {
+						if let Some(path) = &sourcemap_path {
+							info!("Regenerating sourcemap..");
+
+							match core.sourcemap(Some(path.clone()), false) {
+								Ok(_) => (),
+								Err(err) => {
+									argon_error!("Failed to generate sourcemap: {}", err);
+								}
+							}
+						}
+					}
+				}
+			});
+		}
 
 		if config.spawn {
 			sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
 		}
+
+		let server = Server::new(core, &host, &port);
 
 		argon_info!(
 			"Running on: {}:{}, project: {}",
@@ -128,12 +164,15 @@ impl Run {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
-
-		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
-		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
-
 		let mut args = vec![String::from("run"), util::get_verbosity_flag()];
+
+		if let Some(project) = self.project {
+			args.push(project.to_str().unwrap().to_string());
+		}
+
+		if let Some(session) = self.session {
+			args.push(session);
+		}
 
 		if let Some(host) = self.host {
 			args.push(String::from("--host"));
@@ -145,25 +184,15 @@ impl Run {
 			args.push(port.to_string());
 		}
 
-		if let Some(project) = self.project {
-			args.push(project.to_str().unwrap().to_string());
-		}
-
-		if let Some(session) = self.session {
-			args.push(session);
+		if self.sourcemap {
+			args.push(String::from("--sourcemap"));
 		}
 
 		if self.ts {
 			args.push(String::from("--ts"));
 		}
 
-		Command::new(program)
-			.args(args)
-			.arg("--yes")
-			.arg("--argon-spawn")
-			.env("RUST_LOG_STYLE", log_style)
-			.env("RUST_BACKTRACE", backtrace)
-			.spawn()?;
+		Program::new(ProgramKind::Argon).args(args).spawn()?;
 
 		Ok(())
 	}

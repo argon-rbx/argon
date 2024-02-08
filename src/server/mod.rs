@@ -25,9 +25,9 @@ pub struct Server {
 }
 
 impl Server {
-	pub fn new(core: Core, host: &String, port: &u16) -> Self {
+	pub fn new(core: Arc<Core>, host: &String, port: &u16) -> Self {
 		Self {
-			core: Arc::new(core),
+			core,
 			host: host.to_owned(),
 			port: port.to_owned(),
 		}

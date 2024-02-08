@@ -1,16 +1,16 @@
 use anyhow::Result;
 use crossbeam_channel::Receiver;
+use rbx_dom_weak::types::Ref;
+use serde::Serialize;
 use std::{
 	fs::File,
 	io::BufWriter,
-	path::Path,
+	path::{Path, PathBuf},
 	sync::{Arc, Mutex, MutexGuard},
-	thread,
-	time::Duration,
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
-use crate::{lock, middleware::new_snapshot, project::Project, vfs::Vfs};
+use crate::{lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
 
 pub mod change;
 pub mod meta;
@@ -80,7 +80,7 @@ impl Core {
 		lock!(self.queue)
 	}
 
-	pub fn tree_changed(&self) -> Receiver<()> {
+	pub fn tree_changed(&self) -> Receiver<bool> {
 		self.processor.callback()
 	}
 
@@ -89,16 +89,7 @@ impl Core {
 
 		// We want to proritize event processing over building
 		// so we can wait for the Mutex lock to release
-		let tree = loop {
-			match self.tree.try_lock() {
-				Ok(guard) => {
-					break guard;
-				}
-				Err(_) => {
-					thread::sleep(Duration::from_millis(1));
-				}
-			}
-		};
+		let tree = util::wait_for_mutex(&self.tree);
 
 		let root_refs = if self.project.is_place() {
 			tree.place_root_refs().to_vec()
@@ -114,4 +105,62 @@ impl Core {
 
 		Ok(())
 	}
+
+	pub fn sourcemap(&self, path: Option<PathBuf>, non_scripts: bool) -> Result<()> {
+		let tree = util::wait_for_mutex(&self.tree);
+		let dom = tree.inner();
+
+		fn walk(tree: &Tree, id: Ref, non_scripts: bool) -> Option<SourcemapNode> {
+			let instance = tree.get_instance(id).unwrap();
+
+			let children: Vec<SourcemapNode> = instance
+				.children()
+				.iter()
+				.filter_map(|&child_id| walk(tree, child_id, non_scripts))
+				.collect();
+
+			if children.is_empty() && (!non_scripts && !util::is_script(&instance.class)) {
+				return None;
+			}
+
+			let file_paths = {
+				if let Some(meta) = tree.get_meta(id) {
+					meta.child_sources.clone()
+				} else if let Some(path) = tree.get_path(id) {
+					vec![path.clone()]
+				} else {
+					vec![]
+				}
+			};
+
+			Some(SourcemapNode {
+				name: instance.name.clone(),
+				class_name: instance.class.clone(),
+				file_paths,
+				children,
+			})
+		}
+
+		let sourcemap = walk(&tree, dom.root_ref(), non_scripts);
+
+		if let Some(path) = path {
+			let writer = BufWriter::new(File::create(path)?);
+			serde_json::to_writer(writer, &sourcemap)?;
+		} else {
+			println!("{}", serde_json::to_string(&sourcemap)?);
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SourcemapNode {
+	name: String,
+	class_name: String,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
+	file_paths: Vec<PathBuf>,
+	#[serde(skip_serializing_if = "Vec::is_empty")]
+	children: Vec<SourcemapNode>,
 }

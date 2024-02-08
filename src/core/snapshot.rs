@@ -84,6 +84,16 @@ impl Snapshot {
 		self
 	}
 
+	pub fn with_sources(mut self, sources: Vec<PathBuf>) -> Self {
+		if let Some(meta) = &mut self.meta {
+			meta.extend_child_sources(sources);
+		} else {
+			self.meta = Some(Meta::new().with_child_sources(sources));
+		}
+
+		self
+	}
+
 	// Overwriting snapshot fields
 
 	pub fn set_id(&mut self, id: Ref) {

@@ -81,6 +81,10 @@ impl Tree {
 		}
 	}
 
+	pub fn insert_meta(&mut self, id: Ref, meta: Meta) -> Option<Meta> {
+		self.ids_to_meta.insert(id, meta)
+	}
+
 	pub fn get_instance(&self, id: Ref) -> Option<&Instance> {
 		self.dom.get_by_ref(id)
 	}
@@ -93,8 +97,16 @@ impl Tree {
 		self.path_to_ids.get_vec(path)
 	}
 
+	pub fn get_meta(&self, id: Ref) -> Option<&Meta> {
+		self.ids_to_meta.get(&id)
+	}
+
+	pub fn get_meta_mut(&mut self, id: Ref) -> Option<&mut Meta> {
+		self.ids_to_meta.get_mut(&id)
+	}
+
 	/// Get all meta associated with the given `Ref` in order from root to leaf
-	pub fn get_meta(&self, id: Ref) -> VecDeque<&Meta> {
+	pub fn get_meta_all(&self, id: Ref) -> VecDeque<&Meta> {
 		let mut metas = VecDeque::new();
 		let mut id = id;
 
@@ -116,10 +128,6 @@ impl Tree {
 			.iter_all()
 			.find(|(_, ids)| ids.contains(&id))
 			.map(|(path, _)| path)
-	}
-
-	pub fn exists(&self, path: &Path) -> bool {
-		self.path_to_ids.contains_key(path)
 	}
 
 	pub fn inner(&self) -> &WeakDom {

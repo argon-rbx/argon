@@ -3,11 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use log::{info, trace};
 use roblox_install::RobloxStudio;
-use std::{
-	env, fs,
-	path::PathBuf,
-	process::{self, Command},
-};
+use std::{fs, path::PathBuf, process};
 
 use crate::{
 	argon_info,
@@ -16,8 +12,7 @@ use crate::{
 	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
-	sessions,
-	util::{self, resolve_path},
+	sessions, util,
 };
 
 /// Build project into Roblox place or model
@@ -38,6 +33,10 @@ pub struct Build {
 	/// Rebuild project every time files change
 	#[arg(short, long)]
 	watch: bool,
+
+	/// Generate sourcemap every time files change
+	#[arg(short, long)]
+	sourcemap: bool,
 
 	/// Build plugin and place it into plugins folder
 	#[arg(short, long)]
@@ -65,6 +64,13 @@ impl Build {
 		}
 
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
+		let sourcemap_path = {
+			if self.sourcemap {
+				Some(project_path.parent().unwrap().join("sourcemap.json"))
+			} else {
+				None
+			}
+		};
 
 		if !project_path.exists() {
 			exit!(
@@ -129,7 +135,7 @@ impl Build {
 		} else {
 			self.get_default_file(&project)
 		};
-		let path = resolve_path(path)?;
+		let path = util::resolve_path(path)?;
 
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
 
@@ -162,6 +168,12 @@ impl Build {
 			path.to_str().unwrap().bold()
 		);
 
+		if let Some(path) = &sourcemap_path {
+			core.sourcemap(Some(path.clone()), false)?;
+
+			argon_info!("Generated sourcemap in: {}", path.to_str().unwrap().bold());
+		}
+
 		if self.watch {
 			if use_ts {
 				trace!("Starting roblox-ts");
@@ -186,10 +198,18 @@ impl Build {
 
 			argon_info!("Watching for changes..");
 
-			for _ in core.tree_changed() {
+			for path_changed in core.tree_changed() {
 				info!("Rebuilding project..");
 
 				core.build(&path, xml)?;
+
+				if path_changed {
+					if let Some(path) = &sourcemap_path {
+						info!("Regenerating sourcemap..");
+
+						core.sourcemap(Some(path.clone()), false)?;
+					}
+				}
 			}
 		}
 
@@ -213,11 +233,6 @@ impl Build {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let program = env::current_exe().unwrap_or(PathBuf::from("argon"));
-
-		let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
-		let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
-
 		let mut args = vec![String::from("build"), util::get_verbosity_flag()];
 
 		if let Some(project) = self.project {
@@ -226,6 +241,14 @@ impl Build {
 
 		if let Some(output) = self.output {
 			args.push(util::path_to_string(&output))
+		}
+
+		if self.watch {
+			args.push(String::from("--watch"))
+		}
+
+		if self.sourcemap {
+			args.push(String::from("--sourcemap"))
 		}
 
 		if self.plugin {
@@ -240,17 +263,7 @@ impl Build {
 			args.push(String::from("--ts"))
 		}
 
-		if self.watch {
-			args.push(String::from("--watch"))
-		}
-
-		Command::new(program)
-			.args(args)
-			.arg("--yes")
-			.arg("--argon-spawn")
-			.env("RUST_LOG_STYLE", log_style)
-			.env("RUST_BACKTRACE", backtrace)
-			.spawn()?;
+		Program::new(ProgramKind::Argon).args(args).spawn()?;
 
 		Ok(())
 	}

@@ -9,6 +9,9 @@ use std::{
 	fs,
 	path::{Path, PathBuf},
 	process::{self, Command},
+	sync::{Mutex, MutexGuard},
+	thread,
+	time::Duration,
 };
 
 pub fn get_home_dir() -> Result<PathBuf> {
@@ -71,6 +74,10 @@ pub fn is_service(class: &str) -> bool {
 	};
 
 	has_tag || class == "StarterPlayerScripts" || class == "StarterCharacterScripts"
+}
+
+pub fn is_script(class: &str) -> bool {
+	class == "Script" || class == "LocalScript" || class == "ModuleScript"
 }
 
 pub fn get_username() -> String {
@@ -203,6 +210,19 @@ where
 			Ok(ok) => Ok(ok),
 			Err(error) => {
 				bail!("{}: {}", desc(), error);
+			}
+		}
+	}
+}
+
+pub fn wait_for_mutex<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+	loop {
+		match mutex.try_lock() {
+			Ok(guard) => {
+				break guard;
+			}
+			Err(_) => {
+				thread::sleep(Duration::from_millis(1));
 			}
 		}
 	}

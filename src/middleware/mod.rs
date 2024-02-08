@@ -155,9 +155,13 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 	if let Some(resolved_rules) = resolve_child_rules(path, meta) {
 		let (mut snapshot, file_type, resolved_path) = match (resolved_rules.source_rule, resolved_rules.data_rule) {
 			(Some(source_rule), Some(data_rule)) => {
+				let mut child_sources = vec![];
+
 				let data_snapshot = {
 					let file_type = data_rule.file_type;
 					let path = data_rule.path;
+
+					child_sources.push(path.clone());
 
 					file_type.middleware(&path, meta, vfs)?
 				};
@@ -166,12 +170,15 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 				let resolved_path = source_rule.path;
 				let name = source_rule.name;
 
+				child_sources.push(resolved_path.clone());
+
 				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
 						.with_name(&name)
 						.with_path(path)
 						.with_data(data_snapshot)
+						.with_sources(child_sources)
 						.apply_project_data(meta, path),
 					file_type,
 					resolved_path,
@@ -187,6 +194,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 						.middleware(&resolved_path, meta, vfs)?
 						.with_name(&name)
 						.with_path(path)
+						.with_sources(vec![resolved_path.clone()])
 						.apply_project_data(meta, path),
 					file_type,
 					resolved_path,

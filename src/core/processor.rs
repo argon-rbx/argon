@@ -26,7 +26,7 @@ use crate::{
 const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
 pub struct Processor {
-	callback: Receiver<()>,
+	callback: Receiver<bool>,
 }
 
 impl Processor {
@@ -62,7 +62,7 @@ impl Processor {
 		Self { callback: receiver }
 	}
 
-	pub fn callback(&self) -> Receiver<()> {
+	pub fn callback(&self) -> Receiver<bool> {
 		self.callback.clone()
 	}
 }
@@ -71,7 +71,7 @@ struct Handler {
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Vfs>,
-	callback: Sender<()>,
+	callback: Sender<bool>,
 }
 
 impl Handler {
@@ -111,7 +111,9 @@ impl Handler {
 		};
 
 		if !changes.is_empty() {
-			self.callback.send(()).unwrap();
+			let path_changed = !changes.additions.is_empty() || !changes.removals.is_empty();
+
+			self.callback.send(path_changed).unwrap();
 
 			for snapshot in changes.additions {
 				queue.push(
@@ -132,8 +134,6 @@ impl Handler {
 			for id in changes.removals {
 				queue.push(messages::Remove { id }, None);
 			}
-
-			// println!("{:#?}", changes);
 		}
 	}
 }
@@ -152,7 +152,7 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		}
 	};
 
-	let meta = join_meta_entries(tree.get_meta(id));
+	let meta = join_meta_entries(tree.get_meta_all(id));
 
 	let snapshot = match new_snapshot(path, &meta, vfs) {
 		Ok(snapshot) => snapshot,
@@ -176,6 +176,18 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 }
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes, tree: &mut Tree) {
+	match (snapshot.meta, tree.get_meta_mut(id)) {
+		(Some(snapshot_meta), Some(meta)) => {
+			if snapshot_meta != *meta {
+				*meta = snapshot_meta;
+			}
+		}
+		(Some(snapshot_meta), None) => {
+			tree.insert_meta(id, snapshot_meta);
+		}
+		_ => {}
+	}
+
 	let instance = tree.get_instance_mut(id).unwrap();
 
 	let mut modified_snapshot = ModifiedSnapshot::new(id);

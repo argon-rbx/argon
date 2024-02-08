@@ -5,7 +5,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Glob {
 	pattern: Pattern,
 }

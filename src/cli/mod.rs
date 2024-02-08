@@ -11,6 +11,7 @@ mod doc;
 mod exec;
 mod init;
 mod run;
+mod sourcemap;
 mod stop;
 mod studio;
 
@@ -112,6 +113,7 @@ impl Cli {
 			Commands::Run(command) => command.main(),
 			Commands::Stop(command) => command.main(),
 			Commands::Build(command) => command.main(),
+			Commands::Sourcemap(command) => command.main(),
 			Commands::Studio(command) => command.main(),
 			Commands::Exec(command) => command.main(),
 			Commands::Config(command) => command.main(),
@@ -126,6 +128,7 @@ pub enum Commands {
 	Run(run::Run),
 	Stop(stop::Stop),
 	Build(build::Build),
+	Sourcemap(sourcemap::Sourcemap),
 	Studio(studio::Studio),
 	Exec(exec::Exec),
 	Config(config::Config),

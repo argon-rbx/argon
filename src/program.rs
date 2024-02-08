@@ -10,7 +10,9 @@ use std::{
 
 use crate::{argon_error, logger, util};
 
+#[derive(PartialEq)]
 pub enum ProgramKind {
+	Argon,
 	Git,
 	Npm,
 	Npx,
@@ -33,17 +35,26 @@ impl Program {
 		}
 	}
 
-	pub fn arg(&mut self, arg: &str) -> &mut Self {
+	pub fn arg<S>(&mut self, arg: S) -> &mut Self
+	where
+		S: Into<String>,
+	{
+		let arg: String = arg.into();
+
 		if arg.is_empty() {
 			return self;
 		}
 
-		self.args.push(arg.to_owned());
+		self.args.push(arg);
 		self
 	}
 
-	pub fn args(&mut self, args: &[&str]) -> &mut Self {
-		for &arg in args {
+	pub fn args<I, S>(&mut self, args: I) -> &mut Self
+	where
+		I: IntoIterator<Item = S>,
+		S: Into<String>,
+	{
+		for arg in args {
 			self.arg(arg);
 		}
 		self
@@ -78,11 +89,28 @@ impl Program {
 	}
 
 	fn get_command(&self) -> Command {
+		if self.program == ProgramKind::Argon {
+			let mut command = Command::new(env::current_exe().unwrap_or(PathBuf::from("argon")));
+
+			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
+			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
+
+			command
+				.args(self.args.clone())
+				.arg("--yes")
+				.arg("--argon-spawn")
+				.env("RUST_LOG_STYLE", log_style)
+				.env("RUST_BACKTRACE", backtrace);
+
+			return command;
+		};
+
 		#[cfg(not(target_os = "windows"))]
 		let program = match self.program {
 			ProgramKind::Git => "git",
 			ProgramKind::Npm => "npm",
 			ProgramKind::Npx => "npx",
+			ProgramKind::Argon => unreachable!(),
 		};
 
 		#[cfg(target_os = "windows")]
@@ -90,6 +118,7 @@ impl Program {
 			ProgramKind::Git => "git",
 			ProgramKind::Npm => "npm.cmd",
 			ProgramKind::Npx => "npx.cmd",
+			ProgramKind::Argon => unreachable!(),
 		};
 
 		let mut command = Command::new(program);
@@ -126,6 +155,7 @@ impl Program {
 				"use_git".bold()
 			),
 			ProgramKind::Npm | ProgramKind::Npx => format!("{}: npm is not installed", error),
+			ProgramKind::Argon => unreachable!(),
 		}
 	}
 
@@ -133,6 +163,7 @@ impl Program {
 		match self.program {
 			ProgramKind::Git => "Do you want to install Git now?",
 			ProgramKind::Npm | ProgramKind::Npx => "Do you want to install npm now?",
+			ProgramKind::Argon => unreachable!(),
 		}
 	}
 
@@ -140,6 +171,7 @@ impl Program {
 		match self.program {
 			ProgramKind::Git => "https://git-scm.com/downloads",
 			ProgramKind::Npm | ProgramKind::Npx => "https://nodejs.org/en/download/",
+			ProgramKind::Argon => unreachable!(),
 		}
 	}
 }
