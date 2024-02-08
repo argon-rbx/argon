@@ -12,7 +12,8 @@ use crate::{
 	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
-	sessions, util,
+	sessions,
+	util::{self, PathExt},
 };
 
 /// Build project into Roblox place or model
@@ -66,7 +67,7 @@ impl Build {
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
 			if self.sourcemap {
-				Some(project_path.parent().unwrap().join("sourcemap.json"))
+				Some(project_path.get_parent().join("sourcemap.json"))
 			} else {
 				None
 			}
@@ -75,7 +76,7 @@ impl Build {
 		if !project_path.exists() {
 			exit!(
 				"No project files found in {}",
-				project_path.parent().unwrap().to_str().unwrap().bold()
+				project_path.get_parent().to_string().bold()
 			);
 		}
 
@@ -95,7 +96,7 @@ impl Build {
 			if path.is_dir() {
 				path.join(self.get_default_file(&project))
 			} else {
-				let ext = util::get_file_ext(&path);
+				let ext = path.get_file_ext();
 
 				if ext.is_empty() {
 					fs::create_dir_all(&path)?;
@@ -123,7 +124,7 @@ impl Build {
 						exit!("Cannot build place from plugin or model project");
 					}
 
-					let parent = path.parent().unwrap();
+					let parent = path.get_parent();
 
 					if !parent.exists() {
 						fs::create_dir_all(parent)?;
@@ -135,14 +136,14 @@ impl Build {
 		} else {
 			self.get_default_file(&project)
 		};
-		let path = util::resolve_path(path)?;
+		let path = path.resolve()?;
 
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
 
 		if use_ts {
 			argon_info!("Compiling TypeScript files..");
 
-			let working_dir = project_path.parent().unwrap();
+			let working_dir = project_path.get_parent();
 
 			let child = Program::new(ProgramKind::Npx)
 				.message("Failed to start roblox-ts")
@@ -164,21 +165,21 @@ impl Build {
 
 		argon_info!(
 			"Successfully built project: {} to: {}",
-			project_path.to_str().unwrap().bold(),
-			path.to_str().unwrap().bold()
+			project_path.to_string().bold(),
+			path.to_string().bold()
 		);
 
 		if let Some(path) = &sourcemap_path {
 			core.sourcemap(Some(path.clone()), false)?;
 
-			argon_info!("Generated sourcemap in: {}", path.to_str().unwrap().bold());
+			argon_info!("Generated sourcemap in: {}", path.to_string().bold());
 		}
 
 		if self.watch {
 			if use_ts {
 				trace!("Starting roblox-ts");
 
-				let working_dir = project_path.parent().unwrap();
+				let working_dir = project_path.get_parent();
 
 				let mut child = Program::new(ProgramKind::Npx)
 					.current_dir(working_dir)
@@ -233,14 +234,14 @@ impl Build {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let mut args = vec![String::from("build"), util::get_verbosity_flag()];
+		let mut args = vec![String::from("build")];
 
 		if let Some(project) = self.project {
-			args.push(util::path_to_string(&project))
+			args.push(project.to_string())
 		}
 
 		if let Some(output) = self.output {
-			args.push(util::path_to_string(&output))
+			args.push(output.to_string())
 		}
 
 		if self.watch {

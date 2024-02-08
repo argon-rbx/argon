@@ -95,7 +95,7 @@ impl Config {
 
 		for (setting, default) in &defaults {
 			if let Ok(doc) = Self::get_field_comment(setting) {
-				table.add_row(vec![setting.to_string(), default.to_string(), doc.trim().to_string()]);
+				table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
 			}
 		}
 

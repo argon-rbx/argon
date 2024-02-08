@@ -16,7 +16,7 @@ impl Glob {
 		let pattern = pattern.replace('\\', "/");
 
 		#[cfg(target_os = "windows")]
-		let pattern = pattern.replace("/", "\\");
+		let pattern = pattern.replace('/', "\\");
 
 		Ok(Self {
 			pattern: Pattern::new(&pattern)?,

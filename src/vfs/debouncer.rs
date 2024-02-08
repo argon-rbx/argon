@@ -1,17 +1,35 @@
 use crossbeam_channel::Sender;
-use notify::{
-	event::{DataChange, ModifyKind},
-	EventKind, RecommendedWatcher,
-};
+use notify::{EventKind, RecommendedWatcher};
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
 use std::{sync::mpsc, thread::Builder, time::Duration};
 
+#[cfg(target_os = "macos")]
+use notify::event::DataChange;
+
+#[cfg(not(target_os = "windows"))]
+use notify::event::ModifyKind;
+
+#[cfg(target_os = "linux")]
+use {
+	notify::event::{AccessKind, AccessMode, RenameMode},
+	std::{path::PathBuf, time::Instant},
+};
+
 use super::VfsEvent;
+
+#[cfg(target_os = "linux")]
+const DEBOUNCE_TIME: Duration = Duration::from_micros(500);
 
 macro_rules! event_path {
 	($event:expr) => {
 		$event.paths.first().unwrap().to_owned()
 	};
+}
+
+#[cfg(target_os = "linux")]
+struct DebounceContext {
+	time: Instant,
+	path: PathBuf,
 }
 
 pub struct VfsDebouncer {
@@ -24,11 +42,23 @@ impl VfsDebouncer {
 		let debouncer = new_debouncer(Duration::from_millis(100), None, sender, false).unwrap();
 
 		Builder::new()
-			.name("debouncer".into())
+			.name("debouncer".to_owned())
 			.spawn(move || {
+				#[cfg(target_os = "linux")]
+				let mut context = DebounceContext {
+					time: Instant::now(),
+					path: PathBuf::new(),
+				};
+
 				for events in receiver {
 					for event in events.unwrap() {
+						#[cfg(not(target_os = "linux"))]
 						if let Some(event) = Self::debounce(&event) {
+							handler.send(event).unwrap();
+						}
+
+						#[cfg(target_os = "linux")]
+						if let Some(event) = Self::debounce(&event, &mut context) {
 							handler.send(event).unwrap();
 						}
 					}
@@ -74,40 +104,37 @@ impl VfsDebouncer {
 		}
 	}
 
-	// TODO
 	#[cfg(target_os = "linux")]
-	fn debounce(&mut self, event: &DebouncedEvent) {
+	fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<VfsEvent> {
 		match event.kind {
 			EventKind::Create(_) => {
-				let path = self.get_path(event);
+				let path = event_path!(event);
 
-				self.time = event.time;
-				self.path = path.to_owned();
+				context.time = event.time;
+				context.path = path.clone();
 
-				self.send(FsEventKind::Create, path);
+				Some(VfsEvent::Create(path))
 			}
 			EventKind::Modify(ModifyKind::Name(mode)) => match mode {
-				RenameMode::From => {
-					self.send(FsEventKind::Delete, self.get_path(event));
-				}
-				RenameMode::To => {
-					self.send(FsEventKind::Create, self.get_path(event));
-				}
-				_ => {}
+				RenameMode::From => Some(VfsEvent::Delete(event_path!(event))),
+				RenameMode::To => Some(VfsEvent::Create(event_path!(event))),
+				_ => None,
 			},
 			EventKind::Access(kind) => {
 				if kind == AccessKind::Close(AccessMode::Write) {
-					let duration = event.time.duration_since(self.time);
-					let path = self.get_path(event);
+					let duration = event.time.duration_since(context.time);
+					let path = event_path!(event);
 
-					if duration < DEBOUNCE_TIME && path == self.path {
-						return;
+					if duration < DEBOUNCE_TIME && path == context.path {
+						return None;
 					}
 
-					self.send(FsEventKind::Write, path);
+					Some(VfsEvent::Write(event_path!(event)))
+				} else {
+					None
 				}
 			}
-			_ => {}
+			_ => None,
 		}
 	}
 

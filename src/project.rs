@@ -6,7 +6,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{core::meta::SyncRule, glob::Glob, resolution::UnresolvedValue, util, workspace};
+use crate::{core::meta::SyncRule, glob::Glob, resolution::UnresolvedValue, util::PathExt, workspace};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {
@@ -108,9 +108,9 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
-	let mut project_path = util::resolve_path(path)?;
+	let mut project_path = path.resolve()?;
 
-	if project_path.is_file() || util::get_file_name(&project_path).ends_with(".project.json") {
+	if project_path.is_file() || project_path.get_file_name().ends_with(".project.json") {
 		return Ok(project_path);
 	}
 

@@ -12,7 +12,8 @@ use crate::{
 	program::{Program, ProgramKind},
 	project::{self, Project},
 	server::{self, Server},
-	sessions, util,
+	sessions,
+	util::{self, PathExt},
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -58,7 +59,7 @@ impl Run {
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
 			if self.sourcemap {
-				Some(project_path.parent().unwrap().join("sourcemap.json"))
+				Some(project_path.get_parent().join("sourcemap.json"))
 			} else {
 				None
 			}
@@ -67,7 +68,7 @@ impl Run {
 		if !project_path.exists() {
 			exit!(
 				"No project files found in {}. Run {} to create new one.",
-				project_path.parent().unwrap().to_str().unwrap().bold(),
+				project_path.get_parent().to_string().bold(),
 				"argon init".bold(),
 			);
 		}
@@ -78,7 +79,7 @@ impl Run {
 		if use_ts {
 			trace!("Starting roblox-ts");
 
-			let working_dir = project_path.parent().unwrap();
+			let working_dir = project_path.get_parent();
 
 			let child = Program::new(ProgramKind::Npx)
 				.message("Failed to serve roblox-ts project")
@@ -119,7 +120,7 @@ impl Run {
 		if let Some(path) = &sourcemap_path {
 			core.sourcemap(Some(path.clone()), false)?;
 
-			argon_info!("Generated sourcemap in: {}", path.to_str().unwrap().bold());
+			argon_info!("Generated sourcemap in: {}", path.to_string().bold());
 		}
 
 		let core = Arc::new(core);
@@ -151,12 +152,7 @@ impl Run {
 
 		let server = Server::new(core, &host, &port);
 
-		argon_info!(
-			"Running on: {}:{}, project: {}",
-			host,
-			port,
-			project_path.to_str().unwrap()
-		);
+		argon_info!("Running on: {}:{}, project: {}", host, port, project_path.to_string());
 
 		server.start()?;
 
@@ -164,10 +160,10 @@ impl Run {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let mut args = vec![String::from("run"), util::get_verbosity_flag()];
+		let mut args = vec![String::from("run")];
 
 		if let Some(project) = self.project {
-			args.push(project.to_str().unwrap().to_string());
+			args.push(project.to_string());
 		}
 
 		if let Some(session) = self.session {

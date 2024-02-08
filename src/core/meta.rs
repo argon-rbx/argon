@@ -5,7 +5,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{glob::Glob, middleware::FileType, project::Project, util};
+use crate::{glob::Glob, middleware::FileType, project::Project, util::PathExt};
 
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
@@ -55,7 +55,7 @@ impl SyncRule {
 	}
 
 	pub fn with_suffix(mut self, suffix: &str) -> Self {
-		self.suffix = Some(suffix.to_string());
+		self.suffix = Some(suffix.to_owned());
 		self
 	}
 
@@ -89,17 +89,17 @@ impl SyncRule {
 
 	pub fn get_name(&self, path: &Path) -> String {
 		if let Some(suffix) = &self.suffix {
-			let name = util::get_file_name(path);
-			name.strip_suffix(suffix).unwrap_or(name).into()
+			let name = path.get_file_name();
+			name.strip_suffix(suffix).unwrap_or(name).to_owned()
 		} else {
-			util::get_file_stem(path).into()
+			path.get_file_stem().to_owned()
 		}
 	}
 
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
 		fn matches_child_pattern(pattern: &Option<Glob>, path: &Path) -> bool {
 			if let Some(child_pattern) = &pattern {
-				let child_path = path.parent().unwrap().join(child_pattern.as_str());
+				let child_path = path.get_parent().join(child_pattern.as_str());
 				let child_pattern = Glob::from_path(&child_path).unwrap();
 
 				return child_pattern.matches_path(path);
@@ -115,7 +115,7 @@ impl SyncRule {
 			{
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
-					path: path.to_path_buf(),
+					path: path.to_owned(),
 					name: self.get_name(path),
 				});
 			}
@@ -134,11 +134,11 @@ impl SyncRule {
 					return None;
 				}
 
-				let name = util::get_file_name(path.parent().unwrap());
+				let name = path.get_parent().get_file_name();
 
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
-					name: name.to_string(),
+					name: name.to_owned(),
 					path,
 				});
 			}
@@ -181,8 +181,8 @@ pub struct ProjectData {
 impl ProjectData {
 	pub fn new(name: &str, applies_to: &Path) -> Self {
 		Self {
-			name: name.to_string(),
-			affects: applies_to.to_path_buf(),
+			name: name.to_owned(),
+			affects: applies_to.to_owned(),
 			class: None,
 			properties: None,
 		}
@@ -274,7 +274,7 @@ impl Meta {
 	}
 
 	pub fn with_processed_path(mut self, path: &Path) -> Self {
-		self.processed_paths.push(path.to_path_buf());
+		self.processed_paths.push(path.to_owned());
 		self
 	}
 
@@ -346,7 +346,7 @@ impl Meta {
 	}
 
 	pub fn was_processed(&self, path: &Path) -> bool {
-		self.processed_paths.contains(&path.to_path_buf())
+		self.processed_paths.contains(&path.to_owned())
 	}
 }
 

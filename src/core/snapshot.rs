@@ -50,17 +50,17 @@ impl Snapshot {
 	}
 
 	pub fn with_path(mut self, path: &Path) -> Self {
-		self.path = Some(path.into());
+		self.path = Some(path.to_owned());
 		self
 	}
 
 	pub fn with_name(mut self, name: &str) -> Self {
-		self.name = name.into();
+		self.name = name.to_owned();
 		self
 	}
 
 	pub fn with_class(mut self, class: &str) -> Self {
-		self.class = class.into();
+		self.class = class.to_owned();
 		self
 	}
 
@@ -105,15 +105,15 @@ impl Snapshot {
 	}
 
 	pub fn set_path(&mut self, path: &Path) {
-		self.path = Some(path.into());
+		self.path = Some(path.to_owned());
 	}
 
 	pub fn set_name(&mut self, name: &str) {
-		self.name = name.into();
+		self.name = name.to_owned();
 	}
 
 	pub fn set_class(&mut self, class: &str) {
-		self.class = class.into();
+		self.class = class.to_owned();
 	}
 
 	pub fn set_properties(&mut self, properties: HashMap<String, Variant>) {
@@ -127,7 +127,7 @@ impl Snapshot {
 	// Adding to snapshot fields
 
 	pub fn add_property(&mut self, name: &str, value: Variant) {
-		self.properties.insert(name.into(), value);
+		self.properties.insert(name.to_owned(), value);
 	}
 
 	pub fn add_child(&mut self, child: Snapshot) {

@@ -11,7 +11,7 @@ use crate::{
 		meta::{Meta, ResolvedSyncRule},
 		snapshot::Snapshot,
 	},
-	util::Desc,
+	util::{Desc, PathExt},
 	vfs::Vfs,
 };
 
@@ -107,7 +107,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 			Ok(Some(snapshot))
 		// If file does not match any rule it might be child source or data so we need
 		// to get a snapshot of the parent directory
-		} else if let Some(snapshot) = new_snapshot_file_child(path.parent().unwrap(), meta, vfs)? {
+		} else if let Some(snapshot) = new_snapshot_file_child(path.get_parent(), meta, vfs)? {
 			Ok(Some(snapshot))
 		// If file does not match any rule and its parent does not have child source or data
 		// we are 100% sure that this file shouldn't be processed by Argon

@@ -44,7 +44,7 @@ impl Processor {
 			let handler = handler.clone();
 
 			Builder::new()
-				.name("processor".into())
+				.name("processor".to_owned())
 				.spawn(move || {
 					let vfs_receiver = vfs.receiver();
 

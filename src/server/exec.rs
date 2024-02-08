@@ -6,10 +6,7 @@ use actix_web::{
 use serde::Deserialize;
 use std::sync::Arc;
 
-use crate::{
-	core::Core,
-	messages::{Execute, Message},
-};
+use crate::{core::Core, messages};
 
 #[derive(Deserialize, Debug)]
 struct Request {
@@ -19,9 +16,9 @@ struct Request {
 #[post("/exec")]
 async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	core.queue().push(
-		Message::Execute(Execute {
+		messages::Execute {
 			code: request.code.clone(),
-		}),
+		},
 		None,
 	);
 

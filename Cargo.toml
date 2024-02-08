@@ -23,10 +23,15 @@ rbx_reflection_database = "0.2.9"
 config-derive = { version = "*", path = "crates/config-derive" }
 profiling = { version = "*", path = "crates/profiling/profiling" }
 
-reqwest = { version = "0.11.23", features = ["blocking", "json"] }
 clap = { version = "4.4.1", features = ["derive", "cargo"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }
+reqwest = { version = "0.11.23", features = [
+	"blocking",
+	"json",
+	"native-tls-vendored",
+] }
+
 
 notify-debouncer-full = "0.3.1"
 clap-verbosity-flag = "2.1.0"
@@ -52,7 +57,7 @@ globenv = "0.2.1"
 
 puffin = "0.19.0"
 colored = "2.0.4"
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 chrono = "0.4.31"
 notify = "6.1.1"
 whoami = "1.4.1"

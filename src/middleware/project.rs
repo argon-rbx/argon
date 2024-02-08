@@ -10,7 +10,7 @@ use crate::{
 		snapshot::Snapshot,
 	},
 	project::{Project, ProjectNode},
-	util,
+	util::{self, PathExt},
 	vfs::Vfs,
 };
 
@@ -19,7 +19,7 @@ pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot>
 	let project = fs::read_to_string(path)?;
 	let project: Project = serde_json::from_str(&project)?;
 
-	let super_path = path.parent().unwrap();
+	let super_path = path.get_parent();
 
 	let snapshot = walk(&project.name, super_path, meta, vfs, project.node)?
 		.with_meta(meta.to_owned())
@@ -37,7 +37,7 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		if let Some(class_name) = node.class_name {
 			class_name
 		} else if util::is_service(name) {
-			name.to_string()
+			name.to_owned()
 		} else {
 			String::from("Folder")
 		}

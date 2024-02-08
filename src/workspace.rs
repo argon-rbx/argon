@@ -7,13 +7,15 @@ use std::{fs, path::Path};
 use crate::{
 	argon_info, argon_warn,
 	program::{Program, ProgramKind},
-	util,
+	util::{self, PathExt},
 };
 
-fn add_license(path: &Path, license: &str) -> Result<()> {
+fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
+	trace!("Getting {} license template..", license);
+
 	let url = format!("https://api.github.com/licenses/{}", license);
 
-	let license = || -> Result<String> {
+	let license_template = || -> Result<String> {
 		match Client::new().get(url).header("User-Agent", "Argon").send() {
 			Ok(response) => {
 				let json = response.json::<serde_json::Value>()?;
@@ -30,11 +32,11 @@ fn add_license(path: &Path, license: &str) -> Result<()> {
 		}
 	}();
 
-	match license {
-		Ok(license) => {
-			let name = util::get_username();
-			let year = chrono::Utc::now().year();
+	let name = util::get_username();
+	let year = chrono::Utc::now().year();
 
+	match license_template {
+		Ok(license) => {
 			// Apache
 			let license = license.replace("[yyyy]", &year.to_string());
 			let license = license.replace("[name of copyright owner]", &name);
@@ -50,7 +52,14 @@ fn add_license(path: &Path, license: &str) -> Result<()> {
 			fs::write(path, license)?;
 		}
 		Err(err) => {
-			argon_warn!("Failed to add license: {}", err);
+			let license = fallback.replace("$license", license);
+			let license = license.replace("$year", &year.to_string());
+			let license = license.replace("$owner", &name);
+
+			fs::write(path, license)?;
+
+			argon_warn!("Failed to add license: {}. Using basic fallback instead!", err);
+
 			return Ok(());
 		}
 	}
@@ -58,7 +67,15 @@ fn add_license(path: &Path, license: &str) -> Result<()> {
 	Ok(())
 }
 
-pub fn init(project: &Path, template: &str, license: &str, git: bool, wally: bool, docs: bool) -> Result<()> {
+pub fn init(
+	project: &Path,
+	template: &str,
+	license: &str,
+	git: bool,
+	wally: bool,
+	docs: bool,
+	rojo_mode: bool,
+) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 	let template_dir = home_dir.join(".argon").join("templates").join(template);
 
@@ -77,8 +94,8 @@ pub fn init(project: &Path, template: &str, license: &str, git: bool, wally: boo
 		let entry = entry?;
 
 		let path = entry.path();
-		let name = util::get_file_name(&path);
-		let stem = util::get_file_stem(&path);
+		let name = path.get_file_name();
+		let stem = path.get_file_stem();
 
 		let new_path = if name == "project.json" {
 			project.to_owned()
@@ -106,6 +123,7 @@ pub fn init(project: &Path, template: &str, license: &str, git: bool, wally: boo
 				if wally || template == "package" {
 					let content = fs::read_to_string(path)?;
 					let content = content.replace("$name", project_name);
+					// TODO: fix this on Windows
 					let content = content.replace("$author", &util::get_username());
 					let content = content.replace("$license", license);
 
@@ -122,13 +140,16 @@ pub fn init(project: &Path, template: &str, license: &str, git: bool, wally: boo
 					}
 				}
 				"LICENSE" => {
+					let fallback = fs::read_to_string(path)?;
+
 					if docs {
-						add_license(&new_path, license)?;
+						add_license(&new_path, license, &fallback)?;
 					}
 				}
 				_ => {
+					// TODO: fix this on Windows
 					if path.is_dir() {
-						util::copy_dir(&path, &new_path)?;
+						copy_dir(&path, &new_path, rojo_mode)?;
 					} else {
 						fs::copy(path, new_path)?;
 					}
@@ -163,7 +184,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		.arg("--")
 		.arg("--skipBuild")
 		.arg(&format!("--git={}", git))
-		.args(["--dir", &util::path_to_string(project)])
+		.args(["--dir", &project.to_string()])
 		.arg(if util::get_yes() { "--yes" } else { "" })
 		.spawn()?;
 
@@ -192,14 +213,14 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			return Ok(true);
 		}
 
-		let project_name = util::get_file_name(project);
+		let project_name = project.get_file_name();
 
 		for entry in fs::read_dir(template_dir)? {
 			let entry = entry?;
 
 			let path = entry.path();
-			let name = util::get_file_name(&path);
-			let stem = util::get_file_stem(&path);
+			let name = path.get_file_name();
+			let stem = path.get_file_stem();
 
 			let new_path = project.join(name);
 
@@ -215,7 +236,9 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 					fs::write(new_path, content)?;
 				}
 				"LICENSE" => {
-					add_license(&new_path, license)?;
+					let fallback = fs::read_to_string(path)?;
+
+					add_license(&new_path, license, &fallback)?;
 				}
 				"wally" => {
 					if wally {
@@ -238,7 +261,7 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 	let output = Program::new(ProgramKind::Git)
 		.message("Failed to initialize repository")
 		.arg("init")
-		.arg(&util::path_to_string(directory))
+		.arg(&directory.to_string())
 		.output()?;
 
 	if output.is_some() {
@@ -251,11 +274,34 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 }
 
 pub fn get_dir(project_path: &Path) -> &Path {
-	project_path.parent().unwrap()
+	project_path.get_parent()
 }
 
 pub fn get_name(project_path: &Path) -> &str {
-	let name = project_path.parent().unwrap();
+	project_path.get_parent().get_file_name()
+}
 
-	util::from_os_str(name.file_name().unwrap())
+fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
+	if !to.exists() {
+		fs::create_dir_all(to)?;
+	}
+
+	for entry in fs::read_dir(from)? {
+		let entry = entry?;
+
+		let path = entry.path();
+		let mut name = path.get_file_name().to_owned();
+
+		if name.starts_with(".src") && rojo_mode {
+			name = name.replace(".src", "init");
+		}
+
+		if path.is_dir() {
+			copy_dir(&path, &to.join(name), rojo_mode)?;
+		} else {
+			fs::copy(&path, &to.join(name))?;
+		}
+	}
+
+	Ok(())
 }

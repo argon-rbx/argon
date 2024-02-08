@@ -2,7 +2,10 @@ use anyhow::Result;
 use include_dir::{include_dir, Dir};
 use std::{env, fs, path::Path};
 
-use crate::{logger, util};
+use crate::{
+	logger,
+	util::{self, PathExt},
+};
 
 const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/place");
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
@@ -28,7 +31,7 @@ pub fn install() -> Result<()> {
 		fs::create_dir(&templates_dir)?;
 	}
 
-	globenv::set_path(bin_dir.to_str().unwrap())?;
+	globenv::set_path(&bin_dir.to_string())?;
 
 	#[cfg(not(target_os = "windows"))]
 	let exe_path = bin_dir.join("argon");

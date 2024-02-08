@@ -11,7 +11,8 @@ use crate::{
 	exit,
 	program::{Program, ProgramKind},
 	project::{self, Project},
-	sessions, util,
+	sessions,
+	util::PathExt,
 };
 
 #[derive(Parser)]
@@ -54,7 +55,7 @@ impl Sourcemap {
 		if !project_path.exists() {
 			exit!(
 				"No project file found in {}",
-				project_path.parent().unwrap().to_str().unwrap().bold()
+				project_path.get_parent().to_string().bold()
 			);
 		}
 
@@ -66,8 +67,8 @@ impl Sourcemap {
 		if let Some(output) = &self.output {
 			argon_info!(
 				"Successfully generated sourcemap of project: {} to: {}",
-				project_path.to_str().unwrap().bold(),
-				output.to_str().unwrap().bold()
+				project_path.to_string().bold(),
+				output.to_string().bold()
 			);
 		}
 
@@ -92,14 +93,14 @@ impl Sourcemap {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let mut args = vec![String::from("sourcemap"), util::get_verbosity_flag()];
+		let mut args = vec![String::from("sourcemap")];
 
 		if let Some(project) = self.project {
-			args.push(util::path_to_string(&project))
+			args.push(project.to_string())
 		}
 
 		if let Some(output) = self.output {
-			args.push(util::path_to_string(&output))
+			args.push(output.to_string())
 		}
 
 		if self.watch {

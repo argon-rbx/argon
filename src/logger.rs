@@ -81,7 +81,7 @@ pub fn prompt(prompt: &str, default: bool) -> bool {
 		return default;
 	}
 
-	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("always".to_string());
+	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("always".to_owned());
 
 	let theme = match log_style.as_str() {
 		"always" => PromptTheme::color(),
@@ -203,8 +203,8 @@ impl PromptTheme {
 	fn color() -> Self {
 		Self {
 			prompt_style: Style::new().for_stderr(),
-			prompt_prefix: style("PROMPT".to_string()).for_stderr().blue().bold(),
-			prompt_suffix: style("·".to_string()).for_stderr().black().bright(),
+			prompt_prefix: style("PROMPT".to_owned()).for_stderr().blue().bold(),
+			prompt_suffix: style("·".to_owned()).for_stderr().black().bright(),
 			yes_style: Style::new().for_stderr().green(),
 			no_style: Style::new().for_stderr().red(),
 			none_style: Style::new().for_stderr().cyan(),
@@ -215,8 +215,8 @@ impl PromptTheme {
 	fn no_color() -> Self {
 		Self {
 			prompt_style: Style::new().for_stderr(),
-			prompt_prefix: style("PROMPT".to_string()).for_stderr(),
-			prompt_suffix: style("·".to_string()).for_stderr(),
+			prompt_prefix: style("PROMPT".to_owned()).for_stderr(),
+			prompt_suffix: style("·".to_owned()).for_stderr(),
 			yes_style: Style::new().for_stderr(),
 			no_style: Style::new().for_stderr(),
 			none_style: Style::new().for_stderr(),

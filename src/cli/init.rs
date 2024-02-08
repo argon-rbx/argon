@@ -3,7 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::path::PathBuf;
 
-use crate::{argon_error, argon_info, config::Config, project, workspace};
+use crate::{argon_error, argon_info, config::Config, project, util::PathExt, workspace};
 
 /// Initialize new Argon project
 #[derive(Parser)]
@@ -60,16 +60,13 @@ impl Init {
 		let project_path = project::resolve(project)?;
 
 		if project_path.exists() {
-			argon_error!("Project {} already exists!", project_path.to_str().unwrap().bold());
+			argon_error!("Project {} already exists!", project_path.to_string().bold());
 			return Ok(());
 		}
 
-		workspace::init(&project_path, &template, &license, git, wally, docs)?;
+		workspace::init(&project_path, &template, &license, git, wally, docs, config.rojo_mode)?;
 
-		argon_info!(
-			"Successfully initialized project: {}",
-			project_path.to_str().unwrap().bold()
-		);
+		argon_info!("Successfully initialized project: {}", project_path.to_string().bold());
 
 		Ok(())
 	}

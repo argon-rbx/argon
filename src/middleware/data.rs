@@ -8,7 +8,7 @@ use std::{collections::HashMap, path::Path};
 use crate::{
 	core::{meta::Meta, snapshot::Snapshot},
 	resolution::UnresolvedValue,
-	util,
+	util::{self, PathExt},
 	vfs::Vfs,
 };
 
@@ -32,7 +32,7 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 	let mut properties = HashMap::new();
 
 	let class = {
-		let parent = path.parent().unwrap();
+		let parent = path.get_parent();
 
 		// Get the class from meta if there was one
 		// specified in the project for this path
@@ -56,7 +56,7 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		// Get the class from the parent folder name,
 		// only if it's a service and fallback to `Folder`
 		} else {
-			let name = util::get_file_name(parent);
+			let name = parent.get_file_name();
 			let is_service = util::is_service(name);
 
 			if is_service {

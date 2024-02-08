@@ -92,13 +92,14 @@ impl Program {
 		if self.program == ProgramKind::Argon {
 			let mut command = Command::new(env::current_exe().unwrap_or(PathBuf::from("argon")));
 
-			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_string());
-			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_string());
+			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_owned());
+			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_owned());
 
 			command
 				.args(self.args.clone())
 				.arg("--yes")
 				.arg("--argon-spawn")
+				.arg(util::get_verbosity_flag())
 				.env("RUST_LOG_STYLE", log_style)
 				.env("RUST_BACKTRACE", backtrace);
 

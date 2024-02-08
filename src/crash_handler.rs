@@ -52,7 +52,7 @@ pub fn hook() {
 			backtrace = backtrace.replace('&', "ptr");
 
 			if backtrace.len() > MAX_BACKTRACE_LEN {
-				backtrace = backtrace[..MAX_BACKTRACE_LEN].to_string();
+				backtrace = backtrace[..MAX_BACKTRACE_LEN].to_owned();
 				backtrace.push_str("\n...\n");
 			}
 
@@ -75,7 +75,7 @@ pub fn hook() {
 		);
 
 		if report_issue {
-			let mut url = env!("CARGO_PKG_REPOSITORY").to_string();
+			let mut url = env!("CARGO_PKG_REPOSITORY").to_owned();
 			url.push_str("/issues/new?title=Argon crash report&body=");
 			url.push_str(&report);
 
