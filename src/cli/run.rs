@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
-use log::{info, trace};
+use log::{debug, info};
 use std::{path::PathBuf, process, sync::Arc, thread};
 
 use crate::{
@@ -77,7 +77,7 @@ impl Run {
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
 
 		if use_ts {
-			trace!("Starting roblox-ts");
+			debug!("Starting roblox-ts");
 
 			let working_dir = project_path.get_parent();
 

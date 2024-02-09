@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::Datelike;
-use log::trace;
+use log::{debug, trace, warn};
 use reqwest::blocking::Client;
 use std::{fs, path::Path};
 
@@ -123,7 +123,6 @@ pub fn init(
 				if wally || template == "package" {
 					let content = fs::read_to_string(path)?;
 					let content = content.replace("$name", project_name);
-					// TODO: fix this on Windows
 					let content = content.replace("$author", &util::get_username());
 					let content = content.replace("$license", license);
 
@@ -147,7 +146,6 @@ pub fn init(
 					}
 				}
 				_ => {
-					// TODO: fix this on Windows
 					if path.is_dir() {
 						copy_dir(&path, &new_path, rojo_mode)?;
 					} else {
@@ -199,7 +197,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			return Ok(false);
 		}
 	} else {
-		trace!("npm is not installed");
+		warn!("npm is not installed");
 		return Ok(false);
 	}
 
@@ -265,9 +263,9 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 		.output()?;
 
 	if output.is_some() {
-		trace!("Initialized Git repository");
+		debug!("Initialized Git repository");
 	} else {
-		trace!("Git is not installed");
+		warn!("Git is not installed");
 	}
 
 	Ok(())

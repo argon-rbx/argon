@@ -1,4 +1,5 @@
 use crossbeam_channel::Sender;
+use log::trace;
 use notify::{EventKind, RecommendedWatcher};
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
 use std::{sync::mpsc, thread::Builder, time::Duration};
@@ -52,6 +53,8 @@ impl VfsDebouncer {
 
 				for events in receiver {
 					for event in events.unwrap() {
+						trace!("Debouncing event, paths: {:?}, kind: {:?}", event.paths, event.kind);
+
 						#[cfg(not(target_os = "linux"))]
 						if let Some(event) = Self::debounce(&event) {
 							handler.send(event).unwrap();

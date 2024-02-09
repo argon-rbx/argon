@@ -1,5 +1,6 @@
 use anyhow::{bail, Context, Result};
 use directories::UserDirs;
+use env_logger::WriteStyle;
 use log::LevelFilter;
 use rbx_reflection::ClassTag;
 use std::{
@@ -107,6 +108,24 @@ where
 	}
 }
 
+/// `to_string` implementation for `WriteSetyle` ///
+
+pub trait ToString {
+	fn to_string(&self) -> String;
+}
+
+impl ToString for WriteStyle {
+	fn to_string(&self) -> String {
+		let write_style = match self {
+			WriteStyle::Always => "always",
+			WriteStyle::Auto => "auto",
+			WriteStyle::Never => "never",
+		};
+
+		String::from(write_style)
+	}
+}
+
 /// Returns the home directory of the current user
 pub fn get_home_dir() -> Result<PathBuf> {
 	let user_dirs = UserDirs::new().context("Failed to get user directory")?;
@@ -136,7 +155,11 @@ pub fn is_script(class: &str) -> bool {
 /// Returns the Git or local username of the current user
 pub fn get_username() -> String {
 	if let Ok(output) = Command::new("git").arg("config").arg("user.name").output() {
-		return String::from_utf8_lossy(&output.stdout).trim().to_owned();
+		let username = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+
+		if !username.is_empty() {
+			return username;
+		}
 	}
 
 	whoami::username()
@@ -171,9 +194,9 @@ where
 	})
 }
 
-/// Returns the verbosity level filter
+/// Returns the `RUST_VERBOSE` environment variable
 pub fn get_verbosity() -> LevelFilter {
-	let verbosity = env::var("ARGON_VERBOSITY").unwrap_or("ERROR".to_owned());
+	let verbosity = env::var("RUST_VERBOSE").unwrap_or("ERROR".to_owned());
 
 	match verbosity.as_str() {
 		"OFF" => LevelFilter::Off,
@@ -186,26 +209,27 @@ pub fn get_verbosity() -> LevelFilter {
 	}
 }
 
-/// Returns the verbosity flag
-pub fn get_verbosity_flag() -> String {
-	let verbosity = env::var("ARGON_VERBOSITY").unwrap_or("ERROR".to_owned());
+/// Returns the `RUST_LOG_STYLE` environment variable
+pub fn get_log_style() -> WriteStyle {
+	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_owned());
 
-	let verbosity = match verbosity.as_str() {
-		"OFF" => "-q",
-		"ERROR" => "",
-		"WARN" => "-v",
-		"INFO" => "-vv",
-		"DEBUG" => "-vvv",
-		"TRACE" => "-vvvv",
-		_ => "",
-	};
-
-	String::from(verbosity)
+	match log_style.as_str() {
+		"always" => WriteStyle::Always,
+		"never" => WriteStyle::Never,
+		_ => WriteStyle::Auto,
+	}
 }
 
-/// Returns the Argon `yes` flag
+/// Returns the `RUST_BACKTRACE` environment variable
+pub fn get_backtrace() -> bool {
+	let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_owned());
+	backtrace == "1"
+}
+
+/// Returns the `RUST_YES` environment variable
 pub fn get_yes() -> bool {
-	env::var("ARGON_YES").is_ok()
+	let yes = env::var("RUST_YES").unwrap_or("0".to_owned());
+	yes == "1"
 }
 
 /// Waits for the Mutex to be released

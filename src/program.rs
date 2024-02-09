@@ -8,7 +8,10 @@ use std::{
 	process::{Child, Command, Output},
 };
 
-use crate::{argon_error, logger, util};
+use crate::{
+	argon_error, logger,
+	util::{self, ToString},
+};
 
 #[derive(PartialEq)]
 pub enum ProgramKind {
@@ -92,16 +95,18 @@ impl Program {
 		if self.program == ProgramKind::Argon {
 			let mut command = Command::new(env::current_exe().unwrap_or(PathBuf::from("argon")));
 
-			let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_owned());
-			let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_owned());
+			let verbosity = util::get_verbosity().as_str();
+			let log_style = util::get_log_style().to_string();
+			let backtrace = if util::get_backtrace() { "1" } else { "0" };
+			let yes = if util::get_yes() { "1" } else { "0" };
 
 			command
 				.args(self.args.clone())
-				.arg("--yes")
 				.arg("--argon-spawn")
-				.arg(util::get_verbosity_flag())
+				.env("RUST_VERBOSE", verbosity)
 				.env("RUST_LOG_STYLE", log_style)
-				.env("RUST_BACKTRACE", backtrace);
+				.env("RUST_BACKTRACE", backtrace)
+				.env("RUST_YES", yes);
 
 			return command;
 		};

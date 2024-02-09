@@ -1,5 +1,5 @@
 use env_logger::WriteStyle;
-use log::{error, info, trace, warn};
+use log::{debug, error, info, warn};
 use puffin_http::Server;
 use std::{
 	env,
@@ -21,29 +21,28 @@ fn main() {
 	let installation = installer::install();
 	let cli = Cli::new();
 
-	let log_level = cli.log_level();
-	let color_choice = cli.color_choice();
 	let yes = cli.yes();
+	let backtrace = cli.backtrace();
+	let verbosity = cli.verbosity();
+	let log_style = cli.log_style();
 
-	if color_choice == WriteStyle::Auto && io::stdin().is_terminal() {
+	if log_style == WriteStyle::Auto && io::stdin().is_terminal() {
 		env::set_var("RUST_LOG_STYLE", "always");
 	} else {
 		env::set_var(
 			"RUST_LOG_STYLE",
-			match color_choice {
+			match log_style {
 				WriteStyle::Always => "always",
 				_ => "never",
 			},
 		)
 	}
 
-	if yes {
-		env::set_var("ARGON_YES", "1");
-	}
+	env::set_var("RUST_VERBOSE", verbosity.as_str());
+	env::set_var("RUST_YES", if yes { "1" } else { "0" });
+	env::set_var("RUST_BACKTRACE", if backtrace { "1" } else { "0" });
 
-	env::set_var("ARGON_VERBOSITY", log_level.as_str());
-
-	logger::init(log_level, color_choice);
+	logger::init(verbosity, log_style);
 
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
@@ -55,7 +54,7 @@ fn main() {
 			Ok(server) => {
 				let _ = ManuallyDrop::new(server);
 
-				info!("Profiler started at {}", PROFILER_ADDRESS);
+				debug!("Profiler started at {}", PROFILER_ADDRESS);
 			}
 			Err(err) => {
 				error!("Failed to start profiler: {}", err);
@@ -66,7 +65,7 @@ fn main() {
 	}
 
 	match cli.main() {
-		Ok(()) => trace!("Successfully executed command!"),
+		Ok(()) => debug!("Successfully executed command!"),
 		Err(err) => argon_error!("Command execution failed: {}", err),
 	};
 }

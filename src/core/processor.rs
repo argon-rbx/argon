@@ -1,5 +1,5 @@
 use crossbeam_channel::{select, Receiver, Sender};
-use log::error;
+use log::{error, trace};
 use rbx_dom_weak::types::Ref;
 use std::{
 	collections::VecDeque,
@@ -18,12 +18,8 @@ use crate::{
 	lock, messages,
 	middleware::new_snapshot,
 	vfs::{Vfs, VfsEvent},
+	BLACKLISTED_PATHS,
 };
-
-// Paths that should be ignored before they are even processed
-// useful to save ton of computing time, however users won't
-// be able to set them in `sync_rules` or project `$path`
-const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
 pub struct Processor {
 	callback: Receiver<bool>,
@@ -82,6 +78,7 @@ impl Handler {
 		let changes = match event {
 			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
 				if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted)) {
+					trace!("Processing of {:?} aborted: blacklisted", path);
 					return;
 				}
 
@@ -141,13 +138,14 @@ impl Handler {
 #[profiling::function]
 fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	profiling::start_frame!();
+	trace!("Processing changes for instance: {:?}", id);
 
 	let mut changes = Changes::new();
 
 	let path = match tree.get_path(id) {
 		Some(path) => path,
 		None => {
-			error!("Failed to get path for instance: {:?}. You shouldn't see this error message, please report this problem!", id);
+			error!("Failed to get path for instance: {:?}", id);
 			return changes;
 		}
 	};

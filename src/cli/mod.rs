@@ -5,6 +5,8 @@ use env_logger::fmt::WriteStyle;
 use log::LevelFilter;
 use std::env;
 
+use crate::util;
+
 mod build;
 mod config;
 mod doc;
@@ -65,6 +67,10 @@ pub struct Cli {
 	#[arg(short, long, global = true)]
 	yes: bool,
 
+	/// Print full backtrace on panic
+	#[arg(short = 'B', long, global = true)]
+	backtrace: bool,
+
 	/// Output coloring: auto, always, never
 	#[arg(
 		long,
@@ -84,20 +90,32 @@ impl Cli {
 	}
 
 	pub fn yes(&self) -> bool {
+		if env::var("RUST_YES").is_ok() {
+			return util::get_yes();
+		}
+
 		self.yes
 	}
 
-	pub fn log_level(&self) -> LevelFilter {
+	pub fn backtrace(&self) -> bool {
+		if env::var("RUST_BACKTRACE").is_ok() {
+			return util::get_backtrace();
+		}
+
+		self.backtrace
+	}
+
+	pub fn verbosity(&self) -> LevelFilter {
+		if env::var("RUST_VERBOSE").is_ok() {
+			return util::get_verbosity();
+		}
+
 		self.verbose.log_level_filter()
 	}
 
-	pub fn color_choice(&self) -> WriteStyle {
-		if let Ok(log_style) = env::var("RUST_LOG_STYLE") {
-			return match log_style.as_str() {
-				"always" => WriteStyle::Always,
-				"never" => WriteStyle::Never,
-				_ => WriteStyle::Auto,
-			};
+	pub fn log_style(&self) -> WriteStyle {
+		if env::var("RUST_LOG_STYLE").is_ok() {
+			return util::get_log_style();
 		}
 
 		match self.color {

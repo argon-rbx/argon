@@ -1,11 +1,11 @@
 use actix_web::{post, HttpResponse, Responder};
-use log::trace;
+use log::debug;
 use std::process;
 
 use crate::util;
 
 async fn stop() {
-	trace!("Stopping Argon!");
+	debug!("Stopping Argon!");
 	util::kill_process(process::id());
 }
 

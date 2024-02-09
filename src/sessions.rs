@@ -54,7 +54,7 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 	}
 
 	if !path.exists() {
-		trace!("Session data file not found! Creating new one.");
+		warn!("Session data file not found! Creating new one.");
 		return create_empty(path);
 	}
 

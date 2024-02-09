@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
-use log::{info, trace};
+use log::{debug, info};
 use roblox_install::RobloxStudio;
 use std::{fs, path::PathBuf, process};
 
@@ -177,7 +177,7 @@ impl Build {
 
 		if self.watch {
 			if use_ts {
-				trace!("Starting roblox-ts");
+				debug!("Starting roblox-ts");
 
 				let working_dir = project_path.get_parent();
 

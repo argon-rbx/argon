@@ -1,5 +1,6 @@
 use anyhow::Result;
 use colored::Colorize;
+use log::trace;
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::{self, Display, Formatter},
@@ -13,6 +14,7 @@ use crate::{
 	},
 	util::{Desc, PathExt},
 	vfs::Vfs,
+	BLACKLISTED_PATHS,
 };
 
 use self::{
@@ -91,15 +93,22 @@ impl FileType {
 
 /// Returns a snapshot of the given path, `None` if path no longer exists
 pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	if meta.ignore_rules.iter().any(|rule| rule.matches(path)) {
+	if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted))
+		|| meta.ignore_rules.iter().any(|rule| rule.matches(path))
+	{
+		trace!("Snapshot of {} not created: ignored or blacklisted", path.display());
 		return Ok(None);
 	}
 
 	if !vfs.exists(path) {
+		trace!("Snapshot of {} not created: path does not exist", path.display());
+
 		vfs.unwatch(path)?;
 
 		return Ok(None);
 	}
+
+	trace!("Snapshot of {} created", path.display());
 
 	if vfs.is_file(path) {
 		// Get a snapshot of a regular file

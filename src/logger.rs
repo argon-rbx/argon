@@ -5,7 +5,7 @@ use dialoguer::Confirm;
 use env_logger::{fmt::Color, Builder, WriteStyle};
 use log::{Level, LevelFilter};
 use std::fmt::{Display, Formatter};
-use std::{env, fmt, io::Write};
+use std::{fmt, io::Write};
 
 use crate::util;
 
@@ -25,11 +25,11 @@ macro_rules! argon_info {
     ($($arg:tt)+) => (log::log!(target: "argon_log", log::Level::Info, $($arg)+))
 }
 
-pub fn init(log_level: LevelFilter, color_choice: WriteStyle) {
+pub fn init(verbosity: LevelFilter, log_style: WriteStyle) {
 	let mut builder = Builder::new();
 
 	builder.format(move |buffer, record| {
-		if record.level() > log_level && record.target() != "argon_log" {
+		if record.level() > verbosity && record.target() != "argon_log" {
 			return Ok(());
 		}
 
@@ -63,15 +63,25 @@ pub fn init(log_level: LevelFilter, color_choice: WriteStyle) {
 		}
 	});
 
-	if log_level == LevelFilter::Off {
+	if verbosity == LevelFilter::Off {
 		builder.filter_level(LevelFilter::Off);
-	} else if log_level <= LevelFilter::Info {
+	} else if verbosity <= LevelFilter::Info {
 		builder.filter_level(LevelFilter::Info);
 	} else {
-		builder.filter_level(log_level);
+		builder.filter_level(verbosity);
 	}
 
-	builder.write_style(color_choice);
+	builder.write_style(log_style);
+
+	// We want to see only important logs from these crates
+	builder.filter_module("notify_debouncer_full", LevelFilter::Warn);
+	builder.filter_module("notify", LevelFilter::Warn);
+	builder.filter_module("actix_server", LevelFilter::Warn);
+	builder.filter_module("hyper", LevelFilter::Warn);
+	builder.filter_module("reqwest", LevelFilter::Warn);
+	builder.filter_module("mio", LevelFilter::Warn);
+	builder.filter_module("rbx_binary", LevelFilter::Warn);
+	builder.filter_module("rbx_xml", LevelFilter::Warn);
 
 	builder.init();
 }
@@ -81,10 +91,8 @@ pub fn prompt(prompt: &str, default: bool) -> bool {
 		return default;
 	}
 
-	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("always".to_owned());
-
-	let theme = match log_style.as_str() {
-		"always" => PromptTheme::color(),
+	let theme = match util::get_log_style() {
+		WriteStyle::Always => PromptTheme::color(),
 		_ => PromptTheme::no_color(),
 	};
 
