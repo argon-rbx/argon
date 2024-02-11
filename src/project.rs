@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::{BTreeMap, HashMap},
-	fs,
+	fs, mem,
 	path::{Path, PathBuf},
 };
 
@@ -48,7 +48,7 @@ pub struct Project {
 	pub sync_rules: Option<Vec<SyncRule>>,
 
 	#[serde(skip)]
-	pub project_path: PathBuf,
+	pub path: PathBuf,
 	#[serde(skip)]
 	pub workspace_dir: PathBuf,
 }
@@ -60,10 +60,18 @@ impl Project {
 
 		let workspace_dir = workspace::get_dir(project_path);
 
-		project.project_path = project_path.to_owned();
+		project.path = project_path.to_owned();
 		project.workspace_dir = workspace_dir.to_owned();
 
 		Ok(project)
+	}
+
+	pub fn reload(&mut self) -> Result<()> {
+		let new = Self::load(&self.path)?;
+
+		drop(mem::replace(self, new));
+
+		Ok(())
 	}
 
 	pub fn is_place(&self) -> bool {
@@ -108,19 +116,27 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
-	let mut project_path = path.resolve()?;
+	let path = path.resolve()?;
 
-	if project_path.is_file() || project_path.get_file_name().ends_with(".project.json") {
-		return Ok(project_path);
+	if path.is_file() || path.get_file_name().ends_with(".project.json") {
+		return Ok(path);
 	}
 
-	let glob = project_path.clone().join("*.project.json");
+	let argon_project = path.join(".argon.project.json");
+	if argon_project.exists() {
+		return Ok(argon_project);
+	}
+
+	let default_project = path.join("default.project.json");
+	if default_project.exists() {
+		return Ok(default_project);
+	}
+
+	let glob = path.clone().join("*.project.json");
 
 	if let Some(path) = Glob::from_path(&glob)?.first() {
-		project_path = path;
+		Ok(path)
 	} else {
-		project_path = project_path.join(".argon.project.json");
+		Ok(path.join(".argon.project.json"))
 	}
-
-	Ok(project_path)
 }

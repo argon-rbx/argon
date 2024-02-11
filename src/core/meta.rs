@@ -247,7 +247,7 @@ impl Meta {
 			.collect();
 
 		Self {
-			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Meta::default().sync_rules),
+			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Self::default().sync_rules),
 			ignore_rules,
 			..Self::new()
 		}
@@ -327,9 +327,10 @@ impl Meta {
 	pub fn extend(&mut self, meta: Meta) {
 		self.extend_sync_rules(meta.sync_rules);
 		self.extend_ignore_rules(meta.ignore_rules);
+		self.extend_child_sources(meta.child_sources);
 
-		if let Some(project_data) = meta.project_data {
-			self.project_data = Some(project_data);
+		if meta.project_data.is_some() {
+			self.project_data = meta.project_data;
 		}
 	}
 
@@ -347,6 +348,10 @@ impl Meta {
 
 	pub fn was_processed(&self, path: &Path) -> bool {
 		self.processed_paths.contains(&path.to_owned())
+	}
+
+	pub fn get_sync_rule(&self, file_type: &FileType) -> Option<&SyncRule> {
+		self.sync_rules.iter().find(|rule| &rule.file_type == file_type)
 	}
 }
 
@@ -423,7 +428,7 @@ impl Default for Meta {
 			SyncRule::new(FileType::JsonModule)
 				.with_pattern("*.json")
 				.with_child_pattern(".src.json")
-				.with_exclude(&["*.data.json", "*.meta.json", "*.model.json"]),
+				.with_exclude(&["*.project.json", "*.data.json", "*.meta.json", "*.model.json"]),
 			SyncRule::new(FileType::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),

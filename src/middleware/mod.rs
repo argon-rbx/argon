@@ -64,7 +64,7 @@ impl Display for FileType {
 impl FileType {
 	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		let snapshot = match self {
-			FileType::Project => snapshot_project(path, meta, vfs),
+			FileType::Project => snapshot_project(path, vfs),
 			FileType::InstanceData => snapshot_data(path, meta, vfs),
 			//
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
@@ -125,7 +125,15 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		}
 	// Get a snapshot of a directory that might contain child source or data
 	} else if let Some(snapshot) = new_snapshot_file_child(path, meta, vfs)? {
+		// We don't need to watch whole parent directory of a project
+		if let Some(file_type) = &snapshot.file_type {
+			if *file_type == FileType::Project {
+				return Ok(Some(snapshot));
+			}
+		}
+
 		vfs.watch(path)?;
+
 		Ok(Some(snapshot))
 	// Get a snapshot of a directory
 	} else {
@@ -144,6 +152,7 @@ fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snaps
 
 		let snapshot = file_type
 			.middleware(&resolved_path, meta, vfs)?
+			.with_file_type(file_type.clone())
 			.with_name(&name)
 			.with_path(path)
 			.apply_project_data(meta, path);
@@ -184,6 +193,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
+						.with_file_type(file_type.clone())
 						.with_name(&name)
 						.with_path(path)
 						.with_data(data_snapshot)
@@ -201,6 +211,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
+						.with_file_type(file_type.clone())
 						.with_name(&name)
 						.with_path(path)
 						.with_sources(vec![resolved_path.clone()])

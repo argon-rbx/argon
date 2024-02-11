@@ -20,7 +20,7 @@ pub mod snapshot;
 pub mod tree;
 
 pub struct Core {
-	project: Arc<Project>,
+	project: Arc<Mutex<Project>>,
 	processor: Arc<Processor>,
 	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
@@ -34,21 +34,18 @@ impl Core {
 
 		let vfs = Vfs::new(watch);
 
-		if watch {
-			vfs.watch(&project.workspace_dir)?;
-		}
-
 		let meta = Meta::from_project(&project);
-		let snapshot = new_snapshot(&project.workspace_dir, &meta, &vfs)?;
+		let snapshot = new_snapshot(&project.path, &meta, &vfs)?;
 
 		let vfs = Arc::new(vfs);
 		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
 		let queue = Arc::new(Mutex::new(Queue::new()));
 
-		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone());
+		let project = Arc::new(Mutex::new(project));
+		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone(), project.clone());
 
 		Ok(Core {
-			project: Arc::new(project),
+			project,
 			processor: Arc::new(processor),
 			queue,
 			tree,
@@ -57,23 +54,23 @@ impl Core {
 	}
 
 	pub fn name(&self) -> String {
-		self.project.name.clone()
+		lock!(self.project).name.clone()
 	}
 
 	pub fn host(&self) -> Option<String> {
-		self.project.host.clone()
+		lock!(self.project).host.clone()
 	}
 
 	pub fn port(&self) -> Option<u16> {
-		self.project.port
+		lock!(self.project).port
 	}
 
 	pub fn game_id(&self) -> Option<u64> {
-		self.project.game_id
+		lock!(self.project).game_id
 	}
 
 	pub fn place_ids(&self) -> Option<Vec<u64>> {
-		self.project.place_ids.clone()
+		lock!(self.project).place_ids.clone()
 	}
 
 	pub fn queue(&self) -> MutexGuard<'_, Queue> {
@@ -91,7 +88,7 @@ impl Core {
 		// so we can wait for the Mutex lock to release
 		let tree = util::wait_for_mutex(&self.tree);
 
-		let root_refs = if self.project.is_place() {
+		let root_refs = if lock!(self.project).is_place() {
 			tree.place_root_refs().to_vec()
 		} else {
 			vec![tree.root_ref()]

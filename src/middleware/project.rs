@@ -1,10 +1,12 @@
 use anyhow::{bail, Result};
+use colored::Colorize;
 use log::error;
 use rbx_dom_weak::types::Tags;
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, path::Path};
 
 use super::new_snapshot;
 use crate::{
+	argon_warn,
 	core::{
 		meta::{Meta, ProjectData},
 		snapshot::Snapshot,
@@ -15,15 +17,18 @@ use crate::{
 };
 
 #[profiling::function]
-pub fn snapshot_project(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
-	let project = fs::read_to_string(path)?;
-	let project: Project = serde_json::from_str(&project)?;
+pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+	let project: Project = Project::load(path)?;
 
 	let super_path = path.get_parent();
 
-	let snapshot = walk(&project.name, super_path, meta, vfs, project.node)?
-		.with_meta(meta.to_owned())
-		.with_path(path);
+	let mut meta = Meta::from_project(&project);
+	let mut snapshot = walk(&project.name, super_path, &meta, vfs, project.node)?;
+
+	meta.set_child_sources(snapshot.meta.clone().unwrap().child_sources);
+	snapshot.set_meta(meta);
+
+	vfs.watch(path)?;
 
 	Ok(snapshot)
 }
@@ -85,6 +90,10 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 	if let Some(node_path) = node.path {
 		let path = path.join(node_path);
 
+		if path.is_file() {
+			vfs.watch(&path)?;
+		}
+
 		let meta = {
 			let mut project_data = ProjectData::new(name, &path);
 			let mut meta = meta.clone();
@@ -114,6 +123,11 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 			}
 
 			snapshot = path_snapshot
+		} else {
+			argon_warn!(
+				"Path specified in the project does not exist: {}. Please create this path and restart Argon to watch for file changes or remove it from the project to suppress this warning.",
+				path.to_string().bold()
+			);
 		}
 
 		if snapshot.path.is_none() {

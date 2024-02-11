@@ -21,6 +21,14 @@ pub enum VfsEvent {
 	Write(PathBuf),
 }
 
+impl VfsEvent {
+	pub fn path(&self) -> &Path {
+		match self {
+			VfsEvent::Create(path) | VfsEvent::Delete(path) | VfsEvent::Write(path) => path.as_ref(),
+		}
+	}
+}
+
 pub struct Vfs {
 	inner: Mutex<VfsBackend>,
 }

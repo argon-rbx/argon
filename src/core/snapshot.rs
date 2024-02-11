@@ -9,6 +9,7 @@ use std::{
 };
 
 use super::meta::Meta;
+use crate::middleware::FileType;
 
 #[derive(Clone)]
 pub struct Snapshot {
@@ -16,6 +17,7 @@ pub struct Snapshot {
 	pub id: Option<Ref>,
 	pub meta: Option<Meta>,
 	pub path: Option<PathBuf>,
+	pub file_type: Option<FileType>,
 
 	// Roblox related
 	pub name: String,
@@ -32,6 +34,7 @@ impl Snapshot {
 			id: None,
 			meta: None,
 			path: None,
+			file_type: None,
 			name: String::from(""),
 			class: String::from("Folder"),
 			properties: HashMap::new(),
@@ -54,7 +57,19 @@ impl Snapshot {
 		self
 	}
 
+	pub fn with_file_type(mut self, file_type: FileType) -> Self {
+		self.file_type = Some(file_type);
+		self
+	}
+
 	pub fn with_name(mut self, name: &str) -> Self {
+		// Projects should not have their name overwritten
+		if let Some(file_type) = &self.file_type {
+			if *file_type == FileType::Project {
+				return self;
+			}
+		}
+
 		self.name = name.to_owned();
 		self
 	}
@@ -106,6 +121,10 @@ impl Snapshot {
 
 	pub fn set_path(&mut self, path: &Path) {
 		self.path = Some(path.to_owned());
+	}
+
+	pub fn set_file_type(&mut self, file_type: FileType) {
+		self.file_type = Some(file_type);
 	}
 
 	pub fn set_name(&mut self, name: &str) {

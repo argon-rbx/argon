@@ -22,6 +22,8 @@ pub trait PathExt {
 	fn get_file_stem(&self) -> &str;
 	fn get_file_ext(&self) -> &str;
 	fn get_parent(&self) -> &Path;
+	fn len(&self) -> usize;
+	fn is_empty(&self) -> bool;
 }
 
 impl PathExt for Path {
@@ -62,6 +64,14 @@ impl PathExt for Path {
 
 	fn get_parent(&self) -> &Path {
 		self.parent().unwrap_or(self)
+	}
+
+	fn len(&self) -> usize {
+		self.components().count()
+	}
+
+	fn is_empty(&self) -> bool {
+		self.len() == 0
 	}
 }
 

@@ -6,6 +6,7 @@ use std::{
 };
 
 use super::{meta::Meta, snapshot::Snapshot};
+use crate::util::PathExt;
 
 #[derive(Debug)]
 pub struct Tree {
@@ -27,9 +28,20 @@ impl Tree {
 		};
 
 		let root_ref = tree.dom.root_ref();
+		let meta = snapshot.meta.unwrap();
 
-		tree.ids_to_meta.insert(root_ref, snapshot.meta.unwrap());
+		tree.ids_to_meta.insert(root_ref, meta.clone());
 		tree.path_to_ids.insert(snapshot.path.unwrap(), root_ref);
+
+		// If the root `Ref` has `$path` assigned we need
+		// to insert it as well.
+		for path in meta.child_sources {
+			let path = path.get_parent();
+
+			if !tree.path_to_ids.contains_key(path) {
+				tree.path_to_ids.insert(path.to_owned(), root_ref);
+			}
+		}
 
 		for child in snapshot.children {
 			tree.insert(child, root_ref);
@@ -45,14 +57,26 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		if let Some(meta) = snapshot.meta {
-			if !meta.is_empty() {
-				self.ids_to_meta.insert(referent, meta);
-			}
-		}
-
 		if let Some(path) = snapshot.path {
 			self.path_to_ids.insert(path, referent);
+		}
+
+		if let Some(meta) = snapshot.meta {
+			if !meta.is_empty() {
+				for path in &meta.child_sources {
+					let path = path.get_parent();
+
+					// We need to insert `$path` of the root `Ref` if there is one.
+					// Only child projects require this.
+					if !self.path_to_ids.contains_key(path)
+						|| !self.path_to_ids.get_vec(path).unwrap().contains(&referent)
+					{
+						self.path_to_ids.insert(path.to_owned(), referent);
+					}
+				}
+
+				self.ids_to_meta.insert(referent, meta);
+			}
 		}
 
 		for child in snapshot.children {
@@ -66,18 +90,29 @@ impl Tree {
 		self.dom.destroy(id);
 		self.ids_to_meta.remove(&id);
 
-		let mut removed = vec![];
+		let mut removed_paths = vec![];
 
-		for (path, ids) in self.path_to_ids.iter_all_mut() {
-			ids.retain(|&referent| referent != id);
+		self.path_to_ids.retain(|path, &referent| {
+			let matches = referent == id;
 
-			if ids.is_empty() {
-				removed.push(path.to_owned());
+			if matches {
+				removed_paths.push(path.to_owned());
 			}
-		}
 
-		for path in removed {
-			self.path_to_ids.remove(&path);
+			!matches
+		});
+
+		// Remove all descendant references
+		for removed_path in &removed_paths {
+			self.path_to_ids.retain(|path, referent| {
+				let matches = path.starts_with(removed_path) && path != removed_path;
+
+				if matches {
+					self.ids_to_meta.retain(|id, _| id != referent);
+				}
+
+				!matches
+			})
 		}
 	}
 
@@ -124,10 +159,26 @@ impl Tree {
 	}
 
 	pub fn get_path(&self, id: Ref) -> Option<&PathBuf> {
-		self.path_to_ids
-			.iter_all()
-			.find(|(_, ids)| ids.contains(&id))
-			.map(|(path, _)| path)
+		let mut paths = vec![];
+
+		for (path, ids) in &self.path_to_ids {
+			if ids.contains(&id) {
+				paths.push(path);
+			}
+		}
+
+		// Only scenario where there are multiple paths for a single `id`
+		// is when said `id` is the root `Ref` of the `WeakDom` and it's
+		// not a `DataModel` instance - has `$path` assigned.
+		if paths.is_empty() {
+			None
+		} else {
+			let path = paths
+				.iter()
+				.fold(paths[0], |acc, path| if path.len() < acc.len() { path } else { acc });
+
+			Some(path)
+		}
 	}
 
 	pub fn inner(&self) -> &WeakDom {

@@ -1,5 +1,5 @@
 use crossbeam_channel::{select, Receiver, Sender};
-use log::{error, trace};
+use log::{debug, error, trace};
 use rbx_dom_weak::types::Ref;
 use std::{
 	collections::VecDeque,
@@ -15,8 +15,9 @@ use super::{
 	tree::Tree,
 };
 use crate::{
-	lock, messages,
+	argon_error, lock, messages,
 	middleware::new_snapshot,
+	project::Project,
 	vfs::{Vfs, VfsEvent},
 	BLACKLISTED_PATHS,
 };
@@ -26,34 +27,33 @@ pub struct Processor {
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>) -> Self {
+	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>, project: Arc<Mutex<Project>>) -> Self {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		let handler = Arc::new(Handler {
-			queue: queue.clone(),
-			tree: tree.clone(),
+			queue,
+			tree,
 			vfs: vfs.clone(),
 			callback: sender,
+			project,
 		});
 
-		{
-			let handler = handler.clone();
+		let handler = handler.clone();
 
-			Builder::new()
-				.name("processor".to_owned())
-				.spawn(move || {
-					let vfs_receiver = vfs.receiver();
+		Builder::new()
+			.name("processor".to_owned())
+			.spawn(move || {
+				let vfs_receiver = vfs.receiver();
 
-					loop {
-						select! {
-							recv(vfs_receiver) -> event => {
-								handler.on_vfs_event(event.unwrap());
-							}
+				loop {
+					select! {
+						recv(vfs_receiver) -> event => {
+							handler.on_vfs_event(event.unwrap());
 						}
 					}
-				})
-				.unwrap();
-		}
+				}
+			})
+			.unwrap();
 
 		Self { callback: receiver }
 	}
@@ -68,6 +68,7 @@ struct Handler {
 	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Vfs>,
 	callback: Sender<bool>,
+	project: Arc<Mutex<Project>>,
 }
 
 impl Handler {
@@ -75,36 +76,46 @@ impl Handler {
 		let mut tree = lock!(self.tree);
 		let mut queue = lock!(self.queue);
 
-		let changes = match event {
-			VfsEvent::Create(path) | VfsEvent::Write(path) | VfsEvent::Delete(path) => {
-				if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted)) {
-					trace!("Processing of {:?} aborted: blacklisted", path);
+		let path = event.path();
+
+		let changes = {
+			if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted)) {
+				trace!("Processing of {:?} aborted: blacklisted", path);
+				return;
+			}
+
+			if lock!(self.project).path == path {
+				if let VfsEvent::Write(_) = event {
+					debug!("Project file was modified. Reloading project..");
+					lock!(self.project).reload().ok();
+				} else if let VfsEvent::Delete(_) = event {
+					argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
 					return;
 				}
-
-				let ids = {
-					let mut current_path = path.as_path();
-
-					loop {
-						if let Some(ids) = tree.get_ids(current_path) {
-							break ids.to_owned();
-						}
-
-						match current_path.parent() {
-							Some(parent) => current_path = parent,
-							None => break vec![],
-						}
-					}
-				};
-
-				let mut changes = Changes::new();
-
-				for id in ids {
-					changes.extend(process_changes(id, &mut tree, &self.vfs));
-				}
-
-				changes
 			}
+
+			let ids = {
+				let mut current_path = path;
+
+				loop {
+					if let Some(ids) = tree.get_ids(current_path) {
+						break ids.to_owned();
+					}
+
+					match current_path.parent() {
+						Some(parent) => current_path = parent,
+						None => break vec![],
+					}
+				}
+			};
+
+			let mut changes = Changes::new();
+
+			for id in ids {
+				changes.extend(process_changes(id, &mut tree, &self.vfs));
+			}
+
+			changes
 		};
 
 		if !changes.is_empty() {
@@ -155,7 +166,7 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	let snapshot = match new_snapshot(path, &meta, vfs) {
 		Ok(snapshot) => snapshot,
 		Err(err) => {
-			error!("Failed to create snapshot: {}, path: {:?}", err, path);
+			error!("Failed to process changes: {}, path", err);
 			return changes;
 		}
 	};
@@ -222,13 +233,19 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, chnages: &mut Changes,
 	'outer: for child_id in instance.children().to_owned() {
 		// Assign instances with known path to snapshot children
 		if let Some(path) = tree.get_path(child_id) {
-			for child in snapshot.children.iter_mut() {
-				if child.path == Some(path.to_owned()) {
-					child.set_id(child_id);
+			if snapshot.children.is_empty() {
+				tree.remove(child_id);
+				chnages.remove(child_id);
+			} else {
+				for child in snapshot.children.iter_mut() {
+					if child.path == Some(path.to_owned()) {
+						child.set_id(child_id);
 
-					continue 'outer;
+						continue 'outer;
+					}
 				}
 			}
+
 		// Hydrate instances without path by their name and class
 		} else {
 			let instance = tree.get_instance(child_id).unwrap();
