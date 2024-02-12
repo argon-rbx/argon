@@ -120,15 +120,7 @@ impl Core {
 				return None;
 			}
 
-			let file_paths = {
-				if let Some(meta) = tree.get_meta(id) {
-					meta.child_sources.clone()
-				} else if let Some(path) = tree.get_path(id) {
-					vec![path.clone()]
-				} else {
-					vec![]
-				}
-			};
+			let file_paths = tree.get_paths(id).into_iter().cloned().collect();
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),

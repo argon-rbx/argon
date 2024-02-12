@@ -25,7 +25,8 @@ pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let mut meta = Meta::from_project(&project);
 	let mut snapshot = walk(&project.name, super_path, &meta, vfs, project.node)?;
 
-	meta.set_child_sources(snapshot.meta.clone().unwrap().child_sources);
+	// We don't have to keep project data in project snapshot
+	meta.project_data = None;
 	snapshot.set_meta(meta);
 
 	vfs.watch(path)?;
@@ -95,7 +96,8 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		}
 
 		let meta = {
-			let mut project_data = ProjectData::new(name, &path);
+			let source = meta.project_data.clone().unwrap().source;
+			let mut project_data = ProjectData::new(name, &path, &source);
 			let mut meta = meta.clone();
 
 			if class != "Folder" {
@@ -125,13 +127,16 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 			snapshot = path_snapshot
 		} else {
 			argon_warn!(
-				"Path specified in the project does not exist: {}. Please create this path and restart Argon to watch for file changes or remove it from the project to suppress this warning.",
+				"Path specified in the project does not exist: {}. Please create this path and restart Argon \
+				to watch for file changes in this path or remove it from the project to suppress this warning.",
 				path.to_string().bold()
 			);
 		}
 
-		if snapshot.path.is_none() {
-			snapshot.set_path(&path);
+		// If path does not exist, we still want
+		// to keep it in the snapshot
+		if snapshot.paths.is_empty() {
+			snapshot.add_path(&path);
 		}
 	}
 

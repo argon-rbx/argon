@@ -127,5 +127,5 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 		}
 	}
 
-	Ok(Snapshot::new().with_properties(properties))
+	Ok(Snapshot::new().with_class(&class).with_properties(properties))
 }

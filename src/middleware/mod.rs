@@ -111,18 +111,14 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 	trace!("Snapshot of {} created", path.display());
 
 	if vfs.is_file(path) {
-		// Get a snapshot of a regular file
-		if let Some(snapshot) = new_snapshot_file(path, meta, vfs)? {
-			Ok(Some(snapshot))
-		// If file does not match any rule it might be child source or data so we need
-		// to get a snapshot of the parent directory
-		} else if let Some(snapshot) = new_snapshot_file_child(path.get_parent(), meta, vfs)? {
-			Ok(Some(snapshot))
-		// If file does not match any rule and its parent does not have child source or data
-		// we are 100% sure that this file shouldn't be processed by Argon
+		// Get a snapshot of a file that is child source or data
+		if meta.sync_rules.iter().any(|rule| rule.matches_child(path)) {
+			new_snapshot_file_child(path.get_parent(), meta, vfs)
 		} else {
-			Ok(None)
+			// Get a snapshot of a regular file
+			new_snapshot_file(path, meta, vfs)
 		}
+
 	// Get a snapshot of a directory that might contain child source or data
 	} else if let Some(snapshot) = new_snapshot_file_child(path, meta, vfs)? {
 		// We don't need to watch whole parent directory of a project
@@ -173,31 +169,30 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 	if let Some(resolved_rules) = resolve_child_rules(path, meta) {
 		let (mut snapshot, file_type, resolved_path) = match (resolved_rules.source_rule, resolved_rules.data_rule) {
 			(Some(source_rule), Some(data_rule)) => {
-				let mut child_sources = vec![];
+				let mut paths = vec![path.to_owned()];
 
 				let data_snapshot = {
 					let file_type = data_rule.file_type;
-					let path = data_rule.path;
+					let resolved_path = data_rule.path;
 
-					child_sources.push(path.clone());
+					paths.push(resolved_path.clone());
 
-					file_type.middleware(&path, meta, vfs)?
+					file_type.middleware(&resolved_path, meta, vfs)?
 				};
 
 				let file_type = source_rule.file_type;
 				let resolved_path = source_rule.path;
 				let name = source_rule.name;
 
-				child_sources.push(resolved_path.clone());
+				paths.push(resolved_path.clone());
 
 				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
 						.with_file_type(file_type.clone())
 						.with_name(&name)
-						.with_path(path)
+						.with_paths(paths)
 						.with_data(data_snapshot)
-						.with_sources(child_sources)
 						.apply_project_data(meta, path),
 					file_type,
 					resolved_path,
@@ -208,13 +203,14 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 				let resolved_path = rule.path;
 				let name = rule.name;
 
+				let paths = vec![path.to_owned(), resolved_path.clone()];
+
 				(
 					file_type
 						.middleware(&resolved_path, meta, vfs)?
 						.with_file_type(file_type.clone())
 						.with_name(&name)
-						.with_path(path)
-						.with_sources(vec![resolved_path.clone()])
+						.with_paths(paths)
 						.apply_project_data(meta, path),
 					file_type,
 					resolved_path,

@@ -60,12 +60,12 @@ pub fn hook() {
 			report.push_str(&backtrace);
 			report.push_str("```");
 		} else {
-			report.push_str("Backtrace disabled, add `RUST_BACKTRACE=1` variable to enable");
+			report.push_str("Backtrace disabled, run Argon with `--backtrace` flag to enable");
 
 			argon_error!(
-				"{}: {}",
+				"{}: Run Argon with {} flag to show full backtrace\n",
 				"Backtrace".bold(),
-				"Add `RUST_BACKTRACE=1` environment variable to show full backtrace\n"
+				"--backtrace".bold()
 			);
 		}
 

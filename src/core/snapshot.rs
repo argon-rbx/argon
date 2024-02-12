@@ -4,7 +4,7 @@ use rbx_dom_weak::{
 };
 use std::{
 	collections::HashMap,
-	fmt::Debug,
+	fmt::{self, Debug, Formatter},
 	path::{Path, PathBuf},
 };
 
@@ -16,7 +16,7 @@ pub struct Snapshot {
 	// For middleware & change processing
 	pub id: Option<Ref>,
 	pub meta: Option<Meta>,
-	pub path: Option<PathBuf>,
+	pub paths: Vec<PathBuf>,
 	pub file_type: Option<FileType>,
 
 	// Roblox related
@@ -33,7 +33,7 @@ impl Snapshot {
 		Self {
 			id: None,
 			meta: None,
-			path: None,
+			paths: Vec::new(),
 			file_type: None,
 			name: String::from(""),
 			class: String::from("Folder"),
@@ -53,7 +53,18 @@ impl Snapshot {
 	}
 
 	pub fn with_path(mut self, path: &Path) -> Self {
-		self.path = Some(path.to_owned());
+		self.paths.push(path.to_owned());
+		self
+	}
+
+	pub fn with_paths(mut self, paths: Vec<PathBuf>) -> Self {
+		// Projects should have their original paths kept
+		if self.is_project() {
+			self.extend_paths(paths);
+			return self;
+		}
+
+		self.paths = paths;
 		self
 	}
 
@@ -64,10 +75,8 @@ impl Snapshot {
 
 	pub fn with_name(mut self, name: &str) -> Self {
 		// Projects should not have their name overwritten
-		if let Some(file_type) = &self.file_type {
-			if *file_type == FileType::Project {
-				return self;
-			}
+		if self.is_project() {
+			return self;
 		}
 
 		self.name = name.to_owned();
@@ -99,16 +108,6 @@ impl Snapshot {
 		self
 	}
 
-	pub fn with_sources(mut self, sources: Vec<PathBuf>) -> Self {
-		if let Some(meta) = &mut self.meta {
-			meta.extend_child_sources(sources);
-		} else {
-			self.meta = Some(Meta::new().with_child_sources(sources));
-		}
-
-		self
-	}
-
 	// Overwriting snapshot fields
 
 	pub fn set_id(&mut self, id: Ref) {
@@ -119,8 +118,8 @@ impl Snapshot {
 		self.meta = Some(meta);
 	}
 
-	pub fn set_path(&mut self, path: &Path) {
-		self.path = Some(path.to_owned());
+	pub fn set_paths(&mut self, paths: Vec<PathBuf>) {
+		self.paths = paths;
 	}
 
 	pub fn set_file_type(&mut self, file_type: FileType) {
@@ -145,6 +144,10 @@ impl Snapshot {
 
 	// Adding to snapshot fields
 
+	pub fn add_path(&mut self, path: &Path) {
+		self.paths.push(path.to_owned());
+	}
+
 	pub fn add_property(&mut self, name: &str, value: Variant) {
 		self.properties.insert(name.to_owned(), value);
 	}
@@ -154,6 +157,10 @@ impl Snapshot {
 	}
 
 	// Joining snapshot fields
+
+	pub fn extend_paths(&mut self, paths: Vec<PathBuf>) {
+		self.paths.extend(paths);
+	}
 
 	pub fn extend_properties(&mut self, properties: HashMap<String, Variant>) {
 		self.properties.extend(properties);
@@ -176,6 +183,13 @@ impl Snapshot {
 	pub fn apply_project_data(mut self, meta: &Meta, path: &Path) -> Self {
 		if let Some(project_data) = &meta.project_data {
 			if path != project_data.affects {
+				return self;
+			// Check if project containing this data still exists
+			} else if !project_data.source.exists() {
+				let mut meta = meta.clone();
+				meta.project_data = None;
+
+				self.set_meta(meta);
 				return self;
 			}
 
@@ -217,25 +231,35 @@ impl Snapshot {
 
 		walk(id, &mut raw_dom)
 	}
+
+	fn is_project(&self) -> bool {
+		if let Some(file_type) = &self.file_type {
+			if *file_type == FileType::Project {
+				return true;
+			}
+		}
+
+		false
+	}
 }
 
 impl Debug for Snapshot {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		let mut debug = f.debug_struct("Snapshot");
 
 		debug.field("name", &self.name);
 		debug.field("class", &self.class);
 
-		if let Some(path) = &self.path {
-			debug.field("path", &path);
+		if !self.paths.is_empty() {
+			debug.field("paths", &self.paths);
 		}
 
-		if let Some(id) = self.id {
-			debug.field("id", &id);
+		if let Some(id) = &self.id {
+			debug.field("id", id);
 		}
 
 		if let Some(meta) = &self.meta {
-			debug.field("meta", &meta);
+			debug.field("meta", meta);
 		}
 
 		if !self.properties.is_empty() {

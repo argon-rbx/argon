@@ -2,6 +2,7 @@ use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
+	fmt::{self, Debug, Formatter},
 	path::{Path, PathBuf},
 };
 
@@ -21,7 +22,7 @@ pub struct SyncRule {
 
 	pub pattern: Option<Glob>,
 	pub child_pattern: Option<Glob>,
-	pub exclude: Vec<Glob>,
+	pub exclude: Option<Glob>,
 
 	pub suffix: Option<String>,
 }
@@ -34,7 +35,7 @@ impl SyncRule {
 			file_type,
 			pattern: None,
 			child_pattern: None,
-			exclude: vec![],
+			exclude: None,
 			suffix: None,
 		}
 	}
@@ -49,8 +50,8 @@ impl SyncRule {
 		self
 	}
 
-	pub fn with_exclude(mut self, exclude: &[&str]) -> Self {
-		self.exclude = exclude.iter().map(|glob| Glob::new(glob).unwrap()).collect();
+	pub fn with_exclude(mut self, exclude: &str) -> Self {
+		self.exclude = Some(Glob::new(exclude).unwrap());
 		self
 	}
 
@@ -63,6 +64,8 @@ impl SyncRule {
 
 	pub fn matches(&self, path: &Path) -> bool {
 		if let Some(pattern) = &self.pattern {
+			let path = path.strip_prefix(path.get_parent()).unwrap();
+
 			if pattern.matches_path(path) {
 				return !self.is_excluded(path);
 			}
@@ -73,10 +76,10 @@ impl SyncRule {
 
 	pub fn matches_child(&self, path: &Path) -> bool {
 		if let Some(child_pattern) = &self.child_pattern {
-			let path = path.join(child_pattern.as_str());
+			let path = path.strip_prefix(path.get_parent()).unwrap();
 
-			if child_pattern.matches_path(&path) {
-				return !self.is_excluded(&path);
+			if child_pattern.matches_path(path) {
+				return !self.is_excluded(path);
 			}
 		}
 
@@ -96,23 +99,10 @@ impl SyncRule {
 		}
 	}
 
+	/// `path` should be a file
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
-		fn matches_child_pattern(pattern: &Option<Glob>, path: &Path) -> bool {
-			if let Some(child_pattern) = &pattern {
-				let child_path = path.get_parent().join(child_pattern.as_str());
-				let child_pattern = Glob::from_path(&child_path).unwrap();
-
-				return child_pattern.matches_path(path);
-			}
-
-			false
-		}
-
 		if let Some(pattern) = &self.pattern {
-			if pattern.matches_path(path)
-				&& !matches_child_pattern(&self.child_pattern, path)
-				&& !self.is_excluded(path)
-			{
+			if pattern.matches_path(path) && !self.is_excluded(path) {
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
 					path: path.to_owned(),
@@ -124,6 +114,7 @@ impl SyncRule {
 		None
 	}
 
+	/// `path` should be a directory
 	pub fn resolve_child(&self, path: &Path) -> Option<ResolvedSyncRule> {
 		if let Some(child_pattern) = &self.child_pattern {
 			let path = path.join(child_pattern.as_str());
@@ -146,13 +137,6 @@ impl SyncRule {
 
 		None
 	}
-
-	pub fn full_name(&self, stem: &str) -> Option<String> {
-		let pattern = self.pattern.as_ref()?.as_str();
-		let name = pattern.replacen('*', stem, 1);
-
-		Some(name)
-	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -173,16 +157,19 @@ impl IgnoreRule {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProjectData {
 	pub affects: PathBuf,
+	pub source: PathBuf,
 	pub name: String,
 	pub class: Option<String>,
 	pub properties: Option<HashMap<String, Variant>>,
 }
 
 impl ProjectData {
-	pub fn new(name: &str, applies_to: &Path) -> Self {
+	pub fn new(name: &str, affects: &Path, source: &Path) -> Self {
 		Self {
+			affects: affects.to_owned(),
+			source: source.to_owned(),
+
 			name: name.to_owned(),
-			affects: applies_to.to_owned(),
 			class: None,
 			properties: None,
 		}
@@ -197,18 +184,16 @@ impl ProjectData {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Meta {
 	/// Rules that define how files are synced
 	pub sync_rules: Vec<SyncRule>,
 	/// Rules that define which files are ignored
 	pub ignore_rules: Vec<IgnoreRule>,
-	/// Sources of specific folder snapshot e.g. `.src.lua` and `.data.json`
-	pub child_sources: Vec<PathBuf>,
 	/// Project data that is included in the project node in `*.project.json`
 	pub project_data: Option<ProjectData>,
-	/// List of paths that already have been processed by middleware,
-	/// used for computing `.src.*` files in `new_snapshot_file_child` fn
+	/// List of paths that already have been processed by the middleware,
+	/// used for computing `.src.*` files in `new_snapshot_file_child`
 	pub processed_paths: Vec<PathBuf>,
 }
 
@@ -216,7 +201,6 @@ impl PartialEq for Meta {
 	fn eq(&self, other: &Self) -> bool {
 		self.sync_rules == other.sync_rules
 			&& self.ignore_rules == other.ignore_rules
-			&& self.child_sources == other.child_sources
 			&& self.project_data == other.project_data
 	}
 }
@@ -228,7 +212,6 @@ impl Meta {
 		Self {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
-			child_sources: Vec::new(),
 			project_data: None,
 			processed_paths: Vec::new(),
 		}
@@ -246,9 +229,13 @@ impl Meta {
 			})
 			.collect();
 
+		// Initial project data required for node project data
+		let project_data = ProjectData::new(&project.name, &project.workspace_dir, &project.path);
+
 		Self {
 			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Self::default().sync_rules),
 			ignore_rules,
+			project_data: Some(project_data),
 			..Self::new()
 		}
 	}
@@ -260,11 +247,6 @@ impl Meta {
 
 	pub fn with_ignore_rules(mut self, ignore_rules: Vec<IgnoreRule>) -> Self {
 		self.ignore_rules = ignore_rules;
-		self
-	}
-
-	pub fn with_child_sources(mut self, child_sources: Vec<PathBuf>) -> Self {
-		self.child_sources = child_sources;
 		self
 	}
 
@@ -288,10 +270,6 @@ impl Meta {
 		self.ignore_rules = ignore_rules;
 	}
 
-	pub fn set_child_sources(&mut self, child_sources: Vec<PathBuf>) {
-		self.child_sources = child_sources;
-	}
-
 	pub fn set_project_data(&mut self, project_data: ProjectData) {
 		self.project_data = Some(project_data);
 	}
@@ -306,10 +284,6 @@ impl Meta {
 		self.ignore_rules.push(ignore_rule);
 	}
 
-	pub fn add_child_source(&mut self, child_source: PathBuf) {
-		self.child_sources.push(child_source);
-	}
-
 	// Joining meta fields
 
 	pub fn extend_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
@@ -320,14 +294,9 @@ impl Meta {
 		self.ignore_rules.extend(ignore_rules);
 	}
 
-	pub fn extend_child_sources(&mut self, child_sources: Vec<PathBuf>) {
-		self.child_sources.extend(child_sources);
-	}
-
 	pub fn extend(&mut self, meta: Meta) {
 		self.extend_sync_rules(meta.sync_rules);
 		self.extend_ignore_rules(meta.ignore_rules);
-		self.extend_child_sources(meta.child_sources);
 
 		if meta.project_data.is_some() {
 			self.project_data = meta.project_data;
@@ -340,10 +309,7 @@ impl Meta {
 		// We intentionally omit `processed_paths` here
 		// as it's a temporary field used only in middleware
 		// so there is no need to keep it in the tree
-		self.sync_rules.is_empty()
-			&& self.ignore_rules.is_empty()
-			&& self.child_sources.is_empty()
-			&& self.project_data.is_none()
+		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
 	}
 
 	pub fn was_processed(&self, path: &Path) -> bool {
@@ -352,6 +318,30 @@ impl Meta {
 
 	pub fn get_sync_rule(&self, file_type: &FileType) -> Option<&SyncRule> {
 		self.sync_rules.iter().find(|rule| &rule.file_type == file_type)
+	}
+}
+
+impl Debug for Meta {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		let mut debug = f.debug_struct("Meta");
+
+		if !self.sync_rules.is_empty() {
+			debug.field("sync_rules", &self.sync_rules);
+		}
+
+		if !self.ignore_rules.is_empty() {
+			debug.field("ignore_rules", &self.ignore_rules);
+		}
+
+		if let Some(project_data) = &self.project_data {
+			debug.field("project_data", project_data);
+		}
+
+		if !self.processed_paths.is_empty() {
+			debug.field("processed_paths", &self.processed_paths);
+		}
+
+		debug.finish()
 	}
 }
 
@@ -367,16 +357,16 @@ impl Default for Meta {
 				.with_pattern("*.server.lua")
 				.with_child_pattern(".src.server.lua")
 				.with_suffix(".server.lua")
-				.with_exclude(&["init.server.lua"]),
+				.with_exclude("init.server.lua"),
 			SyncRule::new(FileType::ClientScript)
 				.with_pattern("*.client.lua")
 				.with_child_pattern(".src.client.lua")
 				.with_suffix(".client.lua")
-				.with_exclude(&["init.client.lua"]),
+				.with_exclude("init.client.lua"),
 			SyncRule::new(FileType::ModuleScript)
 				.with_pattern("*.lua")
 				.with_child_pattern(".src.lua")
-				.with_exclude(&["init.lua"]),
+				.with_exclude("init.lua"),
 			// Rojo scripts
 			SyncRule::new(FileType::ServerScript)
 				.with_pattern("*.server.lua")
@@ -395,16 +385,16 @@ impl Default for Meta {
 				.with_pattern("*.server.luau")
 				.with_child_pattern(".src.server.luau")
 				.with_suffix(".server.luau")
-				.with_exclude(&["init.server.luau"]),
+				.with_exclude("init.server.luau"),
 			SyncRule::new(FileType::ClientScript)
 				.with_pattern("*.client.luau")
 				.with_child_pattern(".src.client.luau")
 				.with_suffix(".client.luau")
-				.with_exclude(&["init.client.luau"]),
+				.with_exclude("init.client.luau"),
 			SyncRule::new(FileType::ModuleScript)
 				.with_pattern("*.luau")
 				.with_child_pattern(".src.luau")
-				.with_exclude(&["init.luau"]),
+				.with_exclude("init.luau"),
 			// Luau variants for Rojo
 			SyncRule::new(FileType::ServerScript)
 				.with_pattern("*.server.luau")
@@ -428,7 +418,7 @@ impl Default for Meta {
 			SyncRule::new(FileType::JsonModule)
 				.with_pattern("*.json")
 				.with_child_pattern(".src.json")
-				.with_exclude(&["*.project.json", "*.data.json", "*.meta.json", "*.model.json"]),
+				.with_exclude("*.model.json"),
 			SyncRule::new(FileType::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),

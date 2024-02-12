@@ -1,3 +1,4 @@
+use log::error;
 use rbx_dom_weak::types::{Ref, Variant};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -43,8 +44,23 @@ impl Changes {
 		}
 	}
 
-	pub fn add(&mut self, snapshot: Snapshot) {
+	pub fn add(&mut self, mut snapshot: Snapshot) {
+		if snapshot.id.is_none() {
+			error!("Attempted to add a snapshot without an ID to changes: {:?}", snapshot);
+			return;
+		}
+
+		snapshot.meta = None;
+		snapshot.paths.clear();
+		snapshot.file_type = None;
+
+		let children: Vec<Snapshot> = snapshot.children.drain(..).collect();
+
 		self.additions.push(snapshot);
+
+		for child in children {
+			self.add(child);
+		}
 	}
 
 	pub fn modify(&mut self, modified_snapshot: ModifiedSnapshot) {
