@@ -9,11 +9,13 @@ use std::sync::Arc;
 use crate::{core::Core, messages::Message};
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Request {
 	client_id: u64,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct Response {
 	queue: Vec<Message>,
 }

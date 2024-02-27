@@ -9,6 +9,7 @@ use std::sync::Arc;
 use crate::core::Core;
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Request {
 	client_id: u64,
 }

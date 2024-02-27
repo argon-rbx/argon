@@ -3,6 +3,7 @@ use crossbeam_channel::Receiver;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
+	cmp,
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
@@ -10,7 +11,13 @@ use std::{
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
-use crate::{lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
+use crate::{
+	lock,
+	middleware::new_snapshot,
+	project::Project,
+	util::{self, PathExt},
+	vfs::Vfs,
+};
 
 pub mod change;
 pub mod meta;
@@ -120,7 +127,14 @@ impl Core {
 				return None;
 			}
 
-			let file_paths = tree.get_paths(id).into_iter().cloned().collect();
+			let mut file_paths: Vec<_> = tree
+				.get_paths(id)
+				.into_iter()
+				.filter(|path| path.is_file())
+				.cloned()
+				.collect();
+
+			file_paths.sort_by_key(|path| cmp::Reverse(path.len()));
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),

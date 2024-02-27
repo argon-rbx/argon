@@ -9,6 +9,7 @@ use std::sync::Arc;
 use crate::{core::Core, messages};
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct Request {
 	code: String,
 }

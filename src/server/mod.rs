@@ -6,6 +6,7 @@ use std::{io::Result, net::TcpStream, sync::Arc};
 
 use crate::core::Core;
 
+mod details;
 mod exec;
 mod home;
 mod read;
@@ -40,6 +41,7 @@ impl Server {
 		HttpServer::new(move || {
 			App::new()
 				.app_data(Data::new(core.clone()))
+				.service(details::main)
 				.service(subscribe::main)
 				.service(unsubscribe::main)
 				.service(home::main)

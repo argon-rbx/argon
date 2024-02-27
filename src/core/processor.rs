@@ -120,7 +120,13 @@ impl Handler {
 		};
 
 		if !changes.is_empty() {
-			let path_changed = !changes.additions.is_empty() || !changes.removals.is_empty();
+			// This way we can detect if any path changed which can be used later to decide
+			// whether to regenerate the sourcemap or not. However, some tools such as Luau LSP
+			// rely on those "useless" changes to e.g. update completition of modules
+			//
+			// let path_changed = !changes.additions.is_empty() || !changes.removals.is_empty();
+
+			let path_changed = true;
 
 			self.callback.send(path_changed).unwrap();
 
