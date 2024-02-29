@@ -7,7 +7,7 @@ use crate::core::change::ModifiedSnapshot;
 
 #[derive(Debug, Clone, Serialize, FromOne)]
 pub enum Message {
-	SyncMeta(SyncMeta),
+	SyncDetails(SyncDetails),
 	Execute(Execute),
 	Create(Create),
 	Remove(Remove),
@@ -15,7 +15,7 @@ pub enum Message {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SyncMeta {
+pub struct SyncDetails {
 	pub name: String,
 	pub game_id: Option<u64>,
 	pub place_ids: Option<Vec<u64>>,

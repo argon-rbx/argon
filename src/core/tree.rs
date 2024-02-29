@@ -189,6 +189,10 @@ impl Tree {
 		&self.path_to_ids
 	}
 
+	pub fn root(&self) -> &Instance {
+		self.dom.root()
+	}
+
 	pub fn root_ref(&self) -> Ref {
 		self.dom.root_ref()
 	}

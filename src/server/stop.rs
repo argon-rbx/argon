@@ -12,5 +12,5 @@ async fn stop() {
 #[post("/stop")]
 async fn main() -> impl Responder {
 	tokio::spawn(stop());
-	HttpResponse::Ok().body("Argon stopped")
+	HttpResponse::Ok().body("Argon stopped successfully")
 }

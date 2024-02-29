@@ -12,7 +12,7 @@ use std::{
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{
-	lock,
+	lock, messages,
 	middleware::new_snapshot,
 	project::Project,
 	util::{self, PathExt},
@@ -86,6 +86,31 @@ impl Core {
 
 	pub fn tree_changed(&self) -> Receiver<bool> {
 		self.processor.callback()
+	}
+
+	pub fn read_all(&self, id: u64) {
+		let tree = lock!(self.tree);
+		let mut queue = lock!(self.queue);
+
+		fn walk(children: &[Ref], tree: &Tree, queue: &mut MutexGuard<'_, Queue>, id: &u64) {
+			for child in children {
+				let child = tree.get_instance(*child).unwrap();
+
+				queue.push(
+					messages::Create {
+						parent: child.referent(),
+						name: child.name.clone(),
+						class: child.class.clone(),
+						properties: child.properties.clone(),
+					},
+					Some(id),
+				);
+
+				walk(child.children(), tree, queue, id);
+			}
+		}
+
+		walk(tree.root().children(), &tree, &mut queue, &id);
 	}
 
 	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {

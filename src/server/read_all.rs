@@ -14,7 +14,7 @@ struct Request {
 	client_id: u64,
 }
 
-#[get("/read_all")]
+#[get("/readAll")]
 async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	let id = request.client_id;
 
@@ -22,7 +22,7 @@ async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> impl Responder 
 		return HttpResponse::BadRequest().body("Not subscribed");
 	}
 
-	// core.sync_dom(id);
+	core.read_all(id);
 
-	HttpResponse::Ok().body("Started syncing DOM")
+	HttpResponse::Ok().body("Started reading local DOM successfully")
 }
