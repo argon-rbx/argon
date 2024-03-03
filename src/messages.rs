@@ -1,9 +1,7 @@
 use derive_from_one::FromOne;
-use rbx_dom_weak::types::{Ref, Variant};
 use serde::Serialize;
-use std::collections::HashMap;
 
-use crate::core::change::ModifiedSnapshot;
+use crate::core::changes::{AddedSnapshot, ModifiedSnapshot, RemovedSnapshot};
 
 #[derive(Debug, Clone, Serialize, FromOne)]
 pub enum Message {
@@ -27,17 +25,10 @@ pub struct Execute {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Create {
-	pub parent: Ref,
-	pub name: String,
-	pub class: String,
-	pub properties: HashMap<String, Variant>,
-}
+pub struct Create(pub AddedSnapshot);
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Remove {
-	pub id: Ref,
-}
+pub struct Remove(pub RemovedSnapshot);
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Update(pub ModifiedSnapshot);

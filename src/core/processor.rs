@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{
-	change::{Changes, ModifiedSnapshot},
+	changes::{Changes, ModifiedSnapshot},
 	meta::Meta,
 	queue::Queue,
 	snapshot::Snapshot,
@@ -131,23 +131,15 @@ impl Handler {
 			self.callback.send(path_changed).unwrap();
 
 			for snapshot in changes.additions {
-				queue.push(
-					messages::Create {
-						parent: snapshot.id.unwrap(),
-						name: snapshot.name,
-						class: snapshot.class,
-						properties: snapshot.properties,
-					},
-					None,
-				)
+				queue.push(messages::Create(snapshot), None);
 			}
 
 			for modified_snapshot in changes.modifications {
 				queue.push(messages::Update(modified_snapshot), None);
 			}
 
-			for id in changes.removals {
-				queue.push(messages::Remove { id }, None);
+			for removed_snapshot in changes.removals {
+				queue.push(messages::Remove(removed_snapshot), None);
 			}
 		}
 	}
@@ -166,10 +158,7 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		if paths.is_empty() {
 			error!("Failed to get path for instance: {:?}", id);
 			return changes;
-		// Get path of a regular file
-		} else if paths.len() == 1 {
-			paths[0]
-		// Get super path of a child file
+		// Get path of a regular file or super path of a child file
 		} else {
 			paths
 				.iter()
@@ -333,7 +322,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 
 			insert_children(&mut child, id, tree);
 
-			changes.add(child);
+			changes.add(child, id);
 		}
 	}
 }

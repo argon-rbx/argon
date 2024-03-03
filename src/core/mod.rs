@@ -4,6 +4,7 @@ use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
 	cmp,
+	collections::HashMap,
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
@@ -12,6 +13,7 @@ use std::{
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{
+	core::changes::AddedSnapshot,
 	lock, messages,
 	middleware::new_snapshot,
 	project::Project,
@@ -19,7 +21,7 @@ use crate::{
 	vfs::Vfs,
 };
 
-pub mod change;
+pub mod changes;
 pub mod meta;
 pub mod processor;
 pub mod queue;
@@ -92,17 +94,29 @@ impl Core {
 		let tree = lock!(self.tree);
 		let mut queue = lock!(self.queue);
 
+		queue.push(
+			messages::Create(AddedSnapshot {
+				id: tree.root_ref(),
+				parent: Ref::none(),
+				name: String::from("ROOT"),
+				class: String::from("DataModel"),
+				properties: HashMap::new(),
+			}),
+			Some(&id),
+		);
+
 		fn walk(children: &[Ref], tree: &Tree, queue: &mut MutexGuard<'_, Queue>, id: &u64) {
 			for child in children {
 				let child = tree.get_instance(*child).unwrap();
 
 				queue.push(
-					messages::Create {
-						parent: child.referent(),
+					messages::Create(AddedSnapshot {
+						id: child.referent(),
+						parent: child.parent(),
 						name: child.name.clone(),
 						class: child.class.clone(),
 						properties: child.properties.clone(),
-					},
+					}),
 					Some(id),
 				);
 
