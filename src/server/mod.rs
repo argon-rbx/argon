@@ -10,7 +10,7 @@ mod details;
 mod exec;
 mod home;
 mod read;
-mod read_all;
+mod snapshot;
 mod stop;
 mod subscribe;
 mod unsubscribe;
@@ -47,7 +47,7 @@ impl Server {
 				.service(home::main)
 				.service(stop::main)
 				.service(read::main)
-				.service(read_all::main)
+				.service(snapshot::main)
 				.service(exec::main)
 				.default_service(web::to(default_redirect))
 		})

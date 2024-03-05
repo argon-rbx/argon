@@ -2,6 +2,7 @@ use rbx_dom_weak::{
 	types::{Ref, Variant},
 	Instance, WeakDom,
 };
+use serde::Serialize;
 use std::{
 	collections::HashMap,
 	fmt::{self, Debug, Formatter},
@@ -11,12 +12,17 @@ use std::{
 use super::meta::Meta;
 use crate::middleware::FileType;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Snapshot {
-	// For middleware & change processing
+	// Dom indentification
 	pub id: Option<Ref>,
+
+	// For middleware & change processing, not serialized
+	#[serde(skip)]
 	pub meta: Option<Meta>,
+	#[serde(skip)]
 	pub paths: Vec<PathBuf>,
+	#[serde(skip)]
 	pub file_type: Option<FileType>,
 
 	// Roblox related

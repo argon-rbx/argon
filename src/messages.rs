@@ -1,15 +1,18 @@
 use derive_from_one::FromOne;
 use serde::Serialize;
 
-use crate::core::changes::{AddedSnapshot, ModifiedSnapshot, RemovedSnapshot};
+use crate::core::changes::{AddedSnapshot, RemovedSnapshot, UpdatedSnapshot};
 
 #[derive(Debug, Clone, Serialize, FromOne)]
 pub enum Message {
-	SyncDetails(SyncDetails),
-	Execute(Execute),
-	Create(Create),
+	// Syncing changes
+	Add(Add),
 	Remove(Remove),
 	Update(Update),
+
+	// Misc
+	SyncDetails(SyncDetails),
+	Execute(Execute),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -25,10 +28,10 @@ pub struct Execute {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Create(pub AddedSnapshot);
+pub struct Add(pub AddedSnapshot);
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Remove(pub RemovedSnapshot);
 
 #[derive(Debug, Clone, Serialize)]
-pub struct Update(pub ModifiedSnapshot);
+pub struct Update(pub UpdatedSnapshot);

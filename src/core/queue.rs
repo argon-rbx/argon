@@ -56,7 +56,7 @@ impl Queue {
 			return None;
 		}
 
-		self.queues.get(id).unwrap().get(0)
+		self.queues.get(id).unwrap().front()
 	}
 
 	pub fn subscribe(&mut self, id: &u64) -> bool {

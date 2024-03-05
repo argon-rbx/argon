@@ -4,7 +4,6 @@ use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
 	cmp,
-	collections::HashMap,
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
@@ -13,8 +12,8 @@ use std::{
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{
-	core::changes::AddedSnapshot,
-	lock, messages,
+	core::snapshot::Snapshot,
+	lock,
 	middleware::new_snapshot,
 	project::Project,
 	util::{self, PathExt},
@@ -90,43 +89,40 @@ impl Core {
 		self.processor.callback()
 	}
 
-	pub fn read_all(&self, id: u64) {
+	/// Create snapshot of the tree
+	pub fn snapshot(&self) -> Snapshot {
 		let tree = lock!(self.tree);
-		let mut queue = lock!(self.queue);
 
-		queue.push(
-			messages::Create(AddedSnapshot {
-				id: tree.root_ref(),
-				parent: Ref::none(),
-				name: String::from("ROOT"),
-				class: String::from("DataModel"),
-				properties: HashMap::new(),
-			}),
-			Some(&id),
-		);
+		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
+			let mut snapshot_children = vec![];
 
-		fn walk(children: &[Ref], tree: &Tree, queue: &mut MutexGuard<'_, Queue>, id: &u64) {
 			for child in children {
 				let child = tree.get_instance(*child).unwrap();
 
-				queue.push(
-					messages::Create(AddedSnapshot {
-						id: child.referent(),
-						parent: child.parent(),
-						name: child.name.clone(),
-						class: child.class.clone(),
-						properties: child.properties.clone(),
-					}),
-					Some(id),
-				);
+				let snapshot = Snapshot::new()
+					.with_id(child.referent())
+					.with_name(&child.name)
+					.with_class(&child.class)
+					.with_properties(child.properties.clone())
+					.with_children(walk(child.children(), tree));
 
-				walk(child.children(), tree, queue, id);
+				snapshot_children.push(snapshot);
 			}
+
+			snapshot_children
 		}
 
-		walk(tree.root().children(), &tree, &mut queue, &id);
+		let root = tree.root();
+
+		Snapshot::new()
+			.with_id(root.referent())
+			.with_name(&root.name)
+			.with_class(&root.class)
+			.with_properties(root.properties.clone())
+			.with_children(walk(tree.root().children(), &tree))
 	}
 
+	/// Build the tree into a file, either XML or binary
 	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {
 		let writer = BufWriter::new(File::create(path)?);
 
@@ -149,6 +145,7 @@ impl Core {
 		Ok(())
 	}
 
+	/// Write sourcemap of the tree
 	pub fn sourcemap(&self, path: Option<PathBuf>, non_scripts: bool) -> Result<()> {
 		let tree = util::wait_for_mutex(&self.tree);
 		let dom = tree.inner();

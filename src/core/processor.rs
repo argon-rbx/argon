@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{
-	changes::{Changes, ModifiedSnapshot},
+	changes::{Changes, UpdatedSnapshot},
 	meta::Meta,
 	queue::Queue,
 	snapshot::Snapshot,
@@ -131,10 +131,10 @@ impl Handler {
 			self.callback.send(path_changed).unwrap();
 
 			for snapshot in changes.additions {
-				queue.push(messages::Create(snapshot), None);
+				queue.push(messages::Add(snapshot), None);
 			}
 
-			for modified_snapshot in changes.modifications {
+			for modified_snapshot in changes.updates {
 				queue.push(messages::Update(modified_snapshot), None);
 			}
 
@@ -231,7 +231,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 
 	let instance = tree.get_instance_mut(id).unwrap();
 
-	let mut modified_snapshot = ModifiedSnapshot::new(id);
+	let mut modified_snapshot = UpdatedSnapshot::new(id);
 
 	modified_snapshot.name = if snapshot.name != instance.name {
 		instance.name = snapshot.name.clone();
@@ -255,7 +255,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 	};
 
 	if !modified_snapshot.is_empty() {
-		changes.modify(modified_snapshot);
+		changes.update(modified_snapshot);
 	}
 
 	let mut hydrated = vec![false; instance.children().len()];

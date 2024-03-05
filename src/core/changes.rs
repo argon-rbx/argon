@@ -12,10 +12,11 @@ pub struct AddedSnapshot {
 	pub name: String,
 	pub class: String,
 	pub properties: HashMap<String, Variant>,
+	pub children: Vec<Snapshot>,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ModifiedSnapshot {
+pub struct UpdatedSnapshot {
 	pub id: Ref,
 	pub name: Option<String>,
 	pub class: Option<String>,
@@ -27,7 +28,7 @@ pub struct RemovedSnapshot {
 	pub id: Ref,
 }
 
-impl ModifiedSnapshot {
+impl UpdatedSnapshot {
 	pub fn new(id: Ref) -> Self {
 		Self {
 			id,
@@ -45,7 +46,7 @@ impl ModifiedSnapshot {
 #[derive(Debug)]
 pub struct Changes {
 	pub additions: Vec<AddedSnapshot>,
-	pub modifications: Vec<ModifiedSnapshot>,
+	pub updates: Vec<UpdatedSnapshot>,
 	pub removals: Vec<RemovedSnapshot>,
 }
 
@@ -53,7 +54,7 @@ impl Changes {
 	pub fn new() -> Self {
 		Self {
 			additions: Vec::new(),
-			modifications: Vec::new(),
+			updates: Vec::new(),
 			removals: Vec::new(),
 		}
 	}
@@ -70,23 +71,18 @@ impl Changes {
 		snapshot.paths.clear();
 		snapshot.file_type = None;
 
-		let children: Vec<Snapshot> = snapshot.children.drain(..).collect();
-
 		self.additions.push(AddedSnapshot {
 			id,
 			parent,
 			name: snapshot.name,
 			class: snapshot.class,
 			properties: snapshot.properties,
+			children: snapshot.children,
 		});
-
-		for child in children {
-			self.add(child, id);
-		}
 	}
 
-	pub fn modify(&mut self, modified_snapshot: ModifiedSnapshot) {
-		self.modifications.push(modified_snapshot);
+	pub fn update(&mut self, modified_snapshot: UpdatedSnapshot) {
+		self.updates.push(modified_snapshot);
 	}
 
 	pub fn remove(&mut self, id: Ref) {
@@ -95,11 +91,11 @@ impl Changes {
 
 	pub fn extend(&mut self, changes: Self) {
 		self.additions.extend(changes.additions);
-		self.modifications.extend(changes.modifications);
+		self.updates.extend(changes.updates);
 		self.removals.extend(changes.removals);
 	}
 
 	pub fn is_empty(&self) -> bool {
-		self.additions.is_empty() && self.modifications.is_empty() && self.removals.is_empty()
+		self.additions.is_empty() && self.updates.is_empty() && self.removals.is_empty()
 	}
 }
