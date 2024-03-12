@@ -7,7 +7,7 @@ use std::{
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
-	sync::{Arc, Mutex, MutexGuard},
+	sync::{Arc, Mutex},
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
@@ -23,8 +23,8 @@ pub mod tree;
 pub struct Core {
 	project: Arc<Mutex<Project>>,
 	processor: Arc<Processor>,
-	queue: Arc<Mutex<Queue>>,
 	tree: Arc<Mutex<Tree>>,
+	queue: Arc<Queue>,
 	_vfs: Arc<Vfs>,
 }
 
@@ -40,7 +40,7 @@ impl Core {
 
 		let vfs = Arc::new(vfs);
 		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
-		let queue = Arc::new(Mutex::new(Queue::new()));
+		let queue = Arc::new(Queue::new());
 
 		let project = Arc::new(Mutex::new(project));
 		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone(), project.clone());
@@ -48,8 +48,8 @@ impl Core {
 		Ok(Core {
 			project,
 			processor: Arc::new(processor),
-			queue,
 			tree,
+			queue,
 			_vfs: vfs,
 		})
 	}
@@ -74,8 +74,8 @@ impl Core {
 		lock!(self.project).place_ids.clone()
 	}
 
-	pub fn queue(&self) -> MutexGuard<'_, Queue> {
-		lock!(self.queue)
+	pub fn queue(&self) -> Arc<Queue> {
+		self.queue.clone()
 	}
 
 	pub fn tree_changed(&self) -> Receiver<bool> {

@@ -23,11 +23,6 @@ pub struct UpdatedSnapshot {
 	pub properties: Option<HashMap<String, Variant>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct RemovedSnapshot {
-	pub id: Ref,
-}
-
 impl UpdatedSnapshot {
 	pub fn new(id: Ref) -> Self {
 		Self {
@@ -43,11 +38,11 @@ impl UpdatedSnapshot {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Changes {
 	pub additions: Vec<AddedSnapshot>,
 	pub updates: Vec<UpdatedSnapshot>,
-	pub removals: Vec<RemovedSnapshot>,
+	pub removals: Vec<Ref>,
 }
 
 impl Changes {
@@ -86,7 +81,7 @@ impl Changes {
 	}
 
 	pub fn remove(&mut self, id: Ref) {
-		self.removals.push(RemovedSnapshot { id });
+		self.removals.push(id);
 	}
 
 	pub fn extend(&mut self, changes: Self) {

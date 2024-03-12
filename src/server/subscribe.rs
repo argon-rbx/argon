@@ -18,7 +18,7 @@ struct Request {
 async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	let subscribed = core.queue().subscribe(&request.client_id);
 
-	if subscribed {
+	if subscribed.is_ok() {
 		HttpResponse::Ok().body("Subscribed successfully")
 	} else {
 		HttpResponse::BadRequest().body("Already subscribed")

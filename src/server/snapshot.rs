@@ -26,7 +26,5 @@ async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Res
 		return Err(error::ErrorBadRequest("Not subscribed"));
 	}
 
-	// let response = Response { queue:  };
-
 	Ok(Json(core.snapshot()))
 }

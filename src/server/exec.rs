@@ -16,12 +16,15 @@ struct Request {
 
 #[post("/exec")]
 async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
-	core.queue().push(
-		messages::Execute {
+	let pushed = core.queue().push(
+		messages::ExecuteCode {
 			code: request.code.clone(),
 		},
 		None,
 	);
 
-	HttpResponse::Ok().body("Code executed successfully")
+	match pushed {
+		Ok(_) => HttpResponse::Ok().body("Code executed successfully"),
+		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+	}
 }

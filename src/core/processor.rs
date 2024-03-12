@@ -29,7 +29,7 @@ pub struct Processor {
 }
 
 impl Processor {
-	pub fn new(queue: Arc<Mutex<Queue>>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>, project: Arc<Mutex<Project>>) -> Self {
+	pub fn new(queue: Arc<Queue>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>, project: Arc<Mutex<Project>>) -> Self {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		let handler = Arc::new(Handler {
@@ -66,7 +66,7 @@ impl Processor {
 }
 
 struct Handler {
-	queue: Arc<Mutex<Queue>>,
+	queue: Arc<Queue>,
 	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Vfs>,
 	callback: Sender<bool>,
@@ -76,7 +76,6 @@ struct Handler {
 impl Handler {
 	fn on_vfs_event(&self, event: VfsEvent) {
 		let mut tree = lock!(self.tree);
-		let mut queue = lock!(self.queue);
 
 		let path = event.path();
 
@@ -131,16 +130,13 @@ impl Handler {
 
 			self.callback.send(path_changed).unwrap();
 
-			for snapshot in changes.additions {
-				queue.push(messages::Add(snapshot), None);
-			}
+			let result = self.queue.push(messages::SyncChanges(changes), None);
 
-			for modified_snapshot in changes.updates {
-				queue.push(messages::Update(modified_snapshot), None);
-			}
-
-			for removed_snapshot in changes.removals {
-				queue.push(messages::Remove(removed_snapshot), None);
+			match result {
+				Ok(_) => trace!("Added changes to the queue"),
+				Err(err) => {
+					error!("Failed to add changes to the queue: {}", err);
+				}
 			}
 		}
 	}

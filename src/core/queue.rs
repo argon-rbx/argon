@@ -1,87 +1,115 @@
-use std::collections::{HashMap, VecDeque};
+use anyhow::{bail, Result};
+use crossbeam_channel::{Receiver, Sender};
+use std::{collections::HashMap, sync::RwLock};
 
 use crate::messages::Message;
 
-#[derive(Debug, Clone)]
+macro_rules! read {
+	($rwlock:expr) => {
+		$rwlock
+			.try_read()
+			.expect("Tried to read RwLock that is being written to!")
+	};
+}
+
+macro_rules! write {
+	($rwlock:expr) => {
+		$rwlock
+			.try_write()
+			.expect("Tried to write RwLock that is being read from!")
+	};
+}
+
+#[derive(Debug)]
+struct Channel {
+	sender: Sender<Message>,
+	receiver: Receiver<Message>,
+}
+
+#[derive(Debug)]
 pub struct Queue {
-	queues: HashMap<u64, VecDeque<Message>>,
-	listeners: Vec<u64>,
+	queues: RwLock<HashMap<u64, Channel>>,
+	listeners: RwLock<Vec<u64>>,
 }
 
 impl Queue {
 	pub fn new() -> Self {
 		Self {
-			queues: HashMap::new(),
-			listeners: vec![],
+			queues: RwLock::new(HashMap::new()),
+			listeners: RwLock::new(vec![]),
 		}
 	}
 
-	pub fn push<M>(&mut self, message: M, id: Option<&u64>)
+	pub fn push<M>(&self, message: M, id: Option<&u64>) -> Result<()>
 	where
 		M: Into<Message>,
 	{
 		if let Some(id) = id {
 			if !self.is_subscribed(id) {
-				return;
+				bail!("Not subscribed")
 			}
 
-			self.queues.get_mut(id).unwrap().push_back(message.into());
+			let queues = read!(self.queues);
+			let sender = queues.get(id).unwrap().sender.clone();
 
-			return;
+			sender.send(message.into())?;
+
+			return Ok(());
 		}
 
 		let message: Message = message.into();
 
-		for listener in &self.listeners {
-			self.queues.get_mut(listener).unwrap().push_back(message.clone());
+		for listener in read!(self.listeners).iter() {
+			let queues = read!(self.queues);
+			let sender = queues.get(listener).unwrap().sender.clone();
+
+			sender.send(message.clone())?;
 		}
+
+		Ok(())
 	}
 
-	pub fn pop(&mut self, id: &u64) {
+	pub fn get(&self, id: &u64) -> Result<Option<Message>> {
 		if !self.is_subscribed(id) {
-			return;
+			bail!("Not subscribed")
 		}
 
-		let queue = self.queues.get_mut(id).unwrap();
+		let queues = read!(self.queues);
+		let receiver = queues.get(id).unwrap().receiver.clone();
 
-		if queue.is_empty() {
-			return;
-		}
+		drop(queues);
 
-		queue.pop_front();
+		let message = receiver.recv().ok();
+
+		Ok(message)
 	}
 
-	pub fn get(&mut self, id: &u64) -> Option<&Message> {
-		if !self.is_subscribed(id) {
-			return None;
-		}
-
-		self.queues.get(id).unwrap().front()
-	}
-
-	pub fn subscribe(&mut self, id: &u64) -> bool {
+	pub fn subscribe(&self, id: &u64) -> Result<()> {
 		if self.is_subscribed(id) {
-			return false;
+			bail!("Already subscribed")
 		}
 
-		self.listeners.push(id.to_owned());
-		self.queues.insert(id.to_owned(), VecDeque::new());
+		let (sender, receiver) = crossbeam_channel::unbounded();
+		let channel = Channel { sender, receiver };
 
-		true
+		write!(self.listeners).push(id.to_owned());
+		write!(self.queues).insert(id.to_owned(), channel);
+
+		Ok(())
 	}
 
-	pub fn unsubscribe(&mut self, id: &u64) -> bool {
+	pub fn unsubscribe(&self, id: &u64) -> Result<()> {
 		if !self.is_subscribed(id) {
-			return false;
+			bail!("Not subscribed")
 		}
 
-		self.listeners.retain(|i| i != id);
-		self.queues.remove(id);
+		write!(self.listeners).retain(|i| i != id);
+		write!(self.queues).remove(id);
 
-		true
+		Ok(())
 	}
 
 	pub fn is_subscribed(&self, id: &u64) -> bool {
-		self.listeners.contains(id)
+		read!(self.listeners).contains(id)
 	}
 }

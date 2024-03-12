@@ -16,33 +16,19 @@ struct Request {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Response {
-	queue: Vec<Message>,
-}
+struct Response(Option<Message>);
 
 #[get("/read")]
 async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Responder> {
 	let id = request.client_id;
-	let mut queue = core.queue();
+	let queue = core.queue();
 
 	if !queue.is_subscribed(&id) {
 		return Err(error::ErrorBadRequest("Not subscribed"));
 	}
 
-	let mut new_queue = vec![];
-
-	loop {
-		let message = queue.get(&id);
-
-		if let Some(message) = message {
-			new_queue.push(message.clone());
-			queue.pop(&id);
-		} else {
-			break;
-		}
+	match queue.get(&id) {
+		Ok(message) => Ok(Json(message)),
+		Err(err) => Err(error::ErrorInternalServerError(err)),
 	}
-
-	let response = Response { queue: new_queue };
-
-	Ok(Json(response))
 }
