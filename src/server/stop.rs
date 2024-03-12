@@ -6,6 +6,7 @@ use crate::util;
 
 async fn stop() {
 	debug!("Stopping Argon!");
+	// We need to kill all child processes as well
 	util::kill_process(process::id());
 }
 

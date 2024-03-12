@@ -4,7 +4,7 @@ use std::path::Path;
 use super::new_snapshot;
 use crate::{
 	core::{meta::Meta, snapshot::Snapshot},
-	util::PathExt,
+	ext::PathExt,
 	vfs::Vfs,
 };
 

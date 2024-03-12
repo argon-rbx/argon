@@ -7,8 +7,9 @@ use std::{collections::HashMap, path::Path};
 
 use crate::{
 	core::{meta::Meta, snapshot::Snapshot},
+	ext::PathExt,
 	resolution::UnresolvedValue,
-	util::{self, PathExt},
+	util,
 	vfs::Vfs,
 };
 

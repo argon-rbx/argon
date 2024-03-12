@@ -3,7 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::path::PathBuf;
 
-use crate::{argon_error, argon_info, config::Config, project, util::PathExt, workspace};
+use crate::{argon_error, argon_info, config::Config, ext::PathExt, project, workspace};
 
 /// Initialize new Argon project
 #[derive(Parser)]

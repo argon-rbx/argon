@@ -1,13 +1,14 @@
 use anyhow::{bail, Result};
 use chrono::Datelike;
-use log::{debug, trace, warn};
+use log::{debug, trace};
 use reqwest::blocking::Client;
 use std::{fs, path::Path};
 
 use crate::{
 	argon_info, argon_warn,
-	program::{Program, ProgramKind},
-	util::{self, PathExt},
+	ext::PathExt,
+	program::{Program, ProgramName},
+	util,
 };
 
 fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
@@ -174,7 +175,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		_ => "init",
 	};
 
-	let child = Program::new(ProgramKind::Npm)
+	let child = Program::new(ProgramName::Npm)
 		.message("Failed to initialize roblox-ts project")
 		.arg("init")
 		.arg("roblox-ts")
@@ -197,7 +198,6 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			return Ok(false);
 		}
 	} else {
-		warn!("npm is not installed");
 		return Ok(false);
 	}
 
@@ -256,7 +256,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 }
 
 pub fn initialize_repo(directory: &Path) -> Result<()> {
-	let output = Program::new(ProgramKind::Git)
+	let output = Program::new(ProgramName::Git)
 		.message("Failed to initialize repository")
 		.arg("init")
 		.arg(&directory.to_string())
@@ -264,8 +264,6 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 
 	if output.is_some() {
 		debug!("Initialized Git repository");
-	} else {
-		warn!("Git is not installed");
 	}
 
 	Ok(())

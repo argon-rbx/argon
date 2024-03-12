@@ -2,7 +2,7 @@ use backtrace::Backtrace;
 use colored::Colorize;
 use open;
 use panic_message::get_panic_info_message;
-use std::{env, panic};
+use std::{env, panic, process};
 
 use crate::{argon_error, argon_info, logger, util};
 
@@ -84,5 +84,7 @@ pub fn hook() {
 				Ok(()) => argon_info!("Browser launched successfully!"),
 			}
 		}
+
+		process::exit(1)
 	}));
 }

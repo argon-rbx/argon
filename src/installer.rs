@@ -2,10 +2,7 @@ use anyhow::Result;
 use include_dir::{include_dir, Dir};
 use std::{env, fs, path::Path};
 
-use crate::{
-	logger,
-	util::{self, PathExt},
-};
+use crate::{ext::PathExt, logger, util};
 
 const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/place");
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");

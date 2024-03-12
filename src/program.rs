@@ -8,13 +8,10 @@ use std::{
 	process::{Child, Command, Output},
 };
 
-use crate::{
-	argon_error, logger,
-	util::{self, ToString},
-};
+use crate::{argon_error, ext::WriteStyleExt, logger, util};
 
 #[derive(PartialEq)]
-pub enum ProgramKind {
+pub enum ProgramName {
 	Argon,
 	Git,
 	Npm,
@@ -22,14 +19,14 @@ pub enum ProgramKind {
 }
 
 pub struct Program {
-	program: ProgramKind,
+	program: ProgramName,
 	args: Vec<String>,
 	current_dir: PathBuf,
 	message: String,
 }
 
 impl Program {
-	pub fn new(program: ProgramKind) -> Self {
+	pub fn new(program: ProgramName) -> Self {
 		Self {
 			program,
 			args: vec![],
@@ -92,7 +89,7 @@ impl Program {
 	}
 
 	fn get_command(&self) -> Command {
-		if self.program == ProgramKind::Argon {
+		if self.program == ProgramName::Argon {
 			let mut command = Command::new(env::current_exe().unwrap_or(PathBuf::from("argon")));
 
 			let verbosity = util::get_verbosity().as_str();
@@ -113,18 +110,18 @@ impl Program {
 
 		#[cfg(not(target_os = "windows"))]
 		let program = match self.program {
-			ProgramKind::Git => "git",
-			ProgramKind::Npm => "npm",
-			ProgramKind::Npx => "npx",
-			ProgramKind::Argon => unreachable!(),
+			ProgramName::Git => "git",
+			ProgramName::Npm => "npm",
+			ProgramName::Npx => "npx",
+			ProgramName::Argon => unreachable!(),
 		};
 
 		#[cfg(target_os = "windows")]
 		let program = match self.program {
-			ProgramKind::Git => "git",
-			ProgramKind::Npm => "npm.cmd",
-			ProgramKind::Npx => "npx.cmd",
-			ProgramKind::Argon => unreachable!(),
+			ProgramName::Git => "git",
+			ProgramName::Npm => "npm.cmd",
+			ProgramName::Npx => "npx.cmd",
+			ProgramName::Argon => unreachable!(),
 		};
 
 		let mut command = Command::new(program);
@@ -154,30 +151,30 @@ impl Program {
 
 	fn get_error(&self, error: &str) -> String {
 		match self.program {
-			ProgramKind::Git => format!(
+			ProgramName::Git => format!(
 				"{}: Git is not installed. To suppress this message remove {} option or disable {} setting.",
 				error,
 				"--git".bold(),
 				"use_git".bold()
 			),
-			ProgramKind::Npm | ProgramKind::Npx => format!("{}: npm is not installed", error),
-			ProgramKind::Argon => unreachable!(),
+			ProgramName::Npm | ProgramName::Npx => format!("{}: npm is not installed", error),
+			ProgramName::Argon => unreachable!(),
 		}
 	}
 
 	fn get_prompt(&self) -> &'static str {
 		match self.program {
-			ProgramKind::Git => "Do you want to install Git now?",
-			ProgramKind::Npm | ProgramKind::Npx => "Do you want to install npm now?",
-			ProgramKind::Argon => unreachable!(),
+			ProgramName::Git => "Do you want to install Git now?",
+			ProgramName::Npm | ProgramName::Npx => "Do you want to install npm now?",
+			ProgramName::Argon => unreachable!(),
 		}
 	}
 
 	fn get_link(&self) -> &'static str {
 		match self.program {
-			ProgramKind::Git => "https://git-scm.com/downloads",
-			ProgramKind::Npm | ProgramKind::Npx => "https://nodejs.org/en/download/",
-			ProgramKind::Argon => unreachable!(),
+			ProgramName::Git => "https://git-scm.com/downloads",
+			ProgramName::Npm | ProgramName::Npx => "https://nodejs.org/en/download/",
+			ProgramName::Argon => unreachable!(),
 		}
 	}
 }

@@ -29,7 +29,7 @@ pub struct Config {
 	pub spawn: bool,
 	/// Scan for the first available port if the default is taken
 	pub scan_ports: bool,
-	/// Automatically detect if project is Rojo or roblox-ts
+	/// Automatically detect if project is roblox-ts
 	pub auto_detect: bool,
 	/// Use git for source control
 	pub use_git: bool,

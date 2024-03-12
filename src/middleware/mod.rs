@@ -12,7 +12,7 @@ use crate::{
 		meta::{Meta, ResolvedSyncRule},
 		snapshot::Snapshot,
 	},
-	util::{Desc, PathExt},
+	ext::{PathExt, ResultExt},
 	vfs::Vfs,
 	BLACKLISTED_PATHS,
 };
@@ -63,7 +63,7 @@ impl Display for FileType {
 
 impl FileType {
 	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
-		let snapshot = match self {
+		let result = match self {
 			FileType::Project => snapshot_project(path, vfs),
 			FileType::InstanceData => snapshot_data(path, meta, vfs),
 			//
@@ -81,7 +81,7 @@ impl FileType {
 			FileType::RbxmxModel => snapshot_rbxmx(path, vfs),
 		};
 
-		snapshot.with_desc(|| {
+		result.with_desc(|| {
 			format!(
 				"Failed to snapshot {} at {}",
 				self.to_string().bold(),

@@ -71,6 +71,9 @@ pub struct Cli {
 	#[arg(short = 'B', long, global = true)]
 	backtrace: bool,
 
+	#[arg(long, hide = true, global = true)]
+	profile: bool,
+
 	/// Output coloring: auto, always, never
 	#[arg(
 		long,
@@ -87,6 +90,10 @@ pub struct Cli {
 impl Cli {
 	pub fn new() -> Cli {
 		Cli::parse()
+	}
+
+	pub fn profile(&self) -> bool {
+		self.profile
 	}
 
 	pub fn yes(&self) -> bool {

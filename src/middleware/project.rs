@@ -11,8 +11,9 @@ use crate::{
 		meta::{Meta, ProjectData},
 		snapshot::Snapshot,
 	},
+	ext::PathExt,
 	project::{Project, ProjectNode},
-	util::{self, PathExt},
+	util,
 	vfs::Vfs,
 };
 

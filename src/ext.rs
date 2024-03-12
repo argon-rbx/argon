@@ -1,0 +1,130 @@
+use anyhow::{bail, Result};
+use env_logger::WriteStyle;
+use std::{
+	env,
+	fmt::Display,
+	path::{Path, PathBuf},
+};
+
+/// Collection of extension methods for `Path`
+
+pub trait PathExt {
+	fn resolve(&self) -> Result<PathBuf>;
+	fn to_string(&self) -> String;
+	fn get_file_name(&self) -> &str;
+	fn get_file_stem(&self) -> &str;
+	fn get_file_ext(&self) -> &str;
+	fn get_parent(&self) -> &Path;
+	fn len(&self) -> usize;
+	fn is_empty(&self) -> bool;
+}
+
+impl PathExt for Path {
+	fn resolve(&self) -> Result<PathBuf> {
+		if self.is_absolute() {
+			return Ok(self.to_owned());
+		}
+
+		let current_dir = env::current_dir()?;
+		let absolute = current_dir.join(self);
+
+		Ok(absolute)
+	}
+
+	fn to_string(&self) -> String {
+		self.to_str().unwrap_or_default().to_owned()
+	}
+
+	fn get_file_name(&self) -> &str {
+		self.file_name().unwrap_or_default().to_str().unwrap_or_default()
+	}
+
+	fn get_file_stem(&self) -> &str {
+		if !self.is_dir() {
+			self.file_stem().unwrap_or_default().to_str().unwrap_or_default()
+		} else {
+			self.get_file_name()
+		}
+	}
+
+	fn get_file_ext(&self) -> &str {
+		if !self.is_dir() {
+			self.extension().unwrap_or_default().to_str().unwrap_or_default()
+		} else {
+			""
+		}
+	}
+
+	fn get_parent(&self) -> &Path {
+		self.parent().unwrap_or(self)
+	}
+
+	fn len(&self) -> usize {
+		self.components().count()
+	}
+
+	fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
+}
+
+/// Additional methods for `anyhow::Error`, similar to `context` and `with_context`
+
+pub trait ResultExt<T, E> {
+	fn desc<D>(self, desc: D) -> Result<T, anyhow::Error>
+	where
+		D: Display + Send + Sync + 'static;
+
+	fn with_desc<C, F>(self, f: F) -> Result<T, anyhow::Error>
+	where
+		C: Display + Send + Sync + 'static,
+		F: FnOnce() -> C;
+}
+
+impl<T, E> ResultExt<T, E> for Result<T, E>
+where
+	E: Display + Send + Sync + 'static,
+{
+	fn desc<D>(self, desc: D) -> Result<T, anyhow::Error>
+	where
+		D: Display + Send + Sync + 'static,
+	{
+		match self {
+			Ok(ok) => Ok(ok),
+			Err(error) => {
+				bail!("{}: {}", desc, error);
+			}
+		}
+	}
+
+	fn with_desc<C, F>(self, desc: F) -> Result<T, anyhow::Error>
+	where
+		C: Display + Send + Sync + 'static,
+		F: FnOnce() -> C,
+	{
+		match self {
+			Ok(ok) => Ok(ok),
+			Err(error) => {
+				bail!("{}: {}", desc(), error);
+			}
+		}
+	}
+}
+
+/// `to_string` implementation for `WriteStyle`
+
+pub trait WriteStyleExt {
+	fn to_string(&self) -> String;
+}
+
+impl WriteStyleExt for WriteStyle {
+	fn to_string(&self) -> String {
+		let write_style = match self {
+			WriteStyle::Always => "always",
+			WriteStyle::Auto => "auto",
+			WriteStyle::Never => "never",
+		};
+
+		String::from(write_style)
+	}
+}

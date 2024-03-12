@@ -11,14 +11,7 @@ use std::{
 };
 
 use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
-use crate::{
-	core::snapshot::Snapshot,
-	lock,
-	middleware::new_snapshot,
-	project::Project,
-	util::{self, PathExt},
-	vfs::Vfs,
-};
+use crate::{core::snapshot::Snapshot, ext::PathExt, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
 
 pub mod changes;
 pub mod meta;
@@ -128,7 +121,7 @@ impl Core {
 
 		// We want to proritize event processing over building
 		// so we can wait for the Mutex lock to release
-		let tree = util::wait_for_mutex(&self.tree);
+		let tree = lock!(&self.tree);
 
 		let root_refs = if lock!(self.project).is_place() {
 			tree.place_root_refs().to_vec()
@@ -147,7 +140,7 @@ impl Core {
 
 	/// Write sourcemap of the tree
 	pub fn sourcemap(&self, path: Option<PathBuf>, non_scripts: bool) -> Result<()> {
-		let tree = util::wait_for_mutex(&self.tree);
+		let tree = lock!(&self.tree);
 		let dom = tree.inner();
 
 		fn walk(tree: &Tree, id: Ref, non_scripts: bool) -> Option<SourcemapNode> {
@@ -163,7 +156,7 @@ impl Core {
 				return None;
 			}
 
-			let mut file_paths: Vec<_> = tree
+			let mut file_paths: Vec<PathBuf> = tree
 				.get_paths(id)
 				.into_iter()
 				.filter(|path| path.is_file())

@@ -6,7 +6,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{glob::Glob, middleware::FileType, project::Project, util::PathExt};
+use crate::{ext::PathExt, glob::Glob, middleware::FileType, project::Project};
 
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {

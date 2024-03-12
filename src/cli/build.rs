@@ -10,10 +10,10 @@ use crate::{
 	config::Config,
 	core::Core,
 	exit,
-	program::{Program, ProgramKind},
+	ext::PathExt,
+	program::{Program, ProgramName},
 	project::{self, Project},
 	sessions,
-	util::{self, PathExt},
 };
 
 /// Build project into Roblox place or model
@@ -145,7 +145,7 @@ impl Build {
 
 			let working_dir = project_path.get_parent();
 
-			let child = Program::new(ProgramKind::Npx)
+			let child = Program::new(ProgramName::Npx)
 				.message("Failed to start roblox-ts")
 				.current_dir(working_dir)
 				.arg("rbxtsc")
@@ -181,21 +181,14 @@ impl Build {
 
 				let working_dir = project_path.get_parent();
 
-				let mut child = Program::new(ProgramKind::Npx)
+				Program::new(ProgramName::Npx)
 					.current_dir(working_dir)
 					.arg("rbxtsc")
 					.arg("--watch")
-					.spawn()?
-					.unwrap();
-
-				util::handle_kill(move || {
-					child.kill().ok();
-				})?;
+					.spawn()?;
 			}
 
-			if config.spawn {
-				sessions::add(self.session, None, None, process::id())?;
-			}
+			sessions::add(self.session, None, None, process::id(), config.spawn)?;
 
 			argon_info!("Watching for changes..");
 
@@ -264,7 +257,7 @@ impl Build {
 			args.push(String::from("--ts"))
 		}
 
-		Program::new(ProgramKind::Argon).args(args).spawn()?;
+		Program::new(ProgramName::Argon).args(args).spawn()?;
 
 		Ok(())
 	}

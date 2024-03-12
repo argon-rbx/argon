@@ -49,7 +49,7 @@ fn main() {
 		Err(err) => warn!("Failed to verify Argon installation: {}", err),
 	}
 
-	if cfg!(debug_assertions) {
+	if cfg!(debug_assertions) && cli.profile() {
 		match Server::new(PROFILER_ADDRESS) {
 			Ok(server) => {
 				let _ = ManuallyDrop::new(server);

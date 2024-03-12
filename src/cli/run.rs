@@ -9,11 +9,11 @@ use crate::{
 	config::Config,
 	core::Core,
 	exit,
-	program::{Program, ProgramKind},
+	ext::PathExt,
+	program::{Program, ProgramName},
 	project::{self, Project},
 	server::{self, Server},
 	sessions,
-	util::{self, PathExt},
 };
 
 /// Run Argon, start local server and looking for file changes
@@ -81,18 +81,14 @@ impl Run {
 
 			let working_dir = project_path.get_parent();
 
-			let child = Program::new(ProgramKind::Npx)
+			let child = Program::new(ProgramName::Npx)
 				.message("Failed to serve roblox-ts project")
 				.current_dir(working_dir)
 				.arg("rbxtsc")
 				.arg("--watch")
 				.spawn()?;
 
-			if let Some(mut child) = child {
-				util::handle_kill(move || {
-					child.kill().ok();
-				})?;
-			} else {
+			if child.is_none() {
 				return Ok(());
 			}
 		}
@@ -146,9 +142,13 @@ impl Run {
 			});
 		}
 
-		if config.spawn {
-			sessions::add(self.session, Some(host.clone()), Some(port), process::id())?;
-		}
+		sessions::add(
+			self.session,
+			Some(host.clone()),
+			Some(port),
+			process::id(),
+			config.spawn,
+		)?;
 
 		let server = Server::new(core, &host, &port);
 
@@ -188,7 +188,7 @@ impl Run {
 			args.push(String::from("--ts"));
 		}
 
-		Program::new(ProgramKind::Argon).args(args).spawn()?;
+		Program::new(ProgramName::Argon).args(args).spawn()?;
 
 		Ok(())
 	}

@@ -5,6 +5,7 @@ use std::{
 	collections::HashMap,
 	fs,
 	path::{Path, PathBuf},
+	process,
 };
 
 use crate::util;
@@ -73,16 +74,23 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 	}
 }
 
-pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32) -> Result<()> {
+pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32, spawn: bool) -> Result<()> {
 	let path = get_path()?;
 	let mut sessions = get_sessions(&path)?;
 	let session = Session { host, port, pid };
 	let id = id.unwrap_or(generate_id()?);
 
 	sessions.last_session = id.clone();
-	sessions.active_sessions.insert(id, session);
+	sessions.active_sessions.insert(id, session.clone());
 
 	fs::write(path, toml::to_string(&sessions)?)?;
+
+	if !spawn {
+		ctrlc::set_handler(move || {
+			remove(&session).ok();
+			process::exit(0);
+		})?;
+	}
 
 	Ok(())
 }

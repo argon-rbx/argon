@@ -6,7 +6,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{core::meta::SyncRule, glob::Glob, resolution::UnresolvedValue, util::PathExt, workspace};
+use crate::{core::meta::SyncRule, ext::PathExt, glob::Glob, resolution::UnresolvedValue, workspace};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectNode {

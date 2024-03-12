@@ -9,12 +9,13 @@ use crate::{
 	config::Config,
 	core::Core,
 	exit,
-	program::{Program, ProgramKind},
+	ext::PathExt,
+	program::{Program, ProgramName},
 	project::{self, Project},
 	sessions,
-	util::PathExt,
 };
 
+/// Generate JSON sourcemap of the project
 #[derive(Parser)]
 pub struct Sourcemap {
 	/// Project path
@@ -73,9 +74,7 @@ impl Sourcemap {
 		}
 
 		if self.watch {
-			if config.spawn {
-				sessions::add(self.session, None, None, process::id())?;
-			}
+			sessions::add(self.session, None, None, process::id(), config.spawn)?;
 
 			if self.output.is_some() {
 				argon_info!("Watching for changes..");
@@ -111,7 +110,7 @@ impl Sourcemap {
 			args.push(String::from("--non-scripts"))
 		}
 
-		Program::new(ProgramKind::Argon).args(args).spawn()?;
+		Program::new(ProgramName::Argon).args(args).spawn()?;
 
 		Ok(())
 	}

@@ -15,10 +15,11 @@ use super::{
 	tree::Tree,
 };
 use crate::{
-	argon_error, lock, messages,
+	argon_error,
+	ext::PathExt,
+	lock, messages,
 	middleware::new_snapshot,
 	project::Project,
-	util::PathExt,
 	vfs::{Vfs, VfsEvent},
 	BLACKLISTED_PATHS,
 };
