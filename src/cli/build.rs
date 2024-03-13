@@ -192,17 +192,18 @@ impl Build {
 
 			argon_info!("Watching for changes..");
 
-			for path_changed in core.tree_changed() {
-				info!("Rebuilding project..");
+			let queue = core.queue();
+			queue.subscribe(1).unwrap();
 
+			loop {
+				let _message = queue.get(1).unwrap();
+
+				info!("Rebuilding project..");
 				core.build(&path, xml)?;
 
-				if path_changed {
-					if let Some(path) = &sourcemap_path {
-						info!("Regenerating sourcemap..");
-
-						core.sourcemap(Some(path.clone()), false)?;
-					}
+				if let Some(path) = &sourcemap_path {
+					info!("Regenerating sourcemap..");
+					core.sourcemap(Some(path.clone()), false)?;
 				}
 			}
 		}

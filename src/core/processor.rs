@@ -1,5 +1,5 @@
-use crossbeam_channel::{select, Receiver, Sender};
-use log::{debug, error, trace};
+use crossbeam_channel::select;
+use log::{debug, error, info, trace, warn};
 use rbx_dom_weak::types::Ref;
 use std::{
 	path::PathBuf,
@@ -24,19 +24,14 @@ use crate::{
 	BLACKLISTED_PATHS,
 };
 
-pub struct Processor {
-	callback: Receiver<bool>,
-}
+pub struct Processor {}
 
 impl Processor {
 	pub fn new(queue: Arc<Queue>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>, project: Arc<Mutex<Project>>) -> Self {
-		let (sender, receiver) = crossbeam_channel::unbounded();
-
 		let handler = Arc::new(Handler {
 			queue,
 			tree,
 			vfs: vfs.clone(),
-			callback: sender,
 			project,
 		});
 
@@ -57,11 +52,7 @@ impl Processor {
 			})
 			.unwrap();
 
-		Self { callback: receiver }
-	}
-
-	pub fn callback(&self) -> Receiver<bool> {
-		self.callback.clone()
+		Self {}
 	}
 }
 
@@ -69,14 +60,14 @@ struct Handler {
 	queue: Arc<Queue>,
 	tree: Arc<Mutex<Tree>>,
 	vfs: Arc<Vfs>,
-	callback: Sender<bool>,
 	project: Arc<Mutex<Project>>,
 }
 
 impl Handler {
 	fn on_vfs_event(&self, event: VfsEvent) {
-		let mut tree = lock!(self.tree);
+		trace!("Received VFS event: {:?}", event);
 
+		let mut tree = lock!(self.tree);
 		let path = event.path();
 
 		let changes = {
@@ -88,7 +79,11 @@ impl Handler {
 			if lock!(self.project).path == path {
 				if let VfsEvent::Write(_) = event {
 					debug!("Project file was modified. Reloading project..");
-					lock!(self.project).reload().ok();
+
+					match lock!(self.project).reload() {
+						Ok(()) => info!("Project reloaded"),
+						Err(err) => warn!("Failed to reload project: {}", err),
+					}
 				} else if let VfsEvent::Delete(_) = event {
 					argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
 					return;
@@ -120,20 +115,10 @@ impl Handler {
 		};
 
 		if !changes.is_empty() {
-			// This way we can detect if any path changed which can be used later to decide
-			// whether to regenerate the sourcemap or not. However, some tools such as Luau LSP
-			// rely on those "useless" changes to e.g. update completition of modules
-			//
-			// let path_changed = !changes.additions.is_empty() || !changes.removals.is_empty();
-
-			let path_changed = true;
-
-			self.callback.send(path_changed).unwrap();
-
 			let result = self.queue.push(messages::SyncChanges(changes), None);
 
 			match result {
-				Ok(_) => trace!("Added changes to the queue"),
+				Ok(()) => trace!("Added changes to the queue"),
 				Err(err) => {
 					error!("Failed to add changes to the queue: {}", err);
 				}

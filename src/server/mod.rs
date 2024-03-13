@@ -26,11 +26,11 @@ pub struct Server {
 }
 
 impl Server {
-	pub fn new(core: Arc<Core>, host: &String, port: &u16) -> Self {
+	pub fn new(core: Arc<Core>, host: &str, port: u16) -> Self {
 		Self {
 			core,
 			host: host.to_owned(),
-			port: port.to_owned(),
+			port,
 		}
 	}
 

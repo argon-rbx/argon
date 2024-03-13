@@ -113,30 +113,26 @@ impl Run {
 			}
 		}
 
-		if let Some(path) = &sourcemap_path {
+		let core = Arc::new(core);
+
+		if let Some(path) = sourcemap_path {
+			let core = core.clone();
+			let queue = core.queue();
+
+			queue.subscribe(1).unwrap();
 			core.sourcemap(Some(path.clone()), false)?;
 
 			argon_info!("Generated sourcemap in: {}", path.to_string().bold());
-		}
 
-		let core = Arc::new(core);
+			thread::spawn(move || loop {
+				let _message = queue.get(1).unwrap();
 
-		{
-			let core = core.clone();
+				info!("Regenerating sourcemap..");
 
-			thread::spawn(move || {
-				for path_changed in core.tree_changed() {
-					if path_changed {
-						if let Some(path) = &sourcemap_path {
-							info!("Regenerating sourcemap..");
-
-							match core.sourcemap(Some(path.clone()), false) {
-								Ok(_) => (),
-								Err(err) => {
-									argon_error!("Failed to generate sourcemap: {}", err);
-								}
-							}
-						}
+				match core.sourcemap(Some(path.clone()), false) {
+					Ok(()) => (),
+					Err(err) => {
+						argon_error!("Failed to regenerate sourcemap: {}", err);
 					}
 				}
 			});
@@ -150,7 +146,7 @@ impl Run {
 			config.spawn,
 		)?;
 
-		let server = Server::new(core, &host, &port);
+		let server = Server::new(core, &host, port);
 
 		argon_info!("Running on: {}:{}, project: {}", host, port, project_path.to_string());
 

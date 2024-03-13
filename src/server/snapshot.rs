@@ -22,7 +22,7 @@ struct Response(Snapshot);
 async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Responder> {
 	let id = request.client_id;
 
-	if !core.queue().is_subscribed(&id) {
+	if !core.queue().is_subscribed(id) {
 		return Err(error::ErrorBadRequest("Not subscribed"));
 	}
 

@@ -87,7 +87,10 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 
 	if !spawn {
 		ctrlc::set_handler(move || {
-			remove(&session).ok();
+			match remove(&session) {
+				Ok(()) => trace!("Session entry removed"),
+				Err(err) => warn!("Failed to remove session entry: {}", err),
+			}
 			process::exit(0);
 		})?;
 	}

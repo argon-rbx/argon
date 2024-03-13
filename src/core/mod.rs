@@ -1,5 +1,4 @@
 use anyhow::Result;
-use crossbeam_channel::Receiver;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
@@ -22,9 +21,9 @@ pub mod tree;
 
 pub struct Core {
 	project: Arc<Mutex<Project>>,
-	processor: Arc<Processor>,
 	tree: Arc<Mutex<Tree>>,
 	queue: Arc<Queue>,
+	_processor: Arc<Processor>,
 	_vfs: Arc<Vfs>,
 }
 
@@ -43,13 +42,18 @@ impl Core {
 		let queue = Arc::new(Queue::new());
 
 		let project = Arc::new(Mutex::new(project));
-		let processor = Processor::new(queue.clone(), tree.clone(), vfs.clone(), project.clone());
+		let processor = Arc::new(Processor::new(
+			queue.clone(),
+			tree.clone(),
+			vfs.clone(),
+			project.clone(),
+		));
 
 		Ok(Core {
 			project,
-			processor: Arc::new(processor),
 			tree,
 			queue,
+			_processor: processor,
 			_vfs: vfs,
 		})
 	}
@@ -76,10 +80,6 @@ impl Core {
 
 	pub fn queue(&self) -> Arc<Queue> {
 		self.queue.clone()
-	}
-
-	pub fn tree_changed(&self) -> Receiver<bool> {
-		self.processor.callback()
 	}
 
 	/// Create snapshot of the tree

@@ -24,7 +24,7 @@ async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	);
 
 	match pushed {
-		Ok(_) => HttpResponse::Ok().body("Code executed successfully"),
+		Ok(()) => HttpResponse::Ok().body("Code executed successfully"),
 		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
 	}
 }

@@ -23,11 +23,11 @@ async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Res
 	let id = request.client_id;
 	let queue = core.queue();
 
-	if !queue.is_subscribed(&id) {
+	if !queue.is_subscribed(id) {
 		return Err(error::ErrorBadRequest("Not subscribed"));
 	}
 
-	match queue.get(&id) {
+	match queue.get(id) {
 		Ok(message) => Ok(Json(message)),
 		Err(err) => Err(error::ErrorInternalServerError(err)),
 	}

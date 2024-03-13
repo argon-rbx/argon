@@ -16,7 +16,7 @@ struct Request {
 
 #[post("/subscribe")]
 async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
-	let subscribed = core.queue().subscribe(&request.client_id);
+	let subscribed = core.queue().subscribe(request.client_id);
 
 	if subscribed.is_ok() {
 		HttpResponse::Ok().body("Subscribed successfully")

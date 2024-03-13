@@ -80,11 +80,14 @@ impl Sourcemap {
 				argon_info!("Watching for changes..");
 			}
 
-			for path_changed in core.tree_changed() {
-				if path_changed {
-					info!("Regenerating sourcemap..");
-					core.sourcemap(self.output.clone(), self.non_scripts)?;
-				}
+			let queue = core.queue();
+			queue.subscribe(1).unwrap();
+
+			loop {
+				let _message = queue.get(1).unwrap();
+
+				info!("Regenerating sourcemap..");
+				core.sourcemap(self.output.clone(), self.non_scripts)?;
 			}
 		}
 

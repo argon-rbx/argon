@@ -6,17 +6,13 @@ use crate::messages::Message;
 
 macro_rules! read {
 	($rwlock:expr) => {
-		$rwlock
-			.try_read()
-			.expect("Tried to read RwLock that is being written to!")
+		$rwlock.write().unwrap()
 	};
 }
 
 macro_rules! write {
 	($rwlock:expr) => {
-		$rwlock
-			.try_write()
-			.expect("Tried to write RwLock that is being read from!")
+		$rwlock.write().unwrap()
 	};
 }
 
@@ -40,7 +36,7 @@ impl Queue {
 		}
 	}
 
-	pub fn push<M>(&self, message: M, id: Option<&u64>) -> Result<()>
+	pub fn push<M>(&self, message: M, id: Option<u64>) -> Result<()>
 	where
 		M: Into<Message>,
 	{
@@ -50,7 +46,7 @@ impl Queue {
 			}
 
 			let queues = read!(self.queues);
-			let sender = queues.get(id).unwrap().sender.clone();
+			let sender = queues.get(&id).unwrap().sender.clone();
 
 			sender.send(message.into())?;
 
@@ -69,13 +65,13 @@ impl Queue {
 		Ok(())
 	}
 
-	pub fn get(&self, id: &u64) -> Result<Option<Message>> {
+	pub fn get(&self, id: u64) -> Result<Option<Message>> {
 		if !self.is_subscribed(id) {
 			bail!("Not subscribed")
 		}
 
 		let queues = read!(self.queues);
-		let receiver = queues.get(id).unwrap().receiver.clone();
+		let receiver = queues.get(&id).unwrap().receiver.clone();
 
 		drop(queues);
 
@@ -84,7 +80,7 @@ impl Queue {
 		Ok(message)
 	}
 
-	pub fn subscribe(&self, id: &u64) -> Result<()> {
+	pub fn subscribe(&self, id: u64) -> Result<()> {
 		if self.is_subscribed(id) {
 			bail!("Already subscribed")
 		}
@@ -98,18 +94,18 @@ impl Queue {
 		Ok(())
 	}
 
-	pub fn unsubscribe(&self, id: &u64) -> Result<()> {
+	pub fn unsubscribe(&self, id: u64) -> Result<()> {
 		if !self.is_subscribed(id) {
 			bail!("Not subscribed")
 		}
 
-		write!(self.listeners).retain(|i| i != id);
-		write!(self.queues).remove(id);
+		write!(self.listeners).retain(|i| i != &id);
+		write!(self.queues).remove(&id);
 
 		Ok(())
 	}
 
-	pub fn is_subscribed(&self, id: &u64) -> bool {
-		read!(self.listeners).contains(id)
+	pub fn is_subscribed(&self, id: u64) -> bool {
+		read!(self.listeners).contains(&id)
 	}
 }

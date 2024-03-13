@@ -16,7 +16,7 @@ struct Request {
 
 #[post("/unsubscribe")]
 async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
-	let unsubscribed = core.queue().unsubscribe(&request.client_id);
+	let unsubscribed = core.queue().unsubscribe(request.client_id);
 
 	if unsubscribed.is_ok() {
 		HttpResponse::Ok().body("Unsubscribed successfully")

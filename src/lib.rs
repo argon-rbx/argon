@@ -24,11 +24,10 @@ pub mod workspace;
 // be able to set them in `sync_rules` or project `$path`
 const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
-/// A shorter way to lock the Mutex.
-/// Will panic if the Mutex is already locked.
+/// A shorter way to lock the Mutex
 #[macro_export]
 macro_rules! lock {
 	($mutex:expr) => {
-		$mutex.try_lock().expect("Tried to lock Mutex that is already locked!")
+		$mutex.lock().expect("Tried to lock Mutex that panicked!")
 	};
 }

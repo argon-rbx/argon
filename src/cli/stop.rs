@@ -100,10 +100,10 @@ impl Stop {
 		let url = format!("http://{}/stop", address);
 
 		match Client::new().post(url).send() {
+			Ok(_) => argon_info!("Stopped Argon session {}", address),
 			Err(_) => {
 				Self::kill_process(pid);
 			}
-			Ok(_) => argon_info!("Stopped Argon session {}", address),
 		}
 	}
 
