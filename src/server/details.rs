@@ -1,7 +1,7 @@
 use actix_web::{
 	get,
 	web::{Data, Json},
-	Responder, Result,
+	HttpResponse, Responder,
 };
 use serde::Serialize;
 use std::sync::Arc;
@@ -18,7 +18,7 @@ struct Response {
 }
 
 #[get("/details")]
-async fn main(core: Data<Arc<Core>>) -> Result<impl Responder> {
+async fn main(core: Data<Arc<Core>>) -> impl Responder {
 	let response = Response {
 		version: env!("CARGO_PKG_VERSION").to_string(),
 		name: core.name(),
@@ -26,5 +26,5 @@ async fn main(core: Data<Arc<Core>>) -> Result<impl Responder> {
 		place_ids: core.place_ids(),
 	};
 
-	Ok(Json(response))
+	HttpResponse::Ok().json(Json(response))
 }

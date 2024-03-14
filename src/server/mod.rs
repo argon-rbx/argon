@@ -9,6 +9,7 @@ use crate::core::Core;
 mod details;
 mod exec;
 mod home;
+mod open;
 mod read;
 mod snapshot;
 mod stop;
@@ -49,6 +50,7 @@ impl Server {
 				.service(read::main)
 				.service(snapshot::main)
 				.service(exec::main)
+				.service(open::main)
 				.default_service(web::to(default_redirect))
 		})
 		.bind((self.host.clone(), self.port))?

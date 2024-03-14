@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
@@ -118,9 +118,6 @@ impl Core {
 	/// Build the tree into a file, either XML or binary
 	pub fn build(&self, path: &Path, xml: bool) -> Result<()> {
 		let writer = BufWriter::new(File::create(path)?);
-
-		// We want to proritize event processing over building
-		// so we can wait for the Mutex lock to release
 		let tree = lock!(&self.tree);
 
 		let root_refs = if lock!(self.project).is_place() {
@@ -183,6 +180,27 @@ impl Core {
 		}
 
 		Ok(())
+	}
+
+	pub fn open(&self, instance: Ref) -> Result<()> {
+		let tree = lock!(self.tree);
+
+		let file_paths: Vec<PathBuf> = tree
+			.get_paths(instance)
+			.into_iter()
+			.filter(|path| path.is_file())
+			// TODO: following two lines should be replaced with globs from sync rules
+			.filter(|path| !path.ends_with(".data.json"))
+			.filter(|path| !path.ends_with("init.meta.json"))
+			.cloned()
+			.collect();
+
+		if let Some(path) = file_paths.first() {
+			open::that(path)?;
+			Ok(())
+		} else {
+			bail!("No matching file was found")
+		}
 	}
 }
 

@@ -1,7 +1,7 @@
 use actix_web::{
-	error, get,
+	get,
 	web::{Data, Json, Query},
-	Responder, Result,
+	HttpResponse, Responder,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -19,16 +19,16 @@ struct Request {
 struct Response(Option<Message>);
 
 #[get("/read")]
-async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> Result<impl Responder> {
+async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	let id = request.client_id;
 	let queue = core.queue();
 
 	if !queue.is_subscribed(id) {
-		return Err(error::ErrorBadRequest("Not subscribed"));
+		return HttpResponse::Unauthorized().body("Not subscribed");
 	}
 
 	match queue.get(id) {
-		Ok(message) => Ok(Json(message)),
-		Err(err) => Err(error::ErrorInternalServerError(err)),
+		Ok(message) => HttpResponse::Ok().json(Json(message)),
+		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
 	}
 }
