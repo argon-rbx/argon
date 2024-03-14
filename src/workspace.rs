@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::Datelike;
+use colored::Colorize;
 use log::{debug, trace};
 use reqwest::blocking::Client;
 use std::{fs, path::Path};
@@ -206,7 +207,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		let template_dir = home_dir.join(".argon").join("templates").join(template);
 
 		if !template_dir.exists() {
-			argon_warn!("Template {} does not exist, docs won't be added!", template);
+			argon_warn!("Template {} does not exist, docs won't be added!", template.bold());
 
 			return Ok(true);
 		}

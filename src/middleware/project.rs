@@ -129,7 +129,7 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		} else {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \
-				to watch for file changes in this path or remove it from the project to suppress this warning.",
+				to watch for file changes in this path or remove it from the project to suppress this warning",
 				path.to_string().bold()
 			);
 		}

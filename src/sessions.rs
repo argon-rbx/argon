@@ -21,7 +21,7 @@ impl Session {
 	pub fn get_address(&self) -> Option<String> {
 		if let Some(host) = &self.host {
 			if let Some(port) = self.port {
-				return Some(format!("{}:{}", host, port));
+				return Some(format!("http://{}:{}", host, port));
 			}
 		}
 
@@ -55,7 +55,7 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 	}
 
 	if !path.exists() {
-		warn!("Session data file not found! Creating new one.");
+		warn!("Session data file not found! Creating new one..");
 		return create_empty(path);
 	}
 
@@ -64,7 +64,7 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 
 	match sessions {
 		Err(_) => {
-			warn!("Session data file is corrupted! Creating new one.");
+			warn!("Session data file is corrupted! Creating new one..");
 			create_empty(path)
 		}
 		Ok(sessions) => {

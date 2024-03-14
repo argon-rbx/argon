@@ -152,7 +152,7 @@ impl Program {
 	fn get_error(&self, error: &str) -> String {
 		match self.program {
 			ProgramName::Git => format!(
-				"{}: Git is not installed. To suppress this message remove {} option or disable {} setting.",
+				"{}: Git is not installed. To suppress this message remove {} option or disable {} setting",
 				error,
 				"--git".bold(),
 				"use_git".bold()

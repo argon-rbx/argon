@@ -109,8 +109,8 @@ impl Build {
 						xml = false;
 					} else {
 						exit!(
-							"Invalid file extension: {}. Only {}, {}, {}, {} extensions are allowed.",
-							ext,
+							"Invalid file extension: {}. Only {}, {}, {}, {} extensions are allowed",
+							ext.bold(),
 							"rbxl".bold(),
 							"rbxlx".bold(),
 							"rbxm".bold(),
@@ -172,7 +172,7 @@ impl Build {
 		if let Some(path) = &sourcemap_path {
 			core.sourcemap(Some(path.clone()), false)?;
 
-			argon_info!("Generated sourcemap in: {}", path.to_string().bold());
+			argon_info!("Generated sourcemap at: {}", path.to_string().bold());
 		}
 
 		if self.watch {
@@ -193,10 +193,10 @@ impl Build {
 			argon_info!("Watching for changes..");
 
 			let queue = core.queue();
-			queue.subscribe(1).unwrap();
+			queue.subscribe(0).unwrap();
 
 			loop {
-				let _message = queue.get(1).unwrap();
+				let _message = queue.get(0).unwrap();
 
 				info!("Rebuilding project..");
 				core.build(&path, xml)?;

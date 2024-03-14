@@ -67,7 +67,7 @@ impl Run {
 
 		if !project_path.exists() {
 			exit!(
-				"No project files found in {}. Run {} to create new one.",
+				"No project files found in {}. Run {} to create new one",
 				project_path.get_parent().to_string().bold(),
 				"argon init".bold(),
 			);
@@ -101,13 +101,17 @@ impl Run {
 			if config.scan_ports {
 				let new_port = server::get_free_port(&host, port);
 
-				argon_warn!("Port {} is already in use, using {} instead!", port, new_port);
+				argon_warn!(
+					"Port {} is already in use, using {} instead!",
+					port.to_string().bold(),
+					new_port.to_string().bold()
+				);
 
 				port = new_port;
 			} else {
 				exit!(
-					"Port {} is already in use! Enable {} setting to use first available port automatically.",
-					port,
+					"Port {} is already in use! Enable {} setting to use first available port automatically",
+					port.to_string().bold(),
 					"scan_ports".bold()
 				);
 			}
@@ -119,13 +123,13 @@ impl Run {
 			let core = core.clone();
 			let queue = core.queue();
 
-			queue.subscribe(1).unwrap();
+			queue.subscribe(0).unwrap();
 			core.sourcemap(Some(path.clone()), false)?;
 
-			argon_info!("Generated sourcemap in: {}", path.to_string().bold());
+			argon_info!("Generated sourcemap at: {}", path.to_string().bold());
 
 			thread::spawn(move || loop {
-				let _message = queue.get(1).unwrap();
+				let _message = queue.get(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 
@@ -148,7 +152,11 @@ impl Run {
 
 		let server = Server::new(core, &host, port);
 
-		argon_info!("Running on: {}:{}, project: {}", host, port, project_path.to_string());
+		argon_info!(
+			"Running on: {}, project: {}",
+			server::format_address(&host, port).bold(),
+			project_path.to_string().bold()
+		);
 
 		server.start()?;
 

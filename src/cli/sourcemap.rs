@@ -55,7 +55,7 @@ impl Sourcemap {
 
 		if !project_path.exists() {
 			exit!(
-				"No project file found in {}",
+				"No project files found in {}",
 				project_path.get_parent().to_string().bold()
 			);
 		}
@@ -67,7 +67,7 @@ impl Sourcemap {
 
 		if let Some(output) = &self.output {
 			argon_info!(
-				"Successfully generated sourcemap of project: {} to: {}",
+				"Generated sourcemap of project: {} at: {}",
 				project_path.to_string().bold(),
 				output.to_string().bold()
 			);
@@ -81,10 +81,10 @@ impl Sourcemap {
 			}
 
 			let queue = core.queue();
-			queue.subscribe(1).unwrap();
+			queue.subscribe(0).unwrap();
 
 			loop {
-				let _message = queue.get(1).unwrap();
+				let _message = queue.get(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 				core.sourcemap(self.output.clone(), self.non_scripts)?;

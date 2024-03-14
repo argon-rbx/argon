@@ -70,3 +70,7 @@ pub fn get_free_port(host: &str, port: u16) -> u16 {
 
 	port
 }
+
+pub fn format_address(host: &str, port: u16) -> String {
+	format!("http://{}:{}", host, port)
+}

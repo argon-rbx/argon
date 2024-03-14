@@ -20,7 +20,7 @@ impl Studio {
 	pub fn main(self) -> Result<()> {
 		let studio_path = RobloxStudio::locate()?.application_path().to_owned();
 
-		argon_info!("Launching Roblox Studio");
+		argon_info!("Launching Roblox Studio..");
 
 		Command::new(studio_path)
 			.arg(self.path.unwrap_or_default())

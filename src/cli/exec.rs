@@ -62,7 +62,7 @@ impl Exec {
 	}
 
 	fn make_request(address: &String, code: &str) {
-		let url = format!("http://{}/exec", address);
+		let url = format!("{}/exec", address);
 
 		let data = json!({
 			"code": code,

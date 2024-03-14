@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use colored::Colorize;
 use reqwest::blocking::Client;
 
 use crate::{argon_info, argon_warn, logger::Table, sessions, util};
@@ -97,10 +98,10 @@ impl Stop {
 	}
 
 	fn make_request(address: &String, pid: u32) {
-		let url = format!("http://{}/stop", address);
+		let url = format!("{}/stop", address);
 
 		match Client::new().post(url).send() {
-			Ok(_) => argon_info!("Stopped Argon session {}", address),
+			Ok(_) => argon_info!("Stopped Argon session with address: {}", address.bold()),
 			Err(_) => {
 				Self::kill_process(pid);
 			}
@@ -109,6 +110,6 @@ impl Stop {
 
 	fn kill_process(pid: u32) {
 		util::kill_process(pid);
-		argon_info!("Stopped Argon process {}", pid.to_string())
+		argon_info!("Stopped Argon process with PID: {}", pid.to_string().bold())
 	}
 }
