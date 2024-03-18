@@ -9,42 +9,59 @@ const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/
 const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
 const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
 
+fn is_aftman() -> Result<bool> {
+	if let Some(parent) = env::current_exe()?.parent() {
+		if !parent.ends_with("bin") {
+			return Ok(false);
+		}
+
+		if let Some(parent) = parent.parent() {
+			if parent.ends_with(".aftman") {
+				return Ok(true);
+			}
+		}
+	}
+
+	Ok(false)
+}
+
 pub fn install() -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
-	let bin_dir = argon_dir.join("bin");
 	let templates_dir = argon_dir.join("templates");
 
 	if !argon_dir.exists() {
 		fs::create_dir(&argon_dir)?;
 	}
 
-	if !bin_dir.exists() {
-		fs::create_dir(&bin_dir)?;
-	}
-
 	if !templates_dir.exists() {
 		fs::create_dir(&templates_dir)?;
 	}
 
-	globenv::set_path(&bin_dir.to_string())?;
+	if !is_aftman()? {
+		let bin_dir = argon_dir.join("bin");
 
-	#[cfg(not(target_os = "windows"))]
-	let exe_path = bin_dir.join("argon");
+		if !bin_dir.exists() {
+			fs::create_dir(&bin_dir)?;
+		}
 
-	#[cfg(target_os = "windows")]
-	let exe_path = bin_dir.join("argon.exe");
+		globenv::set_path(&bin_dir.to_string())?;
 
-	if !exe_path.exists() {
-		let current_exe = env::current_exe()?;
+		#[cfg(not(target_os = "windows"))]
+		let exe_path = bin_dir.join("argon");
 
-		fs::copy(current_exe, &exe_path)?;
+		#[cfg(target_os = "windows")]
+		let exe_path = bin_dir.join("argon.exe");
 
-		let remove_exe = logger::prompt("Installation completed! Do you want to remove this executable?", true);
+		if !exe_path.exists() {
+			fs::copy(env::current_exe()?, &exe_path)?;
 
-		if remove_exe {
-			self_replace::self_delete()?;
+			let remove_exe = logger::prompt("Installation completed! Do you want to remove this executable?", true);
+
+			if remove_exe {
+				self_replace::self_delete()?;
+			}
 		}
 	}
 
