@@ -5,20 +5,23 @@ use std::{
 	env,
 	io::{self, IsTerminal},
 	mem::ManuallyDrop,
+	thread,
 };
 
-use argon::argon_error;
 use argon::cli::Cli;
 use argon::crash_handler;
 use argon::installer;
 use argon::logger;
+use argon::{argon_error, updater};
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
 fn main() {
 	crash_handler::hook();
 
-	let installation = installer::install();
+	let is_aftman = installer::is_aftman();
+	let installation = installer::install(is_aftman);
+
 	let cli = Cli::new();
 
 	let yes = cli.yes();
@@ -47,6 +50,12 @@ fn main() {
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
 		Err(err) => warn!("Failed to verify Argon installation: {}", err),
+	}
+
+	if !is_aftman {
+		thread::spawn(move || {
+			updater::check_for_updates().ok();
+		});
 	}
 
 	if cfg!(debug_assertions) && cli.profile() {

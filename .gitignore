@@ -1,7 +1,5 @@
 .DS_Store
-.vscode
 /target
-/test
 /sourcemap.json
 *.rbxm
 *.rbxmx

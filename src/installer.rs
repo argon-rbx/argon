@@ -1,6 +1,6 @@
 use anyhow::Result;
 use include_dir::{include_dir, Dir};
-use std::{env, fs, path::Path};
+use std::{env, ffi::OsStr, fs, path::Path};
 
 use crate::{ext::PathExt, logger, util};
 
@@ -9,23 +9,28 @@ const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/
 const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
 const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
 
-fn is_aftman() -> Result<bool> {
-	if let Some(parent) = env::current_exe()?.parent() {
-		if !parent.ends_with("bin") {
-			return Ok(false);
+pub fn is_aftman() -> bool {
+	let path = match env::current_exe() {
+		Ok(path) => path,
+		Err(_) => return false,
+	};
+
+	let mut last_comp = OsStr::new("");
+
+	for comp in path.components() {
+		let comp = comp.as_os_str();
+
+		if comp == "tool-storage" {
+			return last_comp == ".aftman";
 		}
 
-		if let Some(parent) = parent.parent() {
-			if parent.ends_with(".aftman") {
-				return Ok(true);
-			}
-		}
+		last_comp = comp;
 	}
 
-	Ok(false)
+	false
 }
 
-pub fn install() -> Result<()> {
+pub fn install(is_aftman: bool) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
@@ -39,7 +44,7 @@ pub fn install() -> Result<()> {
 		fs::create_dir(&templates_dir)?;
 	}
 
-	if !is_aftman()? {
+	if !is_aftman {
 		let bin_dir = argon_dir.join("bin");
 
 		if !bin_dir.exists() {
