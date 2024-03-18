@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  draft-release:
+    name: Draft Release
+    runs-on: ubuntu-latest
+
+    outputs:
+      upload_url: ${{ steps.create-release.outputs.upload_url }}
+      release_id: ${{ steps.create-release.outputs.id }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Changelog
+        id: read-changes
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          version: Unreleased
+
+      - name: Create Release
+        id: create-release
+        uses: shogo82148/actions-create-release@v1
+        with:
+          release_name: ${{ github.ref_name }}
+          body: ${{ steps.read-changes.outputs.changes }}
+          prerelease: ${{ contains(github.ref_name, 'pre') }}
+          draft: true
+
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    needs: draft-release
+
+    strategy:
+      matrix:
+        include:
+          # x86_64
+          - host: linux
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            label: linux-x86_64
+
+          - host: macos
+            os: macos-latest
+            target: x86_64-apple-darwin
+            label: macos-x86_64
+
+          - host: windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: windows-x86_64
+
+            # aarch64
+          - host: macos
+            os: macos-latest
+            target: aarch64-apple-darwin
+            label: macos-aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: hecrj/setup-rust-action@v2
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --verbose --target ${{ matrix.target }}
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir release
+
+          if [ "${{ matrix.host }}" = "windows" ]; then
+            cp "target/${{ matrix.target }}/release/argon.exe" release/
+            cd release
+            7z a ../release.zip *
+          else
+            cp "target/${{ matrix.target }}/release/argon" release/
+            cd release
+            zip ../release.zip *
+          fi
+
+      - name: Upload to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: argon-${{ github.ref_name }}-${{ matrix.label }}.zip
+          path: release.zip
+
+      - name: Upload to Release
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ needs.draft-release.outputs.upload_url }}
+          asset_name: argon-${{ github.ref_name }}-${{ matrix.label }}.zip
+          asset_path: release.zip
+
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update Changelog
+        uses: thomaseizinger/keep-a-changelog-new-release@v2
+        with:
+          tag: ${{ github.ref_name }}
+
+      - name: Bump Cargo version
+        uses: DervexDev/file-version-bumper@v1
+        with:
+          path: ./Cargo.toml
+
+      - name: Update Cargo lock
+        run: cargo update --workspace
+
+      - name: Commit and Push
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: Bump Version to ${{ github.ref_name }}
+          default_author: github_actions
+
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [bump, draft-release]
+
+    steps:
+      - uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.draft-release.outputs.release_id }}
