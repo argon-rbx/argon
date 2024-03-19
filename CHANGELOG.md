@@ -6,34 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.0-pre3] - 2024-03-19
+
 ### Changed
 
-- `run_async` option is now disabled by default
+-   `run_async` option is now disabled by default
 
 ### Improved
 
-- Free port searching speed
-- Subcommand descriptions
+-   Free port searching speed
+-   Subcommand descriptions
 
 ### Fixed
 
-- Path canonicalization on Windows
-- Session management on Windows
-- Crash reporting on Windows
-- Release workflow
+-   Path canonicalization on Windows
+-   Session management on Windows
+-   Crash reporting on Windows
+-   Release workflow
 
 ## [2.0.0-pre2] - 2024-03-18
 
 ### Fixed
 
-- Argon installer not working properly with GitHub Actions
+-   Argon installer not working properly with GitHub Actions
 
 ## [2.0.0-pre1] - 2024-03-18
 
 ### Added
 
-- Brand new Argon CLI, written in Rust
+-   Brand new Argon CLI, written in Rust
 
-[Unreleased]: https://github.com/argon-rbx/argon/compare/2.0.0-pre2...HEAD
+[Unreleased]: https://github.com/argon-rbx/argon/compare/2.0.0-pre3...HEAD
+
+[2.0.0-pre3]: https://github.com/argon-rbx/argon/compare/2.0.0-pre2...2.0.0-pre3
+
 [2.0.0-pre2]: https://github.com/argon-rbx/argon/compare/2.0.0-pre1...2.0.0-pre2
+
 [2.0.0-pre1]: https://github.com/argon-rbx/argon/compare/3057ca895492519fc29e7ab0bd8bdebc86d3e53c...2.0.0-pre1
