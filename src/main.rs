@@ -74,7 +74,7 @@ fn main() {
 	}
 
 	match cli.main() {
-		Ok(()) => info!("Successfully executed command!"),
+		Ok(()) => debug!("Successfully executed command!"),
 		Err(err) => argon_error!("Command execution failed: {}", err),
 	};
 }

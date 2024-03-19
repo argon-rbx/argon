@@ -5,7 +5,7 @@ use std::{
 	collections::HashMap,
 	fs,
 	path::{Path, PathBuf},
-	process,
+	process, thread,
 };
 
 use crate::util;
@@ -29,7 +29,7 @@ impl Session {
 	}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Sessions {
 	last_session: String,
 	active_sessions: HashMap<String, Session>,
@@ -63,13 +63,13 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 	let sessions = toml::from_str::<Sessions>(&sessions_toml);
 
 	match sessions {
-		Err(_) => {
-			warn!("Session data file is corrupted! Creating new one..");
-			create_empty(path)
-		}
 		Ok(sessions) => {
 			trace!("Session data parsed");
 			Ok(sessions)
+		}
+		Err(_) => {
+			warn!("Session data file is corrupted! Creating new one..");
+			create_empty(path)
 		}
 	}
 }
@@ -77,13 +77,14 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32, spawn: bool) -> Result<()> {
 	let path = get_path()?;
 	let mut sessions = get_sessions(&path)?;
+
 	let session = Session { host, port, pid };
-	let id = id.unwrap_or(generate_id()?);
+	let id = id.unwrap_or(generate_id(&sessions));
 
 	sessions.last_session = id.clone();
 	sessions.active_sessions.insert(id, session.clone());
 
-	fs::write(path, toml::to_string(&sessions)?)?;
+	fs::write(&path, toml::to_string(&sessions)?)?;
 
 	if !spawn {
 		ctrlc::set_handler(move || {
@@ -94,6 +95,14 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 			process::exit(0);
 		})?;
 	}
+
+	// Schedule manual cleanup of old sessions
+	// as ctrlc handler does not work on Windows
+	#[cfg(target_os = "windows")]
+	thread::spawn(move || match cleanup(sessions, &path) {
+		Ok(()) => trace!("Session cleanup completed"),
+		Err(err) => warn!("Failed to cleanup sessions: {}", err),
+	});
 
 	Ok(())
 }
@@ -166,17 +175,26 @@ pub fn remove_all() -> Result<()> {
 	Ok(())
 }
 
-pub fn generate_id() -> Result<String> {
-	let path = get_path()?;
-	let sessions = get_sessions(&path)?;
+fn cleanup(mut sessions: Sessions, path: &Path) -> Result<()> {
+	for (id, session) in sessions.active_sessions.clone() {
+		if !util::process_exists(session.pid) {
+			sessions.active_sessions.remove(&id);
+		}
+	}
 
+	fs::write(path, toml::to_string(&sessions)?)?;
+
+	Ok(())
+}
+
+fn generate_id(sessions: &Sessions) -> String {
 	let mut index = 0;
 
 	loop {
 		let id = index.to_string();
 
 		if !sessions.active_sessions.contains_key(&id) {
-			return Ok(id);
+			return id;
 		}
 
 		index += 1;

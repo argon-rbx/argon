@@ -5,7 +5,7 @@ use std::{
 	env,
 	io::{Error, ErrorKind},
 	path::{Path, PathBuf},
-	process::{Child, Command, Output},
+	process::{Child, Command, Output, Stdio},
 };
 
 use crate::{argon_error, ext::WriteStyleExt, logger, util};
@@ -128,8 +128,8 @@ impl Program {
 		command.current_dir(self.current_dir.clone()).args(self.args.clone());
 
 		if util::get_verbosity() == LevelFilter::Off {
-			command.stdout(std::process::Stdio::null());
-			command.stderr(std::process::Stdio::null());
+			command.stdout(Stdio::null());
+			command.stderr(Stdio::null());
 		}
 
 		command

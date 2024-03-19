@@ -108,7 +108,7 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
-	trace!("Snapshot of {} created", path.display());
+	trace!("Creating snapshot of {}", path.display());
 
 	if vfs.is_file(path) {
 		// Get a snapshot of a file that is child source or data

@@ -2,7 +2,7 @@ use actix_web::{
 	web::{self, Data},
 	App, HttpServer, Responder,
 };
-use std::{io::Result, net::TcpStream, sync::Arc};
+use std::{io::Result, net::TcpListener, sync::Arc};
 
 use crate::core::Core;
 
@@ -60,7 +60,7 @@ impl Server {
 }
 
 pub fn is_port_free(host: &str, port: u16) -> bool {
-	TcpStream::connect((host, port)).is_err()
+	TcpListener::bind((host, port)).is_ok()
 }
 
 pub fn get_free_port(host: &str, port: u16) -> u16 {

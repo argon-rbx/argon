@@ -90,7 +90,7 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		.with_properties(properties);
 
 	if let Some(node_path) = node.path {
-		let path = path.join(node_path);
+		let path = path.join(path_clean::clean(node_path));
 
 		if path.is_file() {
 			vfs.watch(&path)?;

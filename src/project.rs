@@ -116,11 +116,7 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
-	let mut path = path.resolve()?;
-
-	if path.exists() {
-		path = path.canonicalize()?;
-	}
+	let path = path_clean::clean(path.resolve()?);
 
 	if path.is_file() || path.get_file_name().ends_with(".project.json") {
 		return Ok(path);

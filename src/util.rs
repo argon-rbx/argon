@@ -57,12 +57,37 @@ pub fn kill_process(pid: u32) {
 
 	// Kill both main and child processes
 	#[cfg(target_os = "windows")]
-	Command::new("taskkill")
-		.arg("/f")
-		.arg("/t")
-		.args(["/pid", &pid.to_string()])
+	Command::new("TASKKILL")
+		.arg("/F")
+		.arg("/T")
+		.args(["/PID", &pid.to_string()])
 		.output()
 		.ok();
+}
+
+pub fn process_exists(pid: u32) -> bool {
+	#[cfg(not(target_os = "windows"))]
+	{
+		if let Ok(output) = Command::new("kill").arg("-0").arg(pid.to_string()).output() {
+			output.status.success()
+		} else {
+			false
+		}
+	}
+
+	#[cfg(target_os = "windows")]
+	{
+		let output = Command::new("TASKLIST")
+			.arg("/NH")
+			.args(["/FI", &format!("PID eq {}", pid)])
+			.output();
+
+		if let Ok(output) = output {
+			String::from_utf8_lossy(&output.stdout).contains("argon.exe")
+		} else {
+			false
+		}
+	}
 }
 
 /// Returns the `RUST_VERBOSE` environment variable
