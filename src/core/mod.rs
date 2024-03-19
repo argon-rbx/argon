@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use log::trace;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
@@ -32,14 +33,22 @@ impl Core {
 	pub fn new(project: Project, watch: bool) -> Result<Self> {
 		profiling::start_frame!();
 
+		trace!("Initializing VFS");
+
 		let vfs = Vfs::new(watch);
+
+		trace!("Snapshotting root project");
 
 		let meta = Meta::from_project(&project);
 		let snapshot = new_snapshot(&project.path, &meta, &vfs)?;
 
+		trace!("Building Tree and Queue");
+
 		let vfs = Arc::new(vfs);
 		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
 		let queue = Arc::new(Queue::new());
+
+		trace!("Starting Processor");
 
 		let project = Arc::new(Mutex::new(project));
 		let processor = Arc::new(Processor::new(
@@ -48,6 +57,8 @@ impl Core {
 			vfs.clone(),
 			project.clone(),
 		));
+
+		trace!("Core initialized successfully!");
 
 		Ok(Core {
 			project,

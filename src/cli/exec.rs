@@ -6,7 +6,7 @@ use std::{fs, path::MAIN_SEPARATOR};
 
 use crate::{argon_error, argon_info, sessions};
 
-/// Execute Luau code in Roblox Studio
+/// Execute Luau code in Roblox Studio (requires running session)
 #[derive(Parser)]
 pub struct Exec {
 	/// Luau code to execute (can be file path)

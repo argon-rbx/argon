@@ -16,7 +16,7 @@ use crate::{
 	sessions,
 };
 
-/// Run Argon, start local server and looking for file changes
+/// Start local server and listen for file changes
 #[derive(Parser)]
 pub struct Run {
 	/// Project path
@@ -52,7 +52,7 @@ impl Run {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
-		if !self.argon_spawn && config.spawn {
+		if !self.argon_spawn && config.run_async {
 			return self.spawn();
 		}
 
@@ -147,7 +147,7 @@ impl Run {
 			Some(host.clone()),
 			Some(port),
 			process::id(),
-			config.spawn,
+			config.run_async,
 		)?;
 
 		let server = Server::new(core, &host, port);

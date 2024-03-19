@@ -47,7 +47,7 @@ impl Sourcemap {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
-		if self.watch && !self.argon_spawn && config.spawn {
+		if self.watch && !self.argon_spawn && config.run_async {
 			return self.spawn();
 		}
 
@@ -74,7 +74,7 @@ impl Sourcemap {
 		}
 
 		if self.watch {
-			sessions::add(self.session, None, None, process::id(), config.spawn)?;
+			sessions::add(self.session, None, None, process::id(), config.run_async)?;
 
 			if self.output.is_some() {
 				argon_info!("Watching for changes..");

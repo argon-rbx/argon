@@ -5,7 +5,7 @@ use reqwest::blocking::Client;
 
 use crate::{argon_info, argon_warn, logger::Table, sessions, util};
 
-/// Stop Argon session by port or all running sessions
+/// Stop Argon session by address, ID or all running sessions
 #[derive(Parser)]
 pub struct Stop {
 	/// Session indentifier

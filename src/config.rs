@@ -26,10 +26,10 @@ pub struct Config {
 	/// Default project license
 	pub license: String,
 	/// Spawn Argon as child process, freeing up the terminal
-	pub spawn: bool,
+	pub run_async: bool,
 	/// Scan for the first available port if the default is taken
 	pub scan_ports: bool,
-	/// Automatically detect if project is roblox-ts
+	/// Automatically detect project type
 	pub auto_detect: bool,
 	/// Use git for source control
 	pub use_git: bool,
@@ -50,7 +50,7 @@ impl Default for Config {
 			port: 8000,
 			template: String::from("place"),
 			license: String::from("Apache-2.0"),
-			spawn: true,
+			run_async: false,
 			scan_ports: true,
 			auto_detect: true,
 			use_git: true,

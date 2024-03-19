@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::{argon_error, argon_info, config::Config, ext::PathExt, project, workspace};
 
-/// Initialize new Argon project
+/// Initialize a new Argon project
 #[derive(Parser)]
 pub struct Init {
 	/// Project path

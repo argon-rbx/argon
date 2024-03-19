@@ -5,8 +5,11 @@ use std::{
 	collections::HashMap,
 	fs,
 	path::{Path, PathBuf},
-	process, thread,
+	process,
 };
+
+#[cfg(target_os = "windows")]
+use std::thread;
 
 use crate::util;
 
@@ -175,6 +178,7 @@ pub fn remove_all() -> Result<()> {
 	Ok(())
 }
 
+#[allow(dead_code)] // Windows only
 fn cleanup(mut sessions: Sessions, path: &Path) -> Result<()> {
 	for (id, session) in sessions.active_sessions.clone() {
 		if !util::process_exists(session.pid) {

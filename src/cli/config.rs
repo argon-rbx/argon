@@ -6,7 +6,7 @@ use std::fs::File;
 
 use crate::{argon_info, config::Config as GlobalConfig, exit, ext::PathExt, logger, util};
 
-/// Edit global config with default editor
+/// Edit global config with default editor or CLI
 #[derive(Parser)]
 pub struct Config {
 	/// Setting to change (if left empty config will be opened)

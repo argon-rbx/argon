@@ -16,7 +16,7 @@ use crate::{
 	sessions,
 };
 
-/// Build project into Roblox place or model
+/// Build project into Roblox binary or XML place or model
 #[derive(Parser)]
 pub struct Build {
 	/// Project path
@@ -60,7 +60,7 @@ impl Build {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
-		if self.watch && !self.argon_spawn && config.spawn {
+		if self.watch && !self.argon_spawn && config.run_async {
 			return self.spawn();
 		}
 
@@ -188,7 +188,7 @@ impl Build {
 					.spawn()?;
 			}
 
-			sessions::add(self.session, None, None, process::id(), config.spawn)?;
+			sessions::add(self.session, None, None, process::id(), config.run_async)?;
 
 			argon_info!("Watching for changes..");
 

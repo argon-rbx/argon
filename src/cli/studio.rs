@@ -8,7 +8,7 @@ use std::{
 
 use crate::argon_info;
 
-/// Launch new instance of Roblox Studio
+/// Launch a new instance of Roblox Studio
 #[derive(Parser)]
 pub struct Studio {
 	/// Path to place or model to open

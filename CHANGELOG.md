@@ -1,18 +1,26 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), that adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `run_async` option is now disabled by default
+
 ### Improved
 
-- Faster free port search
+- Free port searching speed
+- Subcommand descriptions
 
 ### Fixed
 
 - Path canonicalization on Windows
 - Session management on Windows
+- Crash reporting on Windows
+- Release workflow
 
 ## [2.0.0-pre2] - 2024-03-18
 
