@@ -56,7 +56,7 @@ jobs:
         id: read-changes
         uses: mindsers/changelog-reader-action@v2
         with:
-          version: Unreleased
+          version: ${{ github.ref_name }}
 
       - name: Create Release
         id: create-release
