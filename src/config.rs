@@ -9,26 +9,29 @@ use toml;
 
 use crate::{logger::Table, util};
 
-// To add new Config value:
-//
-// 1. Add field to Config struct (with description)
-// 2. Set default value in the Default impl
-
 #[optfield(GlobalConfig, merge_fn, attrs = (derive(Deserialize)))]
 #[derive(Clone, Deserialize, DocumentedFields, Val, Iter, Get, Set)]
 pub struct Config {
 	/// Default server host name
 	pub host: String,
-	/// Default server port
+	/// Default server port number
 	pub port: u16,
-	/// Default project template
+	/// Default project template (place, model, etc.)
 	pub template: String,
-	/// Default project license
+	/// Default project license (SPDX identifier)
 	pub license: String,
-	/// Spawn Argon as child process, freeing up the terminal
+	/// Run Argon asynchronously, freeing up the terminal
 	pub run_async: bool,
-	/// Scan for the first available port if the default is taken
+	/// Scan for the first available port if selected one is in use
 	pub scan_ports: bool,
+	/// Check for new Argon releases on startup
+	pub check_updates: bool,
+	/// Automatically install Argon updates if available
+	pub auto_update: bool,
+	/// Install Roblox plugin locally and keep it updated
+	pub install_plugin: bool,
+	/// Share anonymous Argon usage statistics with the community
+	pub share_stats: bool,
 	/// Automatically detect project type
 	pub auto_detect: bool,
 	/// Use git for source control
@@ -52,6 +55,10 @@ impl Default for Config {
 			license: String::from("Apache-2.0"),
 			run_async: false,
 			scan_ports: true,
+			check_updates: true,
+			auto_update: false,
+			install_plugin: true,
+			share_stats: true,
 			auto_detect: true,
 			use_git: true,
 			use_wally: false,
@@ -76,9 +83,9 @@ impl Config {
 
 	pub fn save(&self) -> Result<()> {
 		let home_dir = util::get_home_dir()?;
-		let config_dir = home_dir.join(".argon").join("config.toml");
+		let path = home_dir.join(".argon").join("config.toml");
 
-		fs::write(config_dir, toml::to_string(self)?)?;
+		fs::write(path, toml::to_string(self)?)?;
 
 		Ok(())
 	}
@@ -104,10 +111,10 @@ impl Config {
 
 	fn read_toml(&mut self) -> Result<()> {
 		let home_dir = util::get_home_dir()?;
-		let config_dir = home_dir.join(".argon").join("config.toml");
+		let path = home_dir.join(".argon").join("config.toml");
 
-		let config_toml = fs::read_to_string(config_dir)?;
-		let config: GlobalConfig = toml::from_str(&config_toml)?;
+		let config_toml = fs::read_to_string(path)?;
+		let config = toml::from_str(&config_toml)?;
 
 		self.merge_opt(config);
 

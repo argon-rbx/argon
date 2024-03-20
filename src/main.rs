@@ -8,11 +8,11 @@ use std::{
 	thread,
 };
 
-use argon::cli::Cli;
 use argon::crash_handler;
 use argon::installer;
 use argon::logger;
 use argon::{argon_error, updater};
+use argon::{cli::Cli, config::Config};
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
@@ -52,18 +52,29 @@ fn main() {
 		Err(err) => warn!("Failed to verify Argon installation: {}", err),
 	}
 
-	if !is_aftman {
-		thread::spawn(move || {
-			updater::check_for_updates().ok();
-		});
-	}
+	let handle = thread::spawn(move || {
+		if !is_aftman {
+			let config = Config::load();
+
+			if config.check_updates {
+				match updater::check_for_updates(config.install_plugin, !config.auto_update) {
+					Ok(()) => info!("Update check completed successfully!"),
+					Err(err) => warn!("Update check failed: {}", err),
+				}
+			}
+
+			if config.share_stats {
+				// TODO
+			}
+		}
+	});
 
 	if cfg!(debug_assertions) && cli.profile() {
 		match Server::new(PROFILER_ADDRESS) {
 			Ok(server) => {
 				let _ = ManuallyDrop::new(server);
 
-				debug!("Profiler started at {}", PROFILER_ADDRESS);
+				info!("Profiler started at {}", PROFILER_ADDRESS);
 			}
 			Err(err) => {
 				error!("Failed to start profiler: {}", err);
@@ -77,4 +88,6 @@ fn main() {
 		Ok(()) => debug!("Successfully executed command!"),
 		Err(err) => argon_error!("Command execution failed: {}", err),
 	};
+
+	handle.join().ok();
 }

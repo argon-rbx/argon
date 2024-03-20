@@ -1,5 +1,8 @@
 [package]
 name = "config-derive"
+authors = ["Dervex"]
+description = "Macros to speed up your Config struct processing"
+license = "Apache-2.0"
 version = "0.1.0"
 edition = "2021"
 

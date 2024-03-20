@@ -77,7 +77,7 @@ fn get_sessions(path: &Path) -> Result<Sessions> {
 	}
 }
 
-pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32, spawn: bool) -> Result<()> {
+pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32, run_async: bool) -> Result<()> {
 	let path = get_path()?;
 	let mut sessions = get_sessions(&path)?;
 
@@ -89,7 +89,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 
 	fs::write(&path, toml::to_string(&sessions)?)?;
 
-	if !spawn {
+	if !run_async {
 		ctrlc::set_handler(move || {
 			match remove(&session) {
 				Ok(()) => trace!("Session entry removed"),

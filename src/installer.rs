@@ -1,5 +1,6 @@
 use anyhow::Result;
 use include_dir::{include_dir, Dir};
+use self_update::self_replace;
 use std::{env, ffi::OsStr, fs, path::Path};
 
 use crate::{ext::PathExt, logger, util};
