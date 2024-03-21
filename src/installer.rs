@@ -1,9 +1,10 @@
 use anyhow::Result;
+use colored::Colorize;
 use include_dir::{include_dir, Dir};
-use self_update::self_replace;
-use std::{env, ffi::OsStr, fs, path::Path};
+use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
+use std::{env, fs, path::Path};
 
-use crate::{ext::PathExt, logger, util};
+use crate::{argon_info, ext::PathExt, logger, updater, util};
 
 const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/place");
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
@@ -16,22 +17,10 @@ pub fn is_aftman() -> bool {
 		Err(_) => return false,
 	};
 
-	let mut last_comp = OsStr::new("");
-
-	for comp in path.components() {
-		let comp = comp.as_os_str();
-
-		if comp == "tool-storage" {
-			return last_comp == ".aftman";
-		}
-
-		last_comp = comp;
-	}
-
-	false
+	path.contains(&[".aftman", "tool-storage"])
 }
 
-pub fn install(is_aftman: bool) -> Result<()> {
+pub fn verify(is_aftman: bool) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
@@ -94,6 +83,38 @@ pub fn install(is_aftman: bool) -> Result<()> {
 	if !model_template.exists() {
 		fs::create_dir(&model_template)?;
 		install_template(&MODEL_TEMPLATE, &model_template)?;
+	}
+
+	Ok(())
+}
+
+pub fn install_plugin(path: &Path) -> Result<()> {
+	let style = util::get_progress_style();
+
+	let update = Update::configure()
+		.repo_owner("argon-rbx")
+		.repo_name("argon-roblox")
+		.bin_name("Argon.rbxm")
+		.target("")
+		.no_confirm(true)
+		.show_output(false)
+		.show_download_progress(true)
+		.set_progress_style(style.0, style.1)
+		.bin_install_path(path)
+		.build()?;
+
+	match update.download()? {
+		UpdateStatus::Updated(release) => {
+			argon_info!("Installed Argon plugin, version: {}", release.version.bold());
+
+			if path.contains(&["Roblox", "Plugins"]) {
+				let mut status = updater::get_status()?;
+				status.plugin_version = release.version;
+
+				updater::set_staus(&status)?;
+			}
+		}
+		_ => unreachable!(),
 	}
 
 	Ok(())

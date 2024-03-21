@@ -122,11 +122,6 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 		return Ok(path);
 	}
 
-	let argon_project = path.join(".argon.project.json");
-	if argon_project.exists() {
-		return Ok(argon_project);
-	}
-
 	let default_project = path.join("default.project.json");
 	if default_project.exists() {
 		return Ok(default_project);
@@ -137,6 +132,6 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	if let Some(path) = Glob::from_path(&glob)?.first() {
 		Ok(path)
 	} else {
-		Ok(path.join(".argon.project.json"))
+		Ok(path.join("default.project.json"))
 	}
 }

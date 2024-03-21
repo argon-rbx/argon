@@ -83,7 +83,7 @@ pub trait ReleaseUpdate {
 	fn get_release_version(&self, ver: &str) -> Result<Release>;
 
 	/// Current version of binary being updated
-	fn current_version(&self) -> String;
+	fn current_version(&self) -> Option<String>;
 
 	/// Target platform the update is being performed for
 	fn target(&self) -> String;
@@ -150,7 +150,7 @@ pub trait ReleaseUpdate {
 	fn update(&self) -> Result<Status> {
 		let current_version = self.current_version();
 		self.update_extended()
-			.map(|s| s.into_status(current_version))
+			.map(|s| s.into_status(current_version.unwrap_or(String::from("0.0.0"))))
 	}
 
 	/// Same as `update`, but returns `UpdateStatus`.
@@ -158,20 +158,21 @@ pub trait ReleaseUpdate {
 		let bin_install_path = self.bin_install_path();
 		let bin_name = self.bin_name();
 
-		let current_version = self.current_version();
 		let target = self.target();
 		let show_output = self.show_output();
 		println(show_output, &format!("Checking target-arch... {}", target));
-		println(
-			show_output,
-			&format!("Checking current version... v{}", current_version),
-		);
 
 		let release = match self.target_version() {
 			None => {
 				print_flush(show_output, "Checking latest released version... ")?;
 				let release = self.get_latest_release()?;
-				{
+
+				if let Some(current_version) = self.current_version() {
+					println(
+						show_output,
+						&format!("Checking current version... v{}", current_version),
+					);
+
 					println(show_output, &format!("v{}", release.version));
 
 					if !version::bump_is_greater(&current_version, &release.version)? {
@@ -196,6 +197,7 @@ pub trait ReleaseUpdate {
 						&format!("New release is {}compatible", qualifier),
 					);
 				}
+
 				release
 			}
 			Some(ref ver) => {
@@ -261,20 +263,21 @@ pub trait ReleaseUpdate {
 		let bin_install_path = self.bin_install_path();
 		let bin_name = self.bin_name();
 
-		let current_version = self.current_version();
 		let target = self.target();
 		let show_output = self.show_output();
 		println(show_output, &format!("Checking target-arch... {}", target));
-		println(
-			show_output,
-			&format!("Checking current version... v{}", current_version),
-		);
 
 		let release = match self.target_version() {
 			None => {
 				print_flush(show_output, "Checking latest released version... ")?;
 				let release = self.get_latest_release()?;
-				{
+
+				if let Some(current_version) = self.current_version() {
+					println(
+						show_output,
+						&format!("Checking current version... v{}", current_version),
+					);
+
 					println(show_output, &format!("v{}", release.version));
 
 					if !version::bump_is_greater(&current_version, &release.version)? {
@@ -299,6 +302,7 @@ pub trait ReleaseUpdate {
 						&format!("New release is {}compatible", qualifier),
 					);
 				}
+
 				release
 			}
 			Some(ref ver) => {

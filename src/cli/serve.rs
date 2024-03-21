@@ -18,7 +18,7 @@ use crate::{
 
 /// Start local server and listen for file changes
 #[derive(Parser)]
-pub struct Run {
+pub struct Serve {
 	/// Project path
 	#[arg()]
 	project: Option<PathBuf>,
@@ -48,7 +48,7 @@ pub struct Run {
 	argon_spawn: bool,
 }
 
-impl Run {
+impl Serve {
 	pub fn main(self) -> Result<()> {
 		let config = Config::load();
 
@@ -74,6 +74,11 @@ impl Run {
 		}
 
 		let project = Project::load(&project_path)?;
+
+		if !project.is_place() {
+			exit!("Cannot serve non-place project!");
+		}
+
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
 
 		if use_ts {
@@ -153,7 +158,7 @@ impl Run {
 		let server = Server::new(core, &host, port);
 
 		argon_info!(
-			"Running on: {}, project: {}",
+			"Serving on: {}, project: {}",
 			server::format_address(&host, port).bold(),
 			project_path.to_string().bold()
 		);

@@ -11,7 +11,6 @@ use crate::{ext::PathExt, glob::Glob, middleware::FileType, project::Project};
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
 	pub file_type: FileType,
-	pub path: PathBuf,
 	pub name: String,
 }
 
@@ -62,30 +61,6 @@ impl SyncRule {
 
 	// Matching and resolving
 
-	pub fn matches(&self, path: &Path) -> bool {
-		if let Some(pattern) = &self.pattern {
-			let path = path.strip_prefix(path.get_parent()).unwrap();
-
-			if pattern.matches_path(path) {
-				return !self.is_excluded(path);
-			}
-		}
-
-		false
-	}
-
-	pub fn matches_child(&self, path: &Path) -> bool {
-		if let Some(child_pattern) = &self.child_pattern {
-			let path = path.strip_prefix(path.get_parent()).unwrap();
-
-			if child_pattern.matches_path(path) {
-				return !self.is_excluded(path);
-			}
-		}
-
-		false
-	}
-
 	pub fn is_excluded(&self, path: &Path) -> bool {
 		self.exclude.iter().any(|exclude| exclude.matches_path(path))
 	}
@@ -99,13 +74,11 @@ impl SyncRule {
 		}
 	}
 
-	/// `path` should be a file
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
 		if let Some(pattern) = &self.pattern {
-			if pattern.matches_path(path) && !self.is_excluded(path) {
+			if pattern.matches_path(path) && !self.is_excluded(path) && self.file_type != FileType::InstanceData {
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
-					path: path.to_owned(),
 					name: self.get_name(path),
 				});
 			}
@@ -114,23 +87,17 @@ impl SyncRule {
 		None
 	}
 
-	/// `path` should be a directory
 	pub fn resolve_child(&self, path: &Path) -> Option<ResolvedSyncRule> {
 		if let Some(child_pattern) = &self.child_pattern {
-			let path = path.join(child_pattern.as_str());
-			let child_pattern = Glob::from_path(&path).unwrap();
+			let stripped_path = path.strip_prefix(path.get_parent()).unwrap();
 
-			if let Some(path) = child_pattern.first() {
-				if self.is_excluded(&path) {
-					return None;
-				}
-
-				let name = path.get_parent().get_file_name();
-
+			if child_pattern.matches_path(stripped_path)
+				&& !self.is_excluded(path)
+				&& self.file_type != FileType::InstanceData
+			{
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
-					name: name.to_owned(),
-					path,
+					name: path.get_parent().get_file_name().to_owned(),
 				});
 			}
 		}
@@ -192,9 +159,6 @@ pub struct Meta {
 	pub ignore_rules: Vec<IgnoreRule>,
 	/// Project data that is included in the project node in `*.project.json`
 	pub project_data: Option<ProjectData>,
-	/// List of paths that already have been processed by the middleware,
-	/// used for computing `.src.*` files in `new_snapshot_file_child`
-	pub processed_paths: Vec<PathBuf>,
 }
 
 impl PartialEq for Meta {
@@ -213,7 +177,6 @@ impl Meta {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
 			project_data: None,
-			processed_paths: Vec::new(),
 		}
 	}
 
@@ -236,7 +199,6 @@ impl Meta {
 			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Self::default().sync_rules),
 			ignore_rules,
 			project_data: Some(project_data),
-			..Self::new()
 		}
 	}
 
@@ -252,11 +214,6 @@ impl Meta {
 
 	pub fn with_project_data(mut self, project_data: ProjectData) -> Self {
 		self.project_data = Some(project_data);
-		self
-	}
-
-	pub fn with_processed_path(mut self, path: &Path) -> Self {
-		self.processed_paths.push(path.to_owned());
 		self
 	}
 
@@ -312,10 +269,6 @@ impl Meta {
 		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
 	}
 
-	pub fn was_processed(&self, path: &Path) -> bool {
-		self.processed_paths.contains(&path.to_owned())
-	}
-
 	pub fn get_sync_rule(&self, file_type: &FileType) -> Option<&SyncRule> {
 		self.sync_rules.iter().find(|rule| &rule.file_type == file_type)
 	}
@@ -337,10 +290,6 @@ impl Debug for Meta {
 			debug.field("project_data", project_data);
 		}
 
-		if !self.processed_paths.is_empty() {
-			debug.field("processed_paths", &self.processed_paths);
-		}
-
 		debug.finish()
 	}
 }
@@ -348,9 +297,15 @@ impl Debug for Meta {
 impl Default for Meta {
 	fn default() -> Self {
 		let sync_rules = vec![
-			SyncRule::new(FileType::Project).with_child_pattern("*.project.json"),
-			SyncRule::new(FileType::InstanceData).with_child_pattern(".data.json"),
-			SyncRule::new(FileType::InstanceData).with_child_pattern("init.meta.json"), // Rojo
+			SyncRule::new(FileType::Project)
+				.with_pattern("*.project.json")
+				.with_child_pattern("default.project.json"),
+			SyncRule::new(FileType::InstanceData)
+				.with_pattern("*.data.json")
+				.with_child_pattern(".data.json"),
+			SyncRule::new(FileType::InstanceData) // Rojo
+				.with_pattern("*.data.json")
+				.with_child_pattern("init.meta.json"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Argon scripts
 			SyncRule::new(FileType::ServerScript)

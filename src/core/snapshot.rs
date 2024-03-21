@@ -10,7 +10,6 @@ use std::{
 };
 
 use super::meta::Meta;
-use crate::middleware::FileType;
 
 #[derive(Clone, Serialize)]
 pub struct Snapshot {
@@ -22,8 +21,6 @@ pub struct Snapshot {
 	pub meta: Option<Meta>,
 	#[serde(skip)]
 	pub paths: Vec<PathBuf>,
-	#[serde(skip)]
-	pub file_type: Option<FileType>,
 
 	// Roblox related
 	pub name: String,
@@ -40,7 +37,6 @@ impl Snapshot {
 			id: None,
 			meta: None,
 			paths: Vec::new(),
-			file_type: None,
 			name: String::from(""),
 			class: String::from("Folder"),
 			properties: HashMap::new(),
@@ -63,28 +59,7 @@ impl Snapshot {
 		self
 	}
 
-	pub fn with_paths(mut self, paths: Vec<PathBuf>) -> Self {
-		// Projects should have their original paths kept
-		if self.is_project() {
-			self.extend_paths(paths);
-			return self;
-		}
-
-		self.paths = paths;
-		self
-	}
-
-	pub fn with_file_type(mut self, file_type: FileType) -> Self {
-		self.file_type = Some(file_type);
-		self
-	}
-
 	pub fn with_name(mut self, name: &str) -> Self {
-		// Projects should not have their name overwritten
-		if self.is_project() {
-			return self;
-		}
-
 		self.name = name.to_owned();
 		self
 	}
@@ -126,10 +101,6 @@ impl Snapshot {
 
 	pub fn set_paths(&mut self, paths: Vec<PathBuf>) {
 		self.paths = paths;
-	}
-
-	pub fn set_file_type(&mut self, file_type: FileType) {
-		self.file_type = Some(file_type);
 	}
 
 	pub fn set_name(&mut self, name: &str) {
@@ -236,16 +207,6 @@ impl Snapshot {
 		}
 
 		walk(id, &mut raw_dom)
-	}
-
-	fn is_project(&self) -> bool {
-		if let Some(file_type) = &self.file_type {
-			if *file_type == FileType::Project {
-				return true;
-			}
-		}
-
-		false
 	}
 }
 

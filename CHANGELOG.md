@@ -8,8 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `plugin` subcommand that installs Argon plugin locally
 - Argon CLI and plugin updater
 - More customization with global config
+
+### Changed
+
+- `run` subcommand is now `serve`
+- Changed default project name from `.argon.project.json` to `default.project.json`
+
+### Fixed
+
+- Sync rules no longer ignore specified project path, reported by [@Arid](https://github.com/AridAjd)
 
 ## [2.0.0-pre3] - 2024-03-19
 

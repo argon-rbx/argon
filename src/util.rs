@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use colored::Colorize;
 use directories::UserDirs;
 use env_logger::WriteStyle;
 use log::LevelFilter;
@@ -88,6 +89,17 @@ pub fn process_exists(pid: u32) -> bool {
 			false
 		}
 	}
+}
+
+/// Returns progress bar styling
+pub fn get_progress_style() -> (String, String) {
+	let mut template = match get_log_style() {
+		WriteStyle::Always => "PROGRESS: ".magenta().bold().to_string(),
+		_ => "PROGRESS: ".to_string(),
+	};
+	template.push_str("[{bar:40}] ({bytes}/{total_bytes})");
+
+	(template, String::from("=>-"))
 }
 
 /// Returns the `RUST_VERBOSE` environment variable

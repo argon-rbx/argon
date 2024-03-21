@@ -12,7 +12,8 @@ mod config;
 mod doc;
 mod exec;
 mod init;
-mod run;
+mod plugin;
+mod serve;
 mod sourcemap;
 mod stop;
 mod studio;
@@ -135,12 +136,13 @@ impl Cli {
 	pub fn main(self) -> Result<()> {
 		match self.command {
 			Commands::Init(command) => command.main(),
-			Commands::Run(command) => command.main(),
+			Commands::Serve(command) => command.main(),
 			Commands::Stop(command) => command.main(),
 			Commands::Build(command) => command.main(),
 			Commands::Sourcemap(command) => command.main(),
 			Commands::Studio(command) => command.main(),
 			Commands::Exec(command) => command.main(),
+			Commands::Plugin(command) => command.main(),
 			Commands::Config(command) => command.main(),
 			Commands::Doc(command) => command.main(),
 		}
@@ -150,12 +152,13 @@ impl Cli {
 #[derive(Subcommand)]
 pub enum Commands {
 	Init(init::Init),
-	Run(run::Run),
+	Serve(serve::Serve),
 	Stop(stop::Stop),
 	Build(build::Build),
 	Sourcemap(sourcemap::Sourcemap),
 	Studio(studio::Studio),
 	Exec(exec::Exec),
+	Plugin(plugin::Plugin),
 	Config(config::Config),
 	Doc(doc::Doc),
 }

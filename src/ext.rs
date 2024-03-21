@@ -17,6 +17,7 @@ pub trait PathExt {
 	fn get_parent(&self) -> &Path;
 	fn len(&self) -> usize;
 	fn is_empty(&self) -> bool;
+	fn contains(&self, pat: &[&str]) -> bool;
 }
 
 impl PathExt for Path {
@@ -65,6 +66,24 @@ impl PathExt for Path {
 
 	fn is_empty(&self) -> bool {
 		self.len() == 0
+	}
+
+	fn contains(&self, pattern: &[&str]) -> bool {
+		let mut index = 0;
+
+		for comp in self.components() {
+			if pattern[index] == comp.as_os_str() {
+				index += 1;
+
+				if index == pattern.len() {
+					return true;
+				}
+			} else if index > 0 {
+				return false;
+			}
+		}
+
+		false
 	}
 }
 

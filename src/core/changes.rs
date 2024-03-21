@@ -62,9 +62,9 @@ impl Changes {
 			return;
 		};
 
+		// Is this necessary?
 		snapshot.meta = None;
 		snapshot.paths.clear();
-		snapshot.file_type = None;
 
 		self.additions.push(AddedSnapshot {
 			id,

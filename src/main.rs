@@ -20,7 +20,7 @@ fn main() {
 	crash_handler::hook();
 
 	let is_aftman = installer::is_aftman();
-	let installation = installer::install(is_aftman);
+	let installation = installer::verify(is_aftman);
 
 	let cli = Cli::new();
 

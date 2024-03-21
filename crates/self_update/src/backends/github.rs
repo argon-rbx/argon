@@ -452,11 +452,7 @@ impl UpdateBuilder {
 			} else {
 				bail!(Error::Config, "`bin_path_in_archive` required")
 			},
-			current_version: if let Some(ref ver) = self.current_version {
-				ver.to_owned()
-			} else {
-				bail!(Error::Config, "`current_version` required")
-			},
+			current_version: self.current_version.clone(),
 			target_version: self.target_version.as_ref().map(|v| v.to_owned()),
 			show_download_progress: self.show_download_progress,
 			progress_template: self.progress_template.clone(),
@@ -478,7 +474,7 @@ pub struct Update {
 	repo_name: String,
 	target: String,
 	identifier: Option<String>,
-	current_version: String,
+	current_version: Option<String>,
 	target_version: Option<String>,
 	bin_name: String,
 	bin_install_path: PathBuf,
@@ -554,7 +550,7 @@ impl ReleaseUpdate for Update {
 		Release::from_release(&json)
 	}
 
-	fn current_version(&self) -> String {
+	fn current_version(&self) -> Option<String> {
 		self.current_version.to_owned()
 	}
 

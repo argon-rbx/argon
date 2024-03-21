@@ -1,6 +1,5 @@
 use anyhow::Result;
 use colored::Colorize;
-use env_logger::WriteStyle;
 use log::{debug, trace};
 use roblox_install::RobloxStudio;
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
@@ -10,12 +9,12 @@ use std::{fs, time::SystemTime};
 use crate::{argon_error, argon_info, logger, util};
 
 #[derive(Serialize, Deserialize)]
-struct UpdateStatus {
-	last_checked: SystemTime,
-	plugin_version: String,
+pub struct UpdateStatus {
+	pub last_checked: SystemTime,
+	pub plugin_version: String,
 }
 
-fn get_status() -> Result<UpdateStatus> {
+pub fn get_status() -> Result<UpdateStatus> {
 	let home_dir = util::get_home_dir()?;
 	let path = home_dir.join(".argon").join("update.toml");
 
@@ -36,7 +35,7 @@ fn get_status() -> Result<UpdateStatus> {
 	}
 }
 
-fn update_staus(status: &UpdateStatus) -> Result<()> {
+pub fn set_staus(status: &UpdateStatus) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 	let path = home_dir.join(".argon").join("update.toml");
 
@@ -45,18 +44,8 @@ fn update_staus(status: &UpdateStatus) -> Result<()> {
 	Ok(())
 }
 
-fn get_progress_style() -> (String, String) {
-	let mut template = match util::get_log_style() {
-		WriteStyle::Always => "PROGRESS: ".magenta().bold().to_string(),
-		_ => "PROGRESS: ".to_string(),
-	};
-	template.push_str("[{bar:40}] ({bytes}/{total_bytes})");
-
-	(template, String::from("=>-"))
-}
-
 fn update_cli(prompt: bool) -> Result<()> {
-	let style = get_progress_style();
+	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
 
 	let update = Update::configure()
@@ -67,7 +56,6 @@ fn update_cli(prompt: bool) -> Result<()> {
 		.show_output(false)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
-		.current_version(current_version)
 		.build()?;
 
 	let release = update.get_latest_release()?;
@@ -100,7 +88,7 @@ fn update_cli(prompt: bool) -> Result<()> {
 }
 
 fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
-	let style = get_progress_style();
+	let style = util::get_progress_style();
 	let current_version = &status.plugin_version;
 	let plugin_path = RobloxStudio::locate()?.plugins_path().join("Argon.rbxm");
 
@@ -113,7 +101,6 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 		.show_output(false)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
-		.current_version(current_version)
 		.bin_install_path(plugin_path)
 		.build()?;
 
@@ -172,7 +159,7 @@ pub fn check_for_updates(plugin: bool, prompt: bool) -> Result<()> {
 
 	status.last_checked = SystemTime::now();
 
-	update_staus(&status)?;
+	set_staus(&status)?;
 
 	Ok(())
 }

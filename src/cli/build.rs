@@ -135,8 +135,8 @@ impl Build {
 			}
 		} else {
 			self.get_default_file(&project)
-		};
-		let path = path.resolve()?;
+		}
+		.resolve()?;
 
 		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
 
