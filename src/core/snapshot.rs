@@ -119,6 +119,14 @@ impl Snapshot {
 		self.children = children;
 	}
 
+	pub fn set_data(&mut self, data: Self) {
+		if self.class == "Folder" {
+			self.class = data.class;
+		}
+
+		self.extend_properties(data.properties);
+	}
+
 	// Adding to snapshot fields
 
 	pub fn add_path(&mut self, path: &Path) {

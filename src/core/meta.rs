@@ -21,7 +21,7 @@ pub struct SyncRule {
 
 	pub pattern: Option<Glob>,
 	pub child_pattern: Option<Glob>,
-	pub exclude: Option<Glob>,
+	pub exclude: Vec<Glob>,
 
 	pub suffix: Option<String>,
 }
@@ -34,7 +34,7 @@ impl SyncRule {
 			file_type,
 			pattern: None,
 			child_pattern: None,
-			exclude: None,
+			exclude: Vec::new(),
 			suffix: None,
 		}
 	}
@@ -50,7 +50,12 @@ impl SyncRule {
 	}
 
 	pub fn with_exclude(mut self, exclude: &str) -> Self {
-		self.exclude = Some(Glob::new(exclude).unwrap());
+		self.exclude = vec![Glob::new(exclude).unwrap()];
+		self
+	}
+
+	pub fn with_excludes(mut self, excludes: &[&str]) -> Self {
+		self.exclude = excludes.iter().map(|exclude| Glob::new(exclude).unwrap()).collect();
 		self
 	}
 
@@ -269,8 +274,11 @@ impl Meta {
 		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
 	}
 
-	pub fn get_sync_rule(&self, file_type: &FileType) -> Option<&SyncRule> {
-		self.sync_rules.iter().find(|rule| &rule.file_type == file_type)
+	pub fn get_sync_rules(&self, file_type: &FileType) -> Vec<&SyncRule> {
+		self.sync_rules
+			.iter()
+			.filter(|rule| rule.file_type == *file_type)
+			.collect()
 	}
 }
 
@@ -304,7 +312,7 @@ impl Default for Meta {
 				.with_pattern("*.data.json")
 				.with_child_pattern(".data.json"),
 			SyncRule::new(FileType::InstanceData) // Rojo
-				.with_pattern("*.data.json")
+				.with_pattern("*.meta.json")
 				.with_child_pattern("init.meta.json"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Argon scripts
@@ -373,7 +381,7 @@ impl Default for Meta {
 			SyncRule::new(FileType::JsonModule)
 				.with_pattern("*.json")
 				.with_child_pattern(".src.json")
-				.with_exclude("*.model.json"),
+				.with_excludes(&["*.model.json", "*.data.json", "*.meta.json"]),
 			SyncRule::new(FileType::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),
