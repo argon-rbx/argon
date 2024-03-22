@@ -45,7 +45,7 @@ pub struct Sourcemap {
 
 impl Sourcemap {
 	pub fn main(self) -> Result<()> {
-		let config = Config::load();
+		let config = Config::new();
 
 		if self.watch && !self.argon_spawn && config.run_async {
 			return self.spawn();

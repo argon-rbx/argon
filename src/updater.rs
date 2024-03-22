@@ -1,12 +1,14 @@
 use anyhow::Result;
 use colored::Colorize;
 use log::{debug, trace};
-use roblox_install::RobloxStudio;
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
 use std::{fs, time::SystemTime};
 
-use crate::{argon_error, argon_info, logger, util};
+use crate::{
+	argon_error, argon_info, logger,
+	util::{self, get_plugin_path},
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateStatus {
@@ -90,7 +92,7 @@ fn update_cli(prompt: bool) -> Result<()> {
 fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 	let style = util::get_progress_style();
 	let current_version = &status.plugin_version;
-	let plugin_path = RobloxStudio::locate()?.plugins_path().join("Argon.rbxm");
+	let plugin_path = get_plugin_path()?;
 
 	let update = Update::configure()
 		.repo_owner("argon-rbx")
@@ -143,7 +145,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 	Ok(())
 }
 
-pub fn check_for_updates(plugin: bool, prompt: bool) -> Result<()> {
+pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
 	let mut status = get_status()?;
 
 	if status.last_checked.elapsed()?.as_secs() < 3600 {
@@ -151,10 +153,10 @@ pub fn check_for_updates(plugin: bool, prompt: bool) -> Result<()> {
 		return Ok(());
 	}
 
-	update_cli(prompt)?;
+	update_cli(should_prompt)?;
 
-	if plugin {
-		update_plugin(&mut status, prompt)?;
+	if with_plugin {
+		update_plugin(&mut status, should_prompt)?;
 	}
 
 	status.last_checked = SystemTime::now();

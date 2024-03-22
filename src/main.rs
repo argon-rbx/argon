@@ -8,19 +8,18 @@ use std::{
 	thread,
 };
 
-use argon::crash_handler;
-use argon::installer;
-use argon::logger;
-use argon::{argon_error, updater};
-use argon::{cli::Cli, config::Config};
+use argon::{argon_error, cli::Cli, config::Config, crash_handler, installer, logger, updater};
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
 fn main() {
 	crash_handler::hook();
 
+	let config_state = Config::load();
+	let config = Config::new();
+
 	let is_aftman = installer::is_aftman();
-	let installation = installer::verify(is_aftman);
+	let installation = installer::verify(is_aftman, config.install_plugin);
 
 	let cli = Cli::new();
 
@@ -47,6 +46,11 @@ fn main() {
 
 	logger::init(verbosity, log_style);
 
+	match config_state {
+		Ok(()) => info!("Config file loaded"),
+		Err(err) => warn!("Failed to load config file: {}", err),
+	}
+
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
 		Err(err) => warn!("Failed to verify Argon installation: {}", err),
@@ -54,8 +58,6 @@ fn main() {
 
 	let handle = thread::spawn(move || {
 		if !is_aftman {
-			let config = Config::load();
-
 			if config.check_updates {
 				match updater::check_for_updates(config.install_plugin, !config.auto_update) {
 					Ok(()) => info!("Update check completed successfully!"),

@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
 	use config_derive::{Get, Iter, Set, Val};
+	use serde::{Deserialize, Serialize};
 
 	#[test]
 	fn it_works() {

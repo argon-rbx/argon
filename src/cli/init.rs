@@ -39,7 +39,7 @@ pub struct Init {
 
 impl Init {
 	pub fn main(self) -> Result<()> {
-		let config = Config::load();
+		let config = Config::new();
 
 		let project = self.project.unwrap_or_default();
 		let template = self.template.unwrap_or(config.template.clone());

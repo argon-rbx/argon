@@ -1,16 +1,17 @@
 use anyhow::Result;
 use config_derive::{Get, Iter, Set, Val};
 use documented::DocumentedFields;
-use log::{info, warn};
 use optfield::optfield;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-use std::fs;
+use std::{fs, sync::OnceLock};
 use toml;
 
 use crate::{logger::Table, util};
 
+static CONFIG: OnceLock<Config> = OnceLock::new();
+
 #[optfield(GlobalConfig, merge_fn, attrs = (derive(Deserialize)))]
-#[derive(Clone, Deserialize, DocumentedFields, Val, Iter, Get, Set)]
+#[derive(Debug, Clone, Deserialize, DocumentedFields, Val, Iter, Get, Set)]
 pub struct Config {
 	/// Default server host name
 	pub host: String,
@@ -70,15 +71,24 @@ impl Default for Config {
 }
 
 impl Config {
-	pub fn load() -> Self {
+	pub fn new() -> &'static Self {
+		CONFIG.get().expect("Config not loaded!")
+	}
+
+	/// This should only be used by the `config` CLI command
+	pub fn new_mut() -> Self {
+		Self::new().clone()
+	}
+
+	/// This sould be called once, at the start of the program
+	pub fn load() -> Result<()> {
 		let mut config = Self::default();
 
-		match config.read_toml() {
-			Ok(()) => info!("Config file loaded"),
-			Err(err) => warn!("Failed to load config file: {}", err),
-		}
+		let load_result = config.read_toml();
 
-		config
+		CONFIG.set(config).expect("Config already loaded");
+
+		load_result
 	}
 
 	pub fn save(&self) -> Result<()> {

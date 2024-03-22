@@ -50,7 +50,7 @@ pub struct Serve {
 
 impl Serve {
 	pub fn main(self) -> Result<()> {
-		let config = Config::load();
+		let config = Config::new();
 
 		if !self.argon_spawn && config.run_async {
 			return self.spawn();

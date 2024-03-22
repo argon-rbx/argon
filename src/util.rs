@@ -4,6 +4,7 @@ use directories::UserDirs;
 use env_logger::WriteStyle;
 use log::LevelFilter;
 use rbx_reflection::ClassTag;
+use roblox_install::RobloxStudio;
 use std::{env, path::PathBuf, process::Command};
 
 /// Returns the home directory of the current user
@@ -25,6 +26,10 @@ pub fn get_username() -> String {
 	}
 
 	whoami::username()
+}
+
+pub fn get_plugin_path() -> Result<PathBuf> {
+	Ok(RobloxStudio::locate()?.plugins_path().join("Argon.rbxm"))
 }
 
 /// Checks if the given `class` is a service

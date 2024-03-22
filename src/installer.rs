@@ -4,7 +4,12 @@ use include_dir::{include_dir, Dir};
 use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
 use std::{env, fs, path::Path};
 
-use crate::{argon_info, ext::PathExt, logger, updater, util};
+use crate::{
+	argon_info,
+	ext::PathExt,
+	logger, updater,
+	util::{self, get_plugin_path},
+};
 
 const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/place");
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
@@ -20,7 +25,7 @@ pub fn is_aftman() -> bool {
 	path.contains(&[".aftman", "tool-storage"])
 }
 
-pub fn verify(is_aftman: bool) -> Result<()> {
+pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
 	let home_dir = util::get_home_dir()?;
 
 	let argon_dir = home_dir.join(".argon");
@@ -85,10 +90,20 @@ pub fn verify(is_aftman: bool) -> Result<()> {
 		install_template(&MODEL_TEMPLATE, &model_template)?;
 	}
 
+	if with_plugin {
+		let plugin_path = get_plugin_path()?;
+
+		if !plugin_path.exists() {
+			install_plugin(&plugin_path, false)?;
+		}
+	}
+
 	Ok(())
 }
 
-pub fn install_plugin(path: &Path) -> Result<()> {
+pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
+	fs::create_dir_all(path.get_parent())?;
+
 	let style = util::get_progress_style();
 
 	let update = Update::configure()
@@ -98,7 +113,7 @@ pub fn install_plugin(path: &Path) -> Result<()> {
 		.target("")
 		.no_confirm(true)
 		.show_output(false)
-		.show_download_progress(true)
+		.show_download_progress(show_progress)
 		.set_progress_style(style.0, style.1)
 		.bin_install_path(path)
 		.build()?;

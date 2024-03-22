@@ -32,7 +32,7 @@ impl Config {
 
 		match (self.setting, self.value) {
 			(Some(setting), Some(value)) => {
-				let mut config = GlobalConfig::load();
+				let mut config = GlobalConfig::new_mut();
 
 				if config.has_setting(&setting) {
 					if let Err(err) = config.set(&setting, &value) {
@@ -50,7 +50,7 @@ impl Config {
 				let default = GlobalConfig::default();
 
 				if default.has_setting(&setting) {
-					let mut config = GlobalConfig::load();
+					let mut config = GlobalConfig::new_mut();
 
 					config
 						.set(&setting, &default.get(&setting).unwrap().to_string())

@@ -13,3 +13,6 @@ proc-macro = true
 proc-macro2 = "1.0.76"
 quote = "1.0.35"
 syn = "2.0.48"
+
+[dev-dependencies]
+serde = { version = "1.0.189", features = ["derive"] }
