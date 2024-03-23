@@ -163,35 +163,6 @@ impl Snapshot {
 		}
 	}
 
-	// Misc
-
-	pub fn apply_project_data(mut self, meta: &Meta, path: &Path) -> Self {
-		if let Some(project_data) = &meta.project_data {
-			if path != project_data.affects {
-				return self;
-			// Check if project containing this data still exists
-			} else if !project_data.source.exists() {
-				let mut meta = meta.clone();
-				meta.project_data = None;
-
-				self.set_meta(meta);
-				return self;
-			}
-
-			self.set_name(&project_data.name);
-
-			if let Some(class) = &project_data.class {
-				self.set_class(class);
-			}
-
-			if let Some(properties) = &project_data.properties {
-				self.extend_properties(properties.clone());
-			}
-		}
-
-		self
-	}
-
 	// Based on Rojo's InstanceSnapshot::from_tree (https://github.com/rojo-rbx/rojo/blob/master/src/snapshot/instance_snapshot.rs#L105)
 	pub fn from_dom(dom: WeakDom, id: Ref) -> Self {
 		let (_, mut raw_dom) = dom.into_raw();

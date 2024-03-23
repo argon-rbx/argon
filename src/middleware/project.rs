@@ -7,10 +7,7 @@ use std::{collections::HashMap, path::Path};
 use super::new_snapshot;
 use crate::{
 	argon_warn,
-	core::{
-		meta::{Meta, ProjectData},
-		snapshot::Snapshot,
-	},
+	core::{meta::Meta, snapshot::Snapshot},
 	ext::PathExt,
 	project::{Project, ProjectNode},
 	util,
@@ -23,12 +20,8 @@ pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	let super_path = path.get_parent();
 
-	let mut meta = Meta::from_project(&project);
-	let mut snapshot = walk(&project.name, super_path, &meta, vfs, project.node)?;
-
-	// We don't have to keep project data in project snapshot
-	meta.project_data = None;
-	snapshot.set_meta(meta);
+	let meta = Meta::from_project(&project);
+	let snapshot = walk(&project.name, super_path, &meta, vfs, project.node)?.with_meta(meta);
 
 	vfs.watch(path)?;
 
@@ -53,15 +46,13 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 	let properties = {
 		let mut properties = HashMap::new();
 
-		if let Some(node_properties) = node.properties {
-			for (property, value) in node_properties {
-				match value.resolve(&class, &property) {
-					Ok(value) => {
-						properties.insert(property, value);
-					}
-					Err(err) => {
-						error!("Failed to parse property: {}", err);
-					}
+		for (property, value) in node.properties {
+			match value.resolve(&class, &property) {
+				Ok(value) => {
+					properties.insert(property, value);
+				}
+				Err(err) => {
+					error!("Failed to parse property: {}", err);
 				}
 			}
 		}
@@ -77,8 +68,8 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 			}
 		}
 
-		if let Some(tags) = node.tags {
-			properties.insert(String::from("Tags"), Tags::from(tags).into());
+		if !node.tags.is_empty() {
+			properties.insert(String::from("Tags"), Tags::from(node.tags).into());
 		}
 
 		properties
@@ -96,30 +87,9 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 			vfs.watch(&path)?;
 		}
 
-		let meta = {
-			let source = meta.project_data.clone().unwrap().source;
-			let mut project_data = ProjectData::new(name, &path, &source);
-			let mut meta = meta.clone();
-
-			if class != "Folder" {
-				project_data.set_class(class.clone());
-			}
-
-			if !snapshot.properties.is_empty() {
-				project_data.set_properties(snapshot.properties.clone());
-			}
-
-			meta.set_project_data(project_data);
-			meta
-		};
-
-		if let Some(mut path_snapshot) = new_snapshot(&path, &meta, vfs)? {
-			// We want to keep project data only
-			let meta = Meta::new().with_project_data(meta.project_data.unwrap());
-
+		if let Some(mut path_snapshot) = new_snapshot(&path, meta, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
 			path_snapshot.set_name(&snapshot.name);
-			path_snapshot.extend_meta(meta);
 
 			if path_snapshot.class == "Folder" {
 				path_snapshot.set_class(&snapshot.class);

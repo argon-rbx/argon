@@ -26,7 +26,7 @@ struct RojoData {
 }
 
 #[profiling::function]
-pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
+pub fn snapshot_data(path: &Path, _meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 	let data = vfs.read(path)?;
 	let data: Value = serde_json::from_str(&data)?;
 
@@ -35,18 +35,8 @@ pub fn snapshot_data(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
 	let class = {
 		let parent = path.get_parent();
 
-		// Get the class from meta if there was one
-		// specified in the project for this path
-		if let Some(class) = meta.project_data.as_ref().and_then(|project_data| {
-			if project_data.affects == parent {
-				project_data.class.as_ref()
-			} else {
-				None
-			}
-		}) {
-			class.to_owned()
 		// Get the class from the data file if one exists
-		} else if let Some(class) = data.get("ClassName").or(data.get("className")) {
+		if let Some(class) = data.get("ClassName").or(data.get("className")) {
 			let class = class.as_str();
 
 			if class.is_none() {

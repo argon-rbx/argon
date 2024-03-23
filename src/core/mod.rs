@@ -85,7 +85,7 @@ impl Core {
 		lock!(self.project).game_id
 	}
 
-	pub fn place_ids(&self) -> Option<Vec<u64>> {
+	pub fn place_ids(&self) -> Vec<u64> {
 		lock!(self.project).place_ids.clone()
 	}
 

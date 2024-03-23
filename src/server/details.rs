@@ -14,7 +14,7 @@ struct Response {
 	version: String,
 	name: String,
 	game_id: Option<u64>,
-	place_ids: Option<Vec<u64>>,
+	place_ids: Vec<u64>,
 }
 
 #[get("/details")]

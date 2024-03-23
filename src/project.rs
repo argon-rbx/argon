@@ -17,17 +17,16 @@ pub struct ProjectNode {
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
-	#[serde(rename = "$properties")]
-	pub properties: Option<HashMap<String, UnresolvedValue>>,
+	#[serde(rename = "$properties", default)]
+	pub properties: HashMap<String, UnresolvedValue>,
 	#[serde(rename = "$attributes")]
 	pub attributes: Option<UnresolvedValue>,
 	// For consistency
 	#[serde(rename = "$tags")]
-	pub tags: Option<Vec<String>>,
+	pub tags: Vec<String>,
 
-	// This field is not actually used by Argon
-	#[serde(rename = "$ignoreUnknownInstances", skip_serializing)]
-	pub ignore_unknown_instances: Option<bool>,
+	#[serde(rename = "$keepUnknowns", alias = "$ignoreUnknownInstances", default)]
+	pub keep_unknowns: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -41,11 +40,16 @@ pub struct Project {
 	#[serde(alias = "servePort")]
 	pub port: Option<u16>,
 	pub game_id: Option<u64>,
-	#[serde(alias = "servePlaceIds")]
-	pub place_ids: Option<Vec<u64>>,
-	#[serde(alias = "globIgnorePaths")]
-	pub ignore_globs: Option<Vec<Glob>>,
-	pub sync_rules: Option<Vec<SyncRule>>,
+	#[serde(alias = "servePlaceIds", default)]
+	pub place_ids: Vec<u64>,
+	#[serde(alias = "globIgnorePaths", default)]
+	pub ignore_globs: Vec<Glob>,
+	#[serde(default)]
+	pub sync_rules: Vec<SyncRule>,
+	#[serde(alias = "ignoreUnknownInstances", default)]
+	pub keep_unknowns: bool,
+	#[serde(alias = "emitLegacyScripts", default)]
+	pub use_contexts: bool,
 
 	#[serde(skip)]
 	pub path: PathBuf,
@@ -83,15 +87,13 @@ impl Project {
 	}
 
 	pub fn is_ts(&self) -> bool {
-		if let Some(ignore_globs) = &self.ignore_globs {
-			for glob in ignore_globs {
-				if glob.matches("**/tsconfig.json") {
-					return true;
-				}
+		for glob in &self.ignore_globs {
+			if glob.matches("**/tsconfig.json") {
+				return true;
+			}
 
-				if glob.matches("**/package.json") {
-					return true;
-				}
+			if glob.matches("**/package.json") {
+				return true;
 			}
 		}
 

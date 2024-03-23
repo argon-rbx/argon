@@ -259,13 +259,13 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 
 			// Skip instances that are part of the project
 			// but have different paths
-			if let Some(meta) = tree.get_meta(id) {
-				if let Some(project_data) = &meta.project_data {
-					if project_data.affects.exists() {
-						continue 'outer;
-					}
-				}
-			}
+			// if let Some(meta) = tree.get_meta(id) {
+			// 	if let Some(project_data) = &meta.project_data {
+			// 		if project_data.affects.exists() {
+			// 			continue 'outer;
+			// 		}
+			// 	}
+			// }
 
 			tree.remove_instance(child_id);
 			changes.remove(child_id);

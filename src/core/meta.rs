@@ -1,12 +1,17 @@
-use rbx_dom_weak::types::Variant;
 use serde::{Deserialize, Serialize};
 use std::{
-	collections::HashMap,
 	fmt::{self, Debug, Formatter},
 	path::{Path, PathBuf},
 };
 
 use crate::{ext::PathExt, glob::Glob, middleware::FileType, project::Project};
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Source {
+	Single(PathBuf),
+	Double(PathBuf, PathBuf),
+	Project(PathBuf, String),
+}
 
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
@@ -126,52 +131,18 @@ impl IgnoreRule {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct ProjectData {
-	pub affects: PathBuf,
-	pub source: PathBuf,
-	pub name: String,
-	pub class: Option<String>,
-	pub properties: Option<HashMap<String, Variant>>,
-}
-
-impl ProjectData {
-	pub fn new(name: &str, affects: &Path, source: &Path) -> Self {
-		Self {
-			affects: affects.to_owned(),
-			source: source.to_owned(),
-
-			name: name.to_owned(),
-			class: None,
-			properties: None,
-		}
-	}
-
-	pub fn set_class(&mut self, class: String) {
-		self.class = Some(class);
-	}
-
-	pub fn set_properties(&mut self, properties: HashMap<String, Variant>) {
-		self.properties = Some(properties);
-	}
-}
-
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Meta {
+	/// Instance source that is guaranteed to exist
+	pub source: Option<Source>,
 	/// Rules that define how files are synced
 	pub sync_rules: Vec<SyncRule>,
 	/// Rules that define which files are ignored
 	pub ignore_rules: Vec<IgnoreRule>,
-	/// Project data that is included in the project node in `*.project.json`
-	pub project_data: Option<ProjectData>,
-}
-
-impl PartialEq for Meta {
-	fn eq(&self, other: &Self) -> bool {
-		self.sync_rules == other.sync_rules
-			&& self.ignore_rules == other.ignore_rules
-			&& self.project_data == other.project_data
-	}
+	/// Whether to keep unknown child instances
+	pub keep_unknowns: bool,
+	/// Whether to use Scripts with contexts instead of LocalScripts
+	pub use_contexts: bool,
 }
 
 impl Meta {
@@ -179,17 +150,24 @@ impl Meta {
 
 	pub fn new() -> Self {
 		Self {
+			source: None,
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
-			project_data: None,
+			keep_unknowns: false,
+			use_contexts: false,
 		}
 	}
 
 	pub fn from_project(project: &Project) -> Self {
+		let sync_rules = if project.sync_rules.is_empty() {
+			Self::default().sync_rules
+		} else {
+			project.sync_rules.clone()
+		};
+
 		let ignore_rules = project
 			.ignore_globs
 			.clone()
-			.unwrap_or_default()
 			.into_iter()
 			.map(|glob| IgnoreRule {
 				pattern: glob,
@@ -197,13 +175,12 @@ impl Meta {
 			})
 			.collect();
 
-		// Initial project data required for node project data
-		let project_data = ProjectData::new(&project.name, &project.workspace_dir, &project.path);
-
 		Self {
-			sync_rules: project.sync_rules.clone().unwrap_or_else(|| Self::default().sync_rules),
+			source: None, // ?
+			sync_rules,
 			ignore_rules,
-			project_data: Some(project_data),
+			keep_unknowns: project.keep_unknowns,
+			use_contexts: project.use_contexts,
 		}
 	}
 
@@ -217,11 +194,6 @@ impl Meta {
 		self
 	}
 
-	pub fn with_project_data(mut self, project_data: ProjectData) -> Self {
-		self.project_data = Some(project_data);
-		self
-	}
-
 	// Overwriting meta fields
 
 	pub fn set_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
@@ -230,10 +202,6 @@ impl Meta {
 
 	pub fn set_ignore_rules(&mut self, ignore_rules: Vec<IgnoreRule>) {
 		self.ignore_rules = ignore_rules;
-	}
-
-	pub fn set_project_data(&mut self, project_data: ProjectData) {
-		self.project_data = Some(project_data);
 	}
 
 	// Adding to meta fields
@@ -260,18 +228,19 @@ impl Meta {
 		self.extend_sync_rules(meta.sync_rules);
 		self.extend_ignore_rules(meta.ignore_rules);
 
-		if meta.project_data.is_some() {
-			self.project_data = meta.project_data;
-		}
+		// if meta.project_data.is_some() {
+		// 	self.project_data = meta.project_data;
+		// }
 	}
 
 	// Misc
 
 	pub fn is_empty(&self) -> bool {
-		// We intentionally omit `processed_paths` here
-		// as it's a temporary field used only in middleware
-		// so there is no need to keep it in the tree
-		self.sync_rules.is_empty() && self.ignore_rules.is_empty() && self.project_data.is_none()
+		self.source.is_none()
+			&& self.sync_rules.is_empty()
+			&& self.ignore_rules.is_empty()
+			&& !self.keep_unknowns
+			&& !self.use_contexts
 	}
 
 	pub fn get_sync_rules(&self, file_type: &FileType) -> Vec<&SyncRule> {
@@ -286,6 +255,10 @@ impl Debug for Meta {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		let mut debug = f.debug_struct("Meta");
 
+		if let Some(source) = &self.source {
+			debug.field("source", source);
+		}
+
 		if !self.sync_rules.is_empty() {
 			debug.field("sync_rules", &self.sync_rules);
 		}
@@ -294,8 +267,12 @@ impl Debug for Meta {
 			debug.field("ignore_rules", &self.ignore_rules);
 		}
 
-		if let Some(project_data) = &self.project_data {
-			debug.field("project_data", project_data);
+		if self.keep_unknowns {
+			debug.field("keep_unknowns", &self.keep_unknowns);
+		}
+
+		if self.use_contexts {
+			debug.field("use_contexts", &self.use_contexts);
 		}
 
 		debug.finish()

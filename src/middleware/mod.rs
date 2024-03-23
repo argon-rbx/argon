@@ -136,10 +136,7 @@ fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snaps
 		let file_type = resolved.file_type;
 		let name = resolved.name;
 
-		let mut snapshot = file_type
-			.middleware(path, meta, vfs)?
-			.with_path(path)
-			.apply_project_data(meta, path);
+		let mut snapshot = file_type.middleware(path, meta, vfs)?.with_path(path);
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
@@ -163,10 +160,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 		let name = resolved.name;
 		let parent = path.get_parent();
 
-		let mut snapshot = file_type
-			.middleware(path, meta, vfs)?
-			.with_path(parent)
-			.apply_project_data(meta, path);
+		let mut snapshot = file_type.middleware(path, meta, vfs)?.with_path(parent);
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
@@ -195,7 +189,7 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 /// Create snapshot of a directory,
 /// example: `foo/bar`
 fn new_snapshot_dir(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	let mut snapshot = snapshot_dir(path, meta, vfs)?.apply_project_data(meta, path);
+	let mut snapshot = snapshot_dir(path, meta, vfs)?;
 
 	if let Some(instance_data) = get_instance_data(&snapshot.name, path, meta, vfs)? {
 		snapshot.set_data(instance_data);
