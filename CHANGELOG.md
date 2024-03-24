@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for `legacy_scripts` and `keep_unknowns` fields
+
 ### Improved
 
 - Instance source tracking and meta management

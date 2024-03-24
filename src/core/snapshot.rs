@@ -8,6 +8,8 @@ use std::{
 	fmt::{self, Debug, Formatter},
 };
 
+use crate::middleware::data::DataSnapshot;
+
 use super::meta::Meta;
 
 #[derive(Clone, Serialize)]
@@ -67,7 +69,7 @@ impl Snapshot {
 		self
 	}
 
-	pub fn with_data(mut self, data: Self) -> Self {
+	pub fn with_data(mut self, data: DataSnapshot) -> Self {
 		self.set_data(data);
 		self
 	}
@@ -98,13 +100,17 @@ impl Snapshot {
 		self.children = children;
 	}
 
-	pub fn set_data(&mut self, data: Self) {
-		if self.class == "Folder" {
-			self.class = data.class;
+	pub fn set_data(&mut self, data: DataSnapshot) {
+		if let Some(class) = data.class {
+			self.class = class;
+		}
+
+		if let Some(keep_unknowns) = data.keep_unknowns {
+			self.meta.keep_unknowns = keep_unknowns;
 		}
 
 		self.extend_properties(data.properties);
-		self.meta.source.add(data.meta.source);
+		self.meta.source.add(data.source);
 	}
 
 	// Adding to snapshot fields

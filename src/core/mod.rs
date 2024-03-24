@@ -3,15 +3,19 @@ use log::trace;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
 use std::{
-	cmp,
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
 	sync::{Arc, Mutex},
 };
 
-use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
-use crate::{core::snapshot::Snapshot, ext::PathExt, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
+use self::{
+	meta::{Meta, SourceType},
+	processor::Processor,
+	queue::Queue,
+	tree::Tree,
+};
+use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
 
 pub mod changes;
 pub mod meta;
@@ -41,8 +45,6 @@ impl Core {
 
 		let meta = Meta::from_project(&project);
 		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?;
-
-		println!("{:#?}", snapshot);
 
 		trace!("Building Tree and Queue");
 
@@ -166,14 +168,7 @@ impl Core {
 				return None;
 			}
 
-			let mut file_paths: Vec<PathBuf> = tree
-				.get_paths(id)
-				.into_iter()
-				.filter(|path| path.is_file())
-				.cloned()
-				.collect();
-
-			file_paths.sort_by_key(|path| cmp::Reverse(path.len()));
+			let file_paths: Vec<PathBuf> = get_usable_paths(tree, id);
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),
@@ -198,15 +193,7 @@ impl Core {
 	pub fn open(&self, instance: Ref) -> Result<()> {
 		let tree = lock!(self.tree);
 
-		let file_paths: Vec<PathBuf> = tree
-			.get_paths(instance)
-			.into_iter()
-			.filter(|path| path.is_file())
-			// TODO: following two lines should be replaced with globs from sync rules
-			.filter(|path| !path.ends_with(".data.json"))
-			.filter(|path| !path.ends_with("init.meta.json"))
-			.cloned()
-			.collect();
+		let file_paths: Vec<PathBuf> = get_usable_paths(&tree, instance);
 
 		if let Some(path) = file_paths.first() {
 			open::that(path)?;
@@ -214,6 +201,21 @@ impl Core {
 		} else {
 			bail!("No matching file was found")
 		}
+	}
+}
+
+pub fn get_usable_paths(tree: &Tree, id: Ref) -> Vec<PathBuf> {
+	if let Some(meta) = tree.get_meta(id) {
+		meta.source
+			.all()
+			.iter()
+			.filter_map(|source| match source {
+				SourceType::Folder(_) => None,
+				_ => Some(source.path().to_owned()),
+			})
+			.collect()
+	} else {
+		vec![]
 	}
 }
 

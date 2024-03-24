@@ -8,8 +8,16 @@ use std::{
 };
 
 use self::{
-	csv::snapshot_csv, data::snapshot_data, dir::snapshot_dir, json::snapshot_json, json_model::snapshot_json_model,
-	lua::snapshot_lua, project::snapshot_project, rbxm::snapshot_rbxm, rbxmx::snapshot_rbxmx, toml::snapshot_toml,
+	csv::snapshot_csv,
+	data::{snapshot_data, DataSnapshot},
+	dir::snapshot_dir,
+	json::snapshot_json,
+	json_model::snapshot_json_model,
+	lua::snapshot_lua,
+	project::snapshot_project,
+	rbxm::snapshot_rbxm,
+	rbxmx::snapshot_rbxmx,
+	toml::snapshot_toml,
 	txt::snapshot_txt,
 };
 use crate::{
@@ -64,7 +72,7 @@ impl FileType {
 	fn middleware(&self, path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 		let result = match self {
 			FileType::Project => snapshot_project(path, vfs),
-			FileType::InstanceData => snapshot_data(path, vfs),
+			FileType::InstanceData => unreachable!(),
 			//
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
 				snapshot_lua(path, vfs, self.clone().into())
@@ -203,18 +211,14 @@ fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 	Ok(Some(snapshot))
 }
 
-fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<DataSnapshot>> {
 	for sync_rule in context.sync_rules_of_type(&FileType::InstanceData) {
 		if vfs.is_dir(path) {
 			if let Some(child_pattern) = &sync_rule.child_pattern {
 				let data_path = path.join(child_pattern.as_str());
 
 				if vfs.exists(&data_path) {
-					let snapshot = FileType::InstanceData
-						.middleware(&data_path, vfs)?
-						.with_meta(Meta::new().with_source(Source::data(&data_path)));
-
-					return Ok(Some(snapshot));
+					return Ok(Some(snapshot_data(&data_path, vfs)?));
 				}
 			}
 		} else if let Some(pattern) = &sync_rule.pattern {
@@ -222,11 +226,7 @@ fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> R
 			let data_path = path.with_file_name(pattern.as_str().replace('*', name));
 
 			if vfs.exists(&data_path) {
-				let snapshot = FileType::InstanceData
-					.middleware(&data_path, vfs)?
-					.with_meta(Meta::new().with_source(Source::data(&data_path)));
-
-				return Ok(Some(snapshot));
+				return Ok(Some(snapshot_data(&data_path, vfs)?));
 			}
 		}
 	}

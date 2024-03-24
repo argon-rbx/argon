@@ -1,116 +1,94 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use log::error;
-use rbx_dom_weak::types::Tags;
+use rbx_dom_weak::types::{Tags, Variant};
 use serde::Deserialize;
-use serde_json::Value;
 use std::{collections::HashMap, path::Path};
 
-use crate::{core::snapshot::Snapshot, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
-
-#[derive(Deserialize, Debug)]
-struct ArgonData(HashMap<String, UnresolvedValue>);
+use crate::{core::meta::Source, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct RojoData {
-	pub properties: Option<HashMap<String, UnresolvedValue>>,
-	pub attributes: Option<UnresolvedValue>,
-	// For consistency
-	pub tags: Option<Vec<String>>,
+struct Data {
+	class_name: Option<String>,
+
+	#[serde(default)]
+	properties: HashMap<String, UnresolvedValue>,
+	attributes: Option<UnresolvedValue>,
+	#[serde(default)]
+	tags: Vec<String>,
+
+	#[serde(alias = "ignoreUnknownInstances", default)]
+	keep_unknowns: Option<bool>,
+}
+
+#[derive(Debug)]
+pub struct DataSnapshot {
+	pub class: Option<String>,
+	pub properties: HashMap<String, Variant>,
+	pub keep_unknowns: Option<bool>,
+	pub source: Source,
 }
 
 #[profiling::function]
-pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 	let data = vfs.read(path)?;
-	let data: Value = serde_json::from_str(&data)?;
+	let data: Data = serde_json::from_str(&data)?;
 
 	let mut properties = HashMap::new();
 
 	let class = {
-		let parent = path.get_parent();
-
-		// Get the class from the data file if one exists
-		if let Some(class) = data.get("ClassName").or(data.get("className")) {
-			let class = class.as_str();
-
-			if class.is_none() {
-				bail!("ClassName property is not a string");
-			}
-
-			class.unwrap().to_owned()
-		// Get the class from the parent folder name,
-		// only if it's a service and fallback to `Folder`
+		if let Some(class_name) = &data.class_name {
+			class_name.to_owned()
 		} else {
-			let name = parent.get_file_name();
-			let is_service = util::is_service(name);
+			let name = path.get_file_name();
 
-			if is_service {
+			if util::is_service(name) {
 				name.to_owned()
 			} else {
-				String::from("Folder")
+				let parent_name = path.get_parent().get_file_name();
+
+				if util::is_service(parent_name) {
+					parent_name.to_owned()
+				} else {
+					String::from("Folder")
+				}
 			}
 		}
 	};
 
-	if data.get("className").is_some()
-		|| data.get("properties").is_some()
-		|| data.get("attributes").is_some()
-		|| data.get("ignoreUnknownInstances").is_some()
-	// Read Rojo instance data
-	{
-		let data: RojoData = serde_json::from_value(data)?;
-
-		// Resolve properties
-		if let Some(data_properties) = data.properties {
-			for (property, value) in data_properties {
-				match value.resolve(&class, &property) {
-					Ok(value) => {
-						properties.insert(property, value);
-					}
-					Err(err) => {
-						error!("Failed to parse property: {}", err);
-					}
-				}
+	// Resolve properties
+	for (property, value) in data.properties {
+		match value.resolve(&class, &property) {
+			Ok(value) => {
+				properties.insert(property, value);
 			}
-		}
-
-		// Resolve attributes
-		if let Some(attributes) = data.attributes {
-			match attributes.resolve(&class, "Attributes") {
-				Ok(value) => {
-					properties.insert(String::from("Attributes"), value);
-				}
-				Err(err) => {
-					error!("Failed to parse attributes: {}", err);
-				}
-			}
-		}
-
-		// Resolve tags
-		if let Some(tags) = data.tags {
-			properties.insert(String::from("Tags"), Tags::from(tags).into());
-		}
-
-	// Read Argon instance data
-	} else {
-		let data: ArgonData = serde_json::from_value(data)?;
-
-		// Resolve everything
-		for (property, value) in data.0 {
-			if property == "ClassName" {
-				continue;
-			}
-
-			match value.resolve(&class, &property) {
-				Ok(value) => {
-					properties.insert(property, value);
-				}
-				Err(err) => {
-					error!("Failed to parse property: {}", err);
-				}
+			Err(err) => {
+				error!("Failed to parse property: {}", err);
 			}
 		}
 	}
 
-	Ok(Snapshot::new().with_class(&class).with_properties(properties))
+	// Resolve attributes
+	if let Some(attributes) = data.attributes {
+		match attributes.resolve(&class, "Attributes") {
+			Ok(value) => {
+				properties.insert(String::from("Attributes"), value);
+			}
+			Err(err) => {
+				error!("Failed to parse attributes: {}", err);
+			}
+		}
+	}
+
+	// Resolve tags
+	if !data.tags.is_empty() {
+		properties.insert(String::from("Tags"), Tags::from(data.tags).into());
+	}
+
+	Ok(DataSnapshot {
+		class: data.class_name,
+		properties,
+		keep_unknowns: data.keep_unknowns,
+		source: Source::data(path),
+	})
 }

@@ -1,7 +1,7 @@
 use multimap::MultiMap;
 use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
-	collections::{HashMap, VecDeque},
+	collections::HashMap,
 	path::{Path, PathBuf},
 };
 
@@ -37,8 +37,6 @@ impl Tree {
 		for child in snapshot.children {
 			tree.insert_instance(child, root_ref);
 		}
-
-		// println!("{:#?}", tree);
 
 		tree
 	}
@@ -131,40 +129,6 @@ impl Tree {
 
 	pub fn get_meta_mut(&mut self, id: Ref) -> Option<&mut Meta> {
 		self.id_to_meta.get_mut(&id)
-	}
-
-	/// Get all meta associated with the given `Ref` in order from root to leaf
-	pub fn get_meta_all(&self, id: Ref) -> VecDeque<&Meta> {
-		let mut metas = VecDeque::new();
-		let mut id = id;
-
-		loop {
-			if let Some(meta) = self.id_to_meta.get(&id) {
-				metas.push_front(meta);
-			}
-
-			if id == self.dom.root_ref() {
-				break metas;
-			}
-
-			id = self.dom.get_by_ref(id).unwrap().parent();
-		}
-	}
-
-	pub fn insert_path(&mut self, path: &Path, id: Ref) {
-		self.path_to_ids.insert(path.to_owned(), id)
-	}
-
-	pub fn remove_path(&mut self, path: &Path, id: Ref) {
-		self.path_to_ids
-			.retain(|tree_path, &tree_id| tree_path != path || tree_id != id)
-	}
-
-	pub fn get_paths(&self, id: Ref) -> Vec<&PathBuf> {
-		self.path_to_ids
-			.iter_all()
-			.filter_map(|(path, ids)| if ids.contains(&id) { Some(path) } else { None })
-			.collect()
 	}
 
 	pub fn get_ids(&self, path: &Path) -> Option<&Vec<Ref>> {

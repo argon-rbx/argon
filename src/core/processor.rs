@@ -1,24 +1,21 @@
 use crossbeam_channel::select;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use rbx_dom_weak::types::Ref;
 use std::{
-	path::PathBuf,
 	sync::{Arc, Mutex},
 	thread::Builder,
 };
 
 use super::{
 	changes::{Changes, UpdatedSnapshot},
-	meta::Meta,
+	meta::SourceType,
 	queue::Queue,
 	snapshot::Snapshot,
 	tree::Tree,
 };
 use crate::{
-	argon_error,
-	ext::PathExt,
-	lock, messages,
-	middleware::new_snapshot,
+	argon_error, lock, messages,
+	middleware::{new_snapshot, project::snapshot_node},
 	project::Project,
 	vfs::{Vfs, VfsEvent},
 	BLACKLISTED_PATHS,
@@ -82,7 +79,7 @@ impl Handler {
 
 					match lock!(self.project).reload() {
 						Ok(()) => info!("Project reloaded"),
-						Err(err) => warn!("Failed to reload project: {}", err),
+						Err(err) => error!("Failed to reload project: {}", err),
 					}
 				} else if let VfsEvent::Delete(_) = event {
 					argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
@@ -134,41 +131,33 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 
 	let mut changes = Changes::new();
 
-	let path = {
-		let paths = tree.get_paths(id);
+	let meta = tree.get_meta(id).unwrap();
+	let source = meta.source.first().unwrap();
 
-		if paths.is_empty() {
-			error!("Failed to get path for instance: {:?}", id);
-			return changes;
-		// Get path of a regular file or super path of a child file
-		} else {
-			paths
-				.iter()
-				.fold(paths[0], |acc, path| if path.len() < acc.len() { path } else { acc })
-		}
+	// println!("{:#?}", meta.source.all());
+	// println!("{:#?}", source);
+
+	let snapshot = match source {
+		SourceType::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
+			Ok(snapshot) => Some(snapshot),
+			Err(err) => {
+				error!("Failed to process changes: {}, source: {:?}", err, source);
+				return changes;
+			}
+		},
+		_ => match new_snapshot(source.path(), &meta.context, vfs) {
+			Ok(snapshot) => snapshot,
+			Err(err) => {
+				error!("Failed to process changes: {}, source: {:?}", err, source);
+				return changes;
+			}
+		},
 	};
 
-	// Merge all meta entries associated with the given `id`
-	// let meta = tree.get_meta_all(id).into_iter().fold(Meta::new(), |mut acc, meta| {
-	// 	acc.extend(meta.clone());
-	// 	acc
-	// });
-
-	let meta = Meta::new();
-
-	let snapshot = match new_snapshot(path, &meta.context, vfs) {
-		Ok(snapshot) => snapshot,
-		Err(err) => {
-			error!("Failed to process changes: {}, path", err);
-			return changes;
-		}
-	};
-
-	// Handle additions, modifications and
-	// removals of instances without paths
+	// Handle additions, modifications and child removals
 	if let Some(snapshot) = snapshot {
 		process_child_changes(id, snapshot, &mut changes, tree);
-	// Handle removals of regular instances
+	// Handle regular removals
 	} else {
 		tree.remove_instance(id);
 		changes.remove(id);
@@ -179,37 +168,16 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes, tree: &mut Tree) {
 	// Update meta if it's different
-	// match (snapshot.meta, tree.get_meta_mut(id)) {
-	// 	(Some(snapshot_meta), Some(meta)) => {
-	// 		if snapshot_meta != *meta {
-	// 			if snapshot_meta.is_empty() {
-	// 				tree.remove_meta(id);
-	// 			} else {
-	// 				*meta = snapshot_meta;
-	// 			}
-	// 		}
-	// 	}
-	// 	(Some(snapshot_meta), None) => {
-	// 		tree.insert_meta(id, snapshot_meta);
-	// 	}
-	// 	_ => {}
-	// }
-
-	// Update paths if they're different
-
-	let paths: Vec<PathBuf> = tree.get_paths(id).into_iter().cloned().collect();
-
-	// for path in &paths {
-	// 	if !snapshot.paths.contains(path) {
-	// 		tree.remove_path(path, id);
-	// 	}
-	// }
-
-	// for path in &snapshot.paths {
-	// 	if !paths.contains(path) {
-	// 		tree.insert_path(path, id);
-	// 	}
-	// }
+	match (snapshot.meta, tree.get_meta_mut(id)) {
+		(snapshot_meta, Some(meta)) => {
+			if snapshot_meta != *meta {
+				*meta = snapshot_meta;
+			}
+		}
+		(snapshot_meta, None) => {
+			tree.insert_meta(id, snapshot_meta);
+		}
+	}
 
 	// Process instance changes
 
@@ -246,68 +214,41 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 
 	// Pair instances and find removed children
 	#[allow(clippy::unnecessary_to_owned)]
-	'outer: for child_id in instance.children().to_owned() {
-		let paths = tree.get_paths(child_id);
+	for child_id in instance.children().to_owned() {
+		let instance = tree.get_instance(child_id).unwrap();
 
-		// Assign instances with known path to snapshot children
-		if !paths.is_empty() {
-			// for child in snapshot.children.iter_mut() {
-			// 	if paths.iter().any(|path| child.paths.contains(path)) {
-			// 		child.set_id(child_id);
+		let snapshot = snapshot.children.iter_mut().enumerate().find(|(index, child)| {
+			if hydrated[*index] {
+				return false;
+			}
 
-			// 		continue 'outer;
-			// 	}
-			// }
+			if child.name == instance.name && child.class == instance.class {
+				hydrated[*index] = true;
+				return true;
+			}
 
-			// Skip instances that are part of the project
-			// but have different paths
-			// if let Some(meta) = tree.get_meta(id) {
-			// 	if let Some(project_data) = &meta.project_data {
-			// 		if project_data.affects.exists() {
-			// 			continue 'outer;
-			// 		}
-			// 	}
-			// }
+			false
+		});
 
+		if let Some((_, child)) = snapshot {
+			child.set_id(child_id);
+		} else {
 			tree.remove_instance(child_id);
 			changes.remove(child_id);
-
-		// Hydrate instances without path by their name and class
-		} else {
-			let instance = tree.get_instance(child_id).unwrap();
-			let snapshot = snapshot.children.iter_mut().enumerate().find(|(index, child)| {
-				if hydrated[*index] {
-					return false;
-				}
-
-				if child.name == instance.name && child.class == instance.class {
-					hydrated[*index] = true;
-					return true;
-				}
-
-				false
-			});
-
-			if let Some((_, child)) = snapshot {
-				child.set_id(child_id);
-			} else {
-				tree.remove_instance(child_id);
-				changes.remove(child_id);
-			}
 		}
 	}
 
 	// Process child changes and find new children
 	for child in snapshot.children {
-		// if let Some(child_id) = child.id {
-		// 	process_child_changes(child_id, child, changes, tree);
-		// } else {
-		// 	let mut child = child;
+		if child.id.is_some() {
+			process_child_changes(child.id, child, changes, tree);
+		} else {
+			let mut child = child;
 
-		// 	insert_children(&mut child, id, tree);
+			insert_children(&mut child, id, tree);
 
-		// 	changes.add(child, id);
-		// }
+			changes.add(child, id);
+		}
 	}
 }
 

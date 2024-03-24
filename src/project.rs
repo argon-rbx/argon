@@ -25,7 +25,7 @@ pub struct ProjectNode {
 	pub tags: Vec<String>,
 
 	#[serde(rename = "$keepUnknowns", alias = "$ignoreUnknownInstances", default)]
-	pub keep_unknowns: bool,
+	pub keep_unknowns: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

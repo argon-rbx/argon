@@ -71,6 +71,16 @@ impl Source {
 		}
 	}
 
+	/// Get first source entry
+	pub fn first(&self) -> Option<&SourceType> {
+		self.sources.first()
+	}
+
+	/// Get all source entries
+	pub fn all(&self) -> &Vec<SourceType> {
+		&self.sources
+	}
+
 	/// Get first source path
 	pub fn path(&self) -> Option<&Path> {
 		self.sources.first().map(|source| source.path())

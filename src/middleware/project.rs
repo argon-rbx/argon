@@ -83,7 +83,7 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 	let meta = Meta::new()
 		.with_source(Source::project(path, name, node.clone()))
 		.with_context(context)
-		.with_keep_unknowns(node.keep_unknowns || class != "Folder");
+		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| class != "Folder"));
 
 	let mut snapshot = Snapshot::new()
 		.with_name(name)
