@@ -28,15 +28,17 @@ impl Tree {
 
 		let root_ref = tree.dom.root_ref();
 
-		tree.id_to_meta.insert(root_ref, snapshot.meta.unwrap());
-
-		for path in snapshot.paths {
-			tree.path_to_ids.insert(path, root_ref);
+		if let Some(path) = snapshot.meta.source.path() {
+			tree.path_to_ids.insert(path.to_owned(), root_ref);
 		}
+
+		tree.id_to_meta.insert(root_ref, snapshot.meta);
 
 		for child in snapshot.children {
 			tree.insert_instance(child, root_ref);
 		}
+
+		// println!("{:#?}", tree);
 
 		tree
 	}
@@ -48,15 +50,11 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		for path in snapshot.paths {
-			self.path_to_ids.insert(path, referent);
+		if let Some(path) = snapshot.meta.source.path() {
+			self.path_to_ids.insert(path.to_owned(), referent);
 		}
 
-		if let Some(meta) = snapshot.meta {
-			if !meta.is_empty() {
-				self.id_to_meta.insert(referent, meta);
-			}
-		}
+		self.id_to_meta.insert(referent, snapshot.meta);
 
 		for child in snapshot.children {
 			self.insert_instance(child, referent);
@@ -72,15 +70,11 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		for path in snapshot.paths {
-			self.path_to_ids.insert(path, referent);
+		if let Some(path) = snapshot.meta.source.path() {
+			self.path_to_ids.insert(path.to_owned(), referent);
 		}
 
-		if let Some(meta) = snapshot.meta {
-			if !meta.is_empty() {
-				self.id_to_meta.insert(referent, meta);
-			}
-		}
+		self.id_to_meta.insert(referent, snapshot.meta);
 
 		referent
 	}

@@ -1,4 +1,3 @@
-use log::error;
 use rbx_dom_weak::types::{Ref, Variant};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -54,20 +53,9 @@ impl Changes {
 		}
 	}
 
-	pub fn add(&mut self, mut snapshot: Snapshot, parent: Ref) {
-		let id = if let Some(id) = snapshot.id {
-			id
-		} else {
-			error!("Attempted to add a snapshot without an ID to changes: {:?}", snapshot);
-			return;
-		};
-
-		// Is this necessary?
-		snapshot.meta = None;
-		snapshot.paths.clear();
-
+	pub fn add(&mut self, snapshot: Snapshot, parent: Ref) {
 		self.additions.push(AddedSnapshot {
-			id,
+			id: snapshot.id,
 			parent,
 			name: snapshot.name,
 			class: snapshot.class,

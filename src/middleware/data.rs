@@ -5,13 +5,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, path::Path};
 
-use crate::{
-	core::{meta::Meta, snapshot::Snapshot},
-	ext::PathExt,
-	resolution::UnresolvedValue,
-	util,
-	vfs::Vfs,
-};
+use crate::{core::snapshot::Snapshot, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
 
 #[derive(Deserialize, Debug)]
 struct ArgonData(HashMap<String, UnresolvedValue>);
@@ -26,7 +20,7 @@ struct RojoData {
 }
 
 #[profiling::function]
-pub fn snapshot_data(path: &Path, _meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
+pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let data = vfs.read(path)?;
 	let data: Value = serde_json::from_str(&data)?;
 

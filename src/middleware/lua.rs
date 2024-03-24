@@ -59,7 +59,6 @@ pub fn snapshot_lua(path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<S
 	}
 
 	properties.insert(String::from("Source"), Variant::String(source));
-
 	snapshot.set_properties(properties);
 
 	Ok(snapshot)

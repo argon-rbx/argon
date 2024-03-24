@@ -8,7 +8,7 @@ use std::{
 
 use crate::{core::meta::SyncRule, ext::PathExt, glob::Glob, resolution::UnresolvedValue, workspace};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ProjectNode {
 	#[serde(rename = "$className")]
 	pub class_name: Option<String>,
@@ -21,8 +21,7 @@ pub struct ProjectNode {
 	pub properties: HashMap<String, UnresolvedValue>,
 	#[serde(rename = "$attributes")]
 	pub attributes: Option<UnresolvedValue>,
-	// For consistency
-	#[serde(rename = "$tags")]
+	#[serde(rename = "$tags", default)]
 	pub tags: Vec<String>,
 
 	#[serde(rename = "$keepUnknowns", alias = "$ignoreUnknownInstances", default)]
@@ -35,6 +34,7 @@ pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
 	pub node: ProjectNode,
+
 	#[serde(alias = "serveAddress")]
 	pub host: Option<String>,
 	#[serde(alias = "servePort")]
@@ -42,14 +42,16 @@ pub struct Project {
 	pub game_id: Option<u64>,
 	#[serde(alias = "servePlaceIds", default)]
 	pub place_ids: Vec<u64>,
+
 	#[serde(alias = "globIgnorePaths", default)]
 	pub ignore_globs: Vec<Glob>,
 	#[serde(default)]
 	pub sync_rules: Vec<SyncRule>,
+
 	#[serde(alias = "ignoreUnknownInstances", default)]
 	pub keep_unknowns: bool,
 	#[serde(alias = "emitLegacyScripts", default)]
-	pub use_contexts: bool,
+	pub legacy_scripts: bool,
 
 	#[serde(skip)]
 	pub path: PathBuf,

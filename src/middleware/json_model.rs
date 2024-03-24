@@ -27,9 +27,7 @@ struct JsonModel {
 
 #[profiling::function]
 pub fn snapshot_json_model(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
-	let model = vfs.read(path)?;
-	let model: JsonModel = serde_json::from_str(&model)?;
-
+	let model = serde_json::from_str(&vfs.read(path)?)?;
 	let snapshot = walk(model)?;
 
 	Ok(snapshot)

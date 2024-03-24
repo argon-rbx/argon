@@ -6,21 +6,15 @@ use serde::Serialize;
 use std::{
 	collections::HashMap,
 	fmt::{self, Debug, Formatter},
-	path::{Path, PathBuf},
 };
 
 use super::meta::Meta;
 
 #[derive(Clone, Serialize)]
 pub struct Snapshot {
-	// Dom indentification
-	pub id: Option<Ref>,
-
-	// For middleware & change processing, not serialized
+	pub id: Ref,
 	#[serde(skip)]
-	pub meta: Option<Meta>,
-	#[serde(skip)]
-	pub paths: Vec<PathBuf>,
+	pub meta: Meta,
 
 	// Roblox related
 	pub name: String,
@@ -34,9 +28,8 @@ impl Snapshot {
 
 	pub fn new() -> Self {
 		Self {
-			id: None,
-			meta: None,
-			paths: Vec::new(),
+			id: Ref::none(),
+			meta: Meta::new(),
 			name: String::from(""),
 			class: String::from("Folder"),
 			properties: HashMap::new(),
@@ -45,62 +38,48 @@ impl Snapshot {
 	}
 
 	pub fn with_id(mut self, id: Ref) -> Self {
-		self.id = Some(id);
+		self.set_id(id);
 		self
 	}
 
 	pub fn with_meta(mut self, meta: Meta) -> Self {
-		self.meta = Some(meta);
-		self
-	}
-
-	pub fn with_path(mut self, path: &Path) -> Self {
-		self.paths.push(path.to_owned());
+		self.set_meta(meta);
 		self
 	}
 
 	pub fn with_name(mut self, name: &str) -> Self {
-		self.name = name.to_owned();
+		self.set_name(name);
 		self
 	}
 
 	pub fn with_class(mut self, class: &str) -> Self {
-		self.class = class.to_owned();
+		self.set_class(class);
 		self
 	}
 
 	pub fn with_properties(mut self, properties: HashMap<String, Variant>) -> Self {
-		self.properties = properties;
+		self.set_properties(properties);
 		self
 	}
 
 	pub fn with_children(mut self, children: Vec<Snapshot>) -> Self {
-		self.children = children;
+		self.set_children(children);
 		self
 	}
 
 	pub fn with_data(mut self, data: Self) -> Self {
-		if self.class == "Folder" {
-			self.class = data.class;
-		}
-
-		self.extend_properties(data.properties);
-
+		self.set_data(data);
 		self
 	}
 
 	// Overwriting snapshot fields
 
 	pub fn set_id(&mut self, id: Ref) {
-		self.id = Some(id);
+		self.id = id;
 	}
 
 	pub fn set_meta(&mut self, meta: Meta) {
-		self.meta = Some(meta);
-	}
-
-	pub fn set_paths(&mut self, paths: Vec<PathBuf>) {
-		self.paths = paths;
+		self.meta = meta;
 	}
 
 	pub fn set_name(&mut self, name: &str) {
@@ -125,13 +104,10 @@ impl Snapshot {
 		}
 
 		self.extend_properties(data.properties);
+		self.meta.source.add(data.meta.source);
 	}
 
 	// Adding to snapshot fields
-
-	pub fn add_path(&mut self, path: &Path) {
-		self.paths.push(path.to_owned());
-	}
 
 	pub fn add_property(&mut self, name: &str, value: Variant) {
 		self.properties.insert(name.to_owned(), value);
@@ -143,24 +119,12 @@ impl Snapshot {
 
 	// Joining snapshot fields
 
-	pub fn extend_paths(&mut self, paths: Vec<PathBuf>) {
-		self.paths.extend(paths);
-	}
-
 	pub fn extend_properties(&mut self, properties: HashMap<String, Variant>) {
 		self.properties.extend(properties);
 	}
 
 	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
 		self.children.extend(children);
-	}
-
-	pub fn extend_meta(&mut self, meta: Meta) {
-		if let Some(snapshot_meta) = &mut self.meta {
-			snapshot_meta.extend(meta);
-		} else {
-			self.meta = Some(meta);
-		}
 	}
 
 	// Based on Rojo's InstanceSnapshot::from_tree (https://github.com/rojo-rbx/rojo/blob/master/src/snapshot/instance_snapshot.rs#L105)
@@ -195,18 +159,8 @@ impl Debug for Snapshot {
 
 		debug.field("name", &self.name);
 		debug.field("class", &self.class);
-
-		if !self.paths.is_empty() {
-			debug.field("paths", &self.paths);
-		}
-
-		if let Some(id) = &self.id {
-			debug.field("id", id);
-		}
-
-		if let Some(meta) = &self.meta {
-			debug.field("meta", meta);
-		}
+		debug.field("id", &self.id);
+		debug.field("meta", &self.meta);
 
 		if !self.properties.is_empty() {
 			let mut properties = self.properties.clone();

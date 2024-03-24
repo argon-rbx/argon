@@ -7,7 +7,10 @@ use std::{collections::HashMap, path::Path};
 use super::new_snapshot;
 use crate::{
 	argon_warn,
-	core::{meta::Meta, snapshot::Snapshot},
+	core::{
+		meta::{Context, Meta, Source},
+		snapshot::Snapshot,
+	},
 	ext::PathExt,
 	project::{Project, ProjectNode},
 	util,
@@ -18,24 +21,26 @@ use crate::{
 pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let project: Project = Project::load(path)?;
 
-	let super_path = path.get_parent();
+	let mut meta = Meta::from_project(&project);
+	let mut snapshot = snapshot_node(&project.name, path, &meta.context, vfs, project.node)?;
 
-	let meta = Meta::from_project(&project);
-	let snapshot = walk(&project.name, super_path, &meta, vfs, project.node)?.with_meta(meta);
+	meta.source = snapshot.meta.source.clone();
+	snapshot.set_meta(meta);
 
 	vfs.watch(path)?;
 
 	Ok(snapshot)
 }
 
-fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
+#[profiling::function]
+pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
 	if node.class_name.is_some() && node.path.is_some() {
 		bail!("Failed to load project: $className and $path cannot be set at the same time");
 	}
 
 	let class = {
-		if let Some(class_name) = node.class_name {
-			class_name
+		if let Some(class_name) = &node.class_name {
+			class_name.to_owned()
 		} else if util::is_service(name) {
 			name.to_owned()
 		} else {
@@ -46,10 +51,10 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 	let properties = {
 		let mut properties = HashMap::new();
 
-		for (property, value) in node.properties {
-			match value.resolve(&class, &property) {
+		for (property, value) in &node.properties {
+			match value.clone().resolve(&class, property) {
 				Ok(value) => {
-					properties.insert(property, value);
+					properties.insert(property.to_owned(), value);
 				}
 				Err(err) => {
 					error!("Failed to parse property: {}", err);
@@ -57,8 +62,8 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 			}
 		}
 
-		if let Some(attributes) = node.attributes {
-			match attributes.resolve(&class, "Attributes") {
+		if let Some(attributes) = &node.attributes {
+			match attributes.clone().resolve(&class, "Attributes") {
 				Ok(value) => {
 					properties.insert(String::from("Attributes"), value);
 				}
@@ -69,31 +74,39 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 		}
 
 		if !node.tags.is_empty() {
-			properties.insert(String::from("Tags"), Tags::from(node.tags).into());
+			properties.insert(String::from("Tags"), Tags::from(node.tags.clone()).into());
 		}
 
 		properties
 	};
 
+	let meta = Meta::new()
+		.with_source(Source::project(path, name, node.clone()))
+		.with_context(context)
+		.with_keep_unknowns(node.keep_unknowns || class != "Folder");
+
 	let mut snapshot = Snapshot::new()
 		.with_name(name)
 		.with_class(&class)
-		.with_properties(properties);
+		.with_properties(properties)
+		.with_meta(meta);
 
 	if let Some(node_path) = node.path {
-		let path = path.join(path_clean::clean(node_path));
+		let path = path.get_parent().join(path_clean::clean(node_path));
 
 		if path.is_file() {
 			vfs.watch(&path)?;
 		}
 
-		if let Some(mut path_snapshot) = new_snapshot(&path, meta, vfs)? {
+		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
 			path_snapshot.set_name(&snapshot.name);
 
 			if path_snapshot.class == "Folder" {
 				path_snapshot.set_class(&snapshot.class);
 			}
+
+			path_snapshot.meta.source.add(snapshot.meta.source);
 
 			snapshot = path_snapshot
 		} else {
@@ -103,16 +116,10 @@ fn walk(name: &str, path: &Path, meta: &Meta, vfs: &Vfs, node: ProjectNode) -> R
 				path.to_string().bold()
 			);
 		}
-
-		// If path does not exist, we still want
-		// to keep it in the snapshot
-		if snapshot.paths.is_empty() {
-			snapshot.add_path(&path);
-		}
 	}
 
 	for (name, node) in node.tree {
-		let child = walk(&name, path, meta, vfs, node)?;
+		let child = snapshot_node(&name, path, context, vfs, node)?;
 		snapshot.add_child(child);
 	}
 

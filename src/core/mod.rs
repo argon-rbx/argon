@@ -40,7 +40,9 @@ impl Core {
 		trace!("Snapshotting root project");
 
 		let meta = Meta::from_project(&project);
-		let snapshot = new_snapshot(&project.path, &meta, &vfs)?;
+		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?;
+
+		println!("{:#?}", snapshot);
 
 		trace!("Building Tree and Queue");
 

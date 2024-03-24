@@ -13,7 +13,10 @@ use self::{
 	txt::snapshot_txt,
 };
 use crate::{
-	core::{meta::Meta, snapshot::Snapshot},
+	core::{
+		meta::{Context, Meta, Source},
+		snapshot::Snapshot,
+	},
 	ext::{PathExt, ResultExt},
 	vfs::Vfs,
 	BLACKLISTED_PATHS,
@@ -58,10 +61,10 @@ impl Display for FileType {
 }
 
 impl FileType {
-	fn middleware(&self, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Snapshot> {
+	fn middleware(&self, path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 		let result = match self {
 			FileType::Project => snapshot_project(path, vfs),
-			FileType::InstanceData => snapshot_data(path, meta, vfs),
+			FileType::InstanceData => snapshot_data(path, vfs),
 			//
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
 				snapshot_lua(path, vfs, self.clone().into())
@@ -88,9 +91,9 @@ impl FileType {
 }
 
 /// Returns a snapshot of the given path, `None` if path no longer exists
-pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
+pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted))
-		|| meta.ignore_rules.iter().any(|rule| rule.matches(path))
+		|| context.ignore_rules().iter().any(|rule| rule.matches(path))
 	{
 		trace!("Snapshot of {} not created: ignored or blacklisted", path.display());
 		return Ok(None);
@@ -104,14 +107,14 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		return Ok(None);
 	}
 
-	trace!("Creating snapshot of {}", path.display());
-
 	// println!("{:#?}", path);
 
+	trace!("Creating snapshot of {}", path.display());
+
 	if vfs.is_file(path) {
-		if let Some(snapshot) = new_snapshot_file_child(path, meta, vfs)? {
+		if let Some(snapshot) = new_snapshot_file_child(path, context, vfs)? {
 			Ok(Some(snapshot))
-		} else if let Some(snapshot) = new_snapshot_file(path, meta, vfs)? {
+		} else if let Some(snapshot) = new_snapshot_file(path, context, vfs)? {
 			Ok(Some(snapshot))
 		} else {
 			Ok(None)
@@ -120,29 +123,30 @@ pub fn new_snapshot(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapsh
 		vfs.watch(path)?;
 
 		for path in vfs.read_dir(path)? {
-			if let Some(snapshot) = new_snapshot_file_child(&path, meta, vfs)? {
+			if let Some(snapshot) = new_snapshot_file_child(&path, context, vfs)? {
 				return Ok(Some(snapshot));
 			}
 		}
 
-		new_snapshot_dir(path, meta, vfs)
+		new_snapshot_dir(path, context, vfs)
 	}
 }
 
 /// Create a snapshot of a regular file,
 /// example: `foo/bar.lua`
-fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve(path)) {
+fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve(path)) {
 		let file_type = resolved.file_type;
 		let name = resolved.name;
 
-		let mut snapshot = file_type.middleware(path, meta, vfs)?.with_path(path);
+		let mut snapshot = file_type.middleware(path, vfs)?;
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
+			snapshot.set_meta(Meta::new().with_context(context).with_source(Source::file(path)));
 		}
 
-		if let Some(instance_data) = get_instance_data(&name, path, meta, vfs)? {
+		if let Some(instance_data) = get_instance_data(&name, path, context, vfs)? {
 			snapshot.set_data(instance_data);
 		}
 
@@ -154,29 +158,30 @@ fn new_snapshot_file(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snaps
 
 /// Create a snapshot of a directory that has a child source or data,
 /// example: `foo/bar/.src.lua`
-fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	if let Some(resolved) = meta.sync_rules.iter().find_map(|rule| rule.resolve_child(path)) {
+fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve_child(path)) {
 		let file_type = resolved.file_type;
 		let name = resolved.name;
 		let parent = path.get_parent();
 
-		let mut snapshot = file_type.middleware(path, meta, vfs)?.with_path(parent);
+		let mut snapshot = file_type.middleware(path, vfs)?;
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
+			snapshot.set_meta(Meta::new().with_context(context).with_source(Source::folder(parent)));
 
 			for entry in vfs.read_dir(parent)? {
 				if entry == path {
 					continue;
 				}
 
-				if let Some(child_snapshot) = new_snapshot(&entry, meta, vfs)? {
+				if let Some(child_snapshot) = new_snapshot(&entry, context, vfs)? {
 					snapshot.add_child(child_snapshot);
 				}
 			}
 		}
 
-		if let Some(instance_data) = get_instance_data(&name, parent, meta, vfs)? {
+		if let Some(instance_data) = get_instance_data(&name, parent, context, vfs)? {
 			snapshot.set_data(instance_data);
 		}
 
@@ -188,24 +193,27 @@ fn new_snapshot_file_child(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option
 
 /// Create snapshot of a directory,
 /// example: `foo/bar`
-fn new_snapshot_dir(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	let mut snapshot = snapshot_dir(path, meta, vfs)?;
+fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	let mut snapshot = snapshot_dir(path, context, vfs)?;
 
-	if let Some(instance_data) = get_instance_data(&snapshot.name, path, meta, vfs)? {
+	if let Some(instance_data) = get_instance_data(&snapshot.name, path, context, vfs)? {
 		snapshot.set_data(instance_data);
 	}
 
 	Ok(Some(snapshot))
 }
 
-fn get_instance_data(name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	for sync_rule in meta.get_sync_rules(&FileType::InstanceData) {
+fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	for sync_rule in context.sync_rules_of_type(&FileType::InstanceData) {
 		if vfs.is_dir(path) {
 			if let Some(child_pattern) = &sync_rule.child_pattern {
 				let data_path = path.join(child_pattern.as_str());
 
 				if vfs.exists(&data_path) {
-					let snapshot = FileType::InstanceData.middleware(&data_path, meta, vfs)?;
+					let snapshot = FileType::InstanceData
+						.middleware(&data_path, vfs)?
+						.with_meta(Meta::new().with_source(Source::data(&data_path)));
+
 					return Ok(Some(snapshot));
 				}
 			}
@@ -214,7 +222,10 @@ fn get_instance_data(name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Result<
 			let data_path = path.with_file_name(pattern.as_str().replace('*', name));
 
 			if vfs.exists(&data_path) {
-				let snapshot = FileType::InstanceData.middleware(&data_path, meta, vfs)?;
+				let snapshot = FileType::InstanceData
+					.middleware(&data_path, vfs)?
+					.with_meta(Meta::new().with_source(Source::data(&data_path)));
+
 				return Ok(Some(snapshot));
 			}
 		}

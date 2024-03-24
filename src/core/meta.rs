@@ -1,16 +1,80 @@
 use serde::{Deserialize, Serialize};
 use std::{
-	fmt::{self, Debug, Formatter},
 	path::{Path, PathBuf},
+	sync::OnceLock,
 };
 
-use crate::{ext::PathExt, glob::Glob, middleware::FileType, project::Project};
+use crate::{
+	ext::PathExt,
+	glob::Glob,
+	middleware::FileType,
+	project::{Project, ProjectNode},
+};
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Source {
-	Single(PathBuf),
-	Double(PathBuf, PathBuf),
-	Project(PathBuf, String),
+#[derive(Debug, Clone, PartialEq)]
+pub enum SourceType {
+	File(PathBuf),
+	Folder(PathBuf),
+	Data(PathBuf),
+	Project(PathBuf, String, ProjectNode),
+}
+
+impl SourceType {
+	pub fn path(&self) -> &Path {
+		match self {
+			SourceType::File(path) => path,
+			SourceType::Folder(path) => path,
+			SourceType::Data(path) => path,
+			SourceType::Project(path, _, _) => path,
+		}
+	}
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Source {
+	sources: Vec<SourceType>,
+}
+
+impl Source {
+	pub fn new() -> Self {
+		Self { sources: Vec::new() }
+	}
+
+	pub fn file(path: &Path) -> Self {
+		Self {
+			sources: vec![SourceType::File(path.to_owned())],
+		}
+	}
+
+	pub fn folder(path: &Path) -> Self {
+		Self {
+			sources: vec![SourceType::Folder(path.to_owned())],
+		}
+	}
+
+	pub fn data(path: &Path) -> Self {
+		Self {
+			sources: vec![SourceType::Data(path.to_owned())],
+		}
+	}
+
+	pub fn project(path: &Path, name: &str, node: ProjectNode) -> Self {
+		Self {
+			sources: vec![SourceType::Project(path.to_owned(), name.to_owned(), node)],
+		}
+	}
+
+	/// Add second source first entry
+	pub fn add(&mut self, source: Self) {
+		if let Some(source) = source.sources.first() {
+			self.sources.push(source.clone());
+		}
+	}
+
+	/// Get first source path
+	pub fn path(&self) -> Option<&Path> {
+		self.sources.first().map(|source| source.path())
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -131,40 +195,84 @@ impl IgnoreRule {
 	}
 }
 
-#[derive(Clone, PartialEq)]
-pub struct Meta {
-	/// Instance source that is guaranteed to exist
-	pub source: Option<Source>,
+#[derive(Debug, Clone, PartialEq)]
+pub struct Context {
 	/// Rules that define how files are synced
-	pub sync_rules: Vec<SyncRule>,
+	sync_rules: Vec<SyncRule>,
 	/// Rules that define which files are ignored
-	pub ignore_rules: Vec<IgnoreRule>,
-	/// Whether to keep unknown child instances
-	pub keep_unknowns: bool,
-	/// Whether to use Scripts with contexts instead of LocalScripts
-	pub use_contexts: bool,
+	ignore_rules: Vec<IgnoreRule>,
+	/// Whether to use legacy script context
+	legacy_scripts: bool,
 }
 
-impl Meta {
-	// Creating new meta
-
-	pub fn new() -> Self {
+impl Context {
+	fn new() -> Self {
 		Self {
-			source: None,
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
-			keep_unknowns: false,
-			use_contexts: false,
+			legacy_scripts: true,
 		}
 	}
 
-	pub fn from_project(project: &Project) -> Self {
-		let sync_rules = if project.sync_rules.is_empty() {
-			Self::default().sync_rules
+	pub fn sync_rules(&self) -> &Vec<SyncRule> {
+		if self.sync_rules.is_empty() {
+			default_sync_rules()
 		} else {
-			project.sync_rules.clone()
-		};
+			&self.sync_rules
+		}
+	}
 
+	pub fn sync_rules_of_type(&self, file_type: &FileType) -> Vec<&SyncRule> {
+		self.sync_rules()
+			.iter()
+			.filter(|rule| rule.file_type == *file_type)
+			.collect()
+	}
+
+	pub fn ignore_rules(&self) -> &Vec<IgnoreRule> {
+		&self.ignore_rules
+	}
+
+	pub fn use_legacy_scripts(&self) -> bool {
+		self.legacy_scripts
+	}
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Meta {
+	/// Instance source that is guaranteed to exist
+	pub source: Source,
+	/// Project context
+	pub context: Context,
+	/// Whether to keep unknown child instances
+	pub keep_unknowns: bool,
+}
+
+impl Meta {
+	pub fn new() -> Self {
+		Self {
+			source: Source::new(),
+			context: Context::new(),
+			keep_unknowns: false,
+		}
+	}
+
+	pub fn with_source<S: Into<Source>>(mut self, source: S) -> Self {
+		self.source = source.into();
+		self
+	}
+
+	pub fn with_context(mut self, context: &Context) -> Self {
+		self.context = context.clone();
+		self
+	}
+
+	pub fn with_keep_unknowns(mut self, keep_unknowns: bool) -> Self {
+		self.keep_unknowns = keep_unknowns;
+		self
+	}
+
+	pub fn from_project(project: &Project) -> Self {
 		let ignore_rules = project
 			.ignore_globs
 			.clone()
@@ -175,113 +283,25 @@ impl Meta {
 			})
 			.collect();
 
-		Self {
-			source: None, // ?
-			sync_rules,
+		let context = Context {
+			sync_rules: project.sync_rules.clone(),
 			ignore_rules,
+			legacy_scripts: project.legacy_scripts,
+		};
+
+		Self {
+			source: Source::new(),
+			context,
 			keep_unknowns: project.keep_unknowns,
-			use_contexts: project.use_contexts,
 		}
-	}
-
-	pub fn with_sync_rules(mut self, sync_rules: Vec<SyncRule>) -> Self {
-		self.sync_rules = sync_rules;
-		self
-	}
-
-	pub fn with_ignore_rules(mut self, ignore_rules: Vec<IgnoreRule>) -> Self {
-		self.ignore_rules = ignore_rules;
-		self
-	}
-
-	// Overwriting meta fields
-
-	pub fn set_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
-		self.sync_rules = sync_rules;
-	}
-
-	pub fn set_ignore_rules(&mut self, ignore_rules: Vec<IgnoreRule>) {
-		self.ignore_rules = ignore_rules;
-	}
-
-	// Adding to meta fields
-
-	pub fn add_sync_rule(&mut self, sync_rule: SyncRule) {
-		self.sync_rules.push(sync_rule);
-	}
-
-	pub fn add_ignore_rule(&mut self, ignore_rule: IgnoreRule) {
-		self.ignore_rules.push(ignore_rule);
-	}
-
-	// Joining meta fields
-
-	pub fn extend_sync_rules(&mut self, sync_rules: Vec<SyncRule>) {
-		self.sync_rules.extend(sync_rules);
-	}
-
-	pub fn extend_ignore_rules(&mut self, ignore_rules: Vec<IgnoreRule>) {
-		self.ignore_rules.extend(ignore_rules);
-	}
-
-	pub fn extend(&mut self, meta: Meta) {
-		self.extend_sync_rules(meta.sync_rules);
-		self.extend_ignore_rules(meta.ignore_rules);
-
-		// if meta.project_data.is_some() {
-		// 	self.project_data = meta.project_data;
-		// }
-	}
-
-	// Misc
-
-	pub fn is_empty(&self) -> bool {
-		self.source.is_none()
-			&& self.sync_rules.is_empty()
-			&& self.ignore_rules.is_empty()
-			&& !self.keep_unknowns
-			&& !self.use_contexts
-	}
-
-	pub fn get_sync_rules(&self, file_type: &FileType) -> Vec<&SyncRule> {
-		self.sync_rules
-			.iter()
-			.filter(|rule| rule.file_type == *file_type)
-			.collect()
 	}
 }
 
-impl Debug for Meta {
-	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		let mut debug = f.debug_struct("Meta");
+fn default_sync_rules() -> &'static Vec<SyncRule> {
+	static SYNC_RULES: OnceLock<Vec<SyncRule>> = OnceLock::new();
 
-		if let Some(source) = &self.source {
-			debug.field("source", source);
-		}
-
-		if !self.sync_rules.is_empty() {
-			debug.field("sync_rules", &self.sync_rules);
-		}
-
-		if !self.ignore_rules.is_empty() {
-			debug.field("ignore_rules", &self.ignore_rules);
-		}
-
-		if self.keep_unknowns {
-			debug.field("keep_unknowns", &self.keep_unknowns);
-		}
-
-		if self.use_contexts {
-			debug.field("use_contexts", &self.use_contexts);
-		}
-
-		debug.finish()
-	}
-}
-
-impl Default for Meta {
-	fn default() -> Self {
-		let sync_rules = vec![
+	SYNC_RULES.get_or_init(|| {
+		vec![
 			SyncRule::new(FileType::Project)
 				.with_pattern("*.project.json")
 				.with_child_pattern("default.project.json"),
@@ -373,11 +393,6 @@ impl Default for Meta {
 			SyncRule::new(FileType::RbxmxModel)
 				.with_pattern("*.rbxmx")
 				.with_child_pattern(".src.rbxmx"),
-		];
-
-		Self {
-			sync_rules,
-			..Self::new()
-		}
-	}
+		]
+	})
 }
