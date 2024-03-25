@@ -106,7 +106,7 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 				path_snapshot.set_class(&snapshot.class);
 			}
 
-			path_snapshot.meta.source.add(snapshot.meta.source);
+			path_snapshot.meta.source.extend(snapshot.meta.source);
 
 			snapshot = path_snapshot
 		} else {

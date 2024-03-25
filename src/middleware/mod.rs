@@ -176,7 +176,11 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
-			snapshot.set_meta(Meta::new().with_context(context).with_source(Source::folder(parent)));
+			snapshot.set_meta(
+				Meta::new()
+					.with_context(context)
+					.with_source(Source::child_file(parent, path)),
+			);
 
 			for entry in vfs.read_dir(parent)? {
 				if entry == path {

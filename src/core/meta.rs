@@ -12,78 +12,136 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum SourceType {
+pub enum SourceKind {
+	File,
+	ChildFile,
+	Directory,
+	Project,
+	Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum SourceEntry {
 	File(PathBuf),
 	Folder(PathBuf),
 	Data(PathBuf),
 	Project(PathBuf, String, ProjectNode),
 }
 
-impl SourceType {
+impl SourceEntry {
 	pub fn path(&self) -> &Path {
 		match self {
-			SourceType::File(path) => path,
-			SourceType::Folder(path) => path,
-			SourceType::Data(path) => path,
-			SourceType::Project(path, _, _) => path,
+			SourceEntry::File(path) => path,
+			SourceEntry::Folder(path) => path,
+			SourceEntry::Data(path) => path,
+			SourceEntry::Project(path, _, _) => path,
+		}
+	}
+
+	pub fn index(&self) -> usize {
+		match self {
+			SourceEntry::File(_) => 0,
+			SourceEntry::Data(_) => 1,
+			SourceEntry::Project(_, _, _) => 2,
+			SourceEntry::Folder(_) => 3,
 		}
 	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Source {
-	sources: Vec<SourceType>,
+	kind: SourceKind,
+	sources: Vec<SourceEntry>,
 }
 
 impl Source {
 	pub fn new() -> Self {
-		Self { sources: Vec::new() }
+		Self {
+			kind: SourceKind::Unknown,
+			sources: Vec::new(),
+		}
 	}
 
 	pub fn file(path: &Path) -> Self {
 		Self {
-			sources: vec![SourceType::File(path.to_owned())],
+			kind: SourceKind::File,
+			sources: vec![SourceEntry::File(path.to_owned())],
 		}
 	}
 
-	pub fn folder(path: &Path) -> Self {
+	pub fn child_file(folder: &Path, file: &Path) -> Self {
 		Self {
-			sources: vec![SourceType::Folder(path.to_owned())],
+			kind: SourceKind::ChildFile,
+			sources: vec![
+				SourceEntry::Folder(folder.to_owned()),
+				SourceEntry::File(file.to_owned()),
+			],
 		}
 	}
 
-	pub fn data(path: &Path) -> Self {
+	pub fn directory(path: &Path) -> Self {
 		Self {
-			sources: vec![SourceType::Data(path.to_owned())],
+			kind: SourceKind::Directory,
+			sources: vec![SourceEntry::Folder(path.to_owned())],
 		}
 	}
 
 	pub fn project(path: &Path, name: &str, node: ProjectNode) -> Self {
 		Self {
-			sources: vec![SourceType::Project(path.to_owned(), name.to_owned(), node)],
+			kind: SourceKind::Project,
+			sources: vec![SourceEntry::Project(path.to_owned(), name.to_owned(), node)],
 		}
 	}
 
-	/// Add second source first entry
-	pub fn add(&mut self, source: Self) {
-		if let Some(source) = source.sources.first() {
-			self.sources.push(source.clone());
+	pub fn extend(&mut self, source: Self) {
+		self.sources.extend(source.sources);
+	}
+
+	pub fn main(&self) -> Option<&SourceEntry> {
+		let mut iterator = self.sources.iter();
+
+		match self.kind {
+			SourceKind::File => iterator.find(|entry| matches!(entry, SourceEntry::File(_))),
+			SourceKind::ChildFile => iterator.find(|entry| matches!(entry, SourceEntry::Folder(_))),
+			SourceKind::Directory => iterator.find(|entry| matches!(entry, SourceEntry::Folder(_))),
+			SourceKind::Project => iterator.find(|entry| matches!(entry, SourceEntry::Project(_, _, _))),
+			SourceKind::Unknown => None,
 		}
 	}
 
-	/// Get first source entry
-	pub fn first(&self) -> Option<&SourceType> {
-		self.sources.first()
+	pub fn data(&self) -> Option<PathBuf> {
+		self.sources.iter().find_map(|entry| match entry {
+			SourceEntry::Data(path) => Some(path.to_owned()),
+			_ => None,
+		})
 	}
 
-	/// Get all source entries
-	pub fn all(&self) -> &Vec<SourceType> {
-		&self.sources
+	pub fn editable(&self) -> Vec<PathBuf> {
+		match self.kind {
+			SourceKind::File | SourceKind::ChildFile | SourceKind::Project => {
+				let mut sources = vec![];
+
+				if let Some(main) = self.main() {
+					sources.push(main.path().to_owned());
+				}
+
+				if let Some(data) = self.data() {
+					sources.push(data);
+				}
+
+				sources
+			}
+
+			_ => vec![],
+		}
 	}
 
-	/// Get first source path
 	pub fn path(&self) -> Option<&Path> {
-		self.sources.first().map(|source| source.path())
+		self.main().map(|entry| entry.path())
+	}
+
+	pub fn all(&self) -> &Vec<SourceEntry> {
+		&self.sources
 	}
 }
 

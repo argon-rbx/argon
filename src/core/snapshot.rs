@@ -110,7 +110,7 @@ impl Snapshot {
 		}
 
 		self.extend_properties(data.properties);
-		self.meta.source.add(data.source);
+		self.meta.source.extend(data.source);
 	}
 
 	// Adding to snapshot fields

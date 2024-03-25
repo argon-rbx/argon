@@ -9,12 +9,7 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use self::{
-	meta::{Meta, SourceType},
-	processor::Processor,
-	queue::Queue,
-	tree::Tree,
-};
+use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
 use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
 
 pub mod changes;
@@ -168,7 +163,7 @@ impl Core {
 				return None;
 			}
 
-			let file_paths: Vec<PathBuf> = get_usable_paths(tree, id);
+			let file_paths = get_sources(tree, id).iter().map(|path| path.to_owned()).collect();
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),
@@ -193,10 +188,10 @@ impl Core {
 	pub fn open(&self, instance: Ref) -> Result<()> {
 		let tree = lock!(self.tree);
 
-		let file_paths: Vec<PathBuf> = get_usable_paths(&tree, instance);
+		let sources = get_sources(&tree, instance);
 
-		if let Some(path) = file_paths.first() {
-			open::that(path)?;
+		if let Some(source) = sources.first() {
+			open::that(source)?;
 			Ok(())
 		} else {
 			bail!("No matching file was found")
@@ -204,16 +199,9 @@ impl Core {
 	}
 }
 
-pub fn get_usable_paths(tree: &Tree, id: Ref) -> Vec<PathBuf> {
+pub fn get_sources(tree: &Tree, id: Ref) -> Vec<PathBuf> {
 	if let Some(meta) = tree.get_meta(id) {
-		meta.source
-			.all()
-			.iter()
-			.filter_map(|source| match source {
-				SourceType::Folder(_) => None,
-				_ => Some(source.path().to_owned()),
-			})
-			.collect()
+		meta.source.editable()
 	} else {
 		vec![]
 	}

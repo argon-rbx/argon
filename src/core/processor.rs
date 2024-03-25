@@ -8,7 +8,7 @@ use std::{
 
 use super::{
 	changes::{Changes, UpdatedSnapshot},
-	meta::SourceType,
+	meta::SourceEntry,
 	queue::Queue,
 	snapshot::Snapshot,
 	tree::Tree,
@@ -132,13 +132,13 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	let mut changes = Changes::new();
 
 	let meta = tree.get_meta(id).unwrap();
-	let source = meta.source.first().unwrap();
+	let source = meta.source.main().unwrap();
 
-	// println!("{:#?}", meta.source.all());
-	// println!("{:#?}", source);
+	println!("{:#?}", meta.source.all());
+	println!("{:#?}", source);
 
 	let snapshot = match source {
-		SourceType::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
+		SourceEntry::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
 			Ok(snapshot) => Some(snapshot),
 			Err(err) => {
 				error!("Failed to process changes: {}, source: {:?}", err, source);

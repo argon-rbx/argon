@@ -89,6 +89,6 @@ pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 		class: data.class_name,
 		properties,
 		keep_unknowns: data.keep_unknowns,
-		source: Source::data(path),
+		source: Source::file(path),
 	})
 }

@@ -17,7 +17,7 @@ pub fn snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapsho
 
 	let mut snapshot = Snapshot::new()
 		.with_name(name)
-		.with_meta(Meta::new().with_context(context).with_source(Source::folder(path)));
+		.with_meta(Meta::new().with_context(context).with_source(Source::directory(path)));
 
 	for path in vfs.read_dir(path)? {
 		if let Some(child_snapshot) = new_snapshot(&path, context, vfs)? {
