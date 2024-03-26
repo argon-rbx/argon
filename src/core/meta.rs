@@ -13,11 +13,8 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SourceKind {
-	File,
-	ChildFile,
-	Directory,
-	Project,
-	Unknown,
+	Path(PathBuf),
+	Project(PathBuf, String, ProjectNode),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,7 +22,7 @@ pub enum SourceEntry {
 	File(PathBuf),
 	Folder(PathBuf),
 	Data(PathBuf),
-	Project(PathBuf, String, ProjectNode),
+	Project(PathBuf),
 }
 
 impl SourceEntry {
@@ -34,45 +31,38 @@ impl SourceEntry {
 			SourceEntry::File(path) => path,
 			SourceEntry::Folder(path) => path,
 			SourceEntry::Data(path) => path,
-			SourceEntry::Project(path, _, _) => path,
-		}
-	}
-
-	pub fn index(&self) -> usize {
-		match self {
-			SourceEntry::File(_) => 0,
-			SourceEntry::Data(_) => 1,
-			SourceEntry::Project(_, _, _) => 2,
-			SourceEntry::Folder(_) => 3,
+			SourceEntry::Project(path) => path,
 		}
 	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Source {
-	kind: SourceKind,
-	sources: Vec<SourceEntry>,
+	// Source used to rebuild the snapshot
+	inner: SourceKind,
+	// Existing paths associated with the snapshot
+	relevant: Vec<SourceEntry>,
 }
 
 impl Source {
 	pub fn new() -> Self {
 		Self {
-			kind: SourceKind::Unknown,
-			sources: Vec::new(),
+			inner: SourceKind::Path(PathBuf::new()),
+			relevant: Vec::new(),
 		}
 	}
 
 	pub fn file(path: &Path) -> Self {
 		Self {
-			kind: SourceKind::File,
-			sources: vec![SourceEntry::File(path.to_owned())],
+			inner: SourceKind::Path(path.to_owned()),
+			relevant: vec![SourceEntry::File(path.to_owned())],
 		}
 	}
 
 	pub fn child_file(folder: &Path, file: &Path) -> Self {
 		Self {
-			kind: SourceKind::ChildFile,
-			sources: vec![
+			inner: SourceKind::Path(folder.to_owned()),
+			relevant: vec![
 				SourceEntry::Folder(folder.to_owned()),
 				SourceEntry::File(file.to_owned()),
 			],
@@ -81,67 +71,40 @@ impl Source {
 
 	pub fn directory(path: &Path) -> Self {
 		Self {
-			kind: SourceKind::Directory,
-			sources: vec![SourceEntry::Folder(path.to_owned())],
+			inner: SourceKind::Path(path.to_owned()),
+			relevant: vec![SourceEntry::Folder(path.to_owned())],
 		}
 	}
 
 	pub fn project(path: &Path, name: &str, node: ProjectNode) -> Self {
 		Self {
-			kind: SourceKind::Project,
-			sources: vec![SourceEntry::Project(path.to_owned(), name.to_owned(), node)],
+			inner: SourceKind::Project(path.to_owned(), name.to_owned(), node),
+			relevant: vec![SourceEntry::Project(path.to_owned())],
 		}
 	}
 
-	pub fn extend(&mut self, source: Self) {
-		self.sources.extend(source.sources);
+	pub fn add_relevant(&mut self, entry: SourceEntry) {
+		self.relevant.push(entry)
 	}
 
-	pub fn main(&self) -> Option<&SourceEntry> {
-		let mut iterator = self.sources.iter();
-
-		match self.kind {
-			SourceKind::File => iterator.find(|entry| matches!(entry, SourceEntry::File(_))),
-			SourceKind::ChildFile => iterator.find(|entry| matches!(entry, SourceEntry::Folder(_))),
-			SourceKind::Directory => iterator.find(|entry| matches!(entry, SourceEntry::Folder(_))),
-			SourceKind::Project => iterator.find(|entry| matches!(entry, SourceEntry::Project(_, _, _))),
-			SourceKind::Unknown => None,
-		}
+	pub fn add_data(&mut self, path: &Path) {
+		self.add_relevant(SourceEntry::Data(path.to_owned()))
 	}
 
-	pub fn data(&self) -> Option<PathBuf> {
-		self.sources.iter().find_map(|entry| match entry {
-			SourceEntry::Data(path) => Some(path.to_owned()),
-			_ => None,
-		})
+	pub fn extend_relavants(&mut self, entries: Vec<SourceEntry>) {
+		self.relevant.extend(entries)
 	}
 
-	pub fn editable(&self) -> Vec<PathBuf> {
-		match self.kind {
-			SourceKind::File | SourceKind::ChildFile | SourceKind::Project => {
-				let mut sources = vec![];
-
-				if let Some(main) = self.main() {
-					sources.push(main.path().to_owned());
-				}
-
-				if let Some(data) = self.data() {
-					sources.push(data);
-				}
-
-				sources
-			}
-
-			_ => vec![],
-		}
+	pub fn get(&self) -> &SourceKind {
+		&self.inner
 	}
 
-	pub fn path(&self) -> Option<&Path> {
-		self.main().map(|entry| entry.path())
+	pub fn relevants(&self) -> &Vec<SourceEntry> {
+		&self.relevant
 	}
 
-	pub fn all(&self) -> &Vec<SourceEntry> {
-		&self.sources
+	pub fn paths(&self) -> Vec<&Path> {
+		self.relevant.iter().map(|entry| entry.path()).collect()
 	}
 }
 

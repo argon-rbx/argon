@@ -8,7 +8,7 @@ use std::{
 
 use super::{
 	changes::{Changes, UpdatedSnapshot},
-	meta::SourceEntry,
+	meta::SourceKind,
 	queue::Queue,
 	snapshot::Snapshot,
 	tree::Tree,
@@ -132,20 +132,17 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	let mut changes = Changes::new();
 
 	let meta = tree.get_meta(id).unwrap();
-	let source = meta.source.main().unwrap();
-
-	println!("{:#?}", meta.source.all());
-	println!("{:#?}", source);
+	let source = meta.source.get();
 
 	let snapshot = match source {
-		SourceEntry::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
+		SourceKind::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
 			Ok(snapshot) => Some(snapshot),
 			Err(err) => {
 				error!("Failed to process changes: {}, source: {:?}", err, source);
 				return changes;
 			}
 		},
-		_ => match new_snapshot(source.path(), &meta.context, vfs) {
+		SourceKind::Path(path) => match new_snapshot(path, &meta.context, vfs) {
 			Ok(snapshot) => snapshot,
 			Err(err) => {
 				error!("Failed to process changes: {}, source: {:?}", err, source);
@@ -168,10 +165,10 @@ fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes, tree: &mut Tree) {
 	// Update meta if it's different
-	match (snapshot.meta, tree.get_meta_mut(id)) {
+	match (snapshot.meta, tree.get_meta(id)) {
 		(snapshot_meta, Some(meta)) => {
 			if snapshot_meta != *meta {
-				*meta = snapshot_meta;
+				tree.update_meta(id, snapshot_meta);
 			}
 		}
 		(snapshot_meta, None) => {
@@ -210,7 +207,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 		changes.update(modified_snapshot);
 	}
 
-	let mut hydrated = vec![false; instance.children().len()];
+	let mut hydrated = vec![false; snapshot.children.len()];
 
 	// Pair instances and find removed children
 	#[allow(clippy::unnecessary_to_owned)]

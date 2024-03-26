@@ -106,8 +106,14 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 				path_snapshot.set_class(&snapshot.class);
 			}
 
-			path_snapshot.meta.source.extend(snapshot.meta.source);
+			// We want to keep the original inner source
+			// but with addition of new relevant paths
+			snapshot
+				.meta
+				.source
+				.extend_relavants(path_snapshot.meta.source.relevants().to_owned());
 
+			path_snapshot.meta.source = snapshot.meta.source;
 			snapshot = path_snapshot
 		} else {
 			argon_warn!(

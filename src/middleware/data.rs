@@ -2,9 +2,12 @@ use anyhow::Result;
 use log::error;
 use rbx_dom_weak::types::{Tags, Variant};
 use serde::Deserialize;
-use std::{collections::HashMap, path::Path};
+use std::{
+	collections::HashMap,
+	path::{Path, PathBuf},
+};
 
-use crate::{core::meta::Source, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
+use crate::{ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -26,7 +29,7 @@ pub struct DataSnapshot {
 	pub class: Option<String>,
 	pub properties: HashMap<String, Variant>,
 	pub keep_unknowns: Option<bool>,
-	pub source: Source,
+	pub path: PathBuf,
 }
 
 #[profiling::function]
@@ -89,6 +92,6 @@ pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 		class: data.class_name,
 		properties,
 		keep_unknowns: data.keep_unknowns,
-		source: Source::file(path),
+		path: path.to_owned(),
 	})
 }

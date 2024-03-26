@@ -9,7 +9,12 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use self::{meta::Meta, processor::Processor, queue::Queue, tree::Tree};
+use self::{
+	meta::{Meta, SourceEntry},
+	processor::Processor,
+	queue::Queue,
+	tree::Tree,
+};
 use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
 
 pub mod changes;
@@ -163,7 +168,16 @@ impl Core {
 				return None;
 			}
 
-			let file_paths = get_sources(tree, id).iter().map(|path| path.to_owned()).collect();
+			let file_paths = tree.get_meta(id).map_or(vec![], |meta| {
+				meta.source
+					.relevants()
+					.iter()
+					.filter_map(|entry| match entry {
+						SourceEntry::File(path) | SourceEntry::Data(path) => Some(path.to_owned()),
+						_ => None,
+					})
+					.collect()
+			});
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),
@@ -173,7 +187,14 @@ impl Core {
 			})
 		}
 
-		let sourcemap = walk(&tree, dom.root_ref(), non_scripts);
+		let mut sourcemap = walk(&tree, dom.root_ref(), non_scripts);
+
+		// We need to add root project path manually
+		// as we ignore other project paths by default
+		if let Some(sourcemap) = &mut sourcemap {
+			let root_path = tree.get_meta(tree.root_ref()).unwrap().source.paths()[0].to_owned();
+			sourcemap.file_paths = vec![root_path]
+		}
 
 		if let Some(path) = path {
 			let writer = BufWriter::new(File::create(path)?);
@@ -188,7 +209,7 @@ impl Core {
 	pub fn open(&self, instance: Ref) -> Result<()> {
 		let tree = lock!(self.tree);
 
-		let sources = get_sources(&tree, instance);
+		let sources = tree.get_meta(instance).map_or(vec![], |meta| meta.source.paths());
 
 		if let Some(source) = sources.first() {
 			open::that(source)?;
@@ -196,14 +217,6 @@ impl Core {
 		} else {
 			bail!("No matching file was found")
 		}
-	}
-}
-
-pub fn get_sources(tree: &Tree, id: Ref) -> Vec<PathBuf> {
-	if let Some(meta) = tree.get_meta(id) {
-		meta.source.editable()
-	} else {
-		vec![]
 	}
 }
 

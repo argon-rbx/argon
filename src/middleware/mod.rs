@@ -115,8 +115,6 @@ pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 		return Ok(None);
 	}
 
-	// println!("{:#?}", path);
-
 	trace!("Creating snapshot of {}", path.display());
 
 	if vfs.is_file(path) {

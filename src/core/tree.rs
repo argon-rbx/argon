@@ -28,11 +28,7 @@ impl Tree {
 
 		let root_ref = tree.dom.root_ref();
 
-		if let Some(path) = snapshot.meta.source.path() {
-			tree.path_to_ids.insert(path.to_owned(), root_ref);
-		}
-
-		tree.id_to_meta.insert(root_ref, snapshot.meta);
+		tree.insert_meta(root_ref, snapshot.meta);
 
 		for child in snapshot.children {
 			tree.insert_instance(child, root_ref);
@@ -48,11 +44,7 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		if let Some(path) = snapshot.meta.source.path() {
-			self.path_to_ids.insert(path.to_owned(), referent);
-		}
-
-		self.id_to_meta.insert(referent, snapshot.meta);
+		self.insert_meta(referent, snapshot.meta);
 
 		for child in snapshot.children {
 			self.insert_instance(child, referent);
@@ -68,43 +60,30 @@ impl Tree {
 
 		let referent = self.dom.insert(parent, builder);
 
-		if let Some(path) = snapshot.meta.source.path() {
-			self.path_to_ids.insert(path.to_owned(), referent);
-		}
-
-		self.id_to_meta.insert(referent, snapshot.meta);
+		self.insert_meta(referent, snapshot.meta);
 
 		referent
 	}
 
 	pub fn remove_instance(&mut self, id: Ref) {
-		self.dom.destroy(id);
-		self.id_to_meta.remove(&id);
+		let mut to_remove = vec![id];
 
-		let mut removed_paths = vec![];
+		fn walk(id: Ref, dom: &WeakDom, to_remove: &mut Vec<Ref>) {
+			let instance = dom.get_by_ref(id).unwrap();
 
-		self.path_to_ids.retain(|path, &referent| {
-			let matches = referent == id;
-
-			if matches {
-				removed_paths.push(path.to_owned());
+			for child in instance.children() {
+				to_remove.push(*child);
+				walk(*child, dom, to_remove);
 			}
-
-			!matches
-		});
-
-		// Remove all descendant references
-		for removed_path in &removed_paths {
-			self.path_to_ids.retain(|path, id| {
-				let matches = path.starts_with(removed_path) && path != removed_path;
-
-				if matches {
-					self.id_to_meta.remove(id);
-				}
-
-				!matches
-			})
 		}
+
+		walk(id, &self.dom, &mut to_remove);
+
+		for id in to_remove {
+			self.remove_meta(id);
+		}
+
+		self.dom.destroy(id);
 	}
 
 	pub fn get_instance(&self, id: Ref) -> Option<&Instance> {
@@ -116,19 +95,59 @@ impl Tree {
 	}
 
 	pub fn insert_meta(&mut self, id: Ref, meta: Meta) -> Option<Meta> {
+		for path in meta.source.paths() {
+			self.path_to_ids.insert(path.to_owned(), id);
+		}
+
 		self.id_to_meta.insert(id, meta)
 	}
 
+	pub fn update_meta(&mut self, id: Ref, meta: Meta) -> Option<Meta> {
+		let old_meta = self.id_to_meta.remove(&id);
+
+		if let Some(old_meta) = &old_meta {
+			let removed: Vec<_> = old_meta
+				.source
+				.paths()
+				.into_iter()
+				.filter(|&path| !meta.source.paths().contains(&path))
+				.collect();
+
+			let added: Vec<_> = meta
+				.source
+				.paths()
+				.into_iter()
+				.filter(|&path| !old_meta.source.paths().contains(&path))
+				.collect();
+
+			for path in removed {
+				self.path_to_ids.remove(path);
+			}
+
+			for path in added {
+				self.path_to_ids.insert(path.to_owned(), id);
+			}
+		}
+
+		self.id_to_meta.insert(id, meta);
+
+		old_meta
+	}
+
 	pub fn remove_meta(&mut self, id: Ref) -> Option<Meta> {
-		self.id_to_meta.remove(&id)
+		let meta = self.id_to_meta.remove(&id);
+
+		if let Some(meta) = &meta {
+			for path in meta.source.paths() {
+				self.path_to_ids.remove(path);
+			}
+		}
+
+		meta
 	}
 
 	pub fn get_meta(&self, id: Ref) -> Option<&Meta> {
 		self.id_to_meta.get(&id)
-	}
-
-	pub fn get_meta_mut(&mut self, id: Ref) -> Option<&mut Meta> {
-		self.id_to_meta.get_mut(&id)
 	}
 
 	pub fn get_ids(&self, path: &Path) -> Option<&Vec<Ref>> {
