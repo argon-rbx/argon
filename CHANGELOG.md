@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Support for `legacy_scripts` and `keep_unknowns` fields
+- Ability to re-release the same version when needed
 
 ### Improved
 
@@ -16,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- `.src` and `init` files
+- `.src` and `init` files in `sourcemap` subcommand
 
 ## [2.0.0-pre5] - 2024-03-22
 
