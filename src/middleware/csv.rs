@@ -17,10 +17,12 @@ struct LocalizationEntry {
 
 #[profiling::function]
 pub fn snapshot_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+	let contents = vfs.read(path)?;
+
 	let mut reader = ReaderBuilder::new()
 		.has_headers(true)
 		.flexible(true)
-		.from_reader(vfs.reader(path)?);
+		.from_reader(contents.as_slice());
 
 	let headers = reader.headers()?.clone();
 	let mut entries = vec![];

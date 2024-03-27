@@ -1,24 +1,41 @@
-use anyhow::Result;
 use crossbeam_channel::Receiver;
 use std::{
-	fs::File,
-	io::BufReader,
+	io::Result,
 	path::{Path, PathBuf},
 	sync::Mutex,
 };
 
-use self::backend::VfsBackend;
+use self::{mem_backend::MemBackend, std_backend::StdBackend};
 use crate::lock;
 
-pub mod backend;
 pub mod debouncer;
-pub mod watcher;
+pub mod mem_backend;
+pub mod std_backend;
 
 #[derive(Debug, Clone)]
 pub enum VfsEvent {
 	Create(PathBuf),
 	Delete(PathBuf),
 	Write(PathBuf),
+}
+
+pub trait VfsBackend: Send {
+	fn read(&self, path: &Path) -> Result<Vec<u8>>;
+	fn read_to_string(&self, path: &Path) -> Result<String>;
+	fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>>;
+
+	fn write(&mut self, path: &Path, contents: &[u8]) -> Result<()>;
+	fn create_dir(&mut self, path: &Path) -> Result<()>;
+	fn remove(&mut self, path: &Path) -> Result<()>;
+
+	fn exists(&self, path: &Path) -> bool;
+	fn is_dir(&self, path: &Path) -> bool;
+	fn is_file(&self, path: &Path) -> bool;
+
+	fn watch(&mut self, path: &Path) -> Result<()>;
+	fn unwatch(&mut self, path: &Path) -> Result<()>;
+
+	fn receiver(&self) -> Receiver<VfsEvent>;
 }
 
 impl VfsEvent {
@@ -30,42 +47,48 @@ impl VfsEvent {
 }
 
 pub struct Vfs {
-	inner: Mutex<VfsBackend>,
+	inner: Mutex<Box<dyn VfsBackend>>,
 }
 
 impl Vfs {
 	pub fn new(watch: bool) -> Self {
 		Self {
-			inner: Mutex::new(VfsBackend::new(watch)),
+			inner: Mutex::new(Box::new(StdBackend::new(watch))),
 		}
 	}
 
-	pub fn watch(&self, path: &Path) -> Result<()> {
-		lock!(self.inner).watch(path)
+	pub fn new_virtual() -> Self {
+		Self {
+			inner: Mutex::new(Box::new(MemBackend::new())),
+		}
 	}
 
-	pub fn unwatch(&self, path: &Path) -> Result<()> {
-		lock!(self.inner).unwatch(path)
-	}
-
-	pub fn read(&self, path: &Path) -> Result<String> {
+	pub fn read(&self, path: &Path) -> Result<Vec<u8>> {
 		lock!(self.inner).read(path)
 	}
 
-	pub fn reader(&self, path: &Path) -> Result<BufReader<File>> {
-		lock!(self.inner).reader(path)
+	pub fn read_to_string(&self, path: &Path) -> Result<String> {
+		lock!(self.inner).read_to_string(path)
 	}
 
 	pub fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
 		lock!(self.inner).read_dir(path)
 	}
 
-	pub fn exists(&self, path: &Path) -> bool {
-		lock!(self.inner).exists(path)
+	pub fn write(&self, path: &Path, contents: &[u8]) -> Result<()> {
+		lock!(self.inner).write(path, contents)
 	}
 
-	pub fn is_watched(&self, path: &Path) -> bool {
-		lock!(self.inner).is_watched(path)
+	pub fn create_dir(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).create_dir(path)
+	}
+
+	pub fn remove(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).remove(path)
+	}
+
+	pub fn exists(&self, path: &Path) -> bool {
+		lock!(self.inner).exists(path)
 	}
 
 	pub fn is_dir(&self, path: &Path) -> bool {
@@ -74,6 +97,14 @@ impl Vfs {
 
 	pub fn is_file(&self, path: &Path) -> bool {
 		lock!(self.inner).is_file(path)
+	}
+
+	pub fn watch(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).watch(path)
+	}
+
+	pub fn unwatch(&self, path: &Path) -> Result<()> {
+		lock!(self.inner).unwatch(path)
 	}
 
 	pub fn receiver(&self) -> Receiver<VfsEvent> {

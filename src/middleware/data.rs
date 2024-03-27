@@ -34,7 +34,7 @@ pub struct DataSnapshot {
 
 #[profiling::function]
 pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
-	let data = vfs.read(path)?;
+	let data = vfs.read_to_string(path)?;
 	let data: Data = serde_json::from_str(&data)?;
 
 	let mut properties = HashMap::new();

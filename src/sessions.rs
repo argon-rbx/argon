@@ -8,9 +8,6 @@ use std::{
 	process,
 };
 
-#[cfg(target_os = "windows")]
-use std::thread;
-
 use crate::util;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
@@ -102,7 +99,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 	// Schedule manual cleanup of old sessions
 	// as ctrlc handler does not work on Windows
 	#[cfg(target_os = "windows")]
-	thread::spawn(move || match cleanup(sessions, &path) {
+	std::thread::spawn(move || match cleanup(sessions, &path) {
 		Ok(()) => trace!("Session cleanup completed"),
 		Err(err) => warn!("Failed to cleanup sessions: {}", err),
 	});

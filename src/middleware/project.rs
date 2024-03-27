@@ -92,7 +92,7 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 		.with_meta(meta);
 
 	if let Some(node_path) = node.path {
-		let path = path.get_parent().join(path_clean::clean(node_path));
+		let path = path_clean::clean(path.get_parent().join(node_path));
 
 		if path.is_file() {
 			vfs.watch(&path)?;

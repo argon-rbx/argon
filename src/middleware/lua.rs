@@ -38,7 +38,7 @@ pub fn snapshot_lua(path: &Path, vfs: &Vfs, script_type: ScriptType) -> Result<S
 	let mut snapshot = Snapshot::new().with_class(script_type.as_class());
 	let mut properties = HashMap::new();
 
-	let source = vfs.read(path)?;
+	let source = vfs.read_to_string(path)?;
 
 	if script_type != ScriptType::Module {
 		if let Some(line) = source.lines().next() {

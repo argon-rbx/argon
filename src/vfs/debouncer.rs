@@ -1,8 +1,14 @@
-use crossbeam_channel::Sender;
+use crossbeam_channel::Receiver;
 use log::trace;
-use notify::{EventKind, RecommendedWatcher};
+use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
-use std::{sync::mpsc, thread::Builder, time::Duration};
+use std::{
+	io::{self, Result},
+	path::Path,
+	sync::mpsc,
+	thread::Builder,
+	time::Duration,
+};
 
 #[cfg(target_os = "macos")]
 use notify::event::DataChange;
@@ -34,13 +40,16 @@ struct DebounceContext {
 }
 
 pub struct VfsDebouncer {
-	pub inner: Debouncer<RecommendedWatcher, FileIdMap>,
+	inner: Debouncer<RecommendedWatcher, FileIdMap>,
+	receiver: Receiver<VfsEvent>,
 }
 
 impl VfsDebouncer {
-	pub fn new(handler: Sender<VfsEvent>) -> Self {
-		let (sender, receiver) = mpsc::channel();
-		let debouncer = new_debouncer(Duration::from_millis(100), None, sender, false).unwrap();
+	pub fn new() -> Self {
+		let (inner_sender, inner_receiver) = mpsc::channel();
+		let (sender, receiver) = crossbeam_channel::unbounded();
+
+		let debouncer = new_debouncer(Duration::from_millis(100), None, inner_sender, false).unwrap();
 
 		Builder::new()
 			.name("debouncer".to_owned())
@@ -51,103 +60,137 @@ impl VfsDebouncer {
 					path: PathBuf::new(),
 				};
 
-				for events in receiver {
+				for events in inner_receiver {
 					for event in events.unwrap() {
 						trace!("Debouncing event, paths: {:?}, kind: {:?}", event.paths, event.kind);
 
 						#[cfg(not(target_os = "linux"))]
-						if let Some(event) = Self::debounce(&event) {
-							handler.send(event).unwrap();
+						if let Some(event) = debounce(&event) {
+							sender.send(event).unwrap();
 						}
 
 						#[cfg(target_os = "linux")]
-						if let Some(event) = Self::debounce(&event, &mut context) {
-							handler.send(event).unwrap();
+						if let Some(event) = debounce(&event, &mut context) {
+							sender.send(event).unwrap();
 						}
 					}
 				}
 			})
 			.unwrap();
 
-		Self { inner: debouncer }
+		Self {
+			inner: debouncer,
+			receiver,
+		}
 	}
 
-	#[cfg(target_os = "macos")]
-	fn debounce(event: &DebouncedEvent) -> Option<VfsEvent> {
-		match event.kind {
-			EventKind::Create(_) => {
+	pub fn watch(&mut self, path: &Path) -> Result<()> {
+		self.inner
+			.watcher()
+			.watch(path, RecursiveMode::NonRecursive)
+			.map_err(map_error)?;
+
+		self.inner.cache().add_root(path, RecursiveMode::NonRecursive);
+
+		Ok(())
+	}
+
+	pub fn unwatch(&mut self, path: &Path) -> Result<()> {
+		self.inner.watcher().unwatch(path).map_err(map_error)?;
+		self.inner.cache().remove_root(path);
+
+		Ok(())
+	}
+
+	pub fn receiver(&self) -> Receiver<VfsEvent> {
+		self.receiver.clone()
+	}
+}
+
+fn map_error(err: notify::Error) -> io::Error {
+	match err.kind {
+		notify::ErrorKind::Io(err) => err,
+		notify::ErrorKind::PathNotFound => io::Error::new(io::ErrorKind::NotFound, err),
+		notify::ErrorKind::WatchNotFound => io::Error::new(io::ErrorKind::NotFound, err),
+		_ => io::Error::new(io::ErrorKind::Other, err),
+	}
+}
+
+#[cfg(target_os = "macos")]
+fn debounce(event: &DebouncedEvent) -> Option<VfsEvent> {
+	match event.kind {
+		EventKind::Create(_) => {
+			let path = event_path!(event);
+
+			if path.exists() {
+				Some(VfsEvent::Create(path))
+			} else {
+				None
+			}
+		}
+		EventKind::Modify(kind) => match kind {
+			ModifyKind::Name(_) => {
 				let path = event_path!(event);
 
 				if path.exists() {
 					Some(VfsEvent::Create(path))
 				} else {
-					None
+					Some(VfsEvent::Delete(path))
 				}
 			}
-			EventKind::Modify(kind) => match kind {
-				ModifyKind::Name(_) => {
-					let path = event_path!(event);
-
-					if path.exists() {
-						Some(VfsEvent::Create(path))
-					} else {
-						Some(VfsEvent::Delete(path))
-					}
-				}
-				ModifyKind::Data(kind) => {
-					if kind == DataChange::Content {
-						Some(VfsEvent::Write(event_path!(event)))
-					} else {
-						None
-					}
-				}
-				_ => None,
-			},
-			_ => None,
-		}
-	}
-
-	#[cfg(target_os = "linux")]
-	fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<VfsEvent> {
-		match event.kind {
-			EventKind::Create(_) => {
-				let path = event_path!(event);
-
-				context.time = event.time;
-				context.path = path.clone();
-
-				Some(VfsEvent::Create(path))
-			}
-			EventKind::Modify(ModifyKind::Name(mode)) => match mode {
-				RenameMode::From => Some(VfsEvent::Delete(event_path!(event))),
-				RenameMode::To => Some(VfsEvent::Create(event_path!(event))),
-				_ => None,
-			},
-			EventKind::Access(kind) => {
-				if kind == AccessKind::Close(AccessMode::Write) {
-					let duration = event.time.duration_since(context.time);
-					let path = event_path!(event);
-
-					if duration < DEBOUNCE_TIME && path == context.path {
-						return None;
-					}
-
+			ModifyKind::Data(kind) => {
+				if kind == DataChange::Content {
 					Some(VfsEvent::Write(event_path!(event)))
 				} else {
 					None
 				}
 			}
 			_ => None,
-		}
+		},
+		_ => None,
 	}
+}
 
-	#[cfg(target_os = "windows")]
-	fn debounce(event: &DebouncedEvent) -> Option<VfsEvent> {
-		match event.kind {
-			EventKind::Create(_) => Some(VfsEvent::Create(event_path!(event))),
-			EventKind::Remove(_) => Some(VfsEvent::Delete(event_path!(event))),
-			EventKind::Modify(_) => Some(VfsEvent::Write(event_path!(event))),
-			_ => None,
+#[cfg(target_os = "linux")]
+fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<VfsEvent> {
+	match event.kind {
+		EventKind::Create(_) => {
+			let path = event_path!(event);
+
+			context.time = event.time;
+			context.path = path.clone();
+
+			Some(VfsEvent::Create(path))
 		}
+		EventKind::Modify(ModifyKind::Name(mode)) => match mode {
+			RenameMode::From => Some(VfsEvent::Delete(event_path!(event))),
+			RenameMode::To => Some(VfsEvent::Create(event_path!(event))),
+			_ => None,
+		},
+		EventKind::Access(kind) => {
+			if kind == AccessKind::Close(AccessMode::Write) {
+				let duration = event.time.duration_since(context.time);
+				let path = event_path!(event);
+
+				if duration < DEBOUNCE_TIME && path == context.path {
+					return None;
+				}
+
+				Some(VfsEvent::Write(event_path!(event)))
+			} else {
+				None
+			}
+		}
+		_ => None,
+	}
+}
+
+#[cfg(target_os = "windows")]
+fn debounce(event: &DebouncedEvent) -> Option<VfsEvent> {
+	match event.kind {
+		EventKind::Create(_) => Some(VfsEvent::Create(event_path!(event))),
+		EventKind::Remove(_) => Some(VfsEvent::Delete(event_path!(event))),
+		EventKind::Modify(_) => Some(VfsEvent::Write(event_path!(event))),
+		_ => None,
 	}
 }
