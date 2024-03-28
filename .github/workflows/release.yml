@@ -111,7 +111,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --verbose --target ${{ matrix.target }}
+        run: cargo build --all-features --release --verbose --target ${{ matrix.target }}
 
       - name: Archive
         shell: bash

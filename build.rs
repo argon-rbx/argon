@@ -3,10 +3,9 @@ use self_update::backends::github::Update;
 use std::{env, fs::File, path::PathBuf};
 
 fn main() -> Result<()> {
-	let include_plugin = env::var("GITHUB_ACTIONS").is_ok() || cfg!(feature = "plugin");
 	let out_path = PathBuf::from(env::var("OUT_DIR")?).join("Argon.rbxm");
 
-	if !include_plugin {
+	if !cfg!(feature = "plugin") {
 		File::create(out_path)?;
 		return Ok(());
 	}
