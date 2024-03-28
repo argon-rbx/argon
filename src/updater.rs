@@ -54,8 +54,6 @@ fn update_cli(prompt: bool) -> Result<()> {
 		.repo_owner("argon-rbx")
 		.repo_name("argon")
 		.bin_name("argon")
-		.no_confirm(true)
-		.show_output(false)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
 		.build()?;
@@ -99,8 +97,6 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 		.repo_name("argon-roblox")
 		.bin_name("Argon.rbxm")
 		.target("")
-		.no_confirm(true)
-		.show_output(false)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
 		.bin_install_path(plugin_path)

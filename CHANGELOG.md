@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Support for `legacy_scripts` and `keep_unknowns` fields
 - Ability to re-release the same version when needed
 - Virtual file system for testing
+- `plugin` command now fallbacks to bundled binary if user has no internet connection
 
 ### Improved
 
@@ -19,13 +20,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- `.src` and `init` files in `sourcemap` subcommand
+- `.src` and `init` files in sourcemap generation
 
 ## [2.0.0-pre5] - 2024-03-22
 
 ### Improved
 
-- `plugin` subcommand now creates directory if the provided one does not exist
+- `plugin` command now creates directory if the provided one does not exist
 - Argon plugin gets installed automatically at the first Argon launch
 - Config is now only read once
 
@@ -33,13 +34,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- `plugin` subcommand that installs Argon plugin locally
+- `plugin` command that installs Argon plugin locally
 - Argon CLI and plugin updater
 - More customization with global config
 
 ### Changed
 
-- `run` subcommand is now `serve`
+- `run` command is now `serve`
 - Changed default project name from `.argon.project.json` to `default.project.json`
 
 ### Fixed
@@ -55,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Improved
 
 - Free port searching speed
-- Subcommand descriptions
+- Command descriptions
 
 ### Fixed
 

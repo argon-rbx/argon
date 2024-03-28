@@ -1,11 +1,12 @@
 use anyhow::Result;
 use colored::Colorize;
 use include_dir::{include_dir, Dir};
+use log::trace;
 use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
 use std::{env, fs, path::Path};
 
 use crate::{
-	argon_info,
+	argon_error, argon_info,
 	ext::PathExt,
 	logger, updater,
 	util::{self, get_plugin_path},
@@ -15,6 +16,8 @@ const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/p
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
 const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
 const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
+
+const ARGON_PLUGIN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/Argon.rbxm"));
 
 pub fn is_aftman() -> bool {
 	let path = match env::current_exe() {
@@ -111,25 +114,37 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 		.repo_name("argon-roblox")
 		.bin_name("Argon.rbxm")
 		.target("")
-		.no_confirm(true)
-		.show_output(false)
 		.show_download_progress(show_progress)
 		.set_progress_style(style.0, style.1)
 		.bin_install_path(path)
 		.build()?;
 
-	match update.download()? {
-		UpdateStatus::Updated(release) => {
-			argon_info!("Installed Argon plugin, version: {}", release.version.bold());
+	match update.download() {
+		Ok(status) => match status {
+			UpdateStatus::Updated(release) => {
+				argon_info!("Installed Argon plugin, version: {}", release.version.bold());
 
-			if path.contains(&["Roblox", "Plugins"]) {
-				let mut status = updater::get_status()?;
-				status.plugin_version = release.version;
+				if path.contains(&["Roblox", "Plugins"]) {
+					let mut status = updater::get_status()?;
+					status.plugin_version = release.version;
 
-				updater::set_staus(&status)?;
+					updater::set_staus(&status)?;
+				}
 			}
+			_ => unreachable!(),
+		},
+		Err(err) => {
+			trace!("Failed to install Argon plugin from GitHub: {}", err);
+
+			if ARGON_PLUGIN.is_empty() {
+				argon_error!("No internet connection! Failed to install Argon plugin - no bundled binary found");
+				return Ok(());
+			}
+
+			fs::write(path, ARGON_PLUGIN)?;
+
+			argon_info!("No internet connection! Installed Argon plugin from bundled binary")
 		}
-		_ => unreachable!(),
 	}
 
 	Ok(())
