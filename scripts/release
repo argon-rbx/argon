@@ -1,0 +1,26 @@
+#!/bin/bash
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+current=$(curl https://api.github.com/repos/argon-rbx/argon/releases/latest -s | grep -i "tag_name" | awk -F '"' '{print $4}')
+
+echo $current | tr -d '\n' | pbcopy 2> /dev/null
+
+echo Current Argon version is: ${bold}$current${normal}
+echo
+
+read -p "Enter a new version to release: " version
+echo
+
+read -p "Is this version correct: ${bold}$version${normal} [y/n] " confirm 
+echo
+
+if [ "$confirm" != "y" ]; then
+	echo Aborted!
+	exit 1
+fi
+
+echo Releasing version ${bold}$version${normal} ...
+
+git tag $version && git push --tags
