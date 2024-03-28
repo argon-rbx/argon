@@ -161,3 +161,19 @@ pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
 
 	Ok(())
 }
+
+pub fn force_update(with_plugin: bool) -> Result<()> {
+	let mut status = get_status()?;
+
+	update_cli(false)?;
+
+	if with_plugin {
+		update_plugin(&mut status, false)?;
+	}
+
+	status.last_checked = SystemTime::now();
+
+	set_staus(&status)?;
+
+	Ok(())
+}

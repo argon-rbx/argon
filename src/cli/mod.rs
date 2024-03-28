@@ -17,6 +17,7 @@ mod serve;
 mod sourcemap;
 mod stop;
 mod studio;
+mod update;
 
 // Like `anyhow::bail!`, but exits gracefully, for CLI only!
 #[macro_export]
@@ -142,6 +143,7 @@ impl Cli {
 			Commands::Sourcemap(command) => command.main(),
 			Commands::Studio(command) => command.main(),
 			Commands::Exec(command) => command.main(),
+			Commands::Update(command) => command.main(),
 			Commands::Plugin(command) => command.main(),
 			Commands::Config(command) => command.main(),
 			Commands::Doc(command) => command.main(),
@@ -158,6 +160,7 @@ pub enum Commands {
 	Sourcemap(sourcemap::Sourcemap),
 	Studio(studio::Studio),
 	Exec(exec::Exec),
+	Update(update::Update),
 	Plugin(plugin::Plugin),
 	Config(config::Config),
 	Doc(doc::Doc),

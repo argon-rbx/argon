@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Ability to re-release the same version when needed
 - Virtual file system for testing
 - `plugin` command now fallbacks to bundled binary if user has no internet connection
+- `update` command that updates both CLI and plugin regardless of global configuration
 
 ### Improved
 
