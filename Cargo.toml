@@ -30,7 +30,7 @@ profiling = { version = "*", path = "crates/profiling/profiling" }
 clap = { version = "4.4.1", features = ["derive", "cargo"] }
 serde = { version = "1.0.189", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }
-reqwest = { version = "0.11.23", features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.11.23", features = ["blocking", "rustls-tls"] }
 self_update = { version = "0.39.0", features = [
 	"compression-zip-deflate",
 	"rustls",
@@ -42,6 +42,7 @@ crossbeam-channel = "0.5.8"
 derive-from-one = "0.1.0"
 roblox_install = "1.0.0"
 panic-message = "0.3.0"
+actix-msgpack = "0.1.1"
 puffin_http = "0.16.0"
 serde_json = "1.0.107"
 env_logger = "0.10.0"
@@ -51,6 +52,7 @@ backtrace = "0.3.69"
 documented = "0.2.0"
 dialoguer = "0.11.0"
 path-clean = "1.0.1"
+rmp-serde = "1.1.2"
 actix-web = "4.4.0"
 multimap = "0.9.1"
 optfield = "0.3.0"

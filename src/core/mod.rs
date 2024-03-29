@@ -193,7 +193,7 @@ impl Core {
 		// as we ignore other project paths by default
 		if let Some(sourcemap) = &mut sourcemap {
 			let root_path = tree.get_meta(tree.root_ref()).unwrap().source.paths()[0].to_owned();
-			sourcemap.file_paths = vec![root_path]
+			sourcemap.file_paths.push(root_path);
 		}
 
 		if let Some(path) = path {
@@ -209,10 +209,16 @@ impl Core {
 	pub fn open(&self, instance: Ref) -> Result<()> {
 		let tree = lock!(self.tree);
 
-		let sources = tree.get_meta(instance).map_or(vec![], |meta| meta.source.paths());
+		let mut sources = if let Some(meta) = tree.get_meta(instance) {
+			meta.source.relevants().to_owned()
+		} else {
+			vec![]
+		};
+
+		sources.sort_by_key(|source| source.index());
 
 		if let Some(source) = sources.first() {
-			open::that(source)?;
+			open::that(source.path())?;
 			Ok(())
 		} else {
 			bail!("No matching file was found")

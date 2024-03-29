@@ -1,8 +1,5 @@
-use actix_web::{
-	post,
-	web::{Data, Json},
-	HttpResponse, Responder,
-};
+use actix_msgpack::MsgPack;
+use actix_web::{post, web::Data, HttpResponse, Responder};
 use rbx_dom_weak::types::Ref;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -17,7 +14,7 @@ struct Request {
 }
 
 #[post("/open")]
-async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
+async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	match core.open(request.instance) {
 		Ok(_) => HttpResponse::Ok().body("Opened file successfully"),
 		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
-use reqwest::blocking::Client;
-use serde_json::json;
+use reqwest::{blocking::Client, header::CONTENT_TYPE};
+use serde::Serialize;
 use std::{fs, path::MAIN_SEPARATOR};
 
 use crate::{argon_error, argon_info, sessions};
@@ -38,7 +38,7 @@ impl Exec {
 
 		if let Some(session) = session {
 			if let Some(address) = session.get_address() {
-				Self::make_request(&address, &code);
+				Self::make_request(&address, &code)?;
 			} else {
 				argon_error!("Code execution failed: running session does not have an address");
 			}
@@ -61,18 +61,26 @@ impl Exec {
 		true
 	}
 
-	fn make_request(address: &String, code: &str) {
+	fn make_request(address: &String, code: &str) -> Result<()> {
 		let url = format!("{}/exec", address);
 
-		let data = json!({
-			"code": code,
-		});
+		let body = rmp_serde::to_vec(&Request { code: code.to_owned() })?;
+		let response = Client::default()
+			.post(url)
+			.header(CONTENT_TYPE, "application/msgpack")
+			.body(body)
+			.send();
 
-		match Client::default().post(url).json(&data).send() {
+		match response {
 			Ok(_) => argon_info!("Code executed successfully!"),
-			Err(err) => {
-				argon_error!("Code execution failed: {}", err);
-			}
+			Err(err) => argon_error!("Code execution failed: {}", err),
 		}
+
+		Ok(())
 	}
+}
+
+#[derive(Serialize)]
+struct Request {
+	code: String,
 }

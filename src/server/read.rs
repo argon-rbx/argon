@@ -1,6 +1,7 @@
+use actix_msgpack::MsgPackResponseBuilder;
 use actix_web::{
 	get,
-	web::{Data, Json, Query},
+	web::{Data, Query},
 	HttpResponse, Responder,
 };
 use serde::{Deserialize, Serialize};
@@ -28,7 +29,7 @@ async fn main(request: Query<Request>, core: Data<Arc<Core>>) -> impl Responder 
 	}
 
 	match queue.get(id) {
-		Ok(message) => HttpResponse::Ok().json(Json(message)),
+		Ok(message) => HttpResponse::Ok().msgpack(message),
 		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
 	}
 }

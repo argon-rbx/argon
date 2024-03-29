@@ -69,6 +69,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-msgpack"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33cf78430a2c5a0909624bda20c173bab06410a9622ace20ed1d9a203267a399"
+dependencies = [
+ "actix-web",
+ "derive_more",
+ "futures-util",
+ "mime",
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
 name = "actix-router"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -306,6 +320,7 @@ checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 name = "argon"
 version = "2.0.0-pre5"
 dependencies = [
+ "actix-msgpack",
  "actix-web",
  "anyhow",
  "backtrace",
@@ -343,6 +358,7 @@ dependencies = [
  "rbx_reflection_database",
  "rbx_xml",
  "reqwest",
+ "rmp-serde",
  "roblox_install",
  "self_update",
  "serde",

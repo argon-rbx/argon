@@ -34,6 +34,15 @@ impl SourceEntry {
 			SourceEntry::Project(path) => path,
 		}
 	}
+
+	pub fn index(&self) -> usize {
+		match self {
+			SourceEntry::File(_) => 0,
+			SourceEntry::Data(_) => 1,
+			SourceEntry::Project(_) => 2,
+			SourceEntry::Folder(_) => 3,
+		}
+	}
 }
 
 #[derive(Debug, Clone, PartialEq)]

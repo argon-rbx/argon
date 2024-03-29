@@ -1,8 +1,5 @@
-use actix_web::{
-	post,
-	web::{Data, Json},
-	HttpResponse, Responder,
-};
+use actix_msgpack::MsgPack;
+use actix_web::{post, web::Data, HttpResponse, Responder};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -15,7 +12,7 @@ struct Request {
 }
 
 #[post("/exec")]
-async fn main(request: Json<Request>, core: Data<Arc<Core>>) -> impl Responder {
+async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
 	let pushed = core.queue().push(
 		messages::ExecuteCode {
 			code: request.code.clone(),

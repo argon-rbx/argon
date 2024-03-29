@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use chrono::Datelike;
 use colored::Colorize;
 use log::{debug, trace};
-use reqwest::blocking::Client;
+use reqwest::{blocking::Client, header::USER_AGENT};
 use std::{fs, path::Path};
 
 use crate::{
@@ -18,7 +18,7 @@ fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
 	let url = format!("https://api.github.com/licenses/{}", license);
 
 	let license_template = || -> Result<String> {
-		match Client::new().get(url).header("User-Agent", "Argon").send() {
+		match Client::new().get(url).header(USER_AGENT, "Argon").send() {
 			Ok(response) => {
 				let json = response.json::<serde_json::Value>()?;
 
