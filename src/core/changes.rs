@@ -81,4 +81,8 @@ impl Changes {
 	pub fn is_empty(&self) -> bool {
 		self.additions.is_empty() && self.updates.is_empty() && self.removals.is_empty()
 	}
+
+	pub fn len(&self) -> usize {
+		self.additions.len() + self.updates.len() + self.removals.len()
+	}
 }

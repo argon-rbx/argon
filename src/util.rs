@@ -3,16 +3,16 @@ use colored::Colorize;
 use directories::UserDirs;
 use env_logger::WriteStyle;
 use log::LevelFilter;
+use rbx_dom_weak::types::Variant;
 use rbx_reflection::ClassTag;
 use roblox_install::RobloxStudio;
-use std::{env, path::PathBuf, process::Command};
+use std::{collections::HashMap, env, path::PathBuf, process::Command};
 
-/// Returns the home directory of the current user
-pub fn get_home_dir() -> Result<PathBuf> {
+/// Returns the `.argon` directory
+pub fn get_argon_dir() -> Result<PathBuf> {
 	let user_dirs = UserDirs::new().context("Failed to get user directory")?;
-	let home_dir = user_dirs.home_dir().to_owned();
 
-	Ok(home_dir)
+	Ok(user_dirs.home_dir().join(".argon"))
 }
 
 /// Returns the Git or local username of the current user
@@ -143,4 +143,17 @@ pub fn get_backtrace() -> bool {
 pub fn get_yes() -> bool {
 	let yes = env::var("RUST_YES").unwrap_or("0".to_owned());
 	yes == "1"
+}
+
+/// Return line of code count from snapshot's properties
+pub fn count_loc_from_properties(properties: &HashMap<String, Variant>) -> usize {
+	let mut loc = 0;
+
+	for value in properties.values() {
+		if let Variant::String(value) = value {
+			loc += value.lines().count();
+		}
+	}
+
+	loc
 }

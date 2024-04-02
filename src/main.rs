@@ -8,7 +8,7 @@ use std::{
 	thread,
 };
 
-use argon::{argon_error, cli::Cli, config::Config, crash_handler, installer, logger, updater};
+use argon::{argon_error, cli::Cli, config::Config, crash_handler, installer, logger, stats, updater};
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
@@ -57,16 +57,17 @@ fn main() {
 	}
 
 	let handle = thread::spawn(move || {
-		if !is_aftman {
-			if config.check_updates {
-				match updater::check_for_updates(config.install_plugin, !config.auto_update) {
-					Ok(()) => info!("Update check completed successfully!"),
-					Err(err) => warn!("Update check failed: {}", err),
-				}
+		if !is_aftman && config.check_updates {
+			match updater::check_for_updates(config.install_plugin, !config.auto_update) {
+				Ok(()) => info!("Update check completed successfully!"),
+				Err(err) => warn!("Update check failed: {}", err),
 			}
+		}
 
-			if config.share_stats {
-				// TODO
+		if config.share_stats {
+			match stats::track() {
+				Ok(()) => info!("Stat tracker initialized successfully!"),
+				Err(err) => warn!("Failed to initialize stat tracker: {}", err),
 			}
 		}
 	});
@@ -92,4 +93,5 @@ fn main() {
 	};
 
 	handle.join().ok();
+	stats::save().ok();
 }

@@ -112,6 +112,8 @@ jobs:
 
       - name: Build
         run: cargo build --all-features --release --verbose --target ${{ matrix.target }}
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
 
       - name: Archive
         shell: bash

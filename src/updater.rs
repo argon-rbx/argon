@@ -1,6 +1,6 @@
 use anyhow::Result;
 use colored::Colorize;
-use log::{debug, trace};
+use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
 use std::{fs, time::SystemTime};
@@ -17,29 +17,27 @@ pub struct UpdateStatus {
 }
 
 pub fn get_status() -> Result<UpdateStatus> {
-	let home_dir = util::get_home_dir()?;
-	let path = home_dir.join(".argon").join("update.toml");
+	let path = util::get_argon_dir()?.join("update.toml");
 
 	if path.exists() {
-		let status_toml = fs::read_to_string(path)?;
-		let status = toml::from_str(&status_toml)?;
-
-		Ok(status)
-	} else {
-		let status = UpdateStatus {
-			last_checked: SystemTime::UNIX_EPOCH,
-			plugin_version: String::from("0.0.0"),
-		};
-
-		fs::write(path, toml::to_string(&status)?)?;
-
-		Ok(status)
+		match toml::from_str(&fs::read_to_string(&path)?) {
+			Ok(status) => return Ok(status),
+			Err(_) => warn!("Update status file is corrupted! Creating new one.."),
+		}
 	}
+
+	let status = UpdateStatus {
+		last_checked: SystemTime::UNIX_EPOCH,
+		plugin_version: String::from("0.0.0"),
+	};
+
+	fs::write(path, toml::to_string(&status)?)?;
+
+	Ok(status)
 }
 
 pub fn set_staus(status: &UpdateStatus) -> Result<()> {
-	let home_dir = util::get_home_dir()?;
-	let path = home_dir.join(".argon").join("update.toml");
+	let path = util::get_argon_dir()?.join("update.toml");
 
 	fs::write(path, toml::to_string(status)?)?;
 

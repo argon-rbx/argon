@@ -1,12 +1,7 @@
 use anyhow::Result;
 use log::{trace, warn};
 use serde::{Deserialize, Serialize};
-use std::{
-	collections::HashMap,
-	fs,
-	path::{Path, PathBuf},
-	process,
-};
+use std::{collections::HashMap, fs, process, thread};
 
 use crate::util;
 
@@ -35,48 +30,36 @@ struct Sessions {
 	active_sessions: HashMap<String, Session>,
 }
 
-fn get_path() -> Result<PathBuf> {
-	let home_dir = util::get_home_dir()?;
-	let session_path = home_dir.join(".argon").join("sessions.toml");
+fn get_sessions() -> Result<Sessions> {
+	let path = util::get_argon_dir()?.join("sessions.toml");
 
-	Ok(session_path)
+	if path.exists() {
+		match toml::from_str(&fs::read_to_string(&path)?) {
+			Ok(sessions) => return Ok(sessions),
+			Err(_) => warn!("Session data file is corrupted! Creating new one.."),
+		}
+	}
+
+	let sessions = Sessions {
+		last_session: String::new(),
+		active_sessions: HashMap::new(),
+	};
+
+	fs::write(path, toml::to_string(&sessions)?)?;
+
+	Ok(sessions)
 }
 
-fn get_sessions(path: &Path) -> Result<Sessions> {
-	fn create_empty(path: &Path) -> Result<Sessions> {
-		let sessions = Sessions {
-			last_session: String::new(),
-			active_sessions: HashMap::new(),
-		};
+fn set_sessions(sessions: &Sessions) -> Result<()> {
+	let path = util::get_argon_dir()?.join("sessions.toml");
 
-		fs::write(path, toml::to_string(&sessions)?)?;
+	fs::write(path, toml::to_string(sessions)?)?;
 
-		Ok(sessions)
-	}
-
-	if !path.exists() {
-		warn!("Session data file not found! Creating new one..");
-		return create_empty(path);
-	}
-
-	let sessions_toml = fs::read_to_string(path)?;
-	let sessions = toml::from_str::<Sessions>(&sessions_toml);
-
-	match sessions {
-		Ok(sessions) => {
-			trace!("Session data parsed");
-			Ok(sessions)
-		}
-		Err(_) => {
-			warn!("Session data file is corrupted! Creating new one..");
-			create_empty(path)
-		}
-	}
+	Ok(())
 }
 
 pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32, run_async: bool) -> Result<()> {
-	let path = get_path()?;
-	let mut sessions = get_sessions(&path)?;
+	let mut sessions = get_sessions()?;
 
 	let session = Session { host, port, pid };
 	let id = id.unwrap_or(generate_id(&sessions));
@@ -84,7 +67,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 	sessions.last_session = id.clone();
 	sessions.active_sessions.insert(id, session.clone());
 
-	fs::write(&path, toml::to_string(&sessions)?)?;
+	set_sessions(&sessions)?;
 
 	if !run_async {
 		ctrlc::set_handler(move || {
@@ -92,14 +75,15 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 				Ok(()) => trace!("Session entry removed"),
 				Err(err) => warn!("Failed to remove session entry: {}", err),
 			}
+
 			process::exit(0);
 		})?;
 	}
 
 	// Schedule manual cleanup of old sessions
-	// as ctrlc handler does not work on Windows
-	#[cfg(target_os = "windows")]
-	std::thread::spawn(move || match cleanup(sessions, &path) {
+	// as ctrlc handler does not work on Windows,
+	// on UNIX cleanup will remove crashed sessions
+	thread::spawn(move || match cleanup(sessions) {
 		Ok(()) => trace!("Session cleanup completed"),
 		Err(err) => warn!("Failed to cleanup sessions: {}", err),
 	});
@@ -108,8 +92,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 }
 
 pub fn get(id: Option<String>, host: Option<String>, port: Option<u16>) -> Result<Option<Session>> {
-	let path = get_path()?;
-	let sessions = get_sessions(&path)?;
+	let sessions = get_sessions()?;
 
 	if id.is_none() && host.is_none() && port.is_none() {
 		return Ok(sessions.active_sessions.get(&sessions.last_session).cloned());
@@ -127,8 +110,7 @@ pub fn get(id: Option<String>, host: Option<String>, port: Option<u16>) -> Resul
 }
 
 pub fn get_all() -> Result<Option<HashMap<String, Session>>> {
-	let path = get_path()?;
-	let sessions = get_sessions(&path)?;
+	let sessions = get_sessions()?;
 
 	if !sessions.active_sessions.is_empty() {
 		return Ok(Some(sessions.active_sessions));
@@ -138,8 +120,7 @@ pub fn get_all() -> Result<Option<HashMap<String, Session>>> {
 }
 
 pub fn remove(session: &Session) -> Result<()> {
-	let path = get_path()?;
-	let mut sessions = get_sessions(&path)?;
+	let mut sessions = get_sessions()?;
 
 	let id = sessions
 		.active_sessions
@@ -157,33 +138,30 @@ pub fn remove(session: &Session) -> Result<()> {
 		}
 	}
 
-	fs::write(path, toml::to_string(&sessions)?)?;
+	set_sessions(&sessions)?;
 
 	Ok(())
 }
 
 pub fn remove_all() -> Result<()> {
-	let path = get_path()?;
-
 	let sessions = Sessions {
 		last_session: String::new(),
 		active_sessions: HashMap::new(),
 	};
 
-	fs::write(path, toml::to_string(&sessions)?)?;
+	set_sessions(&sessions)?;
 
 	Ok(())
 }
 
-#[allow(dead_code)] // Windows only
-fn cleanup(mut sessions: Sessions, path: &Path) -> Result<()> {
+fn cleanup(mut sessions: Sessions) -> Result<()> {
 	for (id, session) in sessions.active_sessions.clone() {
 		if !util::process_exists(session.pid) {
 			sessions.active_sessions.remove(&id);
 		}
 	}
 
-	fs::write(path, toml::to_string(&sessions)?)?;
+	set_sessions(&sessions)?;
 
 	Ok(())
 }

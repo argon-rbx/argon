@@ -17,6 +17,7 @@ use crate::{
 	argon_error, lock, messages,
 	middleware::{new_snapshot, project::snapshot_node},
 	project::Project,
+	stats, util,
 	vfs::{Vfs, VfsEvent},
 	BLACKLISTED_PATHS,
 };
@@ -112,6 +113,8 @@ impl Handler {
 		};
 
 		if !changes.is_empty() {
+			stats::files_synced(changes.len() as u32);
+
 			let result = self.queue.push(messages::SyncChanges(changes), None);
 
 			match result {
@@ -180,31 +183,37 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 
 	let instance = tree.get_instance_mut(id).unwrap();
 
-	let mut modified_snapshot = UpdatedSnapshot::new(id);
+	let mut updated_snapshot = UpdatedSnapshot::new(id);
 
-	modified_snapshot.name = if snapshot.name != instance.name {
+	updated_snapshot.name = if snapshot.name != instance.name {
 		instance.name = snapshot.name.clone();
 		Some(snapshot.name)
 	} else {
 		None
 	};
 
-	modified_snapshot.class = if snapshot.class != instance.class {
+	updated_snapshot.class = if snapshot.class != instance.class {
 		instance.class = snapshot.class.clone();
 		Some(snapshot.class)
 	} else {
 		None
 	};
 
-	modified_snapshot.properties = if snapshot.properties != instance.properties {
+	updated_snapshot.properties = if snapshot.properties != instance.properties {
 		instance.properties = snapshot.properties.clone();
 		Some(snapshot.properties)
 	} else {
 		None
 	};
 
-	if !modified_snapshot.is_empty() {
-		changes.update(modified_snapshot);
+	if !updated_snapshot.is_empty() {
+		// Track `lines_synced` stat
+		if let Some(properties) = &updated_snapshot.properties {
+			let loc = util::count_loc_from_properties(properties);
+			stats::lines_synced(loc as u32);
+		}
+
+		changes.update(updated_snapshot);
 	}
 
 	let mut hydrated = vec![false; snapshot.children.len()];
@@ -243,6 +252,10 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 			let mut child = child;
 
 			insert_children(&mut child, id, tree);
+
+			// Track `lines_synced` stat
+			let loc = util::count_loc_from_properties(&child.properties);
+			stats::lines_synced(loc as u32);
 
 			changes.add(child, id);
 		}

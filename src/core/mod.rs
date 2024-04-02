@@ -15,7 +15,7 @@ use self::{
 	queue::Queue,
 	tree::Tree,
 };
-use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, util, vfs::Vfs};
+use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, stats, util, vfs::Vfs};
 
 pub mod changes;
 pub mod meta;
@@ -146,6 +146,8 @@ impl Core {
 		} else {
 			rbx_binary::to_writer(writer, tree.inner(), &root_refs)?;
 		}
+
+		stats::projects_built(1);
 
 		Ok(())
 	}

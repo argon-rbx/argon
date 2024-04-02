@@ -4,7 +4,7 @@ use colored::Colorize;
 
 use crate::argon_info;
 
-const LINK: &str = "https://argon.wiki/docs";
+const LINK: &str = "https://argon.wiki";
 
 /// Open Argon's documentation in the browser
 #[derive(Parser)]

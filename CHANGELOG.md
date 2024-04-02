@@ -13,12 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Virtual file system for testing
 - `plugin` command now fallbacks to bundled binary if user has no internet connection
 - `update` command that updates both CLI and plugin regardless of global configuration
+- Community stats tracking
+- Helper scripts
 
 ### Improved
 
 - Instance source tracking and meta management
 - Standard file system with additional methods
-- Network messaging now uses MessagePack instead of JSON
+- Argon network protocol now uses MessagePack instead of JSON
+- Sessions that crashed now get removed from `sessions.toml` file
 
 ### Fixed
 

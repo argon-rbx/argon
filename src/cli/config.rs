@@ -64,9 +64,7 @@ impl Config {
 				}
 			}
 			_ => {
-				let home_dir = util::get_home_dir()?;
-
-				let config_path = home_dir.join(".argon").join("config.toml");
+				let config_path = util::get_argon_dir()?.join("config.toml");
 
 				if !config_path.exists() {
 					let create_config = logger::prompt("Config does not exist. Would you like to create one?", true);

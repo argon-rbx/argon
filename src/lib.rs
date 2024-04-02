@@ -15,6 +15,7 @@ pub mod project;
 pub mod resolution;
 pub mod server;
 pub mod sessions;
+pub mod stats;
 pub mod updater;
 pub mod util;
 pub mod vfs;

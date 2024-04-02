@@ -78,10 +78,9 @@ pub fn init(
 	docs: bool,
 	rojo_mode: bool,
 ) -> Result<()> {
-	let home_dir = util::get_home_dir()?;
-	let template_dir = home_dir.join(".argon").join("templates").join(template);
+	let templates_dir = util::get_argon_dir()?.join("templates").join(template);
 
-	if !template_dir.exists() {
+	if !templates_dir.exists() {
 		bail!("Template {} does not exist", template)
 	}
 
@@ -92,7 +91,7 @@ pub fn init(
 		fs::create_dir_all(workspace_dir)?;
 	}
 
-	for entry in fs::read_dir(template_dir)? {
+	for entry in fs::read_dir(templates_dir)? {
 		let entry = entry?;
 
 		let path = entry.path();
@@ -203,10 +202,9 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 	}
 
 	if docs {
-		let home_dir = util::get_home_dir()?;
-		let template_dir = home_dir.join(".argon").join("templates").join(template);
+		let templates_dir = util::get_argon_dir()?.join("templates").join(template);
 
-		if !template_dir.exists() {
+		if !templates_dir.exists() {
 			argon_warn!("Template {} does not exist, docs won't be added!", template.bold());
 
 			return Ok(true);
@@ -214,7 +212,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 
 		let project_name = project.get_file_name();
 
-		for entry in fs::read_dir(template_dir)? {
+		for entry in fs::read_dir(templates_dir)? {
 			let entry = entry?;
 
 			let path = entry.path();

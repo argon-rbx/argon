@@ -3,7 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use std::path::PathBuf;
 
-use crate::{argon_error, argon_info, config::Config, ext::PathExt, project, workspace};
+use crate::{argon_error, argon_info, config::Config, ext::PathExt, project, stats, workspace};
 
 /// Initialize a new Argon project
 #[derive(Parser)]
@@ -72,6 +72,8 @@ impl Init {
 		workspace::init(&project_path, &template, &license, git, wally, docs, config.rojo_mode)?;
 
 		argon_info!("Successfully initialized project: {}", project_path.to_string().bold());
+
+		stats::projects_created(1);
 
 		Ok(())
 	}

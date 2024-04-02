@@ -84,7 +84,7 @@ impl Config {
 	pub fn load() -> Result<()> {
 		let mut config = Self::default();
 
-		let load_result = config.read_toml();
+		let load_result = config.merge_toml();
 
 		CONFIG.set(config).expect("Config already loaded");
 
@@ -92,8 +92,7 @@ impl Config {
 	}
 
 	pub fn save(&self) -> Result<()> {
-		let home_dir = util::get_home_dir()?;
-		let path = home_dir.join(".argon").join("config.toml");
+		let path = util::get_argon_dir()?.join("config.toml");
 
 		fs::write(path, toml::to_string(self)?)?;
 
@@ -119,12 +118,9 @@ impl Config {
 		table
 	}
 
-	fn read_toml(&mut self) -> Result<()> {
-		let home_dir = util::get_home_dir()?;
-		let path = home_dir.join(".argon").join("config.toml");
-
-		let config_toml = fs::read_to_string(path)?;
-		let config = toml::from_str(&config_toml)?;
+	fn merge_toml(&mut self) -> Result<()> {
+		let path = util::get_argon_dir()?.join("config.toml");
+		let config = toml::from_str(&fs::read_to_string(path)?)?;
 
 		self.merge_opt(config);
 

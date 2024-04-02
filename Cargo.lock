@@ -341,6 +341,7 @@ dependencies = [
  "globenv",
  "include_dir",
  "json2lua",
+ "lazy_static",
  "log",
  "multimap",
  "notify",

@@ -29,9 +29,7 @@ pub fn is_aftman() -> bool {
 }
 
 pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
-	let home_dir = util::get_home_dir()?;
-
-	let argon_dir = home_dir.join(".argon");
+	let argon_dir = util::get_argon_dir()?;
 	let templates_dir = argon_dir.join("templates");
 
 	if !argon_dir.exists() {
