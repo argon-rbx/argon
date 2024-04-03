@@ -312,7 +312,11 @@ impl UpdateBuilder {
 	/// This method will append the platform specific executable file suffix
 	/// (see `std::env::consts::EXE_SUFFIX`) to the name if it's missing.
 	pub fn bin_name(&mut self, name: &str) -> &mut Self {
-		let raw_bin_name = format!("{}{}", name.trim_end_matches(EXE_SUFFIX), EXE_SUFFIX);
+		let raw_bin_name = if name.contains('.') {
+			name.to_owned()
+		} else {
+			format!("{}{}", name.trim_end_matches(EXE_SUFFIX), EXE_SUFFIX)
+		};
 		self.bin_name = Some(raw_bin_name.clone());
 		if self.bin_path_in_archive.is_none() {
 			self.bin_path_in_archive = Some(PathBuf::from(raw_bin_name));

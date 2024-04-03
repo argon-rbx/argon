@@ -92,13 +92,9 @@ pub fn track() -> Result<()> {
 	if tracker.last_synced.elapsed()?.as_secs() > 3600 && tracker.stats.len() > 10 {
 		if let Some(token) = option_env!("AUTH_TOKEN") {
 			let mut stats = tracker.stats.clone();
-			let mut hours = stats.minutes_used / 60;
+			let remaining_minutes = stats.minutes_used % 60;
 
-			if stats.minutes_used % 60 >= 30 {
-				hours += 1;
-			}
-
-			stats.minutes_used = hours;
+			stats.minutes_used /= 60;
 
 			Client::new()
 				.post(format!("https://api.argon.wiki/push?auth={}", token))
@@ -107,6 +103,8 @@ pub fn track() -> Result<()> {
 
 			tracker.last_synced = SystemTime::now();
 			tracker.stats = ArgonStats::default();
+
+			tracker.stats.minutes_used = remaining_minutes;
 
 			set_tracker(&tracker)?;
 		} else {

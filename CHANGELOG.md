@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `.src` and `init` files in sourcemap generation
 - `Open In Editor` now opens folders only if instance has no other sources
+- Plugin now installs and updates correctly on Windows
 
 ## [2.0.0-pre5] - 2024-03-22
 
