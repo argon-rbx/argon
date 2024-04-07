@@ -9,6 +9,7 @@ use crate::util;
 
 mod build;
 mod config;
+mod debug;
 mod doc;
 mod exec;
 mod init;
@@ -142,6 +143,7 @@ impl Cli {
 			Commands::Build(command) => command.main(),
 			Commands::Sourcemap(command) => command.main(),
 			Commands::Studio(command) => command.main(),
+			Commands::Debug(command) => command.main(),
 			Commands::Exec(command) => command.main(),
 			Commands::Update(command) => command.main(),
 			Commands::Plugin(command) => command.main(),
@@ -159,6 +161,7 @@ pub enum Commands {
 	Build(build::Build),
 	Sourcemap(sourcemap::Sourcemap),
 	Studio(studio::Studio),
+	Debug(debug::Debug),
 	Exec(exec::Exec),
 	Update(update::Update),
 	Plugin(plugin::Plugin),

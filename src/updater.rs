@@ -65,7 +65,7 @@ fn update_cli(prompt: bool) -> Result<()> {
 					"New Argon version: {} is available! Would you like to update?",
 					release.version.bold()
 				),
-				false,
+				true,
 			) {
 			if !prompt {
 				argon_info!("New Argon version: {} is available! Updating..", release.version.bold());
@@ -109,7 +109,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 					"New version of Argon plugin: {} is available! Would you like to update?",
 					release.version.bold()
 				),
-				false,
+				true,
 			) {
 			if !prompt {
 				argon_info!(
