@@ -1,5 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
+
+#[cfg(not(target_os = "linux"))]
 use keybd_event::{KeyBondingInstance, KeyboardKey};
 
 #[cfg(target_os = "macos")]
@@ -36,7 +38,8 @@ impl Debug {
 	}
 }
 
-fn bring_studio_to_front(_name: Option<&str>) -> Result<bool> {
+#[allow(unused_variables)]
+fn bring_studio_to_front(name: Option<&str>) -> Result<bool> {
 	#[cfg(target_os = "macos")]
 	{
 		let output = Command::new("osascript")
@@ -69,7 +72,7 @@ fn bring_studio_to_front(_name: Option<&str>) -> Result<bool> {
 			}
 
 			if let Ok(title) = hwnd.GetWindowText() {
-				if _name.is_some_and(|name| title == format!("{} - Roblox Studio", name))
+				if name.is_some_and(|name| title == format!("{} - Roblox Studio", name))
 					|| title.contains("Roblox Studio")
 				{
 					hwnd.SetForegroundWindow();
@@ -90,26 +93,35 @@ fn bring_studio_to_front(_name: Option<&str>) -> Result<bool> {
 	}
 }
 
+#[allow(unused_variables)]
 fn send_keys(mode: &DebugMode) {
-	let mut kb = KeyBondingInstance::new().unwrap();
+	#[cfg(not(target_os = "linux"))]
+	{
+		let mut kb = KeyBondingInstance::new().unwrap();
 
-	match mode {
-		DebugMode::Play => {
-			kb.add_key(KeyboardKey::KeyF5);
+		match mode {
+			DebugMode::Play => {
+				kb.add_key(KeyboardKey::KeyF5);
+			}
+			DebugMode::Run => {
+				kb.add_key(KeyboardKey::KeyF8);
+			}
+			DebugMode::Start => {
+				kb.add_key(KeyboardKey::KeyF7);
+			}
+			DebugMode::Stop => {
+				kb.has_shift(true);
+				kb.add_key(KeyboardKey::KeyF5);
+			}
 		}
-		DebugMode::Run => {
-			kb.add_key(KeyboardKey::KeyF8);
-		}
-		DebugMode::Start => {
-			kb.add_key(KeyboardKey::KeyF7);
-		}
-		DebugMode::Stop => {
-			kb.has_shift(true);
-			kb.add_key(KeyboardKey::KeyF5);
-		}
+
+		kb.launching();
 	}
 
-	kb.launching();
+	#[cfg(target_os = "linux")]
+	{
+		panic!("This feature is not yet supported on Linux!");
+	}
 }
 
 enum DebugMode {
