@@ -72,12 +72,12 @@ impl Project {
 		Ok(project)
 	}
 
-	pub fn reload(&mut self) -> Result<()> {
+	pub fn reload(&mut self) -> Result<&Self> {
 		let new = Self::load(&self.path)?;
 
 		drop(mem::replace(self, new));
 
-		Ok(())
+		Ok(self)
 	}
 
 	pub fn is_place(&self) -> bool {
@@ -137,5 +137,25 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 		Ok(path)
 	} else {
 		Ok(path.join("default.project.json"))
+	}
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectDetails {
+	version: String,
+	name: String,
+	game_id: Option<u64>,
+	place_ids: Vec<u64>,
+}
+
+impl From<&Project> for ProjectDetails {
+	fn from(project: &Project) -> Self {
+		Self {
+			version: env!("CARGO_PKG_VERSION").to_owned(),
+			name: project.name.clone(),
+			game_id: project.game_id,
+			place_ids: project.place_ids.clone(),
+		}
 	}
 }

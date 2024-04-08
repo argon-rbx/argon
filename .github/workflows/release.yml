@@ -15,7 +15,7 @@ jobs:
           ref: main
 
       - name: Update Changelog
-        uses: thomaseizinger/keep-a-changelog-new-release@v2
+        uses: thomaseizinger/keep-a-changelog-new-release@v3
         with:
           tag: ${{ github.ref_name }}
 

@@ -6,7 +6,7 @@ use std::{
 	fs::File,
 	io::BufWriter,
 	path::{Path, PathBuf},
-	sync::{Arc, Mutex},
+	sync::{Arc, Mutex, MutexGuard},
 };
 
 use self::{
@@ -85,16 +85,12 @@ impl Core {
 		lock!(self.project).port
 	}
 
-	pub fn game_id(&self) -> Option<u64> {
-		lock!(self.project).game_id
-	}
-
-	pub fn place_ids(&self) -> Vec<u64> {
-		lock!(self.project).place_ids.clone()
-	}
-
 	pub fn queue(&self) -> Arc<Queue> {
 		self.queue.clone()
+	}
+
+	pub fn project(&self) -> MutexGuard<'_, Project> {
+		lock!(self.project)
 	}
 
 	/// Create snapshot of the tree
@@ -105,6 +101,7 @@ impl Core {
 			let mut snapshot_children = vec![];
 
 			for child in children {
+				let meta = tree.get_meta(*child).unwrap();
 				let child = tree.get_instance(*child).unwrap();
 
 				let snapshot = Snapshot::new()
@@ -112,7 +109,8 @@ impl Core {
 					.with_name(&child.name)
 					.with_class(&child.class)
 					.with_properties(child.properties.clone())
-					.with_children(walk(child.children(), tree));
+					.with_children(walk(child.children(), tree))
+					.with_meta(meta.clone());
 
 				snapshot_children.push(snapshot);
 			}
@@ -121,6 +119,7 @@ impl Core {
 		}
 
 		let root = tree.root();
+		let meta = tree.get_meta(root.referent()).unwrap();
 
 		Snapshot::new()
 			.with_id(root.referent())
@@ -128,6 +127,7 @@ impl Core {
 			.with_class(&root.class)
 			.with_properties(root.properties.clone())
 			.with_children(walk(tree.root().children(), &tree))
+			.with_meta(meta.clone())
 	}
 
 	/// Build the tree into a file, either XML or binary

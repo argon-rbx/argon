@@ -15,7 +15,6 @@ use super::meta::Meta;
 #[derive(Clone, Serialize)]
 pub struct Snapshot {
 	pub id: Ref,
-	#[serde(skip)]
 	pub meta: Meta,
 
 	// Roblox related

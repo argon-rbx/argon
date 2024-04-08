@@ -16,7 +16,6 @@ struct Request {
 }
 
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 struct Response(Option<Message>);
 
 #[get("/read")]

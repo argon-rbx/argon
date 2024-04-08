@@ -278,11 +278,14 @@ impl Context {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Meta {
 	/// Instance source that is guaranteed to exist
+	#[serde(skip)]
 	pub source: Source,
 	/// Project context
+	#[serde(skip)]
 	pub context: Context,
 	/// Whether to keep unknown child instances
 	pub keep_unknowns: bool,

@@ -1,5 +1,5 @@
 use crossbeam_channel::select;
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use rbx_dom_weak::types::Ref;
 use std::{
 	sync::{Arc, Mutex},
@@ -16,7 +16,7 @@ use super::{
 use crate::{
 	argon_error, lock, messages,
 	middleware::{new_snapshot, project::snapshot_node},
-	project::Project,
+	project::{Project, ProjectDetails},
 	stats, util,
 	vfs::{Vfs, VfsEvent},
 	BLACKLISTED_PATHS,
@@ -79,7 +79,16 @@ impl Handler {
 					debug!("Project file was modified. Reloading project..");
 
 					match lock!(self.project).reload() {
-						Ok(()) => info!("Project reloaded"),
+						Ok(project) => {
+							info!("Project reloaded");
+
+							let details = messages::SyncDetails(ProjectDetails::from(project));
+
+							match self.queue.push(details, None) {
+								Ok(()) => trace!("Project details synced"),
+								Err(err) => warn!("Failed to sync project details: {}", err),
+							}
+						}
 						Err(err) => error!("Failed to reload project: {}", err),
 					}
 				} else if let VfsEvent::Delete(_) = event {

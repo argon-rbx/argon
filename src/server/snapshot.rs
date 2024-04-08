@@ -6,7 +6,6 @@ use std::sync::Arc;
 use crate::core::{snapshot::Snapshot, Core};
 
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 struct Response(Snapshot);
 
 #[get("/snapshot")]

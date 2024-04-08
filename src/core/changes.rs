@@ -2,11 +2,12 @@ use rbx_dom_weak::types::{Ref, Variant};
 use serde::Serialize;
 use std::collections::HashMap;
 
-use super::snapshot::Snapshot;
+use super::{meta::Meta, snapshot::Snapshot};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct AddedSnapshot {
 	pub id: Ref,
+	pub meta: Meta,
 	pub parent: Ref,
 	pub name: String,
 	pub class: String,
@@ -17,6 +18,7 @@ pub struct AddedSnapshot {
 #[derive(Debug, Clone, Serialize)]
 pub struct UpdatedSnapshot {
 	pub id: Ref,
+	pub meta: Option<Meta>,
 	pub name: Option<String>,
 	pub class: Option<String>,
 	pub properties: Option<HashMap<String, Variant>>,
@@ -29,6 +31,7 @@ impl UpdatedSnapshot {
 			name: None,
 			class: None,
 			properties: None,
+			meta: None,
 		}
 	}
 
@@ -61,6 +64,7 @@ impl Changes {
 			class: snapshot.class,
 			properties: snapshot.properties,
 			children: snapshot.children,
+			meta: snapshot.meta,
 		});
 	}
 
