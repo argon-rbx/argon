@@ -1,8 +1,10 @@
 use anyhow::{bail, Result};
 use crossbeam_channel::{Receiver, Sender};
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap, sync::RwLock, time::Duration};
 
 use crate::messages::Message;
+
+const TIMEOUT: Duration = Duration::from_secs(60);
 
 macro_rules! read {
 	($rwlock:expr) => {
@@ -24,8 +26,8 @@ struct Channel {
 
 #[derive(Debug)]
 pub struct Queue {
-	queues: RwLock<HashMap<u64, Channel>>,
-	listeners: RwLock<Vec<u64>>,
+	queues: RwLock<HashMap<u32, Channel>>,
+	listeners: RwLock<Vec<u32>>,
 }
 
 impl Queue {
@@ -36,7 +38,7 @@ impl Queue {
 		}
 	}
 
-	pub fn push<M>(&self, message: M, id: Option<u64>) -> Result<()>
+	pub fn push<M>(&self, message: M, id: Option<u32>) -> Result<()>
 	where
 		M: Into<Message>,
 	{
@@ -65,7 +67,7 @@ impl Queue {
 		Ok(())
 	}
 
-	pub fn get(&self, id: u64) -> Result<Option<Message>> {
+	pub fn get(&self, id: u32) -> Result<Option<Message>> {
 		if !self.is_subscribed(id) {
 			bail!("Not subscribed")
 		}
@@ -75,12 +77,12 @@ impl Queue {
 
 		drop(queues);
 
-		let message = receiver.recv().ok();
+		let message = receiver.recv_timeout(TIMEOUT).ok();
 
 		Ok(message)
 	}
 
-	pub fn subscribe(&self, id: u64) -> Result<()> {
+	pub fn subscribe(&self, id: u32) -> Result<()> {
 		if self.is_subscribed(id) {
 			bail!("Already subscribed")
 		}
@@ -94,7 +96,7 @@ impl Queue {
 		Ok(())
 	}
 
-	pub fn unsubscribe(&self, id: u64) -> Result<()> {
+	pub fn unsubscribe(&self, id: u32) -> Result<()> {
 		if !self.is_subscribed(id) {
 			bail!("Not subscribed")
 		}
@@ -105,7 +107,7 @@ impl Queue {
 		Ok(())
 	}
 
-	pub fn is_subscribed(&self, id: u64) -> bool {
+	pub fn is_subscribed(&self, id: u32) -> bool {
 		read!(self.listeners).contains(&id)
 	}
 }

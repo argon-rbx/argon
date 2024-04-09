@@ -82,7 +82,7 @@ impl Handler {
 						Ok(project) => {
 							info!("Project reloaded");
 
-							let details = messages::SyncDetails(ProjectDetails::from(project));
+							let details = messages::SyncDetails(ProjectDetails::from_project(project, &tree));
 
 							match self.queue.push(details, None) {
 								Ok(()) => trace!("Project details synced"),

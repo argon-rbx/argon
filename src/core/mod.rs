@@ -85,12 +85,16 @@ impl Core {
 		lock!(self.project).port
 	}
 
-	pub fn queue(&self) -> Arc<Queue> {
-		self.queue.clone()
-	}
-
 	pub fn project(&self) -> MutexGuard<'_, Project> {
 		lock!(self.project)
+	}
+
+	pub fn tree(&self) -> MutexGuard<'_, Tree> {
+		lock!(self.tree)
+	}
+
+	pub fn queue(&self) -> Arc<Queue> {
+		self.queue.clone()
 	}
 
 	/// Create snapshot of the tree

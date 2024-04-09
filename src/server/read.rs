@@ -12,7 +12,7 @@ use crate::{core::Core, messages::Message};
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Request {
-	client_id: u64,
+	client_id: u32,
 }
 
 #[derive(Serialize)]

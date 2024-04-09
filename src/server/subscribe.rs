@@ -8,7 +8,7 @@ use crate::core::Core;
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Request {
-	client_id: u64,
+	client_id: u32,
 }
 
 #[post("/subscribe")]

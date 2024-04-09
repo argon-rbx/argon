@@ -1,4 +1,5 @@
 use anyhow::Result;
+use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::{BTreeMap, HashMap},
@@ -6,7 +7,13 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{core::meta::SyncRule, ext::PathExt, glob::Glob, resolution::UnresolvedValue, workspace};
+use crate::{
+	core::{meta::SyncRule, tree::Tree},
+	ext::PathExt,
+	glob::Glob,
+	resolution::UnresolvedValue,
+	workspace,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ProjectNode {
@@ -147,15 +154,23 @@ pub struct ProjectDetails {
 	name: String,
 	game_id: Option<u64>,
 	place_ids: Vec<u64>,
+	synced_dirs: Vec<Ref>,
 }
 
-impl From<&Project> for ProjectDetails {
-	fn from(project: &Project) -> Self {
+impl ProjectDetails {
+	pub fn from_project(project: &Project, tree: &Tree) -> Self {
 		Self {
 			version: env!("CARGO_PKG_VERSION").to_owned(),
+
 			name: project.name.clone(),
 			game_id: project.game_id,
 			place_ids: project.place_ids.clone(),
+
+			synced_dirs: if project.is_place() {
+				tree.place_root_refs().to_owned()
+			} else {
+				vec![tree.root_ref()]
+			},
 		}
 	}
 }
