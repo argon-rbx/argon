@@ -1,44 +1,7 @@
-use rbx_dom_weak::types::{Ref, Variant};
+use rbx_dom_weak::types::Ref;
 use serde::Serialize;
-use std::collections::HashMap;
 
-use super::{meta::Meta, snapshot::Snapshot};
-
-#[derive(Debug, Clone, Serialize)]
-pub struct AddedSnapshot {
-	pub id: Ref,
-	pub meta: Meta,
-	pub parent: Ref,
-	pub name: String,
-	pub class: String,
-	pub properties: HashMap<String, Variant>,
-	pub children: Vec<Snapshot>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct UpdatedSnapshot {
-	pub id: Ref,
-	pub meta: Option<Meta>,
-	pub name: Option<String>,
-	pub class: Option<String>,
-	pub properties: Option<HashMap<String, Variant>>,
-}
-
-impl UpdatedSnapshot {
-	pub fn new(id: Ref) -> Self {
-		Self {
-			id,
-			name: None,
-			class: None,
-			properties: None,
-			meta: None,
-		}
-	}
-
-	pub fn is_empty(&self) -> bool {
-		self.name.is_none() && self.class.is_none() && self.properties.is_none()
-	}
-}
+use super::snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Changes {

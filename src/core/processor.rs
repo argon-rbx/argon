@@ -7,10 +7,10 @@ use std::{
 };
 
 use super::{
-	changes::{Changes, UpdatedSnapshot},
+	changes::Changes,
 	meta::SourceKind,
 	queue::Queue,
-	snapshot::Snapshot,
+	snapshot::{Snapshot, UpdatedSnapshot},
 	tree::Tree,
 };
 use crate::{
