@@ -1,9 +1,9 @@
 use rbx_dom_weak::types::Ref;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Changes {
 	pub additions: Vec<AddedSnapshot>,
 	pub updates: Vec<UpdatedSnapshot>,

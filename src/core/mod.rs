@@ -28,7 +28,7 @@ pub struct Core {
 	project: Arc<Mutex<Project>>,
 	tree: Arc<Mutex<Tree>>,
 	queue: Arc<Queue>,
-	_processor: Arc<Processor>,
+	processor: Arc<Processor>,
 	_vfs: Arc<Vfs>,
 }
 
@@ -68,7 +68,7 @@ impl Core {
 			project,
 			tree,
 			queue,
-			_processor: processor,
+			processor,
 			_vfs: vfs,
 		})
 	}
@@ -95,6 +95,10 @@ impl Core {
 
 	pub fn queue(&self) -> Arc<Queue> {
 		self.queue.clone()
+	}
+
+	pub fn processor(&self) -> Arc<Processor> {
+		self.processor.clone()
 	}
 
 	/// Create snapshot of the tree

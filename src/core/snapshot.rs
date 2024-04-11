@@ -2,7 +2,7 @@ use rbx_dom_weak::{
 	types::{Ref, Variant},
 	Instance, WeakDom,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
 	fmt::{self, Debug, Formatter},
@@ -12,7 +12,7 @@ use crate::middleware::data::DataSnapshot;
 
 use super::meta::Meta;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Snapshot {
 	pub id: Ref,
 	pub meta: Meta,
@@ -191,7 +191,7 @@ impl Debug for Snapshot {
 	}
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddedSnapshot {
 	pub id: Ref,
 	pub meta: Meta,
@@ -202,7 +202,7 @@ pub struct AddedSnapshot {
 	pub children: Vec<Snapshot>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdatedSnapshot {
 	pub id: Ref,
 	pub meta: Option<Meta>,

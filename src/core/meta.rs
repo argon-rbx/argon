@@ -117,6 +117,12 @@ impl Source {
 	}
 }
 
+impl Default for Source {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
 	pub file_type: FileType,
@@ -278,7 +284,13 @@ impl Context {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+impl Default for Context {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Meta {
 	/// Instance source that is guaranteed to exist

@@ -15,6 +15,7 @@ mod snapshot;
 mod stop;
 mod subscribe;
 mod unsubscribe;
+mod write;
 
 async fn default_redirect() -> impl Responder {
 	web::Redirect::to("/")
@@ -48,6 +49,7 @@ impl Server {
 				.service(home::main)
 				.service(stop::main)
 				.service(read::main)
+				.service(write::main)
 				.service(snapshot::main)
 				.service(exec::main)
 				.service(open::main)

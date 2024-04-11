@@ -1,4 +1,4 @@
-use crossbeam_channel::select;
+use crossbeam_channel::{select, Sender};
 use log::{debug, error, info, trace, warn};
 use rbx_dom_weak::types::Ref;
 use std::{
@@ -22,7 +22,9 @@ use crate::{
 	BLACKLISTED_PATHS,
 };
 
-pub struct Processor {}
+pub struct Processor {
+	writer: Sender<Changes>,
+}
 
 impl Processor {
 	pub fn new(queue: Arc<Queue>, tree: Arc<Mutex<Tree>>, vfs: Arc<Vfs>, project: Arc<Mutex<Project>>) -> Self {
@@ -34,23 +36,32 @@ impl Processor {
 		});
 
 		let handler = handler.clone();
+		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		Builder::new()
 			.name("processor".to_owned())
 			.spawn(move || {
 				let vfs_receiver = vfs.receiver();
+				let client_receiver = receiver;
 
 				loop {
 					select! {
 						recv(vfs_receiver) -> event => {
 							handler.on_vfs_event(event.unwrap());
 						}
+						recv(client_receiver) -> changes => {
+							println!("{:#?}", changes);
+						}
 					}
 				}
 			})
 			.unwrap();
 
-		Self {}
+		Self { writer: sender }
+	}
+
+	pub fn write(&self, changes: Changes) {
+		self.writer.send(changes).unwrap();
 	}
 }
 
