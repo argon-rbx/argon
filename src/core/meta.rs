@@ -15,6 +15,7 @@ use crate::{
 pub enum SourceKind {
 	Path(PathBuf),
 	Project(PathBuf, String, ProjectNode),
+	None,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -56,7 +57,7 @@ pub struct Source {
 impl Source {
 	pub fn new() -> Self {
 		Self {
-			inner: SourceKind::Path(PathBuf::new()),
+			inner: SourceKind::None,
 			relevant: Vec::new(),
 		}
 	}

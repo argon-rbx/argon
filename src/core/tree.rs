@@ -154,6 +154,10 @@ impl Tree {
 		self.path_to_ids.get_vec(path)
 	}
 
+	pub fn exists(&self, id: Ref) -> bool {
+		self.dom.get_by_ref(id).is_some()
+	}
+
 	pub fn inner(&self) -> &WeakDom {
 		&self.dom
 	}

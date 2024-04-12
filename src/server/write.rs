@@ -14,11 +14,7 @@ struct Request {
 
 #[post("/write")]
 async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
-	println!("{:#?}", 1);
-	let id = request.client_id;
-	let queue = core.queue();
-
-	if !queue.is_subscribed(id) {
+	if !core.queue().is_subscribed(request.client_id) {
 		return HttpResponse::Unauthorized().body("Not subscribed");
 	}
 

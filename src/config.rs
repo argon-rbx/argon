@@ -45,6 +45,8 @@ pub struct Config {
 	pub rojo_mode: bool,
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
+	/// Move files to the bin instead of deleting them (two-way sync)
+	pub move_to_bin: bool,
 }
 
 impl Default for Config {
@@ -66,6 +68,7 @@ impl Default for Config {
 			include_docs: true,
 			rojo_mode: false,
 			ts_mode: false,
+			move_to_bin: false,
 		}
 	}
 }

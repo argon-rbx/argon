@@ -1,11 +1,12 @@
 use crossbeam_channel::Receiver;
 use std::{
 	fs,
-	io::Result,
+	io::{Error, ErrorKind, Result},
 	path::{Path, PathBuf},
 };
 
 use super::{debouncer::VfsDebouncer, VfsBackend, VfsEvent};
+use crate::config::Config;
 
 pub struct StdBackend {
 	watching: bool,
@@ -53,7 +54,9 @@ impl VfsBackend for StdBackend {
 	fn remove(&mut self, path: &Path) -> Result<()> {
 		self.unwatch(path)?;
 
-		if path.is_dir() {
+		if Config::new().move_to_bin {
+			trash::delete(path).map_err(|err| Error::new(ErrorKind::Other, err))
+		} else if path.is_dir() {
 			fs::remove_dir_all(path)
 		} else {
 			fs::remove_file(path)
