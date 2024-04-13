@@ -131,7 +131,6 @@ impl VfsBackend for MemBackend {
 	}
 
 	fn receiver(&self) -> Receiver<VfsEvent> {
-		println!("{:#?}", self.inner);
 		self.receiver.clone()
 	}
 }

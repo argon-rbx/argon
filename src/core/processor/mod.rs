@@ -4,6 +4,7 @@ use log::{debug, error, info, trace, warn};
 use std::{
 	sync::{Arc, Mutex},
 	thread::Builder,
+	time::{Duration, Instant},
 };
 
 use super::{changes::Changes, queue::Queue, tree::Tree};
@@ -37,16 +38,21 @@ impl Processor {
 		Builder::new()
 			.name("processor".to_owned())
 			.spawn(move || {
+				let mut last_client_event = Instant::now();
+
 				let vfs_receiver = vfs.receiver();
 				let client_receiver = receiver;
 
 				loop {
 					select! {
 						recv(vfs_receiver) -> event => {
-							handler.on_vfs_event(event.unwrap());
+							if last_client_event.elapsed() > Duration::from_millis(200) {
+								handler.on_vfs_event(event.unwrap());
+							}
 						}
 						recv(client_receiver) -> changes => {
 							handler.on_client_event(changes.unwrap());
+							last_client_event = Instant::now();
 						}
 					}
 				}

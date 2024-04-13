@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use log::{trace, warn};
 use rbx_dom_weak::types::Ref;
 
@@ -9,6 +9,7 @@ use crate::{
 		tree::Tree,
 	},
 	ext::PathExt,
+	project::{self, Project},
 	vfs::Vfs,
 };
 
@@ -34,7 +35,6 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 				let mut path_len = None;
 
 				for entry in meta.source.relevants() {
-					println!("{:#?}", entry);
 					match entry {
 						SourceEntry::Project(_) => continue,
 						SourceEntry::Folder(path) => {
@@ -53,8 +53,17 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 					}
 				}
 			}
-			SourceKind::Project(_, _, _) => {
-				// TODO
+			SourceKind::Project(name, path, _node, node_path) => {
+				let mut project = Project::load(path)?;
+				let node = project::find_node_by_path(&mut project, &node_path.parent());
+
+				node.and_then(|node| node.tree.remove(name)).ok_or(anyhow!(
+					"Failed to remove instance {:?} from project: {:?}",
+					id,
+					project
+				))?;
+
+				project.save(path)?;
 			}
 			SourceKind::None => panic!("Attempted to remove instance with no source: {:?}", id),
 		}

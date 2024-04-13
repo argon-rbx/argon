@@ -8,7 +8,7 @@ use super::new_snapshot;
 use crate::{
 	argon_warn,
 	core::{
-		meta::{Context, Meta, Source},
+		meta::{Context, Meta, NodePath, Source},
 		snapshot::Snapshot,
 	},
 	ext::PathExt,
@@ -22,7 +22,7 @@ pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let project: Project = Project::load(path)?;
 
 	let mut meta = Meta::from_project(&project);
-	let mut snapshot = snapshot_node(&project.name, path, &meta.context, vfs, project.node)?;
+	let mut snapshot = new_snapshot_node(&project.name, path, project.node, NodePath::new(), &meta.context, vfs)?;
 
 	meta.source = snapshot.meta.source.clone();
 	snapshot.set_meta(meta);
@@ -33,8 +33,15 @@ pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 }
 
 #[profiling::function]
-pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node: ProjectNode) -> Result<Snapshot> {
-	if node.class_name.is_some() && node.path.is_some() {
+pub fn new_snapshot_node(
+	name: &str,
+	path: &Path,
+	node: ProjectNode,
+	node_path: NodePath,
+	context: &Context,
+	vfs: &Vfs,
+) -> Result<Snapshot> {
+	if node.class_name.is_some() && node.path.is_some() && !node_path.is_root() {
 		bail!("Failed to load project: $className and $path cannot be set at the same time");
 	}
 
@@ -81,7 +88,7 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 	};
 
 	let meta = Meta::new()
-		.with_source(Source::project(path, name, node.clone()))
+		.with_source(Source::project(name, path, node.clone(), node_path.clone()))
 		.with_context(context)
 		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| class != "Folder"));
 
@@ -124,8 +131,10 @@ pub fn snapshot_node(name: &str, path: &Path, context: &Context, vfs: &Vfs, node
 		}
 	}
 
-	for (name, node) in node.tree {
-		let child = snapshot_node(&name, path, context, vfs, node)?;
+	for (node_name, node) in node.tree {
+		let node_path = node_path.join(&node_name);
+		let child = new_snapshot_node(&node_name, path, node, node_path, context, vfs)?;
+
 		snapshot.add_child(child);
 	}
 

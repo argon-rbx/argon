@@ -106,14 +106,14 @@ impl Tree {
 		let old_meta = self.id_to_meta.remove(&id);
 
 		if let Some(old_meta) = &old_meta {
-			let removed: Vec<_> = old_meta
+			let removed: Vec<&Path> = old_meta
 				.source
 				.paths()
 				.into_iter()
 				.filter(|&path| !meta.source.paths().contains(&path))
 				.collect();
 
-			let added: Vec<_> = meta
+			let added: Vec<&Path> = meta
 				.source
 				.paths()
 				.into_iter()

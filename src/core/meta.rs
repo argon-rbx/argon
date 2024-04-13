@@ -12,9 +12,42 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct NodePath {
+	inner: Vec<String>,
+}
+
+impl NodePath {
+	pub fn new() -> Self {
+		Self { inner: Vec::new() }
+	}
+
+	pub fn join(&self, name: &str) -> Self {
+		let mut inner = self.inner.clone();
+		inner.push(name.to_owned());
+
+		Self { inner }
+	}
+
+	pub fn parent(&self) -> Self {
+		let mut inner = self.inner.clone();
+		inner.pop();
+
+		Self { inner }
+	}
+
+	pub fn iter(&self) -> impl Iterator<Item = &String> {
+		self.inner.iter()
+	}
+
+	pub fn is_root(&self) -> bool {
+		self.inner.is_empty()
+	}
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum SourceKind {
 	Path(PathBuf),
-	Project(PathBuf, String, ProjectNode),
+	Project(String, PathBuf, ProjectNode, NodePath),
 	None,
 }
 
@@ -86,9 +119,9 @@ impl Source {
 		}
 	}
 
-	pub fn project(path: &Path, name: &str, node: ProjectNode) -> Self {
+	pub fn project(name: &str, path: &Path, node: ProjectNode, node_path: NodePath) -> Self {
 		Self {
-			inner: SourceKind::Project(path.to_owned(), name.to_owned(), node),
+			inner: SourceKind::Project(name.to_owned(), path.to_owned(), node, node_path),
 			relevant: vec![SourceEntry::Project(path.to_owned())],
 		}
 	}

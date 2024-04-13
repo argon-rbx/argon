@@ -8,30 +8,38 @@ use std::{
 };
 
 use crate::{
-	core::{meta::SyncRule, tree::Tree},
+	core::{
+		meta::{NodePath, SyncRule},
+		tree::Tree,
+	},
 	ext::PathExt,
 	glob::Glob,
 	resolution::UnresolvedValue,
-	workspace,
+	util, workspace,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ProjectNode {
-	#[serde(rename = "$className")]
+	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
-	#[serde(rename = "$path")]
+	#[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
 	pub path: Option<PathBuf>,
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
-	#[serde(rename = "$properties", default)]
+	#[serde(rename = "$properties", default, skip_serializing_if = "HashMap::is_empty")]
 	pub properties: HashMap<String, UnresolvedValue>,
-	#[serde(rename = "$attributes")]
+	#[serde(rename = "$attributes", skip_serializing_if = "Option::is_none")]
 	pub attributes: Option<UnresolvedValue>,
-	#[serde(rename = "$tags", default)]
+	#[serde(rename = "$tags", default, skip_serializing_if = "Vec::is_empty")]
 	pub tags: Vec<String>,
 
-	#[serde(rename = "$keepUnknowns", alias = "$ignoreUnknownInstances", default)]
+	#[serde(
+		rename = "$keepUnknowns",
+		alias = "$ignoreUnknownInstances",
+		default,
+		skip_serializing_if = "Option::is_none"
+	)]
 	pub keep_unknowns: Option<bool>,
 }
 
@@ -42,22 +50,31 @@ pub struct Project {
 	#[serde(rename = "tree")]
 	pub node: ProjectNode,
 
-	#[serde(alias = "serveAddress")]
+	#[serde(alias = "serveAddress", skip_serializing_if = "Option::is_none")]
 	pub host: Option<String>,
-	#[serde(alias = "servePort")]
+	#[serde(alias = "servePort", skip_serializing_if = "Option::is_none")]
 	pub port: Option<u16>,
+	#[serde(skip_serializing_if = "Option::is_none")]
 	pub game_id: Option<u64>,
-	#[serde(alias = "servePlaceIds", default)]
+	#[serde(alias = "servePlaceIds", default, skip_serializing_if = "Vec::is_empty")]
 	pub place_ids: Vec<u64>,
 
-	#[serde(alias = "globIgnorePaths", default)]
+	#[serde(alias = "globIgnorePaths", default, skip_serializing_if = "Vec::is_empty")]
 	pub ignore_globs: Vec<Glob>,
-	#[serde(default)]
+	#[serde(default, skip_serializing_if = "Vec::is_empty")]
 	pub sync_rules: Vec<SyncRule>,
 
-	#[serde(alias = "ignoreUnknownInstances", default)]
+	#[serde(
+		alias = "ignoreUnknownInstances",
+		default,
+		skip_serializing_if = "std::ops::Not::not"
+	)]
 	pub keep_unknowns: bool,
-	#[serde(alias = "emitLegacyScripts", default)]
+	#[serde(
+		alias = "emitLegacyScripts",
+		default = "util::serde_true",
+		skip_serializing_if = "Clone::clone"
+	)]
 	pub legacy_scripts: bool,
 
 	#[serde(skip)]
@@ -77,6 +94,15 @@ impl Project {
 		project.workspace_dir = workspace_dir.to_owned();
 
 		Ok(project)
+	}
+
+	pub fn save(&self, path: &Path) -> Result<()> {
+		let mut project = serde_json::to_string_pretty(self)?;
+		project.push('\n');
+
+		fs::write(path, project)?;
+
+		Ok(())
 	}
 
 	pub fn reload(&mut self) -> Result<&Self> {
@@ -145,6 +171,16 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	} else {
 		Ok(path.join("default.project.json"))
 	}
+}
+
+pub fn find_node_by_path<'a>(project: &'a mut Project, node_path: &NodePath) -> Option<&'a mut ProjectNode> {
+	let mut node = &mut project.node;
+
+	for name in node_path.iter() {
+		node = node.tree.get_mut(name)?;
+	}
+
+	Some(node)
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -8,7 +8,7 @@ use crate::{
 		snapshot::{Snapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
-	middleware::{new_snapshot, project::snapshot_node},
+	middleware::{new_snapshot, project::new_snapshot_node},
 	stats, util,
 	vfs::Vfs,
 };
@@ -24,13 +24,15 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 	let source = meta.source.get();
 
 	let snapshot = match source {
-		SourceKind::Project(path, name, node) => match snapshot_node(name, path, &meta.context, vfs, node.clone()) {
-			Ok(snapshot) => Some(snapshot),
-			Err(err) => {
-				error!("Failed to process changes: {}, source: {:?}", err, source);
-				return changes;
+		SourceKind::Project(name, path, node, node_path) => {
+			match new_snapshot_node(name, path, node.clone(), node_path.clone(), &meta.context, vfs) {
+				Ok(snapshot) => Some(snapshot),
+				Err(err) => {
+					error!("Failed to process changes: {}, source: {:?}", err, source);
+					return changes;
+				}
 			}
-		},
+		}
 		SourceKind::Path(path) => match new_snapshot(path, &meta.context, vfs) {
 			Ok(snapshot) => snapshot,
 			Err(err) => {

@@ -145,6 +145,11 @@ pub fn get_yes() -> bool {
 	yes == "1"
 }
 
+/// Returns `true`, required for `default` serde derive
+pub fn serde_true() -> bool {
+	true
+}
+
 /// Return line of code count from snapshot's properties
 pub fn count_loc_from_properties(properties: &HashMap<String, Variant>) -> usize {
 	let mut loc = 0;
