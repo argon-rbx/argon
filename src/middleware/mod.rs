@@ -69,13 +69,13 @@ impl Display for FileType {
 }
 
 impl FileType {
-	fn middleware(&self, path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+	fn middleware(&self, path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
 		let result = match self {
 			FileType::Project => snapshot_project(path, vfs),
 			FileType::InstanceData => unreachable!(),
 			//
 			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
-				snapshot_lua(path, vfs, self.clone().into())
+				snapshot_lua(path, context, vfs, self.clone().into())
 			}
 			//
 			FileType::StringValue => snapshot_txt(path, vfs),
@@ -145,7 +145,7 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 		let file_type = resolved.file_type;
 		let name = resolved.name;
 
-		let mut snapshot = file_type.middleware(path, vfs)?;
+		let mut snapshot = file_type.middleware(path, context, vfs)?;
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);
@@ -170,7 +170,7 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 		let name = resolved.name;
 		let parent = path.get_parent();
 
-		let mut snapshot = file_type.middleware(path, vfs)?;
+		let mut snapshot = file_type.middleware(path, context, vfs)?;
 
 		if file_type != FileType::Project {
 			snapshot.set_name(&name);

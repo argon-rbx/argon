@@ -41,7 +41,7 @@ pub fn new_snapshot_node(
 	context: &Context,
 	vfs: &Vfs,
 ) -> Result<Snapshot> {
-	if node.class_name.is_some() && node.path.is_some() && !node_path.is_root() {
+	if node.class_name.is_some() && node.path.is_some() {
 		bail!("Failed to load project: $className and $path cannot be set at the same time");
 	}
 
@@ -90,7 +90,7 @@ pub fn new_snapshot_node(
 	let meta = Meta::new()
 		.with_source(Source::project(name, path, node.clone(), node_path.clone()))
 		.with_context(context)
-		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| class != "Folder"));
+		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| util::is_service(&class)));
 
 	let mut snapshot = Snapshot::new()
 		.with_name(name)

@@ -15,7 +15,7 @@ use crate::{
 	ext::PathExt,
 	glob::Glob,
 	resolution::UnresolvedValue,
-	util, workspace,
+	workspace,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -64,18 +64,8 @@ pub struct Project {
 	#[serde(default, skip_serializing_if = "Vec::is_empty")]
 	pub sync_rules: Vec<SyncRule>,
 
-	#[serde(
-		alias = "ignoreUnknownInstances",
-		default,
-		skip_serializing_if = "std::ops::Not::not"
-	)]
-	pub keep_unknowns: bool,
-	#[serde(
-		alias = "emitLegacyScripts",
-		default = "util::serde_true",
-		skip_serializing_if = "Clone::clone"
-	)]
-	pub legacy_scripts: bool,
+	#[serde(alias = "emitLegacyScripts", skip_serializing_if = "Option::is_none")]
+	pub legacy_scripts: Option<bool>,
 
 	#[serde(skip)]
 	pub path: PathBuf,

@@ -375,13 +375,12 @@ impl Meta {
 		let context = Context {
 			sync_rules: project.sync_rules.clone(),
 			ignore_rules,
-			legacy_scripts: project.legacy_scripts,
+			legacy_scripts: project.legacy_scripts.unwrap_or(true),
 		};
 
 		Self {
-			source: Source::new(),
 			context,
-			keep_unknowns: project.keep_unknowns,
+			..Self::default()
 		}
 	}
 }
