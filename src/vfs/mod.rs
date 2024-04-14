@@ -26,6 +26,7 @@ pub trait VfsBackend: Send {
 
 	fn write(&mut self, path: &Path, contents: &[u8]) -> Result<()>;
 	fn create_dir(&mut self, path: &Path) -> Result<()>;
+	fn rename(&mut self, from: &Path, to: &Path) -> Result<()>;
 	fn remove(&mut self, path: &Path) -> Result<()>;
 
 	fn exists(&self, path: &Path) -> bool;
@@ -81,6 +82,10 @@ impl Vfs {
 
 	pub fn create_dir(&self, path: &Path) -> Result<()> {
 		lock!(self.inner).create_dir(path)
+	}
+
+	pub fn rename(&self, from: &Path, to: &Path) -> Result<()> {
+		lock!(self.inner).rename(from, to)
 	}
 
 	pub fn remove(&self, path: &Path) -> Result<()> {

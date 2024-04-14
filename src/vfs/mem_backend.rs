@@ -96,6 +96,24 @@ impl VfsBackend for MemBackend {
 		Ok(())
 	}
 
+	fn rename(&mut self, from: &Path, to: &Path) -> Result<()> {
+		let entry = self.inner.remove(from);
+
+		match entry {
+			Some(entry) => {
+				self.inner.insert(to.to_owned(), entry);
+
+				if let Some(VfsEntry::Direcotry(children)) = self.inner.get_mut(from.parent().unwrap()) {
+					children.retain(|p| p != from);
+					children.push(to.to_owned());
+				}
+			}
+			None => return not_found(from),
+		}
+
+		Ok(())
+	}
+
 	fn remove(&mut self, path: &Path) -> Result<()> {
 		let entry = self.inner.remove(path);
 

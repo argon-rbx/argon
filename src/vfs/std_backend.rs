@@ -51,6 +51,10 @@ impl VfsBackend for StdBackend {
 		fs::create_dir_all(path)
 	}
 
+	fn rename(&mut self, from: &Path, to: &Path) -> Result<()> {
+		fs::rename(from, to)
+	}
+
 	fn remove(&mut self, path: &Path) -> Result<()> {
 		self.unwatch(path)?;
 

@@ -159,7 +159,7 @@ impl Handler {
 			}
 
 			for snapshot in changes.updates {
-				write::apply_update(snapshot, &mut tree, &self.vfs);
+				write::apply_update(snapshot, &mut tree, &self.vfs)?;
 			}
 
 			for id in changes.removals {

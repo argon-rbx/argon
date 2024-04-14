@@ -215,18 +215,7 @@ fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 
 fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<DataSnapshot>> {
 	for sync_rule in context.sync_rules_of_type(&FileType::InstanceData) {
-		if vfs.is_dir(path) {
-			if let Some(child_pattern) = &sync_rule.child_pattern {
-				let data_path = path.join(child_pattern.as_str());
-
-				if vfs.exists(&data_path) {
-					return Ok(Some(snapshot_data(&data_path, vfs)?));
-				}
-			}
-		} else if let Some(pattern) = &sync_rule.pattern {
-			// Is this okay?
-			let data_path = path.with_file_name(pattern.as_str().replace('*', name));
-
+		if let Some(data_path) = sync_rule.locate_data(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
 				return Ok(Some(snapshot_data(&data_path, vfs)?));
 			}

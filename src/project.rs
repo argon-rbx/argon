@@ -145,7 +145,7 @@ impl Project {
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	let path = path_clean::clean(path.resolve()?);
 
-	if path.is_file() || path.get_file_name().ends_with(".project.json") {
+	if path.is_file() || path.get_name().ends_with(".project.json") {
 		return Ok(path);
 	}
 

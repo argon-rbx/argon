@@ -96,7 +96,7 @@ impl Build {
 			if path.is_dir() {
 				path.join(self.get_default_file(&project))
 			} else {
-				let ext = path.get_file_ext();
+				let ext = path.get_ext();
 
 				if ext.is_empty() {
 					fs::create_dir_all(&path)?;

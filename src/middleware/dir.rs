@@ -13,7 +13,7 @@ use crate::{
 
 #[profiling::function]
 pub fn snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
-	let name = path.get_file_name();
+	let name = path.get_name();
 
 	let mut snapshot = Snapshot::new()
 		.with_name(name)

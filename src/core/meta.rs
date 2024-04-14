@@ -142,6 +142,26 @@ impl Source {
 		&self.inner
 	}
 
+	pub fn get_file(&self) -> Option<&SourceEntry> {
+		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::File(_)))
+	}
+
+	pub fn get_folder(&self) -> Option<&SourceEntry> {
+		self.relevant
+			.iter()
+			.find(|entry| matches!(entry, SourceEntry::Folder(_)))
+	}
+
+	pub fn get_data(&self) -> Option<&SourceEntry> {
+		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::Data(_)))
+	}
+
+	pub fn get_project(&self) -> Option<&SourceEntry> {
+		self.relevant
+			.iter()
+			.find(|entry| matches!(entry, SourceEntry::Project(_)))
+	}
+
 	pub fn relevants(&self) -> &Vec<SourceEntry> {
 		&self.relevant
 	}
@@ -221,10 +241,10 @@ impl SyncRule {
 
 	pub fn get_name(&self, path: &Path) -> String {
 		if let Some(suffix) = &self.suffix {
-			let name = path.get_file_name();
+			let name = path.get_name();
 			name.strip_suffix(suffix).unwrap_or(name).to_owned()
 		} else {
-			path.get_file_stem().to_owned()
+			path.get_stem().to_owned()
 		}
 	}
 
@@ -251,9 +271,27 @@ impl SyncRule {
 			{
 				return Some(ResolvedSyncRule {
 					file_type: self.file_type.clone(),
-					name: path.get_parent().get_file_name().to_owned(),
+					name: path.get_parent().get_name().to_owned(),
 				});
 			}
+		}
+
+		None
+	}
+
+	pub fn locate_data(&self, path: &Path, name: &str, is_dir: bool) -> Option<PathBuf> {
+		if self.file_type != FileType::InstanceData {
+			return None;
+		}
+
+		if is_dir {
+			if let Some(child_pattern) = &self.child_pattern {
+				let data_path = path.join(child_pattern.as_str());
+				return Some(data_path);
+			}
+		} else if let Some(pattern) = &self.pattern {
+			let data_path = path.with_file_name(pattern.as_str().replace('*', name));
+			return Some(data_path);
 		}
 
 		None

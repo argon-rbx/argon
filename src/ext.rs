@@ -11,9 +11,9 @@ use std::{
 pub trait PathExt {
 	fn resolve(&self) -> Result<PathBuf>;
 	fn to_string(&self) -> String;
-	fn get_file_name(&self) -> &str;
-	fn get_file_stem(&self) -> &str;
-	fn get_file_ext(&self) -> &str;
+	fn get_name(&self) -> &str;
+	fn get_stem(&self) -> &str;
+	fn get_ext(&self) -> &str;
 	fn get_parent(&self) -> &Path;
 	fn len(&self) -> usize;
 	fn is_empty(&self) -> bool;
@@ -36,19 +36,19 @@ impl PathExt for Path {
 		self.to_str().unwrap_or_default().to_owned()
 	}
 
-	fn get_file_name(&self) -> &str {
+	fn get_name(&self) -> &str {
 		self.file_name().unwrap_or_default().to_str().unwrap_or_default()
 	}
 
-	fn get_file_stem(&self) -> &str {
+	fn get_stem(&self) -> &str {
 		if !self.is_dir() {
 			self.file_stem().unwrap_or_default().to_str().unwrap_or_default()
 		} else {
-			self.get_file_name()
+			self.get_name()
 		}
 	}
 
-	fn get_file_ext(&self) -> &str {
+	fn get_ext(&self) -> &str {
 		if !self.is_dir() {
 			self.extension().unwrap_or_default().to_str().unwrap_or_default()
 		} else {

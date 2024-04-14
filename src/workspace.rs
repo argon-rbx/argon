@@ -95,8 +95,8 @@ pub fn init(
 		let entry = entry?;
 
 		let path = entry.path();
-		let name = path.get_file_name();
-		let stem = path.get_file_stem();
+		let name = path.get_name();
+		let stem = path.get_stem();
 
 		let new_path = if name == "project.json" {
 			project.to_owned()
@@ -210,14 +210,14 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			return Ok(true);
 		}
 
-		let project_name = project.get_file_name();
+		let project_name = project.get_name();
 
 		for entry in fs::read_dir(templates_dir)? {
 			let entry = entry?;
 
 			let path = entry.path();
-			let name = path.get_file_name();
-			let stem = path.get_file_stem();
+			let name = path.get_name();
+			let stem = path.get_stem();
 
 			let new_path = project.join(name);
 
@@ -273,7 +273,7 @@ pub fn get_dir(project_path: &Path) -> &Path {
 }
 
 pub fn get_name(project_path: &Path) -> &str {
-	project_path.get_parent().get_file_name()
+	project_path.get_parent().get_name()
 }
 
 fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
@@ -285,7 +285,7 @@ fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
 		let entry = entry?;
 
 		let path = entry.path();
-		let mut name = path.get_file_name().to_owned();
+		let mut name = path.get_name().to_owned();
 
 		if name.starts_with(".src") && rojo_mode {
 			name = name.replace(".src", "init");

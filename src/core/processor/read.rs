@@ -41,7 +41,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 			}
 		},
 		SourceKind::None => panic!(
-			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {:#?}, meta: {:#?}",
+			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {:?}, meta: {:#?}",
 			id, meta
 		),
 	};
