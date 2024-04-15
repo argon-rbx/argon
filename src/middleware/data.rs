@@ -7,7 +7,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs};
+use crate::{core::meta::Meta, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs, Properties};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,17 +24,22 @@ struct Data {
 	keep_unknowns: Option<bool>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DataSnapshot {
 	pub class: Option<String>,
-	pub properties: HashMap<String, Variant>,
+	pub properties: Properties,
 	pub keep_unknowns: Option<bool>,
 	pub path: PathBuf,
 }
 
 #[profiling::function]
-pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
+pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 	let data = vfs.read_to_string(path)?;
+
+	if data.is_empty() {
+		return Ok(DataSnapshot::default());
+	}
+
 	let data: Data = serde_json::from_str(&data)?;
 
 	let mut properties = HashMap::new();
@@ -98,12 +103,12 @@ pub fn snapshot_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 
 #[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WritableData {
+struct WritableData {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
 
 	#[serde(skip_serializing_if = "HashMap::is_empty")]
-	pub properties: HashMap<String, Variant>,
+	pub properties: HashMap<String, UnresolvedValue>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub attributes: Option<Variant>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
@@ -111,4 +116,53 @@ pub struct WritableData {
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub keep_unknowns: Option<bool>,
+}
+
+#[profiling::function]
+pub fn write_data<'a>(
+	has_file: bool,
+	class: &str,
+	properties: Properties,
+	path: &'a Path,
+	meta: &Meta,
+	vfs: &Vfs,
+) -> Result<Option<&'a Path>> {
+	if !properties.is_empty() {
+		let class_name = if has_file || class == "Folder" {
+			None
+		} else {
+			Some(class.to_owned())
+		};
+
+		let properties = properties
+			.iter()
+			.map(|(property, varaint)| {
+				(
+					property.to_owned(),
+					UnresolvedValue::from_variant(varaint.clone(), class, property),
+				)
+			})
+			.collect();
+
+		let mut data = WritableData {
+			class_name,
+			properties,
+			..WritableData::default()
+		};
+
+		if meta.keep_unknowns {
+			data.keep_unknowns = Some(true);
+		}
+
+		let mut vec = serde_json::to_vec_pretty(&data)?;
+		vec.push(b'\n');
+
+		vfs.write(path, &vec)?;
+
+		return Ok(Some(path));
+	} else if (has_file || class == "Folder") && vfs.exists(path) {
+		vfs.remove(path)?;
+	}
+
+	Ok(None)
 }

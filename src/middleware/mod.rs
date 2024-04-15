@@ -7,19 +7,7 @@ use std::{
 	path::Path,
 };
 
-use self::{
-	csv::snapshot_csv,
-	data::{snapshot_data, DataSnapshot},
-	dir::snapshot_dir,
-	json::snapshot_json,
-	json_model::snapshot_json_model,
-	lua::snapshot_lua,
-	project::snapshot_project,
-	rbxm::snapshot_rbxm,
-	rbxmx::snapshot_rbxmx,
-	toml::snapshot_toml,
-	txt::snapshot_txt,
-};
+use self::data::DataSnapshot;
 use crate::{
 	core::{
 		meta::{Context, Meta, Source},
@@ -27,7 +15,7 @@ use crate::{
 	},
 	ext::{PathExt, ResultExt},
 	vfs::Vfs,
-	BLACKLISTED_PATHS,
+	Properties, BLACKLISTED_PATHS,
 };
 
 pub mod csv;
@@ -44,7 +32,7 @@ pub mod txt;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub enum FileType {
+pub enum Middleware {
 	Project,
 	InstanceData,
 
@@ -62,39 +50,66 @@ pub enum FileType {
 	RbxmxModel,
 }
 
-impl Display for FileType {
+impl Display for Middleware {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		write!(f, "{:?}", self)
 	}
 }
 
-impl FileType {
-	fn middleware(&self, path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
-		let result = match self {
-			FileType::Project => snapshot_project(path, vfs),
-			FileType::InstanceData => unreachable!(),
+impl Middleware {
+	fn read(&self, path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
+		match self {
+			Middleware::Project => project::read_project(path, vfs),
+			Middleware::InstanceData => unreachable!(),
 			//
-			FileType::ServerScript | FileType::ClientScript | FileType::ModuleScript => {
-				snapshot_lua(path, context, vfs, self.clone().into())
+			Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript => {
+				lua::read_lua(path, context, vfs, self.clone().into())
 			}
 			//
-			FileType::StringValue => snapshot_txt(path, vfs),
-			FileType::LocalizationTable => snapshot_csv(path, vfs),
-			FileType::JsonModule => snapshot_json(path, vfs),
-			FileType::TomlModule => snapshot_toml(path, vfs),
+			Middleware::StringValue => txt::read_txt(path, vfs),
+			Middleware::LocalizationTable => csv::read_csv(path, vfs),
+			Middleware::JsonModule => json::read_json(path, vfs),
+			Middleware::TomlModule => toml::read_toml(path, vfs),
 			//
-			FileType::JsonModel => snapshot_json_model(path, vfs),
-			FileType::RbxmModel => snapshot_rbxm(path, vfs),
-			FileType::RbxmxModel => snapshot_rbxmx(path, vfs),
-		};
-
-		result.with_desc(|| {
+			Middleware::JsonModel => json_model::read_json_model(path, vfs),
+			Middleware::RbxmModel => rbxm::read_rbxm(path, vfs),
+			Middleware::RbxmxModel => rbxmx::read_rbxmx(path, vfs),
+		}
+		.with_desc(|| {
 			format!(
 				"Failed to snapshot {} at {}",
 				self.to_string().bold(),
 				path.display().to_string().bold()
 			)
 		})
+	}
+
+	pub fn write(&self, properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
+		match self {
+			Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript => {
+				lua::write_lua(properties, path, vfs)
+			} // Middleware::StringValue => txt::write_txt(path, vfs),
+			// Middleware::LocalizationTable => csv::write_csv(path, vfs),
+			_ => unimplemented!(),
+		}
+		.with_desc(|| {
+			format!(
+				"Failed to write {} at {}",
+				self.to_string().bold(),
+				path.display().to_string().bold()
+			)
+		})
+	}
+
+	pub fn from_class(class: &str) -> Option<Self> {
+		match class {
+			"Script" => Some(Middleware::ServerScript),
+			"LocalScript" => Some(Middleware::ClientScript),
+			"ModuleScript" => Some(Middleware::ModuleScript),
+			"StringValue" => Some(Middleware::StringValue),
+			"LocalizationTable" => Some(Middleware::LocalizationTable),
+			_ => None,
+		}
 	}
 }
 
@@ -142,12 +157,12 @@ pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 /// example: `foo/bar.lua`
 fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve(path)) {
-		let file_type = resolved.file_type;
+		let middleware = resolved.middleware;
 		let name = resolved.name;
 
-		let mut snapshot = file_type.middleware(path, context, vfs)?;
+		let mut snapshot = middleware.read(path, context, vfs)?;
 
-		if file_type != FileType::Project {
+		if middleware != Middleware::Project {
 			snapshot.set_name(&name);
 			snapshot.set_meta(Meta::new().with_context(context).with_source(Source::file(path)));
 		}
@@ -166,13 +181,13 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 /// example: `foo/bar/.src.lua`
 fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve_child(path)) {
-		let file_type = resolved.file_type;
+		let middleware = resolved.middleware;
 		let name = resolved.name;
 		let parent = path.get_parent();
 
-		let mut snapshot = file_type.middleware(path, context, vfs)?;
+		let mut snapshot = middleware.read(path, context, vfs)?;
 
-		if file_type != FileType::Project {
+		if middleware != Middleware::Project {
 			snapshot.set_name(&name);
 			snapshot.set_meta(
 				Meta::new()
@@ -204,7 +219,7 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 /// Create snapshot of a directory,
 /// example: `foo/bar`
 fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
-	let mut snapshot = snapshot_dir(path, context, vfs)?;
+	let mut snapshot = dir::read_dir(path, context, vfs)?;
 
 	if let Some(instance_data) = get_instance_data(&snapshot.name, path, context, vfs)? {
 		snapshot.set_data(instance_data);
@@ -214,10 +229,10 @@ fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 }
 
 fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<DataSnapshot>> {
-	for sync_rule in context.sync_rules_of_type(&FileType::InstanceData) {
-		if let Some(data_path) = sync_rule.locate_data(path, name, vfs.is_dir(path)) {
+	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData) {
+		if let Some(data_path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
-				return Ok(Some(snapshot_data(&data_path, vfs)?));
+				return Ok(Some(data::read_data(&data_path, vfs)?));
 			}
 		}
 	}

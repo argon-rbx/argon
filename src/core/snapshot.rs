@@ -8,9 +8,8 @@ use std::{
 	fmt::{self, Debug, Formatter},
 };
 
-use crate::middleware::data::DataSnapshot;
-
 use super::meta::Meta;
+use crate::{middleware::data::DataSnapshot, Properties};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -20,7 +19,7 @@ pub struct Snapshot {
 	// Roblox related
 	pub name: String,
 	pub class: String,
-	pub properties: HashMap<String, Variant>,
+	pub properties: Properties,
 	pub children: Vec<Snapshot>,
 }
 
@@ -58,7 +57,7 @@ impl Snapshot {
 		self
 	}
 
-	pub fn with_properties(mut self, properties: HashMap<String, Variant>) -> Self {
+	pub fn with_properties(mut self, properties: Properties) -> Self {
 		self.set_properties(properties);
 		self
 	}
@@ -91,7 +90,7 @@ impl Snapshot {
 		self.class = class.to_owned();
 	}
 
-	pub fn set_properties(&mut self, properties: HashMap<String, Variant>) {
+	pub fn set_properties(&mut self, properties: Properties) {
 		self.properties = properties;
 	}
 
@@ -124,7 +123,7 @@ impl Snapshot {
 
 	// Joining snapshot fields
 
-	pub fn extend_properties(&mut self, properties: HashMap<String, Variant>) {
+	pub fn extend_properties(&mut self, properties: Properties) {
 		self.properties.extend(properties);
 	}
 
@@ -198,7 +197,7 @@ pub struct AddedSnapshot {
 	pub parent: Ref,
 	pub name: String,
 	pub class: String,
-	pub properties: HashMap<String, Variant>,
+	pub properties: Properties,
 	pub children: Vec<Snapshot>,
 }
 
@@ -208,7 +207,7 @@ pub struct UpdatedSnapshot {
 	pub meta: Option<Meta>,
 	pub name: Option<String>,
 	pub class: Option<String>,
-	pub properties: Option<HashMap<String, Variant>>,
+	pub properties: Option<Properties>,
 }
 
 impl UpdatedSnapshot {

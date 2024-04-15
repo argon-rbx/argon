@@ -16,7 +16,7 @@ struct LocalizationEntry {
 }
 
 #[profiling::function]
-pub fn snapshot_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let contents = vfs.read(path)?;
 
 	let mut reader = ReaderBuilder::new()

@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::Path};
 use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
 #[profiling::function]
-pub fn snapshot_json(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+pub fn read_json(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let json = vfs.read_to_string(path)?;
 	let lua = json2lua::parse(&json)?;
 

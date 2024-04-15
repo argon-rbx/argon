@@ -7,7 +7,7 @@ use std::{
 use crate::{
 	ext::PathExt,
 	glob::Glob,
-	middleware::FileType,
+	middleware::Middleware,
 	project::{Project, ProjectNode},
 };
 
@@ -52,6 +52,7 @@ pub enum SourceKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[repr(usize)]
 pub enum SourceEntry {
 	File(PathBuf),
 	Folder(PathBuf),
@@ -70,12 +71,7 @@ impl SourceEntry {
 	}
 
 	pub fn index(&self) -> usize {
-		match self {
-			SourceEntry::File(_) => 0,
-			SourceEntry::Data(_) => 1,
-			SourceEntry::Project(_) => 2,
-			SourceEntry::Folder(_) => 3,
-		}
+		unsafe { *<*const _>::from(self).cast::<usize>() }
 	}
 }
 
@@ -130,8 +126,24 @@ impl Source {
 		self.relevant.push(entry)
 	}
 
+	pub fn add_file(&mut self, path: &Path) {
+		self.add_relevant(SourceEntry::File(path.to_owned()))
+	}
+
 	pub fn add_data(&mut self, path: &Path) {
 		self.add_relevant(SourceEntry::Data(path.to_owned()))
+	}
+
+	pub fn remove_data(&mut self) {
+		self.relevant.retain(|entry| !matches!(entry, SourceEntry::Data(_)))
+	}
+
+	pub fn set_data(&mut self, path: Option<&Path>) {
+		self.remove_data();
+
+		if let Some(path) = path {
+			self.add_data(path)
+		}
 	}
 
 	pub fn extend_relavants(&mut self, entries: Vec<SourceEntry>) {
@@ -140,6 +152,10 @@ impl Source {
 
 	pub fn get(&self) -> &SourceKind {
 		&self.inner
+	}
+
+	pub fn get_mut(&mut self) -> &mut SourceKind {
+		&mut self.inner
 	}
 
 	pub fn get_file(&self) -> Option<&SourceEntry> {
@@ -166,6 +182,10 @@ impl Source {
 		&self.relevant
 	}
 
+	pub fn relevants_mut(&mut self) -> &mut Vec<SourceEntry> {
+		&mut self.relevant
+	}
+
 	pub fn paths(&self) -> Vec<&Path> {
 		self.relevant.iter().map(|entry| entry.path()).collect()
 	}
@@ -179,14 +199,14 @@ impl Default for Source {
 
 #[derive(Debug, Clone)]
 pub struct ResolvedSyncRule {
-	pub file_type: FileType,
+	pub middleware: Middleware,
 	pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SyncRule {
 	#[serde(rename = "type")]
-	pub file_type: FileType,
+	pub middleware: Middleware,
 
 	pub pattern: Option<Glob>,
 	pub child_pattern: Option<Glob>,
@@ -198,9 +218,9 @@ pub struct SyncRule {
 impl SyncRule {
 	// Creating new sync rule
 
-	pub fn new(file_type: FileType) -> Self {
+	pub fn new(middleware: Middleware) -> Self {
 		Self {
-			file_type,
+			middleware,
 			pattern: None,
 			child_pattern: None,
 			exclude: Vec::new(),
@@ -250,9 +270,9 @@ impl SyncRule {
 
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {
 		if let Some(pattern) = &self.pattern {
-			if pattern.matches_path(path) && !self.is_excluded(path) && self.file_type != FileType::InstanceData {
+			if pattern.matches_path(path) && !self.is_excluded(path) && self.middleware != Middleware::InstanceData {
 				return Some(ResolvedSyncRule {
-					file_type: self.file_type.clone(),
+					middleware: self.middleware.clone(),
 					name: self.get_name(path),
 				});
 			}
@@ -267,10 +287,10 @@ impl SyncRule {
 
 			if child_pattern.matches_path(stripped_path)
 				&& !self.is_excluded(path)
-				&& self.file_type != FileType::InstanceData
+				&& self.middleware != Middleware::InstanceData
 			{
 				return Some(ResolvedSyncRule {
-					file_type: self.file_type.clone(),
+					middleware: self.middleware.clone(),
 					name: path.get_parent().get_name().to_owned(),
 				});
 			}
@@ -279,11 +299,7 @@ impl SyncRule {
 		None
 	}
 
-	pub fn locate_data(&self, path: &Path, name: &str, is_dir: bool) -> Option<PathBuf> {
-		if self.file_type != FileType::InstanceData {
-			return None;
-		}
-
+	pub fn locate(&self, path: &Path, name: &str, is_dir: bool) -> Option<PathBuf> {
 		if is_dir {
 			if let Some(child_pattern) = &self.child_pattern {
 				let data_path = path.join(child_pattern.as_str());
@@ -340,10 +356,10 @@ impl Context {
 		}
 	}
 
-	pub fn sync_rules_of_type(&self, file_type: &FileType) -> Vec<&SyncRule> {
+	pub fn sync_rules_of_type(&self, middleware: &Middleware) -> Vec<&SyncRule> {
 		self.sync_rules()
 			.iter()
-			.filter(|rule| rule.file_type == *file_type)
+			.filter(|rule| rule.middleware == *middleware)
 			.collect()
 	}
 
@@ -428,95 +444,95 @@ fn default_sync_rules() -> &'static Vec<SyncRule> {
 
 	SYNC_RULES.get_or_init(|| {
 		vec![
-			SyncRule::new(FileType::Project)
+			SyncRule::new(Middleware::Project)
 				.with_pattern("*.project.json")
 				.with_child_pattern("default.project.json"),
-			SyncRule::new(FileType::InstanceData)
+			SyncRule::new(Middleware::InstanceData)
 				.with_pattern("*.data.json")
 				.with_child_pattern(".data.json"),
-			SyncRule::new(FileType::InstanceData) // Rojo
+			SyncRule::new(Middleware::InstanceData) // Rojo
 				.with_pattern("*.meta.json")
 				.with_child_pattern("init.meta.json"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Argon scripts
-			SyncRule::new(FileType::ServerScript)
+			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.lua")
 				.with_child_pattern(".src.server.lua")
 				.with_suffix(".server.lua")
 				.with_exclude("init.server.lua"),
-			SyncRule::new(FileType::ClientScript)
+			SyncRule::new(Middleware::ClientScript)
 				.with_pattern("*.client.lua")
 				.with_child_pattern(".src.client.lua")
 				.with_suffix(".client.lua")
 				.with_exclude("init.client.lua"),
-			SyncRule::new(FileType::ModuleScript)
+			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.lua")
 				.with_child_pattern(".src.lua")
 				.with_exclude("init.lua"),
 			// Rojo scripts
-			SyncRule::new(FileType::ServerScript)
+			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.lua")
 				.with_child_pattern("init.server.lua")
 				.with_suffix(".server.lua"),
-			SyncRule::new(FileType::ClientScript)
+			SyncRule::new(Middleware::ClientScript)
 				.with_pattern("*.client.lua")
 				.with_child_pattern("init.client.lua")
 				.with_suffix(".client.lua"),
-			SyncRule::new(FileType::ModuleScript)
+			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.lua")
 				.with_child_pattern("init.lua"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Luau variants for Argon
-			SyncRule::new(FileType::ServerScript)
+			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.luau")
 				.with_child_pattern(".src.server.luau")
 				.with_suffix(".server.luau")
 				.with_exclude("init.server.luau"),
-			SyncRule::new(FileType::ClientScript)
+			SyncRule::new(Middleware::ClientScript)
 				.with_pattern("*.client.luau")
 				.with_child_pattern(".src.client.luau")
 				.with_suffix(".client.luau")
 				.with_exclude("init.client.luau"),
-			SyncRule::new(FileType::ModuleScript)
+			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.luau")
 				.with_child_pattern(".src.luau")
 				.with_exclude("init.luau"),
 			// Luau variants for Rojo
-			SyncRule::new(FileType::ServerScript)
+			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.luau")
 				.with_child_pattern("init.server.luau")
 				.with_suffix(".server.luau"),
-			SyncRule::new(FileType::ClientScript)
+			SyncRule::new(Middleware::ClientScript)
 				.with_pattern("*.client.luau")
 				.with_child_pattern("init.client.luau")
 				.with_suffix(".client.luau"),
-			SyncRule::new(FileType::ModuleScript)
+			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.luau")
 				.with_child_pattern("init.luau"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Other file types, Argon only
-			SyncRule::new(FileType::StringValue)
+			SyncRule::new(Middleware::StringValue)
 				.with_pattern("*.txt")
 				.with_child_pattern(".src.txt"),
-			SyncRule::new(FileType::LocalizationTable)
+			SyncRule::new(Middleware::LocalizationTable)
 				.with_pattern("*.csv")
 				.with_child_pattern(".src.csv"),
-			SyncRule::new(FileType::JsonModule)
+			SyncRule::new(Middleware::JsonModule)
 				.with_pattern("*.json")
 				.with_child_pattern(".src.json")
 				.with_excludes(&["*.model.json", "*.data.json", "*.meta.json"]),
-			SyncRule::new(FileType::TomlModule)
+			SyncRule::new(Middleware::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),
 			// Model files, Argon only
-			SyncRule::new(FileType::JsonModel)
+			SyncRule::new(Middleware::JsonModel)
 				.with_pattern("*.model.json")
 				.with_child_pattern(".src.model.json")
 				.with_suffix(".model.json"),
-			SyncRule::new(FileType::RbxmModel)
+			SyncRule::new(Middleware::RbxmModel)
 				.with_pattern("*.rbxm")
 				.with_child_pattern(".src.rbxm"),
-			SyncRule::new(FileType::RbxmxModel)
+			SyncRule::new(Middleware::RbxmxModel)
 				.with_pattern("*.rbxmx")
 				.with_child_pattern(".src.rbxmx"),
 		]

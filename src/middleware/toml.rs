@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::Path};
 use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
 #[profiling::function]
-pub fn snapshot_toml(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+pub fn read_toml(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let toml = vfs.read_to_string(path)?;
 	let lua = toml2lua::parse(&toml)?;
 

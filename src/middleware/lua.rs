@@ -2,10 +2,11 @@ use anyhow::Result;
 use rbx_dom_weak::types::{Enum, Variant};
 use std::{collections::HashMap, path::Path};
 
-use super::FileType;
+use super::Middleware;
 use crate::{
 	core::{meta::Context, snapshot::Snapshot},
 	vfs::Vfs,
+	Properties,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,19 +16,19 @@ pub enum ScriptType {
 	Module,
 }
 
-impl From<FileType> for ScriptType {
-	fn from(file_type: FileType) -> Self {
-		match file_type {
-			FileType::ServerScript => ScriptType::Server,
-			FileType::ClientScript => ScriptType::Client,
-			FileType::ModuleScript => ScriptType::Module,
-			_ => panic!("Cannot convert {:?} to ScriptType", file_type),
+impl From<Middleware> for ScriptType {
+	fn from(middleware: Middleware) -> Self {
+		match middleware {
+			Middleware::ServerScript => ScriptType::Server,
+			Middleware::ClientScript => ScriptType::Client,
+			Middleware::ModuleScript => ScriptType::Module,
+			_ => panic!("Cannot convert {:?} to ScriptType", middleware),
 		}
 	}
 }
 
 #[profiling::function]
-pub fn snapshot_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
+pub fn read_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
 	let (class_name, run_context) = match (context.use_legacy_scripts(), &script_type) {
 		(false, ScriptType::Server) => ("Script", Some(Variant::Enum(Enum::from_u32(1)))),
 		(false, ScriptType::Client) => ("Script", Some(Variant::Enum(Enum::from_u32(2)))),
@@ -74,4 +75,56 @@ pub fn snapshot_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: Scri
 	snapshot.set_properties(properties);
 
 	Ok(snapshot)
+}
+
+#[profiling::function]
+pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
+	let (mut header, mut source) = if let Some(Variant::String(source)) = properties.remove("Source") {
+		if let Some(new_line) = source.find('\n') {
+			let (header, source) = source.split_at(new_line);
+			(header.to_string(), source.to_string())
+		} else {
+			(String::new(), source.to_owned())
+		}
+	} else {
+		(String::new(), String::new())
+	};
+
+	let mut new_header = String::new();
+
+	if properties.remove("Disabled").is_some() {
+		new_header += "--disable ";
+	}
+
+	new_header.pop();
+
+	if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
+		match run_context.to_u32() {
+			1 => new_header += "--server ",
+			2 => new_header += "--client ",
+			3 => new_header += "--plugin ",
+			_ => {}
+		}
+	}
+
+	header = header.replace("--disable", "");
+	header = header.replace("--server", "");
+	header = header.replace("--client", "");
+	header = header.replace("--plugin", "");
+
+	if header.len() == header.match_indices(' ').count() {
+		header.clear();
+	}
+
+	new_header += &header;
+
+	if !new_header.is_empty() && !source.starts_with('\n') {
+		new_header += "\n";
+	}
+
+	source = new_header + &source;
+
+	vfs.write(path, source.as_bytes())?;
+
+	Ok(properties)
 }

@@ -37,6 +37,67 @@ impl UnresolvedValue {
 			_ => None,
 		}
 	}
+
+	// Based on Uplift Games' Rojo fork (https://github.com/UpliftGames/rojo/blob/syncback-incremental/src/resolution.rs#L43)
+	pub fn from_variant(variant: Variant, class_name: &str, prop_name: &str) -> Self {
+		Self::Ambiguous(match variant {
+			Variant::Enum(rbx_enum) => {
+				if let Some(property) = find_descriptor(class_name, prop_name) {
+					if let DataType::Enum(enum_name) = &property.data_type {
+						let database = rbx_reflection_database::get();
+
+						if let Some(enum_descriptor) = database.enums.get(enum_name) {
+							for (variant_name, id) in &enum_descriptor.items {
+								if *id == rbx_enum.to_u32() {
+									return Self::Ambiguous(AmbiguousValue::String(variant_name.to_string()));
+								}
+							}
+						}
+					}
+				}
+
+				return Self::FullyQualified(variant);
+			}
+
+			Variant::Bool(bool) => AmbiguousValue::Bool(bool),
+
+			Variant::Float32(n) => AmbiguousValue::Number(n as f64),
+			Variant::Float64(n) => AmbiguousValue::Number(n),
+			Variant::Int32(n) => AmbiguousValue::Number(n as f64),
+			Variant::Int64(n) => AmbiguousValue::Number(n as f64),
+
+			Variant::String(str) => AmbiguousValue::String(str),
+			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
+			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+
+			Variant::Vector2(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
+			Variant::Vector3(vector) => AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64]),
+			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
+
+			Variant::CFrame(cf) => AmbiguousValue::Array12([
+				cf.position.x as f64,
+				cf.position.y as f64,
+				cf.position.z as f64,
+				cf.orientation.x.x as f64,
+				cf.orientation.x.y as f64,
+				cf.orientation.x.z as f64,
+				cf.orientation.y.x as f64,
+				cf.orientation.y.y as f64,
+				cf.orientation.y.z as f64,
+				cf.orientation.z.x as f64,
+				cf.orientation.z.y as f64,
+				cf.orientation.z.z as f64,
+			]),
+
+			Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
+			Variant::Font(font) => AmbiguousValue::Font(font),
+			Variant::MaterialColors(colors) => AmbiguousValue::MaterialColors(colors),
+
+			_ => {
+				return Self::FullyQualified(variant);
+			}
+		})
+	}
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -59,7 +120,7 @@ pub enum AmbiguousValue {
 impl AmbiguousValue {
 	pub fn resolve(self, class: &str, property: &str) -> anyhow::Result<Variant> {
 		let descriptor =
-			get_descriptor(class, property).ok_or_else(|| format_err!("Unknown property {}.{}", class, property))?;
+			find_descriptor(class, property).ok_or_else(|| format_err!("Unknown property {}.{}", class, property))?;
 
 		match &descriptor.data_type {
 			DataType::Enum(enum_name) => {
@@ -101,42 +162,43 @@ impl AmbiguousValue {
 				Ok(Enum::from_u32(*resolved).into())
 			}
 			DataType::Value(variant) => match (variant, self) {
-				(VariantType::Bool, AmbiguousValue::Bool(value)) => Ok(value.into()),
+				(VariantType::Bool, AmbiguousValue::Bool(bool)) => Ok(bool.into()),
 
-				(VariantType::Float32, AmbiguousValue::Number(value)) => Ok((value as f32).into()),
-				(VariantType::Float64, AmbiguousValue::Number(value)) => Ok(value.into()),
-				(VariantType::Int32, AmbiguousValue::Number(value)) => Ok((value as i32).into()),
-				(VariantType::Int64, AmbiguousValue::Number(value)) => Ok((value as i64).into()),
+				(VariantType::Float32, AmbiguousValue::Number(num)) => Ok((num as f32).into()),
+				(VariantType::Float64, AmbiguousValue::Number(num)) => Ok(num.into()),
+				(VariantType::Int32, AmbiguousValue::Number(num)) => Ok((num as i32).into()),
+				(VariantType::Int64, AmbiguousValue::Number(num)) => Ok((num as i64).into()),
 
-				(VariantType::String, AmbiguousValue::String(value)) => Ok(value.into()),
-				(VariantType::Tags, AmbiguousValue::StringArray(value)) => Ok(Tags::from(value).into()),
-				(VariantType::Content, AmbiguousValue::String(value)) => Ok(Content::from(value).into()),
+				(VariantType::String, AmbiguousValue::String(str)) => Ok(str.into()),
+				(VariantType::Tags, AmbiguousValue::StringArray(tags)) => Ok(Tags::from(tags).into()),
+				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
 
-				(VariantType::Vector2, AmbiguousValue::Array2(value)) => {
-					Ok(Vector2::new(value[0] as f32, value[1] as f32).into())
+				(VariantType::Vector2, AmbiguousValue::Array2(vector)) => {
+					Ok(Vector2::new(vector[0] as f32, vector[1] as f32).into())
 				}
 
-				(VariantType::Vector3, AmbiguousValue::Array3(value)) => {
-					Ok(Vector3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
+				(VariantType::Vector3, AmbiguousValue::Array3(vector)) => {
+					Ok(Vector3::new(vector[0] as f32, vector[1] as f32, vector[2] as f32).into())
 				}
 
-				(VariantType::Color3, AmbiguousValue::Array3(value)) => {
-					Ok(Color3::new(value[0] as f32, value[1] as f32, value[2] as f32).into())
+				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
+					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
 				}
 
-				(VariantType::CFrame, AmbiguousValue::Array12(value)) => {
-					let value = value.map(|v| v as f32);
-					let pos = Vector3::new(value[0], value[1], value[2]);
+				(VariantType::CFrame, AmbiguousValue::Array12(cf)) => {
+					let cf = cf.map(|v| v as f32);
+
+					let pos = Vector3::new(cf[0], cf[1], cf[2]);
 					let orientation = Matrix3::new(
-						Vector3::new(value[3], value[4], value[5]),
-						Vector3::new(value[6], value[7], value[8]),
-						Vector3::new(value[9], value[10], value[11]),
+						Vector3::new(cf[3], cf[4], cf[5]),
+						Vector3::new(cf[6], cf[7], cf[8]),
+						Vector3::new(cf[9], cf[10], cf[11]),
 					);
 
 					Ok(CFrame::new(pos, orientation).into())
 				}
 
-				(VariantType::Attributes, AmbiguousValue::Attributes(value)) => Ok(value.into()),
+				(VariantType::Attributes, AmbiguousValue::Attributes(attr)) => Ok(attr.into()),
 				(VariantType::Attributes, AmbiguousValue::Object(value)) => {
 					let mut attributes = Attributes::new();
 
@@ -147,9 +209,9 @@ impl AmbiguousValue {
 					Ok(attributes.into())
 				}
 
-				(VariantType::Font, AmbiguousValue::Font(value)) => Ok(value.into()),
+				(VariantType::Font, AmbiguousValue::Font(font)) => Ok(font.into()),
 
-				(VariantType::MaterialColors, AmbiguousValue::MaterialColors(value)) => Ok(value.into()),
+				(VariantType::MaterialColors, AmbiguousValue::MaterialColors(colors)) => Ok(colors.into()),
 
 				(_, unresolved) => Err(format_err!(
 					"Wrong type of value for property {}.{}. Expected {:?}, got {}",
@@ -168,7 +230,6 @@ impl AmbiguousValue {
 			AmbiguousValue::Bool(value) => Ok(value.into()),
 			AmbiguousValue::Number(value) => Ok(value.into()),
 			AmbiguousValue::String(value) => Ok(value.into()),
-
 			other => bail!("Cannot unambiguously resolve the value {other:?}"),
 		}
 	}
@@ -191,7 +252,7 @@ impl AmbiguousValue {
 	}
 }
 
-fn get_descriptor(class: &str, property: &str) -> Option<&'static PropertyDescriptor<'static>> {
+fn find_descriptor(class: &str, property: &str) -> Option<&'static PropertyDescriptor<'static>> {
 	let database = rbx_reflection_database::get();
 	let mut current_class = class;
 

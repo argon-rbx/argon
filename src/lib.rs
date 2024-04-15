@@ -1,5 +1,8 @@
 #![allow(clippy::new_without_default)]
 
+use rbx_dom_weak::types::Variant;
+use std::collections::HashMap;
+
 pub mod cli;
 pub mod config;
 pub mod core;
@@ -25,6 +28,9 @@ pub mod workspace;
 // useful to save ton of computing time, however users won't
 // be able to set them in `sync_rules` or project `$path`
 const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
+
+/// Global type for snapshot and instance properties
+pub type Properties = HashMap<String, Variant>;
 
 /// A shorter way to lock the Mutex
 #[macro_export]

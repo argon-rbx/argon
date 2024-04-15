@@ -6,7 +6,9 @@ use log::LevelFilter;
 use rbx_dom_weak::types::Variant;
 use rbx_reflection::ClassTag;
 use roblox_install::RobloxStudio;
-use std::{collections::HashMap, env, path::PathBuf, process::Command};
+use std::{env, path::PathBuf, process::Command};
+
+use crate::Properties;
 
 /// Returns the `.argon` directory
 pub fn get_argon_dir() -> Result<PathBuf> {
@@ -146,7 +148,7 @@ pub fn get_yes() -> bool {
 }
 
 /// Return line of code count from snapshot's properties
-pub fn count_loc_from_properties(properties: &HashMap<String, Variant>) -> usize {
+pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	let mut loc = 0;
 
 	for value in properties.values() {

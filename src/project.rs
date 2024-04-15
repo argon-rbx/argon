@@ -140,6 +140,16 @@ impl Project {
 
 		walk(&self.node)
 	}
+
+	pub fn find_node_by_path(&mut self, node_path: &NodePath) -> Option<&mut ProjectNode> {
+		let mut node = &mut self.node;
+
+		for name in node_path.iter() {
+			node = node.tree.get_mut(name)?;
+		}
+
+		Some(node)
+	}
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
@@ -161,16 +171,6 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	} else {
 		Ok(path.join("default.project.json"))
 	}
-}
-
-pub fn find_node_by_path<'a>(project: &'a mut Project, node_path: &NodePath) -> Option<&'a mut ProjectNode> {
-	let mut node = &mut project.node;
-
-	for name in node_path.iter() {
-		node = node.tree.get_mut(name)?;
-	}
-
-	Some(node)
 }
 
 #[derive(Debug, Clone, Serialize)]

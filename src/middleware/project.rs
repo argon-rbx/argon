@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[profiling::function]
-pub fn snapshot_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
+pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let project: Project = Project::load(path)?;
 
 	let mut meta = Meta::from_project(&project);
@@ -98,8 +98,8 @@ pub fn new_snapshot_node(
 		.with_properties(properties)
 		.with_meta(meta);
 
-	if let Some(node_path) = node.path {
-		let path = path_clean::clean(path.get_parent().join(node_path));
+	if let Some(custom_path) = node.path {
+		let path = path_clean::clean(path.get_parent().join(custom_path));
 
 		if path.is_file() {
 			vfs.watch(&path)?;
@@ -121,6 +121,8 @@ pub fn new_snapshot_node(
 				.extend_relavants(path_snapshot.meta.source.relevants().to_owned());
 
 			path_snapshot.meta.source = snapshot.meta.source;
+			path_snapshot.meta.keep_unknowns = path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns;
+
 			snapshot = path_snapshot
 		} else {
 			argon_warn!(

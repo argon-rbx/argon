@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
-use log::{trace, warn};
-use rbx_dom_weak::types::{Ref, Variant};
+use log::{error, trace, warn};
+use rbx_dom_weak::{types::Ref, Instance};
 use std::{
 	collections::HashMap,
 	path::{Path, PathBuf},
@@ -8,15 +8,16 @@ use std::{
 
 use crate::{
 	core::{
-		meta::{Context, SourceEntry, SourceKind},
+		meta::{Meta, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
 	ext::PathExt,
-	middleware::{data::WritableData, FileType},
-	project::{self, Project},
-	util,
+	middleware::{data, Middleware},
+	project::Project,
+	resolution::UnresolvedValue,
 	vfs::Vfs,
+	Properties,
 };
 
 pub fn apply_addition(snapshot: AddedSnapshot, _tree: &mut Tree, _vfs: &Vfs) {
@@ -31,70 +32,86 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		return Ok(());
 	}
 
-	let meta = tree.get_meta(snapshot.id).unwrap().clone();
+	let mut meta = tree.get_meta(snapshot.id).unwrap().clone();
 	let instance = tree.get_instance_mut(snapshot.id).unwrap();
 
-	let update_paths = |new_name: &str| -> Result<()> {
-		for entry in meta.source.relevants() {
-			match entry {
-				SourceEntry::Project(_) => continue,
-				_ => {
-					let path = entry.path();
-					let name = path.get_name().replace(&instance.name, new_name);
+	fn update_non_project_properties(
+		properties: Properties,
+		instance: &mut Instance,
+		meta: &mut Meta,
+		path: &Path,
+		vfs: &Vfs,
+	) -> Result<()> {
+		let properties = validate_properties(properties);
 
-					vfs.rename(path, &path.get_parent().join(name))?;
+		if let Some(middleware) = Middleware::from_class(&instance.class) {
+			let file_path = if let Some(entry) = meta.source.get_file() {
+				Some(entry.path().to_owned())
+			} else {
+				let mut file_path = None;
+
+				for sync_rule in meta.context.sync_rules_of_type(&middleware) {
+					if let Some(path) = sync_rule.locate(path, &instance.name, vfs.is_dir(path)) {
+						file_path = Some(path);
+						break;
+					}
 				}
+
+				if let Some(file_path) = &file_path {
+					meta.source.add_file(file_path);
+				}
+
+				file_path
+			};
+
+			if let Some(file_path) = file_path {
+				let properties = middleware.write(properties.clone(), &file_path, vfs)?;
+
+				if let Some(data_path) = locate_instance_data(&instance.name, &file_path, meta, vfs) {
+					let data_path = data::write_data(true, &instance.class, properties, &data_path, meta, vfs)?;
+					meta.source.set_data(data_path)
+				}
+			} else {
+				error!("Failed to locate file for path {:?}", path.display());
 			}
+		} else if let Some(data_path) = locate_instance_data(&instance.name, path, meta, vfs) {
+			let data_path = data::write_data(false, &instance.class, properties.clone(), &data_path, meta, vfs)?;
+			meta.source.set_data(data_path)
 		}
 
-		Ok(())
-	};
+		instance.properties = properties;
 
-	match meta.source.get() {
+		Ok(())
+	}
+
+	match meta.source.get().clone() {
 		SourceKind::Path(path) => {
 			if let Some(name) = snapshot.name {
-				update_paths(&name)?;
+				let new_path = path.get_parent().join(path.get_name().replace(&instance.name, &name));
+				*meta.source.get_mut() = SourceKind::Path(new_path.clone());
+
+				for mut entry in meta.source.relevants_mut() {
+					match &mut entry {
+						SourceEntry::Project(_) => continue,
+						SourceEntry::File(path) | SourceEntry::Folder(path) | SourceEntry::Data(path) => {
+							let name = path.get_name().replace(&instance.name, &name);
+							let new_path = path.get_parent().join(name);
+
+							vfs.rename(path, &new_path)?;
+
+							*path = new_path;
+						}
+					}
+				}
+
 				instance.name = name;
 			}
 
 			if let Some(properties) = snapshot.properties {
-				// Temporary solution for serde failing to decode empty HashMap
-				let properties = if properties.contains_key("ArgonEmpty") {
-					HashMap::new()
-				} else {
-					properties
-				};
-
-				if util::is_script(&instance.class) {
-					let source = properties_to_source(&properties);
-					vfs.write(path, source.as_bytes())?;
-				} else {
-					let data_path = if let Some(path) = meta.source.get_data() {
-						Some(path.path().to_owned())
-					} else {
-						locate_instance_data(&instance.name, path, &meta.context, vfs)
-					};
-
-					if let Some(data_path) = data_path {
-						if !properties.is_empty() {
-							let data = WritableData {
-								class_name: Some(instance.class.clone()),
-								properties: properties.clone(),
-								..WritableData::default()
-							};
-
-							vfs.write(&data_path, &serde_json::to_vec_pretty(&data)?)?;
-						} else if vfs.exists(&data_path) {
-							vfs.remove(&data_path)?;
-						}
-					// TODO: Update tree meta
-					} else {
-						warn!("Failed to locate instance data for {:?}", snapshot.id);
-					}
-				}
-
-				instance.properties = properties;
+				update_non_project_properties(properties, instance, &mut meta, &path, vfs)?;
 			}
+
+			tree.update_meta(snapshot.id, meta);
 
 			if let Some(_class) = snapshot.class {
 				// You can't change the class of an instance inside Roblox Studio
@@ -106,25 +123,71 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				unreachable!()
 			}
 		}
-		SourceKind::Project(name, path, _node, node_path) => {
-			let mut project = Project::load(path)?;
+		SourceKind::Project(name, path, node, node_path) => {
+			let mut project = Project::load(&path)?;
+
+			if let Some(properties) = snapshot.properties {
+				if let Some(custom_path) = node.path {
+					let path = path_clean::clean(path.get_parent().join(custom_path));
+
+					update_non_project_properties(properties, instance, &mut meta, &path, vfs)?;
+
+					let node = project
+						.find_node_by_path(&node_path)
+						.context(format!("Failed to find project node with path {:?}", node_path))?;
+
+					node.properties = HashMap::new();
+					node.attributes = None;
+					node.tags = vec![];
+					node.keep_unknowns = None;
+				} else {
+					let node = project
+						.find_node_by_path(&node_path)
+						.context(format!("Failed to find project node with path {:?}", node_path))?;
+
+					let class = node.class_name.as_ref().unwrap_or(&name);
+					let properties = validate_properties(properties);
+
+					node.properties = properties
+						.clone()
+						.iter()
+						.map(|(property, varaint)| {
+							(
+								property.to_owned(),
+								UnresolvedValue::from_variant(varaint.clone(), class, property),
+							)
+						})
+						.collect();
+
+					node.tags = vec![];
+					node.keep_unknowns = None;
+
+					instance.properties = properties;
+				}
+			}
 
 			if let Some(new_name) = snapshot.name {
-				let parent_node = project::find_node_by_path(&mut project, &node_path.parent())
-					.with_context(|| format!("Failed to find project node with path {:?}", node_path.parent()))?;
+				let parent_node = project.find_node_by_path(&node_path.parent()).with_context(|| {
+					format!("Failed to find parent project node with path {:?}", node_path.parent())
+				})?;
 
 				let node = parent_node
 					.tree
-					.remove(name)
+					.remove(&name)
 					.context(format!("Failed to remove project node with path {:?}", node_path))?;
 
-				parent_node.tree.insert(new_name.clone(), node);
-				instance.name = new_name;
+				parent_node.tree.insert(new_name.clone(), node.clone());
 
-				// TODO: Update tree meta
+				let node_path = node_path.parent().join(&new_name);
+
+				*meta.source.get_mut() = SourceKind::Project(new_name.clone(), path.clone(), node, node_path);
+
+				instance.name = new_name;
 			}
 
-			project.save(path)?;
+			tree.update_meta(snapshot.id, meta);
+			project.save(&path)?;
+
 			if let Some(_class) = snapshot.class {
 				// You can't change the class of an instance inside Roblox Studio
 				unreachable!()
@@ -176,7 +239,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 		}
 		SourceKind::Project(name, path, _node, node_path) => {
 			let mut project = Project::load(path)?;
-			let node = project::find_node_by_path(&mut project, &node_path.parent());
+			let node = project.find_node_by_path(&node_path.parent());
 
 			node.and_then(|node| node.tree.remove(name)).ok_or(anyhow!(
 				"Failed to remove instance {:?} from project: {:?}",
@@ -194,59 +257,34 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	Ok(())
 }
 
-fn properties_to_source(properties: &HashMap<String, Variant>) -> String {
-	let (mut header, source) = if let Some(Variant::String(source)) = properties.get("Source") {
-		if let Some(new_line) = source.find('\n') {
-			let (header, source) = source.split_at(new_line);
-			(header.to_string(), source.to_string())
-		} else {
-			(String::new(), source.to_owned())
-		}
+fn locate_instance_data(name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Option<PathBuf> {
+	let data_path = if let Some(entry) = meta.source.get_data() {
+		Some(entry.path().to_owned())
 	} else {
-		(String::new(), String::new())
+		let mut data_path = None;
+
+		for sync_rule in meta.context.sync_rules_of_type(&Middleware::InstanceData) {
+			if let Some(path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
+				data_path = Some(path);
+				break;
+			}
+		}
+
+		data_path
 	};
 
-	let mut new_header = String::new();
-
-	if properties.get("Disabled").is_some() {
-		new_header += "--disable ";
+	if data_path.is_none() {
+		warn!("Failed to locate instance data for {}", path.display())
 	}
 
-	new_header.pop();
-
-	if let Some(Variant::Enum(run_context)) = properties.get("RunContext") {
-		match run_context.to_u32() {
-			1 => new_header += "--server ",
-			2 => new_header += "--client ",
-			3 => new_header += "--plugin ",
-			_ => {}
-		}
-	}
-
-	header = header.replace("--disable", "");
-	header = header.replace("--server", "");
-	header = header.replace("--client", "");
-	header = header.replace("--plugin", "");
-
-	if header.len() == header.match_indices(' ').count() {
-		header.clear();
-	}
-
-	new_header += &header;
-
-	if !new_header.is_empty() && !source.starts_with('\n') {
-		new_header += "\n";
-	}
-
-	new_header + &source
+	data_path
 }
 
-fn locate_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Option<PathBuf> {
-	for sync_rule in context.sync_rules_of_type(&FileType::InstanceData) {
-		if let Some(data_path) = sync_rule.locate_data(path, name, vfs.is_dir(path)) {
-			return Some(data_path);
-		}
+// Temporary solution for serde failing to deserialize empty HashMap
+fn validate_properties(properties: Properties) -> Properties {
+	if properties.contains_key("ArgonEmpty") {
+		HashMap::new()
+	} else {
+		properties
 	}
-
-	None
 }
