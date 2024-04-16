@@ -1,4 +1,5 @@
 use anyhow::Result;
+use colored::Colorize;
 use crossbeam_channel::{select, Sender};
 use log::{debug, error, info, trace, warn};
 use std::{
@@ -9,11 +10,12 @@ use std::{
 
 use super::{changes::Changes, queue::Queue, tree::Tree};
 use crate::{
-	argon_error, lock, messages,
+	argon_error,
+	constants::{BLACKLISTED_PATHS, CHANGES_TRESHOLD},
+	lock, logger, messages,
 	project::{Project, ProjectDetails},
 	stats,
 	vfs::{Vfs, VfsEvent},
-	BLACKLISTED_PATHS,
 };
 
 pub mod read;
@@ -135,7 +137,7 @@ impl Handler {
 		};
 
 		if !changes.is_empty() {
-			stats::files_synced(changes.len() as u32);
+			stats::files_synced(changes.total() as u32);
 
 			let result = self.queue.push(messages::SyncChanges(changes), None);
 
@@ -149,13 +151,34 @@ impl Handler {
 	}
 
 	fn on_client_event(&self, changes: Changes) {
-		trace!("Received client event: {:?} changes", changes.len());
+		trace!("Received client event: {:?} changes", changes.total());
+
+		if changes.total() > CHANGES_TRESHOLD {
+			let accept = logger::prompt(
+				&format!(
+					"You are about to apply {}, {} and {}. Do you want to continue?",
+					format!("{} additions", changes.additions.len()).bold(),
+					format!("{} updates", changes.updates.len()).bold(),
+					format!("{} removals", changes.removals.len()).bold(),
+				),
+				true,
+			);
+
+			if !accept {
+				trace!(
+					"Aborted applying client event! {} changes were not applied",
+					changes.total()
+				);
+
+				return;
+			}
+		}
 
 		let mut tree = lock!(self.tree);
 
 		let result = || -> Result<()> {
 			for snapshot in changes.additions {
-				write::apply_addition(snapshot, &mut tree, &self.vfs);
+				write::apply_addition(snapshot, &mut tree, &self.vfs)?;
 			}
 
 			for snapshot in changes.updates {

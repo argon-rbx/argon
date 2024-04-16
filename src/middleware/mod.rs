@@ -9,13 +9,14 @@ use std::{
 
 use self::data::DataSnapshot;
 use crate::{
+	constants::BLACKLISTED_PATHS,
 	core::{
 		meta::{Context, Meta, Source},
 		snapshot::Snapshot,
 	},
 	ext::{PathExt, ResultExt},
 	vfs::Vfs,
-	Properties, BLACKLISTED_PATHS,
+	Properties,
 };
 
 pub mod csv;
@@ -88,8 +89,10 @@ impl Middleware {
 		match self {
 			Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript => {
 				lua::write_lua(properties, path, vfs)
-			} // Middleware::StringValue => txt::write_txt(path, vfs),
-			// Middleware::LocalizationTable => csv::write_csv(path, vfs),
+			}
+			Middleware::StringValue => txt::write_txt(properties, path, vfs),
+			Middleware::LocalizationTable => csv::write_csv(properties, path, vfs),
+			// TODO: Add support for other middleware
 			_ => unimplemented!(),
 		}
 		.with_desc(|| {
@@ -102,6 +105,7 @@ impl Middleware {
 	}
 
 	pub fn from_class(class: &str) -> Option<Self> {
+		// TODO: Implement matcher for detecting remaining middleware
 		match class {
 			"Script" => Some(Middleware::ServerScript),
 			"LocalScript" => Some(Middleware::ClientScript),

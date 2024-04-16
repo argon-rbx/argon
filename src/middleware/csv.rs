@@ -1,12 +1,12 @@
 use anyhow::Result;
-use csv::ReaderBuilder;
+use csv::{ReaderBuilder, WriterBuilder};
 use rbx_dom_weak::types::Variant;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
 
-use crate::{core::snapshot::Snapshot, vfs::Vfs};
+use crate::{core::snapshot::Snapshot, vfs::Vfs, Properties};
 
-#[derive(Default, Serialize, Debug)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 struct LocalizationEntry {
 	key: Option<String>,
 	context: Option<String>,
@@ -40,9 +40,9 @@ pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 			if let Some(header) = header {
 				match header {
 					"Key" => entry.key = Some(field.to_owned()),
+					"Source" => entry.source = Some(field.to_owned()),
 					"Context" => entry.context = Some(field.to_owned()),
 					"Example" => entry.example = Some(field.to_owned()),
-					"Source" => entry.source = Some(field.to_owned()),
 					_ => {
 						entry.values.insert(header.to_owned(), field.to_owned());
 					}
@@ -63,4 +63,41 @@ pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	Ok(Snapshot::new()
 		.with_class("LocalizationTable")
 		.with_properties(properties))
+}
+
+#[profiling::function]
+pub fn write_csv(mut properties: HashMap<String, Variant>, path: &Path, vfs: &Vfs) -> Result<Properties> {
+	if let Some(Variant::String(contents)) = properties.remove("Contents") {
+		let entries: Vec<LocalizationEntry> = serde_json::from_str(&contents)?;
+		let mut contents = Vec::new();
+
+		let mut writer = WriterBuilder::new()
+			.has_headers(true)
+			.flexible(true)
+			.from_writer(&mut contents);
+
+		writer.write_record(["Key", "Source", "Context", "Example"])?;
+
+		for entry in entries {
+			let mut record = vec![
+				entry.key.unwrap_or_default(),
+				entry.source.unwrap_or_default(),
+				entry.context.unwrap_or_default(),
+				entry.example.unwrap_or_default(),
+			];
+
+			for value in entry.values.values() {
+				record.push(value.to_owned());
+			}
+
+			writer.write_record(&record)?;
+		}
+
+		writer.flush()?;
+		drop(writer);
+
+		vfs.write(path, &contents)?;
+	}
+
+	Ok(properties)
 }

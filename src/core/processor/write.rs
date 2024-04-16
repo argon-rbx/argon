@@ -20,8 +20,29 @@ use crate::{
 	Properties,
 };
 
-pub fn apply_addition(snapshot: AddedSnapshot, _tree: &mut Tree, _vfs: &Vfs) {
-	println!("Added {:#?}", snapshot);
+pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, _vfs: &Vfs) -> Result<()> {
+	trace!("Adding {:?} with parent {:?}", snapshot.id, snapshot.parent);
+
+	if !tree.exists(snapshot.parent) {
+		warn!(
+			"Attempted to add instance: {:?} whose parent doesn't exist: {:?}",
+			snapshot.id, snapshot.parent
+		);
+		return Ok(());
+	}
+
+	let parent_meta = tree.get_meta(snapshot.parent).unwrap();
+
+	match parent_meta.source.get() {
+		SourceKind::Path(_parent_path) => {}
+		SourceKind::Project(_, _, _, _) => {}
+		SourceKind::None => panic!(
+			"Attempted to add instance whose parent has no source: {:?}",
+			snapshot.id
+		),
+	}
+
+	Ok(())
 }
 
 pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
@@ -67,7 +88,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			if let Some(file_path) = file_path {
 				let properties = middleware.write(properties.clone(), &file_path, vfs)?;
 
-				if let Some(data_path) = locate_instance_data(&instance.name, &file_path, meta, vfs) {
+				if let Some(data_path) = locate_instance_data(&instance.name, path, meta, vfs) {
 					let data_path = data::write_data(true, &instance.class, properties, &data_path, meta, vfs)?;
 					meta.source.set_data(data_path)
 				}
@@ -214,38 +235,86 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 
 	let meta = tree.get_meta(id).unwrap();
 
-	match meta.source.get() {
-		SourceKind::Path(_) => {
-			let mut path_len = None;
-
-			for entry in meta.source.relevants() {
-				match entry {
-					SourceEntry::Project(_) => continue,
-					SourceEntry::Folder(path) => {
-						path_len = Some(path.len());
+	fn remove_non_project_instances(id: Ref, meta: &Meta, tree: &Tree, vfs: &Vfs) -> Result<()> {
+		for entry in meta.source.relevants() {
+			match entry {
+				SourceEntry::Project(_) => continue,
+				SourceEntry::Folder(path) => vfs.remove(path)?,
+				SourceEntry::File(path) | SourceEntry::Data(path) => {
+					if vfs.exists(path) {
 						vfs.remove(path)?
 					}
-					SourceEntry::File(path) | SourceEntry::Data(path) => {
-						if let Some(len) = path_len {
-							if path.len() == len {
-								vfs.remove(path)?
+				}
+			}
+		}
+
+		// Transform parent instance source from folder to file
+		// if it no logner has any children
+		if let Some(parent) = tree
+			.get_instance(id)
+			.and_then(|instance| tree.get_instance(instance.parent()))
+		{
+			if parent.children().len() != 1 {
+				return Ok(());
+			}
+
+			if let Some(source) = tree.get_meta(parent.referent()).map(|meta| &meta.source) {
+				if let SourceKind::Path(folder_path) = source.get() {
+					let name = folder_path.get_name();
+
+					if let Some(file) = source.get_file() {
+						let old_path = file.path();
+
+						for sync_rule in meta.context.sync_rules() {
+							if sync_rule.matches_child(old_path) {
+								if let Some(path) = sync_rule.get_path(name) {
+									let parent_path = folder_path.get_parent();
+									let new_path = parent_path.join(path);
+
+									vfs.rename(old_path, &new_path)?;
+
+									if let Some(data) = source.get_data() {
+										let old_path = data.path();
+
+										for sync_rule in meta.context.sync_rules_of_type(&Middleware::InstanceData) {
+											if let Some(path) = sync_rule.get_path(name) {
+												let new_path = parent_path.join(path);
+
+												vfs.rename(old_path, &new_path)?;
+												break;
+											}
+										}
+									}
+
+									vfs.remove(folder_path)?;
+								}
+
+								break;
 							}
-						} else {
-							vfs.remove(path)?
 						}
 					}
 				}
 			}
 		}
-		SourceKind::Project(name, path, _node, node_path) => {
-			let mut project = Project::load(path)?;
-			let node = project.find_node_by_path(&node_path.parent());
 
-			node.and_then(|node| node.tree.remove(name)).ok_or(anyhow!(
+		Ok(())
+	}
+
+	match meta.source.get() {
+		SourceKind::Path(_) => remove_non_project_instances(id, meta, tree, vfs)?,
+		SourceKind::Project(name, path, node, node_path) => {
+			let mut project = Project::load(path)?;
+			let parent_node = project.find_node_by_path(&node_path.parent());
+
+			parent_node.and_then(|node| node.tree.remove(name)).ok_or(anyhow!(
 				"Failed to remove instance {:?} from project: {:?}",
 				id,
 				project
 			))?;
+
+			if node.path.is_some() {
+				remove_non_project_instances(id, meta, tree, vfs)?;
+			}
 
 			project.save(path)?;
 		}

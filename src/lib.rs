@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 pub mod cli;
 pub mod config;
+pub mod constants;
 pub mod core;
 pub mod crash_handler;
 pub mod ext;
@@ -23,11 +24,6 @@ pub mod updater;
 pub mod util;
 pub mod vfs;
 pub mod workspace;
-
-// Paths that should be ignored before they are even processed
-// useful to save ton of computing time, however users won't
-// be able to set them in `sync_rules` or project `$path`
-const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
 /// Global type for snapshot and instance properties
 pub type Properties = HashMap<String, Variant>;

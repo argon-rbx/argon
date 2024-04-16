@@ -49,7 +49,7 @@ impl Changes {
 		self.additions.is_empty() && self.updates.is_empty() && self.removals.is_empty()
 	}
 
-	pub fn len(&self) -> usize {
+	pub fn total(&self) -> usize {
 		self.additions.len() + self.updates.len() + self.removals.len()
 	}
 }
