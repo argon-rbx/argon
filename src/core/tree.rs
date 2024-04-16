@@ -65,6 +65,17 @@ impl Tree {
 		referent
 	}
 
+	pub fn insert_instance_with_ref(&mut self, snapshot: Snapshot, parent: Ref) {
+		let builder = InstanceBuilder::new(snapshot.class)
+			.with_name(snapshot.name)
+			.with_referent(snapshot.id)
+			.with_properties(snapshot.properties);
+
+		let referent = self.dom.insert(parent, builder);
+
+		self.insert_meta(referent, snapshot.meta);
+	}
+
 	pub fn remove_instance(&mut self, id: Ref) {
 		let mut to_remove = vec![id];
 
@@ -148,6 +159,10 @@ impl Tree {
 
 	pub fn get_meta(&self, id: Ref) -> Option<&Meta> {
 		self.id_to_meta.get(&id)
+	}
+
+	pub fn get_meta_mut(&mut self, id: Ref) -> Option<&mut Meta> {
+		self.id_to_meta.get_mut(&id)
 	}
 
 	pub fn get_ids(&self, path: &Path) -> Option<&Vec<Ref>> {

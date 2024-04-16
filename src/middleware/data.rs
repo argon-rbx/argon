@@ -101,7 +101,7 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 	})
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct WritableData {
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -127,42 +127,44 @@ pub fn write_data<'a>(
 	meta: &Meta,
 	vfs: &Vfs,
 ) -> Result<Option<&'a Path>> {
-	if !properties.is_empty() {
-		let class_name = if has_file || class == "Folder" {
-			None
-		} else {
-			Some(class.to_owned())
-		};
+	let class_name = if !has_file && class != "Folder" {
+		Some(class.to_owned())
+	} else {
+		None
+	};
 
-		let properties = properties
-			.iter()
-			.map(|(property, varaint)| {
-				(
-					property.to_owned(),
-					UnresolvedValue::from_variant(varaint.clone(), class, property),
-				)
-			})
-			.collect();
+	let properties = properties
+		.iter()
+		.map(|(property, varaint)| {
+			(
+				property.to_owned(),
+				UnresolvedValue::from_variant(varaint.clone(), class, property),
+			)
+		})
+		.collect();
 
-		let mut data = WritableData {
-			class_name,
-			properties,
-			..WritableData::default()
-		};
+	let mut data = WritableData {
+		class_name,
+		properties,
+		..WritableData::default()
+	};
 
-		if meta.keep_unknowns {
-			data.keep_unknowns = Some(true);
-		}
-
-		let mut vec = serde_json::to_vec_pretty(&data)?;
-		vec.push(b'\n');
-
-		vfs.write(path, &vec)?;
-
-		return Ok(Some(path));
-	} else if (has_file || class == "Folder") && vfs.exists(path) {
-		vfs.remove(path)?;
+	if meta.keep_unknowns {
+		data.keep_unknowns = Some(true);
 	}
 
-	Ok(None)
+	if data == WritableData::default() {
+		if vfs.exists(path) {
+			vfs.remove(path)?;
+		}
+
+		return Ok(None);
+	}
+
+	let mut vec = serde_json::to_vec_pretty(&data)?;
+	vec.push(b'\n');
+
+	vfs.write(path, &vec)?;
+
+	Ok(Some(path))
 }

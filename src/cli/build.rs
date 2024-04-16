@@ -67,7 +67,7 @@ impl Build {
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
 			if self.sourcemap {
-				Some(project_path.get_parent().join("sourcemap.json"))
+				Some(project_path.with_file_name("sourcemap.json"))
 			} else {
 				None
 			}

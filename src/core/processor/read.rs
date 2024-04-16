@@ -155,11 +155,11 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 }
 
 fn insert_children(snapshot: &mut Snapshot, parent: Ref, tree: &mut Tree) {
-	let referent = tree.insert_instance_non_recursive(snapshot.clone(), parent);
+	let id = tree.insert_instance_non_recursive(snapshot.clone(), parent);
 
-	snapshot.set_id(referent);
+	snapshot.set_id(id);
 
 	for child in snapshot.children.iter_mut() {
-		insert_children(child, referent, tree);
+		insert_children(child, id, tree);
 	}
 }

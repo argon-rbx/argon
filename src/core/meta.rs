@@ -120,6 +120,11 @@ impl Source {
 		}
 	}
 
+	pub fn with_relevants(mut self, relevants: Vec<SourceEntry>) -> Self {
+		self.relevant = relevants;
+		self
+	}
+
 	pub fn add_relevant(&mut self, entry: SourceEntry) {
 		self.relevant.push(entry)
 	}
@@ -264,18 +269,6 @@ impl SyncRule {
 		} else {
 			path.get_stem().to_owned()
 		}
-	}
-
-	pub fn get_path(&self, name: &str) -> Option<PathBuf> {
-		self.pattern
-			.as_ref()
-			.map(|pattern| PathBuf::from(pattern.as_str().replace('*', name)))
-	}
-
-	pub fn get_child_path(&self) -> Option<PathBuf> {
-		self.child_pattern
-			.as_ref()
-			.map(|pattern| PathBuf::from(pattern.as_str()))
 	}
 
 	pub fn resolve(&self, path: &Path) -> Option<ResolvedSyncRule> {

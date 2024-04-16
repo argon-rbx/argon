@@ -147,6 +147,8 @@ impl Handler {
 					error!("Failed to add changes to the queue: {}", err);
 				}
 			}
+		} else {
+			trace!("No ID found for path {:?}", path);
 		}
 	}
 

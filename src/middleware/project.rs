@@ -99,7 +99,7 @@ pub fn new_snapshot_node(
 		.with_meta(meta);
 
 	if let Some(custom_path) = node.path {
-		let path = path_clean::clean(path.get_parent().join(custom_path));
+		let path = path_clean::clean(path.with_file_name(custom_path));
 
 		if path.is_file() {
 			vfs.watch(&path)?;

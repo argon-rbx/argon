@@ -18,7 +18,7 @@ use crate::{
 	workspace,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
 pub struct ProjectNode {
 	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
