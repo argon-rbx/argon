@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use log::{debug, warn};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::{
 	fs,
 	sync::RwLock,
@@ -26,7 +27,6 @@ macro_rules! stat_fn {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct ArgonStats {
-	#[serde(rename(serialize = "hours_used"))]
 	minutes_used: u32,
 	files_synced: u32,
 	lines_synced: u32,
@@ -36,13 +36,22 @@ struct ArgonStats {
 }
 
 impl ArgonStats {
-	fn len(&self) -> u32 {
-		self.minutes_used
+	fn total(&self) -> u32 {
+		self.minutes_used / 60
 			+ self.files_synced
 			+ self.lines_synced
 			+ self.projects_created
 			+ self.projects_built
 			+ self.sessions_started
+	}
+
+	fn extend(&mut self, other: &ArgonStats) {
+		self.minutes_used += other.minutes_used;
+		self.files_synced += other.files_synced;
+		self.lines_synced += other.lines_synced;
+		self.projects_created += other.projects_created;
+		self.projects_built += other.projects_built;
+		self.sessions_started += other.sessions_started;
 	}
 }
 
@@ -50,6 +59,20 @@ impl ArgonStats {
 struct StatTracker {
 	last_synced: SystemTime,
 	stats: ArgonStats,
+}
+
+impl StatTracker {
+	fn reset(&mut self) {
+		self.stats = ArgonStats::default();
+	}
+
+	fn merge(&mut self, other: Self) {
+		if other.last_synced > self.last_synced {
+			self.last_synced = other.last_synced;
+		}
+
+		self.stats.extend(&other.stats);
+	}
 }
 
 impl Default for StatTracker {
@@ -89,12 +112,19 @@ fn set_tracker(tracker: &StatTracker) -> Result<()> {
 pub fn track() -> Result<()> {
 	let mut tracker = get_tracker()?;
 
-	if tracker.last_synced.elapsed()?.as_secs() > 3600 && tracker.stats.len() > 10 {
+	if tracker.last_synced.elapsed()?.as_secs() > 3600 && tracker.stats.total() > 10 {
 		if let Some(token) = option_env!("AUTH_TOKEN") {
-			let mut stats = tracker.stats.clone();
-			let remaining_minutes = stats.minutes_used % 60;
+			let stats = tracker.stats;
+			let remainder = stats.minutes_used % 60;
 
-			stats.minutes_used /= 60;
+			let stats = json!({
+				"hours_used": stats.minutes_used / 60,
+				"files_synced": stats.files_synced,
+				"lines_synced": stats.lines_synced,
+				"projects_created": stats.projects_created,
+				"projects_built": stats.projects_built,
+				"sessions_started": stats.sessions_started,
+			});
 
 			Client::new()
 				.post(format!("https://api.argon.wiki/push?auth={}", token))
@@ -104,11 +134,11 @@ pub fn track() -> Result<()> {
 			tracker.last_synced = SystemTime::now();
 			tracker.stats = ArgonStats::default();
 
-			tracker.stats.minutes_used = remaining_minutes;
+			tracker.stats.minutes_used = remainder;
 
 			set_tracker(&tracker)?;
 		} else {
-			warn!("This Argon build has no `AUTH_TOKEN` set, stats will not be synced")
+			warn!("This Argon build has no `AUTH_TOKEN` set, stats will not be uploaded")
 		}
 	} else {
 		debug!("Stats already synced within the last hour or too few stats to sync");
@@ -128,9 +158,14 @@ pub fn track() -> Result<()> {
 }
 
 pub fn save() -> Result<()> {
-	let tracker = TRACKER.read().unwrap();
+	let mut tracker = TRACKER.write().unwrap();
+
+	if let Ok(old) = get_tracker() {
+		tracker.merge(old);
+	}
 
 	set_tracker(&tracker)?;
+	tracker.reset();
 
 	Ok(())
 }

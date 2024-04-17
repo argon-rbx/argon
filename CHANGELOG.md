@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Full two-way sync
 - Support for `legacy_scripts` and `keep_unknowns` fields
 - Ability to re-release the same version when needed
 - Virtual file system for testing

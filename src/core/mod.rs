@@ -197,14 +197,7 @@ impl Core {
 			})
 		}
 
-		let mut sourcemap = walk(&tree, dom.root_ref(), non_scripts);
-
-		// We need to add root project path manually
-		// as we ignore other project paths by default
-		if let Some(sourcemap) = &mut sourcemap {
-			let root_path = tree.get_meta(tree.root_ref()).unwrap().source.paths()[0].to_owned();
-			sourcemap.file_paths.push(root_path);
-		}
+		let sourcemap = walk(&tree, dom.root_ref(), non_scripts);
 
 		if let Some(path) = path {
 			let writer = BufWriter::new(File::create(path)?);

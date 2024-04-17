@@ -21,11 +21,13 @@ use crate::{
 pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let project: Project = Project::load(path)?;
 
-	let mut meta = Meta::from_project(&project);
+	let meta = Meta::from_project(&project);
 	let mut snapshot = new_snapshot_node(&project.name, path, project.node, NodePath::new(), &meta.context, vfs)?;
 
-	meta.source = snapshot.meta.source.clone();
-	snapshot.set_meta(meta);
+	let mut source = Source::file(path).with_relevants(snapshot.meta.source.relevants().to_owned());
+	source.add_project(path);
+
+	snapshot.set_meta(meta.with_source(source));
 
 	vfs.watch(path)?;
 

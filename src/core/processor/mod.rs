@@ -8,7 +8,7 @@ use std::{
 	time::{Duration, Instant},
 };
 
-use super::{changes::Changes, queue::Queue, tree::Tree};
+use super::{changes::Changes, queue::Queue, snapshot::Snapshot, tree::Tree};
 use crate::{
 	argon_error,
 	constants::{BLACKLISTED_PATHS, CHANGES_TRESHOLD},
@@ -66,6 +66,10 @@ impl Processor {
 
 	pub fn write(&self, changes: Changes) {
 		self.writer.send(changes).unwrap();
+	}
+
+	pub fn write_all(&self, _snapshot: Snapshot) {
+		// TODO
 	}
 }
 

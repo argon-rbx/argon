@@ -116,7 +116,7 @@ impl Source {
 	pub fn project(name: &str, path: &Path, node: ProjectNode, node_path: NodePath) -> Self {
 		Self {
 			inner: SourceKind::Project(name.to_owned(), path.to_owned(), node, node_path),
-			relevant: vec![SourceEntry::Project(path.to_owned())],
+			relevant: vec![],
 		}
 	}
 
@@ -135,6 +135,10 @@ impl Source {
 
 	pub fn add_data(&mut self, path: &Path) {
 		self.add_relevant(SourceEntry::Data(path.to_owned()))
+	}
+
+	pub fn add_project(&mut self, path: &Path) {
+		self.add_relevant(SourceEntry::Project(path.to_owned()))
 	}
 
 	pub fn remove_data(&mut self) {
