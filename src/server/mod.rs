@@ -11,12 +11,11 @@ mod exec;
 mod home;
 mod open;
 mod read;
-mod read_all;
+mod snapshot;
 mod stop;
 mod subscribe;
 mod unsubscribe;
 mod write;
-mod write_all;
 
 async fn default_redirect() -> impl Responder {
 	web::Redirect::to("/")
@@ -47,14 +46,13 @@ impl Server {
 				.service(details::main)
 				.service(subscribe::main)
 				.service(unsubscribe::main)
-				.service(home::main)
-				.service(stop::main)
+				.service(snapshot::main)
 				.service(read::main)
 				.service(write::main)
-				.service(read_all::main)
-				.service(write_all::main)
 				.service(exec::main)
 				.service(open::main)
+				.service(stop::main)
+				.service(home::main)
 				.default_service(web::to(default_redirect))
 		})
 		.backlog(0)

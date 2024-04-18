@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
+use colored::Colorize;
 use log::{error, trace, warn};
 use rbx_dom_weak::{types::Ref, Instance};
 use std::{
@@ -7,6 +8,7 @@ use std::{
 };
 
 use crate::{
+	argon_error,
 	core::{
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
@@ -19,6 +21,15 @@ use crate::{
 	vfs::Vfs,
 	Properties,
 };
+
+macro_rules! path_exists {
+	($path:expr) => {
+		argon_error!(
+			"Instance with path: {} already exists! Skipping..",
+			$path.to_string().bold()
+		)
+	};
+}
 
 pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	trace!("Adding {:?} with parent {:?}", snapshot.id, snapshot.parent);
@@ -37,7 +48,13 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 	snapshot.properties = validate_properties(snapshot.properties);
 
-	fn write_instance(is_dir: bool, path: &Path, snapshot: &Snapshot, parent_meta: &Meta, vfs: &Vfs) -> Result<Meta> {
+	fn write_instance(
+		has_children: bool,
+		path: &Path,
+		snapshot: &Snapshot,
+		parent_meta: &Meta,
+		vfs: &Vfs,
+	) -> Result<Option<Meta>> {
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
 		let properties = snapshot.properties.clone();
 
@@ -46,19 +63,33 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.context
 				.sync_rules_of_type(&middleware)
 				.iter()
-				.find_map(|rule| rule.locate(path, &snapshot.name, is_dir))
+				.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
 
-			let properties = middleware.write(properties, &file_path, vfs)?;
+			if has_children {
+				if vfs.exists(path) {
+					return Ok(None);
+				}
 
-			meta.source = Source::file(&file_path);
+				dir::write_dir(path, vfs)?;
+
+				meta.source = Source::child_file(path, &file_path);
+			} else {
+				if vfs.exists(&file_path) {
+					return Ok(None);
+				}
+
+				meta.source = Source::file(&file_path);
+			}
+
+			let properties = middleware.write(properties, &file_path, vfs)?;
 
 			if !properties.is_empty() {
 				let data_path = parent_meta
 					.context
 					.sync_rules_of_type(&Middleware::InstanceData)
 					.iter()
-					.find_map(|rule| rule.locate(path, &snapshot.name, is_dir))
+					.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 					.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))?;
 
 				let data_path = data::write_data(true, &snapshot.class, properties, &data_path, &meta, vfs)?;
@@ -66,6 +97,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				meta.source.set_data(data_path);
 			}
 		} else {
+			if vfs.exists(path) {
+				return Ok(None);
+			}
+
 			dir::write_dir(path, vfs)?;
 
 			meta.source = Source::directory(path);
@@ -82,7 +117,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			meta.source.set_data(data_path);
 		}
 
-		Ok(meta)
+		Ok(Some(meta))
 	}
 
 	fn add_non_project_instances(
@@ -144,12 +179,14 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		let path = parent_path.join(&snapshot.name);
 
 		if snapshot.children.is_empty() {
-			let meta = write_instance(false, &path, &snapshot, parent_meta, vfs)?;
-			let snapshot = snapshot.with_meta(meta);
+			if let Some(meta) = write_instance(false, &path, &snapshot, parent_meta, vfs)? {
+				let snapshot = snapshot.with_meta(meta);
 
-			tree.insert_instance_with_ref(snapshot, parent_id);
-		} else {
-			let meta = write_instance(false, &path, &snapshot, parent_meta, vfs)?;
+				tree.insert_instance_with_ref(snapshot, parent_id);
+			} else {
+				path_exists!(&path)
+			}
+		} else if let Some(meta) = write_instance(true, &path, &snapshot, parent_meta, vfs)? {
 			let snapshot = snapshot.with_meta(meta.clone());
 
 			tree.insert_instance_with_ref(snapshot.clone(), parent_id);
@@ -157,6 +194,8 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			for child in snapshot.children {
 				add_non_project_instances(snapshot.id, &path, child, &meta, tree, vfs)?;
 			}
+		} else {
+			path_exists!(&path)
 		}
 
 		Ok(parent_source)

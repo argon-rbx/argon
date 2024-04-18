@@ -7,7 +7,7 @@ use crate::{
 		meta::{Context, Meta, Source},
 		snapshot::Snapshot,
 	},
-	ext::{PathExt, ResultExt},
+	ext::PathExt,
 	vfs::Vfs,
 };
 
@@ -30,8 +30,7 @@ pub fn read_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
 
 #[profiling::function]
 pub fn write_dir(path: &Path, vfs: &Vfs) -> Result<()> {
-	vfs.create_dir(path)
-		.with_desc(|| format!("Instance with path: {} already exists", path.display()))?;
+	vfs.create_dir(path)?;
 
 	Ok(())
 }
