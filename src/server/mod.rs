@@ -2,6 +2,7 @@ use actix_web::{
 	web::{self, Data},
 	App, HttpServer, Responder,
 };
+use serde::Deserialize;
 use std::{io::Result, net::TcpListener, sync::Arc};
 
 use crate::core::Core;
@@ -19,6 +20,12 @@ mod write;
 
 async fn default_redirect() -> impl Responder {
 	web::Redirect::to("/")
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthRequest {
+	client_id: u32,
 }
 
 pub struct Server {

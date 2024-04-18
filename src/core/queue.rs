@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use crossbeam_channel::{Receiver, Sender};
 use std::{collections::HashMap, sync::RwLock, time::Duration};
 
-use crate::messages::Message;
+use crate::messages::{self, Message};
 
 const TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -118,6 +118,21 @@ impl Queue {
 
 		write!(self.listeners).retain(|i| i != &id);
 		write!(self.queues).remove(&id);
+
+		Ok(())
+	}
+
+	pub fn disconnect(&self, message: &str, id: u32) -> Result<()> {
+		if !self.is_subscribed(id) {
+			bail!("Not subscribed")
+		}
+
+		self.push(
+			messages::Disconnect {
+				message: message.to_owned(),
+			},
+			Some(id),
+		)?;
 
 		Ok(())
 	}

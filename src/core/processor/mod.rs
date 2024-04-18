@@ -2,6 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 use crossbeam_channel::{select, Sender};
 use log::{debug, error, info, trace, warn};
+use serde::Deserialize;
 use std::{
 	sync::{Arc, Mutex},
 	thread::Builder,
@@ -21,8 +22,15 @@ use crate::{
 pub mod read;
 pub mod write;
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteRequest {
+	pub changes: Changes,
+	pub client_id: u32,
+}
+
 pub struct Processor {
-	writer: Sender<Changes>,
+	writer: Sender<WriteRequest>,
 }
 
 impl Processor {
@@ -52,8 +60,8 @@ impl Processor {
 								handler.on_vfs_event(event.unwrap());
 							}
 						}
-						recv(client_receiver) -> changes => {
-							handler.on_client_event(changes.unwrap());
+						recv(client_receiver) -> request => {
+							handler.on_client_event(request.unwrap());
 							last_client_event = Instant::now();
 						}
 					}
@@ -64,8 +72,8 @@ impl Processor {
 		Self { writer: sender }
 	}
 
-	pub fn write(&self, changes: Changes) {
-		self.writer.send(changes).unwrap();
+	pub fn write(&self, request: WriteRequest) {
+		self.writer.send(request).unwrap();
 	}
 }
 
@@ -152,16 +160,19 @@ impl Handler {
 		}
 	}
 
-	fn on_client_event(&self, changes: Changes) {
+	fn on_client_event(&self, request: WriteRequest) {
+		let changes = request.changes;
+		let client_id = request.client_id;
+
 		trace!("Received client event: {:?} changes", changes.total());
 
 		if changes.total() > CHANGES_TRESHOLD {
 			let accept = logger::prompt(
 				&format!(
 					"You are about to apply {}, {} and {}. Do you want to continue?",
-					format!("{} additions", changes.additions.len()).bold(),
-					format!("{} updates", changes.updates.len()).bold(),
-					format!("{} removals", changes.removals.len()).bold(),
+					format!("{} additions", changes.additions.len()).bold().green(),
+					format!("{} updates", changes.updates.len()).bold().blue(),
+					format!("{} removals", changes.removals.len()).bold().red(),
 				),
 				true,
 			);
@@ -171,6 +182,11 @@ impl Handler {
 					"Aborted applying client event! {} changes were not applied",
 					changes.total()
 				);
+
+				match self.queue.disconnect("Client and server got out of sync!", client_id) {
+					Ok(()) => trace!("Client {} disconnected", client_id),
+					Err(err) => warn!("Failed to disconnect client: {}", err),
+				}
 
 				return;
 			}
