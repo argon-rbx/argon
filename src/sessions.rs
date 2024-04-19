@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use log::{trace, warn};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, process, thread};
@@ -126,7 +126,7 @@ pub fn remove(session: &Session) -> Result<()> {
 		.active_sessions
 		.iter()
 		.find_map(|(i, s)| if s == session { Some(i.clone()) } else { None })
-		.unwrap();
+		.context("Session not found")?;
 
 	sessions.active_sessions.remove(&id);
 

@@ -47,7 +47,7 @@ impl Processor {
 
 		Builder::new()
 			.name("processor".to_owned())
-			.spawn(move || {
+			.spawn(move || -> Result<()> {
 				let mut last_client_event = Instant::now();
 
 				let vfs_receiver = vfs.receiver();
@@ -57,11 +57,11 @@ impl Processor {
 					select! {
 						recv(vfs_receiver) -> event => {
 							if last_client_event.elapsed() > Duration::from_millis(200) {
-								handler.on_vfs_event(event.unwrap());
+								handler.on_vfs_event(event?);
 							}
 						}
 						recv(client_receiver) -> request => {
-							handler.on_client_event(request.unwrap());
+							handler.on_client_event(request?);
 							last_client_event = Instant::now();
 						}
 					}

@@ -63,6 +63,7 @@ impl Server {
 				.default_service(web::to(default_redirect))
 		})
 		.backlog(0)
+		.disable_signals()
 		.bind((self.host.clone(), self.port))?
 		.run()
 		.await

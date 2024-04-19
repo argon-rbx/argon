@@ -21,7 +21,6 @@ async fn main(request: Query<AuthRequest>, core: Data<Arc<Core>>) -> impl Respon
 		return HttpResponse::Unauthorized().body("Not subscribed");
 	}
 
-	println!("{:#?}", 3);
 	match queue.get_timeout(id) {
 		Ok(message) => HttpResponse::Ok().msgpack(message),
 		Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
