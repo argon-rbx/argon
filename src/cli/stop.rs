@@ -40,7 +40,7 @@ impl Stop {
 			}
 
 			let mut table = Table::new();
-			table.set_header(vec!["Id", "Host", "Port", "PID"]);
+			table.set_header(vec!["ID", "Host", "Port", "PID"]);
 
 			for (id, session) in sessions.unwrap() {
 				let port = if let Some(port) = session.port {

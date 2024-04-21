@@ -76,12 +76,14 @@ pub fn init(verbosity: LevelFilter, log_style: WriteStyle) {
 	// We want to see only important logs from these crates
 	builder.filter_module("notify_debouncer_full", LevelFilter::Warn);
 	builder.filter_module("notify", LevelFilter::Warn);
+
 	builder.filter_module("actix_server", LevelFilter::Warn);
-	builder.filter_module("hyper", LevelFilter::Warn);
+	builder.filter_module("actix_http", LevelFilter::Warn);
 	builder.filter_module("reqwest", LevelFilter::Warn);
+	builder.filter_module("hyper", LevelFilter::Warn);
 	builder.filter_module("mio", LevelFilter::Warn);
+
 	builder.filter_module("rbx_binary", LevelFilter::Warn);
-	builder.filter_module("rbx_xml", LevelFilter::Warn);
 
 	builder.init();
 }

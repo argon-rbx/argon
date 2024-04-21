@@ -144,8 +144,6 @@ pub fn track() -> Result<()> {
 		debug!("Stats already synced within the last hour or too few stats to sync");
 	}
 
-	*TRACKER.write().unwrap() = tracker;
-
 	thread::spawn(|| loop {
 		thread::sleep(Duration::from_secs(300));
 		minutes_used(5);
