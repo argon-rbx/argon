@@ -3,22 +3,31 @@ use actix_web::{post, web::Data, HttpResponse, Responder};
 use serde::Deserialize;
 use std::sync::Arc;
 
-use crate::{core::Core, messages};
+use crate::{core::Core, messages, studio};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Request {
 	code: String,
+	focus: bool,
 }
 
 #[post("/exec")]
 async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
-	let pushed = core.queue().push(
+	let queue = core.queue();
+
+	let pushed = queue.push(
 		messages::ExecuteCode {
 			code: request.code.clone(),
 		},
 		None,
 	);
+
+	if request.focus {
+		if let Some(name) = queue.get_first_non_internal_listener_name() {
+			studio::focus(Some(name)).ok();
+		}
+	}
 
 	match pushed {
 		Ok(()) => HttpResponse::Ok().body("Code executed successfully"),

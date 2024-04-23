@@ -72,17 +72,40 @@ pub fn is_running(title: Option<String>) -> Result<bool> {
 }
 
 #[allow(unused_variables)]
-pub fn bring_to_front(title: Option<String>) -> Result<()> {
+pub fn focus(title: Option<String>) -> Result<()> {
 	#[cfg(target_os = "macos")]
 	{
-		// TODO: support title
-
-		Command::new("osascript")
-			.args([
-				"-e",
-				"tell application \"System Events\" to tell process \"RobloxStudio\" to set frontmost to true",
-			])
-			.output()?;
+		if let Some(title) = title {
+			Command::new("osascript")
+				.args([
+					"-e",
+					r#"tell application "System Events"
+						repeat with theProcess in processes whose name is "RobloxStudio"
+								tell theProcess
+									set windowList to windows whose name contains "Argon - Roblox Studio"
+									
+									if (count of windowList) > 0 then
+										set frontmost to true
+										perform action "AXRaise" of window 1
+									end if
+								end tell
+						end repeat
+					end tell"#,
+				])
+				.output()?;
+		} else {
+			Command::new("osascript")
+				.args([
+					"-e",
+					r#"tell application "System Events"
+						tell process "RobloxStudio"
+							set frontmost to true
+							perform action "AXRaise" of window 1
+						end tell
+					end tell"#,
+				])
+				.output()?;
+		}
 
 		Ok(())
 	}

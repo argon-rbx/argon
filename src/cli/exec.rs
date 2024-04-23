@@ -42,11 +42,27 @@ impl Exec {
 			self.code
 		};
 
-		let session = sessions::get(self.session, self.host, self.port)?;
-
-		if let Some(session) = session {
+		if self.standalone {
+			// TODO: Implement standalone mode
+			argon_error!("Standalone mode is not implemented yet!");
+		} else if let Some(session) = sessions::get(self.session, self.host, self.port)? {
 			if let Some(address) = session.get_address() {
-				Self::make_request(&address, &code)?;
+				let url = format!("{}/exec", address);
+
+				let body = rmp_serde::to_vec(&Request {
+					code: code.to_owned(),
+					focus: self.focus,
+				})?;
+				let response = Client::default()
+					.post(url)
+					.header(CONTENT_TYPE, "application/msgpack")
+					.body(body)
+					.send();
+
+				match response {
+					Ok(_) => argon_info!("Code executed successfully!"),
+					Err(err) => argon_error!("Code execution failed: {}", err),
+				}
 			} else {
 				argon_error!("Code execution failed: running session does not have an address");
 			}
@@ -68,27 +84,10 @@ impl Exec {
 
 		true
 	}
-
-	fn make_request(address: &String, code: &str) -> Result<()> {
-		let url = format!("{}/exec", address);
-
-		let body = rmp_serde::to_vec(&Request { code: code.to_owned() })?;
-		let response = Client::default()
-			.post(url)
-			.header(CONTENT_TYPE, "application/msgpack")
-			.body(body)
-			.send();
-
-		match response {
-			Ok(_) => argon_info!("Code executed successfully!"),
-			Err(err) => argon_error!("Code execution failed: {}", err),
-		}
-
-		Ok(())
-	}
 }
 
 #[derive(Serialize)]
 struct Request {
 	code: String,
+	focus: bool,
 }

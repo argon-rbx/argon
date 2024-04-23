@@ -23,7 +23,7 @@ impl Debug {
 				exit!("There is no running Roblox Studio instance!");
 			}
 
-			studio::bring_to_front(None)?;
+			studio::focus(None)?;
 			send_keys(&mode);
 		} else {
 			exit!("Invalid debug mode!");

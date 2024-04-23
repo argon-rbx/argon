@@ -128,7 +128,7 @@ impl Serve {
 			let core = core.clone();
 			let queue = core.queue();
 
-			queue.subscribe(0).unwrap();
+			queue.subscribe_internal().unwrap();
 			core.sourcemap(Some(path.clone()), false)?;
 
 			argon_info!("Generated sourcemap at: {}", path.to_string().bold());

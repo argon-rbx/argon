@@ -18,6 +18,13 @@ macro_rules! write {
 	};
 }
 
+#[derive(Debug, Clone)]
+struct Listener {
+	pub id: u32,
+	pub name: String,
+	pub is_internal: bool,
+}
+
 #[derive(Debug)]
 struct Channel {
 	sender: Sender<Message>,
@@ -27,7 +34,7 @@ struct Channel {
 #[derive(Debug)]
 pub struct Queue {
 	queues: RwLock<HashMap<u32, Channel>>,
-	listeners: RwLock<Vec<u32>>,
+	listeners: RwLock<Vec<Listener>>,
 }
 
 impl Queue {
@@ -59,7 +66,7 @@ impl Queue {
 
 		for listener in read!(self.listeners).iter() {
 			let queues = read!(self.queues);
-			let sender = queues.get(listener).unwrap().sender.clone();
+			let sender = queues.get(&listener.id).unwrap().sender.clone();
 
 			sender.send(message.clone())?;
 		}
@@ -97,7 +104,7 @@ impl Queue {
 		Ok(message)
 	}
 
-	pub fn subscribe(&self, id: u32) -> Result<()> {
+	pub fn subscribe(&self, id: u32, name: &str) -> Result<()> {
 		if self.is_subscribed(id) {
 			bail!("Already subscribed")
 		}
@@ -105,7 +112,39 @@ impl Queue {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 		let channel = Channel { sender, receiver };
 
-		write!(self.listeners).push(id.to_owned());
+		let listener = Listener {
+			id,
+			name: name.to_owned(),
+			is_internal: false,
+		};
+
+		write!(self.listeners).push(listener);
+		write!(self.queues).insert(id.to_owned(), channel);
+
+		Ok(())
+	}
+
+	pub fn subscribe_internal(&self) -> Result<()> {
+		let mut id = 0;
+
+		loop {
+			if !self.is_subscribed(id) {
+				break;
+			}
+
+			id += 1;
+		}
+
+		let (sender, receiver) = crossbeam_channel::unbounded();
+		let channel = Channel { sender, receiver };
+
+		let listener = Listener {
+			id,
+			name: format!("Internal listener #{}", id),
+			is_internal: true,
+		};
+
+		write!(self.listeners).push(listener);
 		write!(self.queues).insert(id.to_owned(), channel);
 
 		Ok(())
@@ -116,7 +155,7 @@ impl Queue {
 			bail!("Not subscribed")
 		}
 
-		write!(self.listeners).retain(|i| i != &id);
+		write!(self.listeners).retain(|listener| listener.id != id);
 		write!(self.queues).remove(&id);
 
 		Ok(())
@@ -138,6 +177,13 @@ impl Queue {
 	}
 
 	pub fn is_subscribed(&self, id: u32) -> bool {
-		read!(self.listeners).contains(&id)
+		read!(self.listeners).iter().any(|listener| listener.id == id)
+	}
+
+	pub fn get_first_non_internal_listener_name(&self) -> Option<String> {
+		read!(self.listeners)
+			.iter()
+			.find(|listener| !listener.is_internal)
+			.map(|listener| listener.name.to_owned())
 	}
 }

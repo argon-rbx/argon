@@ -81,7 +81,7 @@ impl Sourcemap {
 			}
 
 			let queue = core.queue();
-			queue.subscribe(0).unwrap();
+			queue.subscribe_internal().unwrap();
 
 			loop {
 				let _message = queue.get(0).unwrap();
