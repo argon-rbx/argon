@@ -10,7 +10,7 @@ use std::{
 use crate::{
 	argon_error,
 	core::{
-		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
+		meta::{Meta, NodePath, Source, SourceEntry, SourceKind, SyncbackFilter},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
@@ -31,6 +31,18 @@ macro_rules! path_exists {
 	};
 }
 
+macro_rules! filter_warn {
+	($id:expr) => {
+		warn!("Instance {:?} does not match syncback filter! Skipping..", $id);
+	};
+	($id:expr, $path:expr) => {
+		warn!(
+			"Path: {:?} (source of instance: {:?}) does not match syncback filter! Skipping..",
+			$path, $id
+		);
+	};
+}
+
 pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	trace!("Adding {:?} with parent {:?}", snapshot.id, snapshot.parent);
 
@@ -45,8 +57,14 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	let parent_id = snapshot.parent;
 	let mut snapshot = snapshot.to_snapshot();
 	let mut parent_meta = tree.get_meta(parent_id).unwrap().clone();
+	let filter = parent_meta.context.syncback_filter();
 
-	snapshot.properties = validate_properties(snapshot.properties);
+	if filter.matches_name(&snapshot.name) || filter.matches_class(&snapshot.class) {
+		filter_warn!(snapshot.id);
+		return Ok(());
+	}
+
+	snapshot.properties = validate_properties(snapshot.properties, filter);
 
 	fn write_instance(
 		has_children: bool,
@@ -56,6 +74,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
+		let filter = parent_meta.context.syncback_filter();
 		let properties = snapshot.properties.clone();
 
 		if let Some(middleware) = Middleware::from_class(&snapshot.class) {
@@ -68,6 +87,12 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			if has_children {
 				if vfs.exists(path) {
+					path_exists!(path);
+					return Ok(None);
+				}
+
+				if filter.matches_path(path) {
+					filter_warn!(snapshot.id, path);
 					return Ok(None);
 				}
 
@@ -76,10 +101,16 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				meta.source = Source::child_file(path, &file_path);
 			} else {
 				if vfs.exists(&file_path) {
+					path_exists!(path);
 					return Ok(None);
 				}
 
 				meta.source = Source::file(&file_path);
+			}
+
+			if filter.matches_path(&file_path) {
+				filter_warn!(snapshot.id, &file_path);
+				return Ok(None);
 			}
 
 			let properties = middleware.write(properties, &file_path, vfs)?;
@@ -92,12 +123,21 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 					.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))?;
 
-				let data_path = data::write_data(true, &snapshot.class, properties, &data_path, &meta, vfs)?;
-
-				meta.source.set_data(data_path);
+				if filter.matches_path(&data_path) {
+					filter_warn!(snapshot.id, &data_path);
+				} else {
+					let data_path = data::write_data(true, &snapshot.class, properties, &data_path, &meta, vfs)?;
+					meta.source.set_data(data_path);
+				}
 			}
 		} else {
 			if vfs.exists(path) {
+				path_exists!(path);
+				return Ok(None);
+			}
+
+			if filter.matches_path(path) {
+				filter_warn!(snapshot.id, path);
 				return Ok(None);
 			}
 
@@ -112,9 +152,12 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.find_map(|rule| rule.locate(path, &snapshot.name, true))
 				.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))?;
 
-			let data_path = data::write_data(false, &snapshot.class, properties, &data_path, &meta, vfs)?;
-
-			meta.source.set_data(data_path);
+			if filter.matches_path(&data_path) {
+				filter_warn!(snapshot.id, &data_path);
+			} else {
+				let data_path = data::write_data(false, &snapshot.class, properties, &data_path, &meta, vfs)?;
+				meta.source.set_data(data_path);
+			}
 		}
 
 		Ok(Some(meta))
@@ -183,8 +226,6 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let snapshot = snapshot.with_meta(meta);
 
 				tree.insert_instance_with_ref(snapshot, parent_id);
-			} else {
-				path_exists!(&path)
 			}
 		} else if let Some(meta) = write_instance(true, &path, &snapshot, parent_meta, vfs)? {
 			let snapshot = snapshot.with_meta(meta.clone());
@@ -194,8 +235,6 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			for child in snapshot.children {
 				add_non_project_instances(snapshot.id, &path, child, &meta, tree, vfs)?;
 			}
-		} else {
-			path_exists!(&path)
 		}
 
 		Ok(parent_source)
@@ -253,7 +292,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					add_non_project_instances(parent_id, &custom_path, snapshot, &parent_meta, tree, vfs)?;
 
 				let parent_source = Source::project(name, path, node.clone(), node_path.clone())
-					.with_relevants(parent_source.relevants().to_owned());
+					.with_relevants(parent_source.relevant().to_owned());
 
 				parent_meta.source = parent_source;
 				tree.update_meta(parent_id, parent_meta);
@@ -281,7 +320,24 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	trace!("Updating {:?}", snapshot.id);
 
-	if !tree.exists(snapshot.id) {
+	if let Some(instance) = tree.get_instance(snapshot.id) {
+		let filter = tree.get_meta(snapshot.id).unwrap().context.syncback_filter();
+
+		if filter.matches_name(&instance.name) || filter.matches_class(&instance.class) {
+			filter_warn!(snapshot.id);
+			return Ok(());
+		}
+
+		if snapshot.name.as_ref().is_some_and(|name| filter.matches_name(name)) {
+			filter_warn!(snapshot.id);
+			return Ok(());
+		}
+
+		if snapshot.class.as_ref().is_some_and(|class| filter.matches_class(class)) {
+			filter_warn!(snapshot.id);
+			return Ok(());
+		}
+	} else {
 		warn!("Attempted to update instance that doesn't exist: {:?}", snapshot.id);
 		return Ok(());
 	}
@@ -313,7 +369,14 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		meta: &mut Meta,
 		vfs: &Vfs,
 	) -> Result<()> {
-		let properties = validate_properties(properties);
+		let filter = meta.context.syncback_filter();
+
+		if filter.matches_path(path) {
+			filter_warn!(instance.referent(), path);
+			return Ok(());
+		}
+
+		let properties = validate_properties(properties, filter);
 
 		if let Some(middleware) = Middleware::from_class(&instance.class) {
 			let file_path = if let Some(file) = meta.source.get_file() {
@@ -358,16 +421,33 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let new_path = path.with_file_name(path.get_name().replace(&instance.name, &name));
 				*meta.source.get_mut() = SourceKind::Path(new_path.clone());
 
-				for mut entry in meta.source.relevants_mut() {
-					match &mut entry {
-						SourceEntry::Project(_) => continue,
-						SourceEntry::File(path) | SourceEntry::Folder(path) | SourceEntry::Data(path) => {
-							let name = path.get_name().replace(&instance.name, &name);
-							let new_path = path.with_file_name(name);
+				let filter = meta.context.syncback_filter();
 
-							vfs.rename(path, &new_path)?;
+				if let Some(SourceEntry::Folder(path)) = meta.source.get_folder_mut() {
+					let new_path = path.with_file_name(&name);
 
-							*path = new_path;
+					if filter.matches_path(path) && filter.matches_path(&new_path) {
+						filter_warn!(snapshot.id, path);
+					} else {
+						vfs.rename(path, &new_path)?;
+						*path = new_path;
+					}
+				} else {
+					for mut entry in meta.source.relevant_mut() {
+						match &mut entry {
+							SourceEntry::File(path) | SourceEntry::Data(path) => {
+								let name = path.get_name().replace(&instance.name, &name);
+								let new_path = path.with_file_name(name);
+
+								if filter.matches_path(path) && filter.matches_path(&new_path) {
+									filter_warn!(snapshot.id, path);
+									continue;
+								}
+
+								vfs.rename(path, &new_path)?;
+								*path = new_path;
+							}
+							_ => continue,
 						}
 					}
 				}
@@ -414,7 +494,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 						.context(format!("Failed to find project node with path {:?}", node_path))?;
 
 					let class = node.class_name.as_ref().unwrap_or(&name);
-					let properties = validate_properties(properties);
+					let properties = validate_properties(properties, meta.context.syncback_filter());
 
 					node.properties = serialize_properties(class, properties.clone());
 					node.tags = vec![];
@@ -465,7 +545,14 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	trace!("Removing {:?}", id);
 
-	if !tree.exists(id) {
+	if let Some(instance) = tree.get_instance(id) {
+		let filter = tree.get_meta(id).unwrap().context.syncback_filter();
+
+		if filter.matches_name(&instance.name) || filter.matches_class(&instance.class) {
+			filter_warn!(id);
+			return Ok(());
+		}
+	} else {
 		warn!("Attempted to remove instance that doesn't exist: {:?}", id);
 		return Ok(());
 	}
@@ -473,13 +560,20 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	let meta = tree.get_meta(id).unwrap().clone();
 
 	fn remove_non_project_instances(id: Ref, meta: &Meta, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
-		for entry in meta.source.relevants() {
+		let filter = meta.context.syncback_filter();
+
+		for entry in meta.source.relevant() {
 			match entry {
 				SourceEntry::Project(_) => continue,
-				SourceEntry::Folder(path) => vfs.remove(path)?,
-				SourceEntry::File(path) | SourceEntry::Data(path) => {
+				_ => {
+					let path = entry.path();
+
 					if vfs.exists(path) {
-						vfs.remove(path)?
+						if filter.matches_path(path) {
+							filter_warn!(id, path);
+						} else {
+							vfs.remove(path)?
+						}
 					}
 				}
 			}
@@ -574,11 +668,14 @@ fn serialize_properties(class: &str, properties: Properties) -> HashMap<String, 
 		.collect()
 }
 
-// Temporary solution for serde failing to deserialize empty HashMap
-fn validate_properties(properties: Properties) -> Properties {
+fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
+	// Temporary solution for serde failing to deserialize empty HashMap
 	if properties.contains_key("ArgonEmpty") {
 		HashMap::new()
 	} else {
 		properties
+			.into_iter()
+			.filter(|(property, _)| !filter.matches_property(property))
+			.collect()
 	}
 }

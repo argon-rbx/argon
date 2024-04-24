@@ -45,6 +45,20 @@ pub struct ProjectNode {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct SyncbackSettings {
+	#[serde(alias = "excludeGlobs", default, skip_serializing_if = "Vec::is_empty")]
+	pub ignore_globs: Vec<Glob>,
+
+	#[serde(alias = "skipInstanceNames", default, skip_serializing_if = "Vec::is_empty")]
+	pub ignore_names: Vec<String>,
+	#[serde(default, skip_serializing_if = "Vec::is_empty")]
+	pub ignore_classes: Vec<String>,
+	#[serde(default, skip_serializing_if = "Vec::is_empty")]
+	pub ignore_properties: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
 	pub name: String,
 	#[serde(rename = "tree")]
@@ -63,6 +77,9 @@ pub struct Project {
 	pub ignore_globs: Vec<Glob>,
 	#[serde(default, skip_serializing_if = "Vec::is_empty")]
 	pub sync_rules: Vec<SyncRule>,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub syncback: Option<SyncbackSettings>,
 
 	#[serde(alias = "emitLegacyScripts", skip_serializing_if = "Option::is_none")]
 	pub legacy_scripts: Option<bool>,

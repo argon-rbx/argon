@@ -77,7 +77,7 @@ impl SourceEntry {
 pub struct Source {
 	// Source used to rebuild the snapshot
 	inner: SourceKind,
-	// Existing paths associated with the snapshot
+	// Existing paths associated with the instance
 	relevant: Vec<SourceEntry>,
 }
 
@@ -125,28 +125,20 @@ impl Source {
 		self
 	}
 
-	pub fn add_relevant(&mut self, entry: SourceEntry) {
-		self.relevant.push(entry)
-	}
-
 	pub fn add_file(&mut self, path: &Path) {
-		self.add_relevant(SourceEntry::File(path.to_owned()))
+		self.relevant.push(SourceEntry::File(path.to_owned()))
 	}
 
 	pub fn add_data(&mut self, path: &Path) {
-		self.add_relevant(SourceEntry::Data(path.to_owned()))
+		self.relevant.push(SourceEntry::Data(path.to_owned()))
 	}
 
 	pub fn add_project(&mut self, path: &Path) {
-		self.add_relevant(SourceEntry::Project(path.to_owned()))
-	}
-
-	pub fn remove_data(&mut self) {
-		self.relevant.retain(|entry| !matches!(entry, SourceEntry::Data(_)))
+		self.relevant.push(SourceEntry::Project(path.to_owned()))
 	}
 
 	pub fn set_data(&mut self, path: Option<&Path>) {
-		self.remove_data();
+		self.relevant.retain(|entry| !matches!(entry, SourceEntry::Data(_)));
 
 		if let Some(path) = path {
 			self.add_data(path)
@@ -165,31 +157,24 @@ impl Source {
 		&mut self.inner
 	}
 
+	pub fn get_folder_mut(&mut self) -> Option<&mut SourceEntry> {
+		self.relevant
+			.iter_mut()
+			.find(|entry| matches!(entry, SourceEntry::Folder(_)))
+	}
 	pub fn get_file(&self) -> Option<&SourceEntry> {
 		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::File(_)))
-	}
-
-	pub fn get_folder(&self) -> Option<&SourceEntry> {
-		self.relevant
-			.iter()
-			.find(|entry| matches!(entry, SourceEntry::Folder(_)))
 	}
 
 	pub fn get_data(&self) -> Option<&SourceEntry> {
 		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::Data(_)))
 	}
 
-	pub fn get_project(&self) -> Option<&SourceEntry> {
-		self.relevant
-			.iter()
-			.find(|entry| matches!(entry, SourceEntry::Project(_)))
-	}
-
-	pub fn relevants(&self) -> &Vec<SourceEntry> {
+	pub fn relevant(&self) -> &Vec<SourceEntry> {
 		&self.relevant
 	}
 
-	pub fn relevants_mut(&mut self) -> &mut Vec<SourceEntry> {
+	pub fn relevant_mut(&mut self) -> &mut Vec<SourceEntry> {
 		&mut self.relevant
 	}
 
@@ -223,8 +208,6 @@ pub struct SyncRule {
 }
 
 impl SyncRule {
-	// Creating new sync rule
-
 	pub fn new(middleware: Middleware) -> Self {
 		Self {
 			middleware,
@@ -259,8 +242,6 @@ impl SyncRule {
 		self.suffix = Some(suffix.to_owned());
 		self
 	}
-
-	// Matching and resolving
 
 	pub fn is_excluded(&self, path: &Path) -> bool {
 		self.exclude.iter().any(|exclude| exclude.matches_path(path))
@@ -342,6 +323,42 @@ impl IgnoreRule {
 			Err(_) => false,
 		}
 	}
+
+	pub fn from_globs(globs: Vec<Glob>, path: PathBuf) -> Vec<Self> {
+		globs
+			.into_iter()
+			.map(|glob| IgnoreRule {
+				pattern: glob,
+				path: path.clone(),
+			})
+			.collect()
+	}
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct SyncbackFilter {
+	pub ignore_rules: Vec<IgnoreRule>,
+	pub ignore_names: Vec<String>,
+	pub ignore_classes: Vec<String>,
+	pub ignore_properties: Vec<String>,
+}
+
+impl SyncbackFilter {
+	pub fn matches_path(&self, path: &Path) -> bool {
+		self.ignore_rules.iter().any(|rule| rule.matches(path))
+	}
+
+	pub fn matches_name(&self, name: &str) -> bool {
+		self.ignore_names.contains(&name.to_owned())
+	}
+
+	pub fn matches_class(&self, class: &str) -> bool {
+		self.ignore_classes.contains(&class.to_owned())
+	}
+
+	pub fn matches_property(&self, property: &str) -> bool {
+		self.ignore_properties.contains(&property.to_owned())
+	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -350,6 +367,8 @@ pub struct Context {
 	sync_rules: Vec<SyncRule>,
 	/// Rules that define which files are ignored
 	ignore_rules: Vec<IgnoreRule>,
+	/// Filter wihch ignores specific instances and properties
+	syncback_filter: SyncbackFilter,
 	/// Whether to use legacy script context
 	legacy_scripts: bool,
 }
@@ -359,6 +378,7 @@ impl Context {
 		Self {
 			sync_rules: Vec::new(),
 			ignore_rules: Vec::new(),
+			syncback_filter: SyncbackFilter::default(),
 			legacy_scripts: true,
 		}
 	}
@@ -380,6 +400,10 @@ impl Context {
 
 	pub fn ignore_rules(&self) -> &Vec<IgnoreRule> {
 		&self.ignore_rules
+	}
+
+	pub fn syncback_filter(&self) -> &SyncbackFilter {
+		&self.syncback_filter
 	}
 
 	pub fn use_legacy_scripts(&self) -> bool {
@@ -431,19 +455,21 @@ impl Meta {
 	}
 
 	pub fn from_project(project: &Project) -> Self {
-		let ignore_rules = project
-			.ignore_globs
-			.clone()
-			.into_iter()
-			.map(|glob| IgnoreRule {
-				pattern: glob,
-				path: project.workspace_dir.clone(),
-			})
-			.collect();
+		let syncback_filter = if let Some(syncback) = &project.syncback {
+			SyncbackFilter {
+				ignore_rules: IgnoreRule::from_globs(syncback.ignore_globs.clone(), project.workspace_dir.clone()),
+				ignore_names: syncback.ignore_names.clone(),
+				ignore_classes: syncback.ignore_classes.clone(),
+				ignore_properties: syncback.ignore_properties.clone(),
+			}
+		} else {
+			SyncbackFilter::default()
+		};
 
 		let context = Context {
 			sync_rules: project.sync_rules.clone(),
-			ignore_rules,
+			ignore_rules: IgnoreRule::from_globs(project.ignore_globs.clone(), project.workspace_dir.clone()),
+			syncback_filter,
 			legacy_scripts: project.legacy_scripts.unwrap_or(true),
 		};
 

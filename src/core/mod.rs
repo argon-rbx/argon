@@ -180,7 +180,7 @@ impl Core {
 
 			let file_paths = tree.get_meta(id).map_or(vec![], |meta| {
 				meta.source
-					.relevants()
+					.relevant()
 					.iter()
 					.filter_map(|entry| match entry {
 						SourceEntry::File(path) | SourceEntry::Data(path) => Some(path.to_owned()),
@@ -213,7 +213,7 @@ impl Core {
 		let tree = lock!(self.tree);
 
 		let mut sources = if let Some(meta) = tree.get_meta(instance) {
-			meta.source.relevants().to_owned()
+			meta.source.relevant().to_owned()
 		} else {
 			vec![]
 		};
