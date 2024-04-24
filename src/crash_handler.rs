@@ -19,7 +19,7 @@ pub fn hook() {
 		report.push_str("\n\nDetails:\n--------\n");
 		report.push_str("*Provide extra details about your problem or what happened here*");
 
-		argon_error!("{}\n", "Argon has crashed!".bold());
+		argon_error!("{}", "Argon has crashed!".bold());
 
 		report.push_str("\n\nMessage:\n----------\n");
 		report.push_str(message);

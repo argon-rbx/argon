@@ -44,12 +44,16 @@ impl Core {
 		trace!("Snapshotting root project");
 
 		let meta = Meta::from_project(&project);
-		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?;
+		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?.expect(
+			"Failed to snapshot root project. \
+		If you are using custom sync rules make sure you have one with the `Project` type. \
+		Otherwise, this is a bug.",
+		);
 
 		trace!("Building Tree and Queue");
 
 		let vfs = Arc::new(vfs);
-		let tree = Arc::new(Mutex::new(Tree::new(snapshot.unwrap())));
+		let tree = Arc::new(Mutex::new(Tree::new(snapshot)));
 		let queue = Arc::new(Queue::new());
 
 		trace!("Starting Processor");

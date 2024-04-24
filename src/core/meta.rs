@@ -202,6 +202,7 @@ pub struct SyncRule {
 
 	pub pattern: Option<Glob>,
 	pub child_pattern: Option<Glob>,
+	#[serde(default)]
 	pub exclude: Vec<Glob>,
 
 	pub suffix: Option<String>,

@@ -32,7 +32,6 @@ pub mod toml;
 pub mod txt;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
 pub enum Middleware {
 	Project,
 	InstanceData,
