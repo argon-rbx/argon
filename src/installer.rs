@@ -16,6 +16,7 @@ const PLACE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/p
 const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/plugin");
 const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
 const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
+const QUICK_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/quick");
 
 const ARGON_PLUGIN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/Argon.rbxm"));
 
@@ -70,6 +71,7 @@ pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
 	let plugin_template = templates_dir.join("plugin");
 	let package_template = templates_dir.join("package");
 	let model_template = templates_dir.join("model");
+	let quick_template = templates_dir.join("quick");
 
 	if !place_template.exists() {
 		fs::create_dir(&place_template)?;
@@ -89,6 +91,11 @@ pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
 	if !model_template.exists() {
 		fs::create_dir(&model_template)?;
 		install_template(&MODEL_TEMPLATE, &model_template)?;
+	}
+
+	if !quick_template.exists() {
+		fs::create_dir(&quick_template)?;
+		install_template(&QUICK_TEMPLATE, &quick_template)?;
 	}
 
 	if with_plugin {

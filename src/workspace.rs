@@ -81,7 +81,7 @@ pub fn init(
 	let templates_dir = util::get_argon_dir()?.join("templates").join(template);
 
 	if !templates_dir.exists() {
-		bail!("Template {} does not exist", template)
+		bail!("Template {} does not exist", template.bold())
 	}
 
 	let project_name = get_name(project);
@@ -293,7 +293,7 @@ fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
 
 		if path.is_dir() {
 			copy_dir(&path, &to.join(name), rojo_mode)?;
-		} else {
+		} else if name != ".gitkeep" {
 			fs::copy(&path, &to.join(name))?;
 		}
 	}
