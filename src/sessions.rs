@@ -109,6 +109,20 @@ pub fn get(id: Option<String>, host: Option<String>, port: Option<u16>) -> Resul
 	Ok(None)
 }
 
+pub fn get_multiple(ids: &Vec<String>) -> Result<HashMap<String, Session>> {
+	let sessions = get_sessions()?;
+
+	let mut result = HashMap::new();
+
+	for id in ids {
+		if let Some(session) = sessions.active_sessions.get(id) {
+			result.insert(id.to_owned(), session.to_owned());
+		}
+	}
+
+	Ok(result)
+}
+
 pub fn get_all() -> Result<Option<HashMap<String, Session>>> {
 	let sessions = get_sessions()?;
 
@@ -137,6 +151,20 @@ pub fn remove(session: &Session) -> Result<()> {
 			sessions.last_session = String::new();
 		}
 	}
+
+	set_sessions(&sessions)?;
+
+	Ok(())
+}
+
+pub fn remove_multiple(ids: &Vec<String>) -> Result<()> {
+	let mut sessions = get_sessions()?;
+
+	for id in ids {
+		sessions.active_sessions.remove(id);
+	}
+
+	sessions.last_session = sessions.active_sessions.keys().next().cloned().unwrap_or_default();
 
 	set_sessions(&sessions)?;
 

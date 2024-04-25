@@ -10,7 +10,7 @@ use crate::{argon_info, argon_warn, logger::Table, sessions, util};
 pub struct Stop {
 	/// Session indentifier
 	#[arg()]
-	session: Option<String>,
+	session: Vec<String>,
 
 	/// Server host name
 	#[arg(short = 'H', long)]
@@ -81,20 +81,37 @@ impl Stop {
 			return sessions::remove_all();
 		}
 
-		let session = sessions::get(self.session, self.host, self.port)?;
+		if self.session.is_empty() {
+			if let Some(session) = sessions::get(None, self.host, self.port)? {
+				if let Some(address) = session.get_address() {
+					Self::make_request(&address, session.pid);
+				} else {
+					Self::kill_process(session.pid);
+				}
 
-		if let Some(session) = session {
-			if let Some(address) = session.get_address() {
-				Self::make_request(&address, session.pid);
+				sessions::remove(&session)?;
 			} else {
-				Self::kill_process(session.pid);
+				argon_warn!("There is no matching session to stop");
 			}
-
-			sessions::remove(&session)
 		} else {
-			argon_warn!("There is no running session on this address");
-			Ok(())
+			let sessions = sessions::get_multiple(&self.session)?;
+
+			if sessions.is_empty() {
+				argon_warn!("There are no running sessions with provided IDs");
+			} else {
+				for session in sessions.values() {
+					if let Some(address) = session.get_address() {
+						Self::make_request(&address, session.pid);
+					} else {
+						Self::kill_process(session.pid);
+					}
+				}
+
+				sessions::remove_multiple(&self.session)?;
+			}
 		}
+
+		Ok(())
 	}
 
 	fn make_request(address: &String, pid: u32) {

@@ -79,6 +79,11 @@ pub fn get_free_port(host: &str, port: u16) -> u16 {
 
 	while !is_port_free(host, port) {
 		port += 1;
+
+		// This should never happen, but just in case
+		if port == 65535 {
+			break;
+		}
 	}
 
 	port
