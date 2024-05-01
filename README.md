@@ -7,7 +7,7 @@
 
 Argon is a powerful CLI that improves Roblox development experience. This is core part of Argon project as this is where all the processing happens. [Argon VS Code](https://github.com/argon-rbx/argon-vscode) extension is user-friendly wrapper of this CLI and [Argon Roblox](https://github.com/argon-rbx/argon-roblox) is a Roblox Studio plugin that is required for live syncing.
 
-Some of the key Argon features:
+Some of the key features of Argon:
 
 - Two-Way sync of code and other instances with their properties
 - Building projects in Roblox binary or XML format

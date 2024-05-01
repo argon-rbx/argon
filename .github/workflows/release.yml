@@ -111,7 +111,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --all-features --release --verbose --target ${{ matrix.target }}
+        run: cargo build --release --verbose --target ${{ matrix.target }}
         env:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
 

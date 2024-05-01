@@ -103,7 +103,7 @@ pub fn new_snapshot_node(
 	if let Some(custom_path) = node.path {
 		let path = path_clean::clean(path.with_file_name(custom_path));
 
-		if path.is_file() {
+		if vfs.is_file(&path) {
 			vfs.watch(&path)?;
 		}
 

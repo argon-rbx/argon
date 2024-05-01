@@ -20,16 +20,16 @@ const QUICK_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/q
 
 const ARGON_PLUGIN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/Argon.rbxm"));
 
-pub fn is_aftman() -> bool {
+pub fn is_managed() -> bool {
 	let path = match env::current_exe() {
 		Ok(path) => path,
 		Err(_) => return false,
 	};
 
-	path.contains(&[".aftman", "tool-storage"])
+	path.contains(&[".aftman", "tool-storage"]) || path.contains(&[".cargo", "bin"])
 }
 
-pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
+pub fn verify(is_managed: bool, with_plugin: bool) -> Result<()> {
 	let argon_dir = util::get_argon_dir()?;
 	let templates_dir = argon_dir.join("templates");
 
@@ -41,7 +41,7 @@ pub fn verify(is_aftman: bool, with_plugin: bool) -> Result<()> {
 		fs::create_dir(&templates_dir)?;
 	}
 
-	if !is_aftman {
+	if !is_managed {
 		let bin_dir = argon_dir.join("bin");
 
 		if !bin_dir.exists() {

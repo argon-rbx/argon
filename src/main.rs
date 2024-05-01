@@ -18,8 +18,8 @@ fn main() {
 	let config_state = Config::load();
 	let config = Config::new();
 
-	let is_aftman = installer::is_aftman();
-	let installation = installer::verify(is_aftman, config.install_plugin);
+	let is_managed = installer::is_managed();
+	let installation = installer::verify(is_managed, config.install_plugin);
 
 	let cli = Cli::new();
 
@@ -57,7 +57,7 @@ fn main() {
 	}
 
 	let handle = thread::spawn(move || {
-		if !is_aftman && config.check_updates {
+		if !is_managed && config.check_updates {
 			match updater::check_for_updates(config.install_plugin, !config.auto_update) {
 				Ok(()) => info!("Update check completed successfully!"),
 				Err(err) => warn!("Update check failed: {}", err),
