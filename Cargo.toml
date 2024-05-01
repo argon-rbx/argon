@@ -1,5 +1,5 @@
 [package]
-name = "argon"
+name = "argon-rbx"
 authors = ["Dervex"]
 description = "Full featured tool for Roblox development"
 repository = "https://github.com/argon-rbx/argon"

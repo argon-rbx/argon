@@ -139,9 +139,9 @@ impl Cli {
 		match self.command {
 			Commands::Init(command) => command.main(),
 			Commands::Serve(command) => command.main(),
-			Commands::Stop(command) => command.main(),
 			Commands::Build(command) => command.main(),
 			Commands::Sourcemap(command) => command.main(),
+			Commands::Stop(command) => command.main(),
 			Commands::Studio(command) => command.main(),
 			Commands::Debug(command) => command.main(),
 			Commands::Exec(command) => command.main(),
@@ -157,9 +157,9 @@ impl Cli {
 pub enum Commands {
 	Init(init::Init),
 	Serve(serve::Serve),
-	Stop(stop::Stop),
 	Build(build::Build),
 	Sourcemap(sourcemap::Sourcemap),
+	Stop(stop::Stop),
 	Studio(studio::Studio),
 	Debug(debug::Debug),
 	Exec(exec::Exec),
