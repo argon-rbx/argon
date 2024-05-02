@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `ArgonEmpty` property no longer serializes in child instances
+
 ## [2.0.0] - 2024-05-01
 
 ### Added

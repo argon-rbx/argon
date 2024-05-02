@@ -232,7 +232,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			tree.insert_instance_with_ref(snapshot.clone(), parent_id);
 
-			for child in snapshot.children {
+			let filter = meta.context.syncback_filter();
+
+			for mut child in snapshot.children {
+				child.properties = validate_properties(child.properties.clone(), filter);
 				add_non_project_instances(snapshot.id, &path, child, &meta, tree, vfs)?;
 			}
 		}
@@ -270,7 +273,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		snapshot.meta = meta;
 		tree.insert_instance_with_ref(snapshot.clone(), parent_id);
 
-		for child in snapshot.children {
+		let filter = snapshot.meta.context.syncback_filter();
+
+		for mut child in snapshot.children {
+			child.properties = validate_properties(child.properties, filter);
 			add_project_instances(parent_id, path, node_path.clone(), child, &mut node, parent_meta, tree);
 		}
 
