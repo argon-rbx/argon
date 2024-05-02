@@ -79,14 +79,14 @@ impl VfsBackend for StdBackend {
 		path.is_file()
 	}
 
-	fn watch(&mut self, path: &Path) -> Result<()> {
+	fn watch(&mut self, path: &Path, recursive: bool) -> Result<()> {
 		let path = path.to_owned();
 
-		if !self.watching || self.watched_paths.contains(&path) {
+		if !self.watching || self.watched_paths.iter().any(|p| p.starts_with(&path)) {
 			return Ok(());
 		}
 
-		self.debouncer.watch(&path)?;
+		self.debouncer.watch(&path, recursive)?;
 		self.watched_paths.push(path);
 
 		Ok(())
@@ -110,6 +110,14 @@ impl VfsBackend for StdBackend {
 		});
 
 		Ok(())
+	}
+
+	fn pause(&mut self) {
+		self.debouncer.pause()
+	}
+
+	fn resume(&mut self) {
+		self.debouncer.resume()
 	}
 
 	fn receiver(&self) -> Receiver<VfsEvent> {

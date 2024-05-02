@@ -63,14 +63,16 @@ impl UnresolvedValue {
 
 			Variant::Float32(n) => AmbiguousValue::Number(n as f64),
 			Variant::Float64(n) => AmbiguousValue::Number(n),
-			Variant::Int32(n) => AmbiguousValue::Number(n as f64),
+			Variant::Int32(n) => AmbiguousValue::Number(truncate_float(n as f64)),
 			Variant::Int64(n) => AmbiguousValue::Number(n as f64),
 
 			Variant::String(str) => AmbiguousValue::String(str),
 			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
 			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
 
-			Variant::Vector2(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
+			Variant::Vector2(vector) => {
+				AmbiguousValue::Array2([truncate_float(vector.x as f64), truncate_float(vector.y as f64)])
+			}
 			Variant::Vector3(vector) => AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64]),
 			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
 
@@ -284,4 +286,13 @@ fn list_examples(values: &[&str]) -> String {
 	}
 
 	output
+}
+
+// Temporary solution to avoid saving `null` values in JSON files
+fn truncate_float(float: f64) -> f64 {
+	if float.is_infinite() {
+		999_999_999.0 * float.signum()
+	} else {
+		float
+	}
 }

@@ -8,7 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- `ArgonEmpty` property no longer serializes in child instances
+- `ArgonEmpty` property is no longer serialized on child instances
+- `math.huge` is no longer saved as JSON `null` (temporarily it's just a big number)
+
+### Improved
+
+- Increased client write request payload size limit from `256 KiB` to `512 MiB`!
+- Error tracing when Argon fails to snapshot nested file or directory
+- Significantly decreased initial file system snapshotting time (caused by Notify)
 
 ## [2.0.0] - 2024-05-01
 

@@ -140,13 +140,17 @@ impl VfsBackend for MemBackend {
 		matches!(self.inner.get(path), Some(VfsEntry::File(_)))
 	}
 
-	fn watch(&mut self, _path: &Path) -> Result<()> {
+	fn watch(&mut self, _path: &Path, _recursive: bool) -> Result<()> {
 		Ok(())
 	}
 
 	fn unwatch(&mut self, _path: &Path) -> Result<()> {
 		Ok(())
 	}
+
+	fn pause(&mut self) {}
+
+	fn resume(&mut self) {}
 
 	fn receiver(&self) -> Receiver<VfsEvent> {
 		self.receiver.clone()

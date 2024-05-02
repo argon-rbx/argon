@@ -13,9 +13,7 @@ use crate::{
 	vfs::Vfs,
 };
 
-#[profiling::function]
 pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
-	profiling::start_frame!();
 	trace!("Processing changes for instance: {:?}", id);
 
 	let mut changes = Changes::new();

@@ -1,3 +1,4 @@
+use actix_msgpack::MsgPackConfig;
 use actix_web::{
 	web::{self, Data},
 	App, HttpServer, Responder,
@@ -5,7 +6,7 @@ use actix_web::{
 use serde::Deserialize;
 use std::{io::Result, net::TcpListener, sync::Arc};
 
-use crate::core::Core;
+use crate::{constants::MAX_PAYLOAD_SIZE, core::Core};
 
 mod details;
 mod exec;
@@ -48,8 +49,12 @@ impl Server {
 		let core = self.core.clone();
 
 		HttpServer::new(move || {
+			let mut msgpack_config = MsgPackConfig::default();
+			msgpack_config.limit(MAX_PAYLOAD_SIZE);
+
 			App::new()
 				.app_data(Data::new(core.clone()))
+				.app_data(msgpack_config)
 				.service(details::main)
 				.service(subscribe::main)
 				.service(unsubscribe::main)

@@ -5,9 +5,9 @@ use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap}
 use std::{
 	io::{self, Result},
 	path::Path,
-	sync::mpsc,
+	sync::{mpsc, Arc, RwLock},
 	thread::Builder,
-	time::Duration,
+	time::{Duration, Instant},
 };
 
 #[cfg(target_os = "macos")]
@@ -15,6 +15,8 @@ use notify::event::DataChange;
 
 #[cfg(not(target_os = "windows"))]
 use notify::event::ModifyKind;
+
+use crate::constants::SYNCBACK_DEBOUNCE_TIME;
 
 #[cfg(target_os = "linux")]
 use {
@@ -41,6 +43,7 @@ struct DebounceContext {
 
 pub struct VfsDebouncer {
 	inner: Debouncer<RecommendedWatcher, FileIdMap>,
+	pause_state: Arc<RwLock<(bool, Instant)>>,
 	receiver: Receiver<VfsEvent>,
 }
 
@@ -50,6 +53,9 @@ impl VfsDebouncer {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		let debouncer = new_debouncer(Duration::from_millis(100), None, inner_sender, false).unwrap();
+
+		let pause_state = Arc::new(RwLock::new((false, Instant::now())));
+		let local_pause_state = pause_state.clone();
 
 		Builder::new()
 			.name("debouncer".to_owned())
@@ -61,6 +67,12 @@ impl VfsDebouncer {
 				};
 
 				for events in inner_receiver {
+					let (is_paused, timestamp) = *local_pause_state.read().unwrap();
+
+					if is_paused || timestamp.elapsed() < SYNCBACK_DEBOUNCE_TIME {
+						continue;
+					}
+
 					for event in events.unwrap() {
 						trace!("Debouncing event, paths: {:?}, kind: {:?}", event.paths, event.kind);
 
@@ -80,17 +92,20 @@ impl VfsDebouncer {
 
 		Self {
 			inner: debouncer,
+			pause_state,
 			receiver,
 		}
 	}
 
-	pub fn watch(&mut self, path: &Path) -> Result<()> {
-		self.inner
-			.watcher()
-			.watch(path, RecursiveMode::NonRecursive)
-			.map_err(map_error)?;
+	pub fn watch(&mut self, path: &Path, recursive: bool) -> Result<()> {
+		let recursive = if recursive {
+			RecursiveMode::Recursive
+		} else {
+			RecursiveMode::NonRecursive
+		};
 
-		self.inner.cache().add_root(path, RecursiveMode::NonRecursive);
+		self.inner.watcher().watch(path, recursive).map_err(map_error)?;
+		self.inner.cache().add_root(path, recursive);
 
 		Ok(())
 	}
@@ -100,6 +115,14 @@ impl VfsDebouncer {
 		self.inner.cache().remove_root(path);
 
 		Ok(())
+	}
+
+	pub fn pause(&mut self) {
+		*self.pause_state.write().unwrap() = (true, Instant::now());
+	}
+
+	pub fn resume(&mut self) {
+		*self.pause_state.write().unwrap() = (false, Instant::now());
 	}
 
 	pub fn receiver(&self) -> Receiver<VfsEvent> {

@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{sync::OnceLock, time::Duration};
 
 use crate::{core::meta::SyncRule, middleware::Middleware};
 
@@ -11,6 +11,16 @@ pub const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 // clients that can be applied to the underlying tree and
 // vfs without extra user confirmation
 pub const CHANGES_TRESHOLD: usize = 5;
+
+// Maximum payload size that can be sent from client
+// to the server, usually containing changes to apply,
+// currently it is 512 MiB but it is a huge overkill
+pub const MAX_PAYLOAD_SIZE: usize = 536_870_912;
+
+// VFS events will be ignored for this amount of time
+// after the last change that has been made by the client,
+// this saves a lot of computing time
+pub const SYNCBACK_DEBOUNCE_TIME: Duration = Duration::from_millis(200);
 
 // Set of default sync rules that is used to determine
 // what middleware should be used to process a file

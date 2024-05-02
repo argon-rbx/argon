@@ -31,7 +31,6 @@ pub fn read_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Snapshot> {
 #[profiling::function]
 pub fn write_dir(path: &Path, vfs: &Vfs) -> Result<()> {
 	vfs.create_dir(path)?;
-	vfs.watch(path)?;
 
 	Ok(())
 }

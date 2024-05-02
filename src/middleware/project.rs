@@ -29,7 +29,7 @@ pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	snapshot.set_meta(meta.with_source(source));
 
-	vfs.watch(path)?;
+	vfs.watch(path, false)?;
 
 	Ok(snapshot)
 }
@@ -103,10 +103,6 @@ pub fn new_snapshot_node(
 	if let Some(custom_path) = node.path {
 		let path = path_clean::clean(path.with_file_name(custom_path));
 
-		if vfs.is_file(&path) {
-			vfs.watch(&path)?;
-		}
-
 		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
 			path_snapshot.set_name(&snapshot.name);
@@ -125,7 +121,9 @@ pub fn new_snapshot_node(
 			path_snapshot.meta.source = snapshot.meta.source;
 			path_snapshot.meta.keep_unknowns = path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns;
 
-			snapshot = path_snapshot
+			snapshot = path_snapshot;
+
+			vfs.watch(&path, vfs.is_dir(&path))?;
 		} else {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \

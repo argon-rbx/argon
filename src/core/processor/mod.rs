@@ -6,7 +6,6 @@ use serde::Deserialize;
 use std::{
 	sync::{Arc, Mutex},
 	thread::Builder,
-	time::{Duration, Instant},
 };
 
 use super::{changes::Changes, queue::Queue, tree::Tree};
@@ -48,21 +47,18 @@ impl Processor {
 		Builder::new()
 			.name("processor".to_owned())
 			.spawn(move || -> Result<()> {
-				let mut last_client_event = Instant::now();
-
 				let vfs_receiver = vfs.receiver();
 				let client_receiver = receiver;
 
 				loop {
 					select! {
 						recv(vfs_receiver) -> event => {
-							if last_client_event.elapsed() > Duration::from_millis(200) {
-								handler.on_vfs_event(event?);
-							}
+							handler.on_vfs_event(event?);
 						}
 						recv(client_receiver) -> request => {
+							vfs.pause();
 							handler.on_client_event(request?);
-							last_client_event = Instant::now();
+							vfs.resume();
 						}
 					}
 				}
@@ -85,7 +81,10 @@ struct Handler {
 }
 
 impl Handler {
+	#[profiling::function]
 	fn on_vfs_event(&self, event: VfsEvent) {
+		profiling::start_frame!();
+
 		trace!("Received VFS event: {:?}", event);
 
 		let mut tree = lock!(self.tree);
@@ -160,7 +159,10 @@ impl Handler {
 		}
 	}
 
+	#[profiling::function]
 	fn on_client_event(&self, request: WriteRequest) {
+		profiling::start_frame!();
+
 		let changes = request.changes;
 		let client_id = request.client_id;
 

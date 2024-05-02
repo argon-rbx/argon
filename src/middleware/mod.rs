@@ -77,7 +77,7 @@ impl Middleware {
 		}
 		.with_desc(|| {
 			format!(
-				"Failed to snapshot {} at {}",
+				"Failed to read {} at {}",
 				self.to_string().bold(),
 				path.display().to_string().bold()
 			)
@@ -144,8 +144,6 @@ pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 			Ok(None)
 		}
 	} else {
-		vfs.watch(path)?;
-
 		for path in vfs.read_dir(path)? {
 			if let Some(snapshot) = new_snapshot_file_child(&path, context, vfs)? {
 				return Ok(Some(snapshot));
@@ -235,7 +233,14 @@ fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> R
 	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData) {
 		if let Some(data_path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
-				return Ok(Some(data::read_data(&data_path, vfs)?));
+				let data = data::read_data(&data_path, vfs).with_desc(|| {
+					format!(
+						"Failed to get instance data at {}",
+						data_path.display().to_string().bold()
+					)
+				})?;
+
+				return Ok(Some(data));
 			}
 		}
 	}

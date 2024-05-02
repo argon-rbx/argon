@@ -33,8 +33,10 @@ pub trait VfsBackend: Send {
 	fn is_dir(&self, path: &Path) -> bool;
 	fn is_file(&self, path: &Path) -> bool;
 
-	fn watch(&mut self, path: &Path) -> Result<()>;
+	fn watch(&mut self, path: &Path, recursive: bool) -> Result<()>;
 	fn unwatch(&mut self, path: &Path) -> Result<()>;
+	fn pause(&mut self);
+	fn resume(&mut self);
 
 	fn receiver(&self) -> Receiver<VfsEvent>;
 }
@@ -104,12 +106,20 @@ impl Vfs {
 		lock!(self.inner).is_file(path)
 	}
 
-	pub fn watch(&self, path: &Path) -> Result<()> {
-		lock!(self.inner).watch(path)
+	pub fn watch(&self, path: &Path, recursive: bool) -> Result<()> {
+		lock!(self.inner).watch(path, recursive)
 	}
 
 	pub fn unwatch(&self, path: &Path) -> Result<()> {
 		lock!(self.inner).unwatch(path)
+	}
+
+	pub fn pause(&self) {
+		lock!(self.inner).pause()
+	}
+
+	pub fn resume(&self) {
+		lock!(self.inner).resume()
 	}
 
 	pub fn receiver(&self) -> Receiver<VfsEvent> {
