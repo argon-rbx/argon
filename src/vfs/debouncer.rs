@@ -16,15 +16,14 @@ use notify::event::DataChange;
 #[cfg(not(target_os = "windows"))]
 use notify::event::ModifyKind;
 
-use crate::constants::SYNCBACK_DEBOUNCE_TIME;
-
 #[cfg(target_os = "linux")]
 use {
 	notify::event::{AccessKind, AccessMode, RenameMode},
-	std::{path::PathBuf, time::Instant},
+	std::path::PathBuf,
 };
 
 use super::VfsEvent;
+use crate::constants::SYNCBACK_DEBOUNCE_TIME;
 
 #[cfg(target_os = "linux")]
 const DEBOUNCE_TIME: Duration = Duration::from_micros(500);
