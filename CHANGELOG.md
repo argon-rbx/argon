@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.1] - 2024-05-02
+
 ### Fixed
 
 - `ArgonEmpty` property is no longer serialized on child instances
@@ -98,7 +100,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.0...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.1...HEAD
+[2.0.1]: https://github.com/argon-rbx/argon/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/argon-rbx/argon/compare/2.0.0-pre5...2.0.0
 [2.0.0-pre5]: https://github.com/argon-rbx/argon/compare/2.0.0-pre4...2.0.0-pre5
 [2.0.0-pre4]: https://github.com/argon-rbx/argon/compare/2.0.0-pre3...2.0.0-pre4
