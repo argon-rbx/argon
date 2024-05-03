@@ -92,10 +92,10 @@ impl Program {
 		if self.program == ProgramName::Argon {
 			let mut command = Command::new(env::current_exe().unwrap_or(PathBuf::from("argon")));
 
-			let verbosity = util::get_verbosity().as_str();
-			let log_style = util::get_log_style().to_string();
-			let backtrace = if util::get_backtrace() { "1" } else { "0" };
-			let yes = if util::get_yes() { "1" } else { "0" };
+			let verbosity = util::env_verbosity().as_str();
+			let log_style = util::env_log_style().to_string();
+			let backtrace = if util::env_backtrace() { "1" } else { "0" };
+			let yes = if util::env_yes() { "1" } else { "0" };
 
 			command
 				.args(self.args.clone())
@@ -127,7 +127,7 @@ impl Program {
 		let mut command = Command::new(program);
 		command.current_dir(self.current_dir.clone()).args(self.args.clone());
 
-		if util::get_verbosity() == LevelFilter::Off {
+		if util::env_verbosity() == LevelFilter::Off {
 			command.stdout(Stdio::null());
 			command.stderr(Stdio::null());
 		}

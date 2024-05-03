@@ -4,13 +4,9 @@ use actix_web::{
 	web::{Data, Query},
 	HttpResponse, Responder,
 };
-use serde::Serialize;
 use std::sync::Arc;
 
-use crate::{core::Core, messages::Message, server::AuthRequest};
-
-#[derive(Serialize)]
-struct Response(Option<Message>);
+use crate::{core::Core, server::AuthRequest};
 
 #[get("/read")]
 async fn main(request: Query<AuthRequest>, core: Data<Arc<Core>>) -> impl Responder {

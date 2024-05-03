@@ -89,11 +89,11 @@ pub fn init(verbosity: LevelFilter, log_style: WriteStyle) {
 }
 
 pub fn prompt(prompt: &str, default: bool) -> bool {
-	if util::get_yes() {
+	if util::env_yes() {
 		return default;
 	}
 
-	let theme = match util::get_log_style() {
+	let theme = match util::env_log_style() {
 		WriteStyle::Always => PromptTheme::color(),
 		_ => PromptTheme::no_color(),
 	};

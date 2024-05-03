@@ -184,7 +184,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		.arg("--skipBuild")
 		.arg(&format!("--git={}", git))
 		.args(["--dir", &project.to_string()])
-		.arg(if util::get_yes() { "--yes" } else { "" })
+		.arg(if util::env_yes() { "--yes" } else { "" })
 		.spawn()?;
 
 	if let Some(child) = child {

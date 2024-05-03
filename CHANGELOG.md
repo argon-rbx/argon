@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Support for MessagePack (`.msgpack`) - binary format, great for storing big amount of data
 
+### Improved
+
+- Argon now uses the `.luau` extension by default when syncing back from Roblox Studio
+- When running `argon plugin install` with no internet connection the bundled binary will be used
+
 ## [2.0.1] - 2024-05-02
 
 ### Fixed

@@ -101,7 +101,7 @@ impl Cli {
 
 	pub fn yes(&self) -> bool {
 		if env::var("RUST_YES").is_ok() {
-			return util::get_yes();
+			return util::env_yes();
 		}
 
 		self.yes
@@ -109,7 +109,7 @@ impl Cli {
 
 	pub fn backtrace(&self) -> bool {
 		if env::var("RUST_BACKTRACE").is_ok() {
-			return util::get_backtrace();
+			return util::env_backtrace();
 		}
 
 		self.backtrace
@@ -117,7 +117,7 @@ impl Cli {
 
 	pub fn verbosity(&self) -> LevelFilter {
 		if env::var("RUST_VERBOSE").is_ok() {
-			return util::get_verbosity();
+			return util::env_verbosity();
 		}
 
 		self.verbose.log_level_filter()
@@ -125,7 +125,7 @@ impl Cli {
 
 	pub fn log_style(&self) -> WriteStyle {
 		if env::var("RUST_LOG_STYLE").is_ok() {
-			return util::get_log_style();
+			return util::env_log_style();
 		}
 
 		match self.color {

@@ -40,35 +40,7 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.meta.json")
 				.with_child_pattern("init.meta.json"),
 			//////////////////////////////////////////////////////////////////////////////////////////
-			// Argon scripts
-			SyncRule::new(Middleware::ServerScript)
-				.with_pattern("*.server.lua")
-				.with_child_pattern(".src.server.lua")
-				.with_suffix(".server.lua")
-				.with_exclude("init.server.lua"),
-			SyncRule::new(Middleware::ClientScript)
-				.with_pattern("*.client.lua")
-				.with_child_pattern(".src.client.lua")
-				.with_suffix(".client.lua")
-				.with_exclude("init.client.lua"),
-			SyncRule::new(Middleware::ModuleScript)
-				.with_pattern("*.lua")
-				.with_child_pattern(".src.lua")
-				.with_exclude("init.lua"),
-			// Rojo scripts
-			SyncRule::new(Middleware::ServerScript)
-				.with_pattern("*.server.lua")
-				.with_child_pattern("init.server.lua")
-				.with_suffix(".server.lua"),
-			SyncRule::new(Middleware::ClientScript)
-				.with_pattern("*.client.lua")
-				.with_child_pattern("init.client.lua")
-				.with_suffix(".client.lua"),
-			SyncRule::new(Middleware::ModuleScript)
-				.with_pattern("*.lua")
-				.with_child_pattern("init.lua"),
-			//////////////////////////////////////////////////////////////////////////////////////////
-			// Luau variants for Argon
+			// Luau scripts for Argon
 			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.luau")
 				.with_child_pattern(".src.server.luau")
@@ -83,7 +55,7 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.luau")
 				.with_child_pattern(".src.luau")
 				.with_exclude("init.luau"),
-			// Luau variants for Rojo
+			// Luau scripts for Rojo
 			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.luau")
 				.with_child_pattern("init.server.luau")
@@ -95,6 +67,34 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.luau")
 				.with_child_pattern("init.luau"),
+			//////////////////////////////////////////////////////////////////////////////////////////
+			// Lua scripts for Argon
+			SyncRule::new(Middleware::ServerScript)
+				.with_pattern("*.server.lua")
+				.with_child_pattern(".src.server.lua")
+				.with_suffix(".server.lua")
+				.with_exclude("init.server.lua"),
+			SyncRule::new(Middleware::ClientScript)
+				.with_pattern("*.client.lua")
+				.with_child_pattern(".src.client.lua")
+				.with_suffix(".client.lua")
+				.with_exclude("init.client.lua"),
+			SyncRule::new(Middleware::ModuleScript)
+				.with_pattern("*.lua")
+				.with_child_pattern(".src.lua")
+				.with_exclude("init.lua"),
+			// Lua scripts for Argon
+			SyncRule::new(Middleware::ServerScript)
+				.with_pattern("*.server.lua")
+				.with_child_pattern("init.server.lua")
+				.with_suffix(".server.lua"),
+			SyncRule::new(Middleware::ClientScript)
+				.with_pattern("*.client.lua")
+				.with_child_pattern("init.client.lua")
+				.with_suffix(".client.lua"),
+			SyncRule::new(Middleware::ModuleScript)
+				.with_pattern("*.lua")
+				.with_child_pattern("init.lua"),
 			//////////////////////////////////////////////////////////////////////////////////////////
 			// Other file types, Argon only
 			SyncRule::new(Middleware::StringValue)
