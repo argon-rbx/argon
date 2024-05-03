@@ -53,6 +53,7 @@ impl Exec {
 					code: code.to_owned(),
 					focus: self.focus,
 				})?;
+
 				let response = Client::default()
 					.post(url)
 					.header(CONTENT_TYPE, "application/msgpack")

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for MessagePack (`.msgpack`) - binary format, great for storing big amount of data
+
 ## [2.0.1] - 2024-05-02
 
 ### Fixed

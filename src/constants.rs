@@ -110,6 +110,9 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 			SyncRule::new(Middleware::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),
+			SyncRule::new(Middleware::MsgpackModule)
+				.with_pattern("*.msgpack")
+				.with_child_pattern(".src.msgpack"),
 			// Model files, Argon only
 			SyncRule::new(Middleware::JsonModel)
 				.with_pattern("*.model.json")

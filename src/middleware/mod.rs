@@ -25,6 +25,7 @@ pub mod dir;
 pub mod json;
 pub mod json_model;
 pub mod lua;
+pub mod msgpack;
 pub mod project;
 pub mod rbxm;
 pub mod rbxmx;
@@ -42,8 +43,10 @@ pub enum Middleware {
 
 	StringValue,
 	LocalizationTable,
+
 	JsonModule,
 	TomlModule,
+	MsgpackModule,
 
 	JsonModel,
 	RbxmModel,
@@ -68,8 +71,10 @@ impl Middleware {
 			//
 			Middleware::StringValue => txt::read_txt(path, vfs),
 			Middleware::LocalizationTable => csv::read_csv(path, vfs),
+			//
 			Middleware::JsonModule => json::read_json(path, vfs),
 			Middleware::TomlModule => toml::read_toml(path, vfs),
+			Middleware::MsgpackModule => msgpack::read_msgpack(path, vfs),
 			//
 			Middleware::JsonModel => json_model::read_json_model(path, vfs),
 			Middleware::RbxmModel => rbxm::read_rbxm(path, vfs),
