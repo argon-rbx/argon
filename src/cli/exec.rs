@@ -13,6 +13,10 @@ pub struct Exec {
 	#[arg()]
 	code: String,
 
+	/// Session indentifier
+	#[arg()]
+	session: Option<String>,
+
 	/// Focus Roblox Studio window when executing code
 	#[arg(short, long)]
 	focus: bool,
@@ -20,10 +24,6 @@ pub struct Exec {
 	/// Launch Roblox Studio, run code and return the result
 	#[arg(short, long)]
 	standalone: bool,
-
-	/// Session indentifier
-	#[arg()]
-	session: Option<String>,
 
 	/// Server host name
 	#[arg(short = 'H', long)]

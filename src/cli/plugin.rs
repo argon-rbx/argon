@@ -9,7 +9,7 @@ use crate::{argon_info, installer, util};
 pub struct Plugin {
 	/// Whether to `install` or `uninstall` the plugin
 	#[arg(hide_possible_values = true)]
-	mode: Mode,
+	action: Action,
 	/// Custom plugin installation path
 	#[arg()]
 	path: Option<PathBuf>,
@@ -27,12 +27,12 @@ impl Plugin {
 			util::get_plugin_path()?
 		};
 
-		match self.mode {
-			Mode::Install => {
+		match self.action {
+			Action::Install => {
 				argon_info!("Installing Argon plugin..");
 				installer::install_plugin(&plugin_path, true)?;
 			}
-			Mode::Uninstall => {
+			Action::Uninstall => {
 				argon_info!("Uninstalling Argon plugin..");
 				fs::remove_file(plugin_path)?;
 			}
@@ -43,7 +43,7 @@ impl Plugin {
 }
 
 #[derive(ValueEnum, Clone)]
-enum Mode {
+enum Action {
 	/// Install the plugin in the selected path or in Studio's plugin directory
 	Install,
 	/// Uninstall the plugin from the selected path or from Studio's plugin directory

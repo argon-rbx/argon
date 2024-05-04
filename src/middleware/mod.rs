@@ -146,6 +146,7 @@ pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 		} else if let Some(snapshot) = new_snapshot_file(path, context, vfs)? {
 			Ok(Some(snapshot))
 		} else {
+			trace!("Snapshot of {} not created: no middleware matched", path.display());
 			Ok(None)
 		}
 	} else {

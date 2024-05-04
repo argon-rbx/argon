@@ -44,7 +44,7 @@ pub fn set_staus(status: &UpdateStatus) -> Result<()> {
 	Ok(())
 }
 
-fn update_cli(prompt: bool) -> Result<()> {
+fn update_cli(prompt: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
 
@@ -72,7 +72,10 @@ fn update_cli(prompt: bool) -> Result<()> {
 			}
 
 			match update.update() {
-				Ok(_) => argon_info!("Argon updated! Restart the program to apply changes"),
+				Ok(_) => {
+					argon_info!("CLI updated! Restart the program to apply changes");
+					return Ok(true);
+				}
 				Err(err) => argon_error!("Failed to update Argon: {}", err),
 			}
 		} else {
@@ -82,10 +85,10 @@ fn update_cli(prompt: bool) -> Result<()> {
 		trace!("Argon is up to date!");
 	}
 
-	Ok(())
+	Ok(false)
 }
 
-fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
+fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = &status.plugin_version;
 	let plugin_path = get_plugin_path()?;
@@ -121,11 +124,12 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 			match update.download() {
 				Ok(_) => {
 					argon_info!(
-						"Argon plugin updated! Make sure you have {} setting enabled to see changes",
+						"Roblox plugin updated! Make sure you have {} setting enabled to see changes",
 						"Reload plugins on file changed".bold()
 					);
 
 					status.plugin_version = release.version;
+					return Ok(true);
 				}
 				Err(err) => argon_error!("Failed to update Argon plugin: {}", err),
 			}
@@ -136,7 +140,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<()> {
 		trace!("Argon plugin is up to date!");
 	}
 
-	Ok(())
+	Ok(false)
 }
 
 pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
@@ -154,24 +158,25 @@ pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
 	}
 
 	status.last_checked = SystemTime::now();
-
 	set_staus(&status)?;
 
 	Ok(())
 }
 
-pub fn force_update(with_plugin: bool) -> Result<()> {
+pub fn force_update(cli: bool, plugin: bool) -> Result<bool> {
 	let mut status = get_status()?;
+	let mut updated = false;
 
-	update_cli(false)?;
+	if cli && update_cli(false)? {
+		updated = true;
+	}
 
-	if with_plugin {
-		update_plugin(&mut status, false)?;
+	if plugin && update_plugin(&mut status, false)? {
+		updated = true;
 	}
 
 	status.last_checked = SystemTime::now();
-
 	set_staus(&status)?;
 
-	Ok(())
+	Ok(updated)
 }

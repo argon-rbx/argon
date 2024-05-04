@@ -6,13 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- You can now specify to update CLI or plugin only in `update` command
+- Properties are now serialized alphabetically ([#25])
+
+[#25]: https://github.com/argon-rbx/argon/pull/25
+
 ## [2.0.2] - 2024-05-03
 
 ### Added
 
 - Support for MessagePack (`.msgpack`) - binary format, great for storing big amount of data
 
-### Improved
+### Changed
 
 - Argon now uses the `.luau` extension by default when syncing back from Roblox Studio
 - When running `argon plugin install` with no internet connection the bundled binary will be used
@@ -24,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ArgonEmpty` property is no longer serialized on child instances
 - `math.huge` is no longer saved as JSON `null` (temporarily it's just a big number)
 
-### Improved
+### Changed
 
 - Increased client write request payload size limit from `256 KiB` to `512 MiB`!
 - Error tracing when Argon fails to snapshot nested file or directory
@@ -43,7 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Community stats tracking
 - Helper scripts
 
-### Improved
+### Changed
 
 - Instance source tracking and meta management
 - Standard file system with additional methods
@@ -58,7 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [2.0.0-pre5] - 2024-03-22
 
-### Improved
+### Changed
 
 - `plugin` command now creates directory if the provided one does not exist
 - Argon plugin gets installed automatically at the first Argon launch
@@ -79,7 +86,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Sync rules no longer ignore specified project path, reported by [@Arid](https://github.com/AridAjd) and [@EthanMichalicek](https://github.com/EthanMichalicek) in [#23](https://github.com/argon-rbx/argon/issues/23)
+- Sync rules no longer ignore specified project path ([#23])
+
+[#23]: https://github.com/argon-rbx/argon/issues/23
 
 ## [2.0.0-pre3] - 2024-03-19
 
@@ -87,7 +96,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `run_async` option is now disabled by default
 
-### Improved
+### Changed
 
 - Free port searching speed
 - Command descriptions
