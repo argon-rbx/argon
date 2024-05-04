@@ -3,7 +3,7 @@ use log::error;
 use rbx_dom_weak::types::{Tags, Variant};
 use serde::{Deserialize, Serialize};
 use std::{
-	collections::HashMap,
+	collections::{BTreeMap, HashMap},
 	path::{Path, PathBuf},
 };
 
@@ -107,8 +107,8 @@ struct WritableData {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
 
-	#[serde(skip_serializing_if = "HashMap::is_empty")]
-	pub properties: HashMap<String, UnresolvedValue>,
+	#[serde(skip_serializing_if = "BTreeMap::is_empty")]
+	pub properties: BTreeMap<String, UnresolvedValue>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub attributes: Option<Variant>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
