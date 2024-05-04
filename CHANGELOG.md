@@ -6,10 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for values in boolean flags for `init` command, example: `--git=false`
+- New setting `with_sourcemap` - always run commands with sourcemap generation
+- New setting `build_xml` - build using XML format by default
+
 ### Changed
 
 - You can now specify to update CLI or plugin only in `update` command
 - Properties are now serialized alphabetically ([#25])
+- Renamed `auto_detect` setting to `detect_project`
 
 [#25]: https://github.com/argon-rbx/argon/pull/25
 

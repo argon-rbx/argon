@@ -7,10 +7,10 @@ use crate::{argon_error, argon_info, config::Config, updater};
 #[derive(Parser)]
 pub struct Update {
 	/// Update the Argon CLI only
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub cli: bool,
 	/// Update the Argon plugin only
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub plugin: bool,
 }
 

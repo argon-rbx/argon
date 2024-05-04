@@ -21,32 +21,40 @@ pub struct Config {
 	pub template: String,
 	/// Default project license (SPDX identifier)
 	pub license: String,
+	/// Include documentation in the project (README, CHANGELOG, etc.)
+	pub include_docs: bool,
+	/// Use git for source control
+	pub use_git: bool,
+	/// Use Wally for package management
+	pub use_wally: bool,
+
 	/// Run Argon asynchronously, freeing up the terminal
 	pub run_async: bool,
 	/// Scan for the first available port if selected one is in use
 	pub scan_ports: bool,
+	/// Automatically detect project type
+	pub detect_project: bool,
+	/// Always run commands with sourcemap generation
+	pub with_sourcemap: bool,
+	/// Build using XML format by default
+	pub build_xml: bool,
+
 	/// Check for new Argon releases on startup
 	pub check_updates: bool,
 	/// Automatically install Argon updates if available
 	pub auto_update: bool,
 	/// Install Roblox plugin locally and keep it updated
 	pub install_plugin: bool,
-	/// Share anonymous Argon usage statistics with the community
-	pub share_stats: bool,
-	/// Automatically detect project type
-	pub auto_detect: bool,
-	/// Use git for source control
-	pub use_git: bool,
-	/// Use Wally for package management
-	pub use_wally: bool,
-	/// Include documentation in the project (README, LICENSE, etc.)
-	pub include_docs: bool,
+
 	/// Use Rojo namespace by default
 	pub rojo_mode: bool,
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
+
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
+	/// Share anonymous Argon usage statistics with the community
+	pub share_stats: bool,
 }
 
 impl Default for Config {
@@ -56,19 +64,25 @@ impl Default for Config {
 			port: 8000,
 			template: String::from("place"),
 			license: String::from("Apache-2.0"),
+			include_docs: true,
+			use_git: true,
+			use_wally: false,
+
 			run_async: false,
 			scan_ports: true,
+			detect_project: true,
+			with_sourcemap: false,
+			build_xml: false,
+
 			check_updates: true,
 			auto_update: false,
 			install_plugin: true,
-			share_stats: true,
-			auto_detect: true,
-			use_git: true,
-			use_wally: false,
-			include_docs: true,
+
 			rojo_mode: false,
 			ts_mode: false,
+
 			move_to_bin: false,
+			share_stats: true,
 		}
 	}
 }

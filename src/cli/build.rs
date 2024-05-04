@@ -66,7 +66,7 @@ impl Build {
 
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
-			if self.sourcemap {
+			if self.sourcemap || config.with_sourcemap {
 				Some(project_path.with_file_name("sourcemap.json"))
 			} else {
 				None
@@ -82,7 +82,7 @@ impl Build {
 
 		let project = Project::load(&project_path)?;
 
-		let mut xml = self.xml;
+		let mut xml = self.xml || config.build_xml;
 		let path = if self.plugin {
 			if project.is_place() {
 				exit!("Cannot build plugin from place project");
@@ -138,7 +138,7 @@ impl Build {
 		}
 		.resolve()?;
 
-		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
+		let use_ts = self.ts || config.ts_mode || if config.detect_project { project.is_ts() } else { false };
 
 		if use_ts {
 			argon_info!("Compiling TypeScript files..");

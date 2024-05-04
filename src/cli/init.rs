@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use colored::Colorize;
 use std::path::PathBuf;
 
@@ -21,20 +21,44 @@ pub struct Init {
 	license: Option<String>,
 
 	/// Configure Git
-	#[arg(short, long)]
-	git: bool,
+	#[arg(
+		short,
+        long,
+        default_missing_value("true"),
+        num_args(0..=1),
+    	action = ArgAction::Set,
+    )]
+	git: Option<bool>,
 
 	/// Setup Wally
-	#[arg(short, long)]
-	wally: bool,
+	#[arg(
+		short,
+        long,
+        default_missing_value("true"),
+        num_args(0..=1),
+    	action = ArgAction::Set,
+    )]
+	wally: Option<bool>,
 
 	/// Include docs (README, CHANGELOG, etc.)
-	#[arg(short, long)]
-	docs: bool,
+	#[arg(
+		short,
+        long,
+        default_missing_value("true"),
+        num_args(0..=1),
+    	action = ArgAction::Set,
+    )]
+	docs: Option<bool>,
 
 	/// Initialize using roblox-ts
-	#[arg(short, long)]
-	ts: bool,
+	#[arg(
+		short,
+        long,
+        default_missing_value("true"),
+        num_args(0..=1),
+    	action = ArgAction::Set,
+    )]
+	ts: Option<bool>,
 }
 
 impl Init {
@@ -44,10 +68,10 @@ impl Init {
 		let project = self.project.unwrap_or_default();
 		let template = self.template.unwrap_or(config.template.clone());
 		let license = self.license.unwrap_or(config.license.clone());
-		let git = self.git || config.use_git;
-		let wally = self.wally || config.use_wally;
-		let docs = self.docs || config.include_docs;
-		let ts = self.ts || config.ts_mode;
+		let git = self.git.unwrap_or(config.use_git);
+		let wally = self.wally.unwrap_or(config.use_wally);
+		let docs = self.docs.unwrap_or(config.include_docs);
+		let ts = self.ts.unwrap_or(config.ts_mode);
 
 		if ts {
 			if workspace::init_ts(&project, &template, &license, git, wally, docs)? {

@@ -58,7 +58,7 @@ impl Serve {
 
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
-			if self.sourcemap {
+			if self.sourcemap || config.with_sourcemap {
 				Some(project_path.with_file_name("sourcemap.json"))
 			} else {
 				None
@@ -79,7 +79,7 @@ impl Serve {
 			exit!("Cannot serve non-place project!");
 		}
 
-		let use_ts = self.ts || config.ts_mode || if config.auto_detect { project.is_ts() } else { false };
+		let use_ts = self.ts || config.ts_mode || if config.detect_project { project.is_ts() } else { false };
 
 		if use_ts {
 			debug!("Starting roblox-ts");
