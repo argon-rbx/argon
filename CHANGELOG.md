@@ -15,10 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - You can now specify to update CLI or plugin only in `update` command
-- Properties are now serialized alphabetically ([#25])
+- Properties are now serialized alphabetically ([#25](https://github.com/argon-rbx/argon/pull/25))
 - Renamed `auto_detect` setting to `detect_project`
-
-[#25]: https://github.com/argon-rbx/argon/pull/25
 
 ## [2.0.2] - 2024-05-03
 
@@ -93,9 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Sync rules no longer ignore specified project path ([#23])
-
-[#23]: https://github.com/argon-rbx/argon/issues/23
+- Sync rules no longer ignore specified project path ([#23](https://github.com/argon-rbx/argon/issues/23))
 
 ## [2.0.0-pre3] - 2024-03-19
 
