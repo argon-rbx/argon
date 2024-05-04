@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.3] - 2024-05-04
+
 ### Added
 
 - Support for values in boolean flags for `init` command, example: `--git=false`
@@ -123,7 +125,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.2...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.3...HEAD
+[2.0.3]: https://github.com/argon-rbx/argon/compare/2.0.2...2.0.3
 [2.0.2]: https://github.com/argon-rbx/argon/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/argon-rbx/argon/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/argon-rbx/argon/compare/2.0.0-pre5...2.0.0
