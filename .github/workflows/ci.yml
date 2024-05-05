@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+env:
+  RUSTFLAGS: "-D warnings"
+
 jobs:
   build-test:
     name: Build and Test

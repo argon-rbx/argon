@@ -113,7 +113,7 @@ pub fn track() -> Result<()> {
 	let mut tracker = get_tracker()?;
 
 	if tracker.last_synced.elapsed()?.as_secs() > 3600 && tracker.stats.total() > 10 {
-		if let Some(token) = option_env!("AUTH_TOKEN") {
+		if let Some(token) = option_env!("ARGON_TOKEN") {
 			let stats = tracker.stats;
 			let remainder = stats.minutes_used % 60;
 
@@ -138,7 +138,7 @@ pub fn track() -> Result<()> {
 
 			set_tracker(&tracker)?;
 		} else {
-			warn!("This Argon build has no `AUTH_TOKEN` set, stats will not be uploaded")
+			warn!("This Argon build has no `ARGON_TOKEN` set, stats will not be uploaded")
 		}
 	} else {
 		debug!("Stats already synced within the last hour or too few stats to sync");

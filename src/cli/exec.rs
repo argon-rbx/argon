@@ -4,7 +4,7 @@ use reqwest::{blocking::Client, header::CONTENT_TYPE};
 use serde::Serialize;
 use std::{fs, path::MAIN_SEPARATOR};
 
-use crate::{argon_error, argon_info, sessions, studio};
+use crate::{argon_error, argon_info, sessions};
 
 /// Execute Luau code in Roblox Studio (requires running session)
 #[derive(Parser)]
@@ -71,7 +71,7 @@ impl Exec {
 
 				#[cfg(target_os = "windows")]
 				if self.focus {
-					studio::focus(None)?;
+					crate::studio::focus(None)?;
 				}
 			} else {
 				argon_error!("Code execution failed: running session does not have an address");
