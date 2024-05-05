@@ -10,14 +10,14 @@ use std::{
 use crate::{
 	argon_error,
 	core::{
-		meta::{Meta, NodePath, Source, SourceEntry, SourceKind, SyncbackFilter},
+		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
 	ext::PathExt,
 	middleware::{data, dir, Middleware},
 	project::{Project, ProjectNode},
-	resolution::UnresolvedValue,
+	syncback::{serialize_properties, validate_properties, verify_name},
 	vfs::Vfs,
 	Properties,
 };
@@ -31,13 +31,19 @@ macro_rules! path_exists {
 	};
 }
 
+macro_rules! bad_name {
+	($err:expr) => {
+		argon_error!("Instance name is corrupted: {}", $err);
+	};
+}
+
 macro_rules! filter_warn {
 	($id:expr) => {
-		warn!("Instance {:?} does not match syncback filter! Skipping..", $id);
+		warn!("Instance {:?} does not pass syncback filter! Skipping..", $id);
 	};
 	($id:expr, $path:expr) => {
 		warn!(
-			"Path: {:?} (source of instance: {:?}) does not match syncback filter! Skipping..",
+			"Path: {:?} (source of instance: {:?}) does not pass syncback filter! Skipping..",
 			$path, $id
 		);
 	};
@@ -73,6 +79,11 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		parent_meta: &Meta,
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
+		if let Err(err) = verify_name(&snapshot.name) {
+			bad_name!(err);
+			return Ok(None);
+		}
+
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
 		let filter = parent_meta.context.syncback_filter();
 		let properties = snapshot.properties.clone();
@@ -183,8 +194,13 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.with_context(|| format!("Failed to find sync rule for path: {}", parent_path.display()))?;
 
 			let name = sync_rule.get_name(&parent_path);
-
 			let folder_path = parent_path.with_file_name(&name);
+
+			if vfs.exists(&folder_path) {
+				path_exists!(folder_path);
+				return Ok(parent_meta.source.clone());
+			}
+
 			let file_path = sync_rule
 				.locate(&folder_path, &name, true)
 				.with_context(|| format!("Failed to locate file path for parent: {}", folder_path.display()))?;
@@ -423,9 +439,24 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 	match meta.source.get().clone() {
 		SourceKind::Path(path) => {
+			if let Some(properties) = snapshot.properties {
+				update_non_project_properties(&path, properties, instance, &mut meta, vfs)?;
+			}
+
+			// It has to be done after updating properties as it may change the file path
 			if let Some(name) = snapshot.name {
+				if let Err(err) = verify_name(&name) {
+					bad_name!(err);
+					return Ok(());
+				}
+
 				let new_path = path.with_file_name(path.get_name().replace(&instance.name, &name));
 				*meta.source.get_mut() = SourceKind::Path(new_path.clone());
+
+				if vfs.exists(&new_path) {
+					path_exists!(new_path);
+					return Ok(());
+				}
 
 				let filter = meta.context.syncback_filter();
 
@@ -459,10 +490,6 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				}
 
 				instance.name = name;
-			}
-
-			if let Some(properties) = snapshot.properties {
-				update_non_project_properties(&path, properties, instance, &mut meta, vfs)?;
 			}
 
 			tree.update_meta(snapshot.id, meta);
@@ -510,6 +537,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				}
 			}
 
+			// It has to be done after updating properties as it may change the node path
 			if let Some(new_name) = snapshot.name {
 				let parent_node = project.find_node_by_path(&node_path.parent()).with_context(|| {
 					format!("Failed to find parent project node with path {:?}", node_path.parent())
@@ -660,28 +688,4 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	tree.remove_instance(id);
 
 	Ok(())
-}
-
-fn serialize_properties(class: &str, properties: Properties) -> HashMap<String, UnresolvedValue> {
-	properties
-		.iter()
-		.map(|(property, varaint)| {
-			(
-				property.to_owned(),
-				UnresolvedValue::from_variant(varaint.clone(), class, property),
-			)
-		})
-		.collect()
-}
-
-fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
-	// Temporary solution for serde failing to deserialize empty HashMap
-	if properties.contains_key("ArgonEmpty") {
-		HashMap::new()
-	} else {
-		properties
-			.into_iter()
-			.filter(|(property, _)| !filter.matches_property(property))
-			.collect()
-	}
 }

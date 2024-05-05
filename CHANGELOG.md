@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- File name verification to avoid creating corrupted instances (blocks some characters and names)
+
 ### Fixed
 
 - `debug` command no longer errors even when succeeding on Windows
