@@ -4,7 +4,7 @@ use reqwest::{blocking::Client, header::CONTENT_TYPE};
 use serde::Serialize;
 use std::{fs, path::MAIN_SEPARATOR};
 
-use crate::{argon_error, argon_info, sessions};
+use crate::{argon_error, argon_info, sessions, studio};
 
 /// Execute Luau code in Roblox Studio (requires running session)
 #[derive(Parser)]
@@ -51,7 +51,11 @@ impl Exec {
 
 				let body = rmp_serde::to_vec(&Request {
 					code: code.to_owned(),
-					focus: self.focus,
+					focus: if cfg!(not(target_os = "windows")) {
+						self.focus
+					} else {
+						false
+					},
 				})?;
 
 				let response = Client::default()
@@ -63,6 +67,11 @@ impl Exec {
 				match response {
 					Ok(_) => argon_info!("Code executed successfully!"),
 					Err(err) => argon_error!("Code execution failed: {}", err),
+				}
+
+				#[cfg(target_os = "windows")]
+				if self.focus {
+					studio::focus(None)?;
 				}
 			} else {
 				argon_error!("Code execution failed: running session does not have an address");

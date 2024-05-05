@@ -1,5 +1,6 @@
 use actix_msgpack::MsgPack;
 use actix_web::{post, web::Data, HttpResponse, Responder};
+use log::error;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -25,7 +26,10 @@ async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responde
 
 	if request.focus {
 		if let Some(name) = queue.get_first_non_internal_listener_name() {
-			studio::focus(Some(name)).ok();
+			match studio::focus(Some(name)) {
+				Ok(()) => (),
+				Err(err) => error!("Failed to focus Roblox Studio: {}", err),
+			}
 		}
 	}
 

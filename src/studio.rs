@@ -112,7 +112,7 @@ pub fn focus(title: Option<String>) -> Result<()> {
 
 	#[cfg(target_os = "windows")]
 	{
-		EnumWindows(|hwnd| -> bool {
+		let result = EnumWindows(|hwnd| -> bool {
 			if !hwnd.IsWindowVisible() {
 				return true;
 			}
@@ -134,7 +134,16 @@ pub fn focus(title: Option<String>) -> Result<()> {
 			}
 
 			true
-		})?;
+		});
+
+		match result {
+			Ok(()) => (),
+			Err(err) => {
+				if err.raw() != 0 {
+					anyhow::bail!("Failed to focus Roblox Studio: {}", err)
+				}
+			}
+		}
 
 		Ok(())
 	}

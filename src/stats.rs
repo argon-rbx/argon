@@ -1,6 +1,6 @@
 use anyhow::Result;
 use lazy_static::lazy_static;
-use log::{debug, warn};
+use log::{debug, trace, warn};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -147,7 +147,11 @@ pub fn track() -> Result<()> {
 	thread::spawn(|| loop {
 		thread::sleep(Duration::from_secs(300));
 		minutes_used(5);
-		save().ok();
+
+		match save() {
+			Ok(_) => trace!("Stats saved successfully"),
+			Err(err) => warn!("Failed to save stats: {}", err),
+		}
 	});
 
 	sessions_started(1);

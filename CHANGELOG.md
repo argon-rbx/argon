@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `debug` command no longer errors even when succeeding on Windows
+- `exec` command now actually focuses Roblox Studio when enabled on Windows
+
 ## [2.0.3] - 2024-05-04
 
 ### Added
