@@ -32,8 +32,12 @@ macro_rules! path_exists {
 }
 
 macro_rules! bad_name {
-	($err:expr) => {
-		argon_error!("Instance name is corrupted: {}", $err);
+	($name:expr, $err:expr) => {
+		argon_error!(
+			"Instance with name: {} is corrupted: {}! Skipping..",
+			$name.bold(),
+			$err
+		);
 	};
 }
 
@@ -80,7 +84,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
 		if let Err(err) = verify_name(&snapshot.name) {
-			bad_name!(err);
+			bad_name!(snapshot.name, err);
 			return Ok(None);
 		}
 
@@ -446,7 +450,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			// It has to be done after updating properties as it may change the file path
 			if let Some(name) = snapshot.name {
 				if let Err(err) = verify_name(&name) {
-					bad_name!(err);
+					bad_name!(name, err);
 					return Ok(());
 				}
 

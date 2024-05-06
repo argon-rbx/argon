@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Instances with whitespace characters are now now synced back properly
+- Instances with corrupted names now log the proper error message
+
 ## [2.0.4] - 2024-05-05
 
 ### Added

@@ -39,10 +39,6 @@ pub fn verify_name(name: &str) -> Result<()> {
 			bail!("file name cannot contain {} character", char.to_string().bold());
 		}
 
-		if char.is_whitespace() {
-			bail!("file name cannot contain whitespace");
-		}
-
 		#[cfg(windows)]
 		if char.is_control() {
 			bail!("file name cannot contain ASCII control characters");
