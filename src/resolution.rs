@@ -6,7 +6,7 @@ use rbx_dom_weak::types::{
 	Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use std::{borrow::Borrow, collections::HashMap, fmt::Write};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -108,11 +108,16 @@ pub enum AmbiguousValue {
 	Bool(bool),
 	String(String),
 	StringArray(Vec<String>),
+	#[serde(serialize_with = "serialize_number")]
 	Number(f64),
 	Object(HashMap<String, UnresolvedValue>),
+	#[serde(serialize_with = "serialize_array")]
 	Array2([f64; 2]),
+	#[serde(serialize_with = "serialize_array")]
 	Array3([f64; 3]),
+	#[serde(serialize_with = "serialize_array")]
 	Array4([f64; 4]),
+	#[serde(serialize_with = "serialize_array")]
 	Array12([f64; 12]),
 	Attributes(Attributes),
 	Font(Font),
@@ -295,4 +300,36 @@ fn truncate_float(float: f64) -> f64 {
 	} else {
 		float
 	}
+}
+
+fn serialize_number<S>(number: &f64, serializer: S) -> Result<S::Ok, S::Error>
+where
+	S: Serializer,
+{
+	let number = (*number * 1_000_000.0).trunc() / 1_000_000.0;
+
+	if number.fract() == 0.0 {
+		serializer.serialize_i64(number as i64)
+	} else {
+		serializer.serialize_f64(number)
+	}
+}
+
+fn serialize_array<S>(array: &[f64], serializer: S) -> Result<S::Ok, S::Error>
+where
+	S: Serializer,
+{
+	let mut seq = serializer.serialize_seq(Some(array.len()))?;
+
+	for number in array {
+		let number = (*number * 1_000_000.0).trunc() / 1_000_000.0;
+
+		if number.fract() == 0.0 {
+			seq.serialize_element(&(number as i64))?;
+		} else {
+			seq.serialize_element(&number)?;
+		}
+	}
+
+	seq.end()
 }
