@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.6] - 2024-05-08
+
 ### Changed
 
 - `exec` command now looks for the first session with address instead of failing
@@ -148,7 +150,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.5...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.6...HEAD
+[2.0.6]: https://github.com/argon-rbx/argon/compare/2.0.5...2.0.6
 [2.0.5]: https://github.com/argon-rbx/argon/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/argon-rbx/argon/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/argon-rbx/argon/compare/2.0.2...2.0.3
