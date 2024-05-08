@@ -123,14 +123,8 @@ pub fn get_multiple(ids: &Vec<String>) -> Result<HashMap<String, Session>> {
 	Ok(result)
 }
 
-pub fn get_all() -> Result<Option<HashMap<String, Session>>> {
-	let sessions = get_sessions()?;
-
-	if !sessions.active_sessions.is_empty() {
-		return Ok(Some(sessions.active_sessions));
-	}
-
-	Ok(None)
+pub fn get_all() -> Result<HashMap<String, Session>> {
+	Ok(get_sessions()?.active_sessions)
 }
 
 pub fn remove(session: &Session) -> Result<()> {

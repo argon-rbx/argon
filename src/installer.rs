@@ -157,7 +157,9 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 
 fn install_template(template: &Dir, path: &Path) -> Result<()> {
 	for file in template.files() {
-		fs::write(path.join(file.path()), file.contents())?;
+		if file.path().get_name() != ".gitkeep" {
+			fs::write(path.join(file.path()), file.contents())?;
+		}
 	}
 
 	for dir in template.dirs() {

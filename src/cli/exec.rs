@@ -46,7 +46,14 @@ impl Exec {
 			// TODO: Implement standalone mode
 			argon_error!("Standalone mode is not implemented yet!");
 		} else if let Some(session) = sessions::get(self.session, self.host, self.port)? {
-			if let Some(address) = session.get_address() {
+			let address = session.get_address().or_else(|| {
+				sessions::get_all()
+					.unwrap_or_default()
+					.into_iter()
+					.find_map(|(_, session)| session.get_address())
+			});
+
+			if let Some(address) = address {
 				let url = format!("{}/exec", address);
 
 				let body = rmp_serde::to_vec(&Request {

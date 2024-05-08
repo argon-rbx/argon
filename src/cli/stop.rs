@@ -34,7 +34,7 @@ impl Stop {
 		if self.list {
 			let sessions = sessions::get_all()?;
 
-			if sessions.is_none() {
+			if sessions.is_empty() {
 				argon_warn!("There are no running sessions");
 				return Ok(());
 			}
@@ -42,7 +42,7 @@ impl Stop {
 			let mut table = Table::new();
 			table.set_header(vec!["ID", "Host", "Port", "PID"]);
 
-			for (id, session) in sessions.unwrap() {
+			for (id, session) in sessions {
 				let port = if let Some(port) = session.port {
 					port.to_string()
 				} else {
@@ -65,12 +65,12 @@ impl Stop {
 		if self.all {
 			let sessions = sessions::get_all()?;
 
-			if sessions.is_none() {
+			if sessions.is_empty() {
 				argon_warn!("There are no running sessions");
 				return Ok(());
 			}
 
-			for (_, session) in sessions.unwrap() {
+			for (_, session) in sessions {
 				if let Some(address) = session.get_address() {
 					Self::make_request(&address, session.pid);
 				} else {
