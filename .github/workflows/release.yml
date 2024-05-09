@@ -150,8 +150,14 @@ jobs:
     needs: [build, draft-release]
 
     steps:
-      - uses: eregon/publish-release@v1
+      - name: Publish on GitHub
+        uses: eregon/publish-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ needs.draft-release.outputs.release_id }}
+
+      # - name: Publish on crates.io
+      #   run: cargo publish
+      #   env:
+      #     CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
