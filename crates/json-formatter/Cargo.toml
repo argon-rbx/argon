@@ -1,0 +1,10 @@
+[package]
+name = "json-formatter"
+authors = ["Dervex"]
+description = "Custom serde JSON formatter"
+license = "Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1.0.117"

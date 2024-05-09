@@ -1,4 +1,5 @@
 use anyhow::Result;
+use json_formatter::JsonFormatter;
 use log::error;
 use rbx_dom_weak::types::{Tags, Variant};
 use serde::{Deserialize, Serialize};
@@ -161,10 +162,15 @@ pub fn write_data<'a>(
 		return Ok(None);
 	}
 
-	let mut vec = serde_json::to_vec_pretty(&data)?;
-	vec.push(b'\n');
+	let formatter = JsonFormatter::with_array_breaks(false);
 
-	vfs.write(path, &vec)?;
+	let mut writer = Vec::new();
+	let mut serializer = serde_json::Serializer::with_formatter(&mut writer, formatter);
+
+	data.serialize(&mut serializer)?;
+	writer.push(b'\n');
+
+	vfs.write(path, &writer)?;
 
 	Ok(Some(path))
 }

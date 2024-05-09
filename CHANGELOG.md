@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Arrays in `.data.json` and `*.project.json` files are now single-line by default
+
 ## [2.0.6] - 2024-05-08
 
 ### Changed
