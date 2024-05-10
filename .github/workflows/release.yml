@@ -61,6 +61,10 @@ jobs:
         with:
           version: ${{ github.ref_name }}
 
+      - name: Get previus Tag
+        id: previus-tag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+
       - name: Create Release
         id: create-release
         uses: shogo82148/actions-create-release@v1
@@ -68,6 +72,9 @@ jobs:
           release_name: ${{ github.ref_name }}
           body: ${{ steps.read-changes.outputs.changes }}
           prerelease: ${{ contains(github.ref_name, 'pre') }}
+          notes_start_tag: ${{ steps.previus-tag.outputs.tag }}
+          generate_release_notes: true
+          commitish: main
           draft: true
 
   build:
