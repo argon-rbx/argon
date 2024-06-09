@@ -1,8 +1,8 @@
-use colored::Colorize;
+use colored::{Color, Colorize};
 use dialoguer::console::{style, Style, StyledObject};
 use dialoguer::theme::Theme;
 use dialoguer::Confirm;
-use env_logger::{fmt::Color, Builder, WriteStyle};
+use env_logger::{Builder, WriteStyle};
 use log::{Level, LevelFilter};
 use std::fmt::{Display, Formatter};
 use std::{fmt, io::Write};
@@ -41,21 +41,18 @@ pub fn init(verbosity: LevelFilter, log_style: WriteStyle) {
 			Level::Trace => Color::White,
 		};
 
-		let mut style = buffer.style();
-		style.set_color(color).set_bold(true);
-
 		if record.target() == "argon_log" {
 			writeln!(
 				buffer,
 				"{}: {:?}",
-				style.value(record.level().to_string()),
+				record.level().to_string().color(color).bold(),
 				record.args()
 			)
 		} else {
 			writeln!(
 				buffer,
 				"{}: {:?} [{}:{}]",
-				style.value(record.level().to_string()),
+				record.level().to_string().color(color).bold(),
 				record.args(),
 				record.module_path().unwrap(),
 				record.line().unwrap()

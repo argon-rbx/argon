@@ -127,7 +127,7 @@ impl Config {
 		table.set_header(vec!["Setting", "Default", "Description"]);
 
 		for (setting, default) in &defaults {
-			if let Ok(doc) = Self::get_field_comment(setting) {
+			if let Ok(doc) = Self::get_field_docs(setting) {
 				table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
 			}
 		}
