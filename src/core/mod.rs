@@ -187,7 +187,9 @@ impl Core {
 					.relevant()
 					.iter()
 					.filter_map(|entry| match entry {
-						SourceEntry::File(path) | SourceEntry::Data(path) => Some(path.to_owned()),
+						SourceEntry::File(path) | SourceEntry::Data(path) | SourceEntry::Project(path) => {
+							Some(path.to_owned())
+						}
 						_ => None,
 					})
 					.collect()

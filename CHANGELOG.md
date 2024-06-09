@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Sourcemap now includes project files in `filePaths`
+
 ## [2.0.7] - 2024-05-12
 
 ### Changed
