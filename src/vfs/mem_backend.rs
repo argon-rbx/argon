@@ -64,7 +64,7 @@ impl VfsBackend for MemBackend {
 		let entry = self.inner.entry(path.to_owned()).or_insert(VfsEntry::File(vec![]));
 
 		match entry {
-			VfsEntry::File(old) => *old = contents.to_owned(),
+			VfsEntry::File(old) => contents.clone_into(old),
 			VfsEntry::Direcotry(_) => return not_file(path),
 		}
 

@@ -61,12 +61,12 @@ impl Program {
 	}
 
 	pub fn current_dir(&mut self, dir: &Path) -> &mut Self {
-		self.current_dir = dir.to_owned();
+		dir.clone_into(&mut self.current_dir);
 		self
 	}
 
 	pub fn message(&mut self, message: &str) -> &mut Self {
-		self.message = message.to_owned();
+		message.clone_into(&mut self.message);
 		self
 	}
 

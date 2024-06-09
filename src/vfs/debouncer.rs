@@ -180,7 +180,7 @@ fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<Vfs
 			let path = event_path!(event);
 
 			context.time = event.time;
-			context.path = path.clone();
+			context.path.clone_from(&path);
 
 			Some(VfsEvent::Create(path))
 		}

@@ -76,21 +76,21 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 	let mut updated_snapshot = UpdatedSnapshot::new(id);
 
 	updated_snapshot.name = if snapshot.name != instance.name {
-		instance.name = snapshot.name.clone();
+		instance.name.clone_from(&snapshot.name);
 		Some(snapshot.name)
 	} else {
 		None
 	};
 
 	updated_snapshot.class = if snapshot.class != instance.class {
-		instance.class = snapshot.class.clone();
+		instance.class.clone_from(&snapshot.class);
 		Some(snapshot.class)
 	} else {
 		None
 	};
 
 	updated_snapshot.properties = if snapshot.properties != instance.properties {
-		instance.properties = snapshot.properties.clone();
+		instance.properties.clone_from(&snapshot.properties);
 		Some(snapshot.properties)
 	} else {
 		None

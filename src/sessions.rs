@@ -64,7 +64,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 	let session = Session { host, port, pid };
 	let id = id.unwrap_or(generate_id(&sessions));
 
-	sessions.last_session = id.clone();
+	sessions.last_session.clone_from(&id);
 	sessions.active_sessions.insert(id, session.clone());
 
 	set_sessions(&sessions)?;
@@ -140,7 +140,7 @@ pub fn remove(session: &Session) -> Result<()> {
 
 	if sessions.last_session == id {
 		if let Some((session_id, _)) = sessions.active_sessions.iter().next() {
-			sessions.last_session = session_id.clone();
+			sessions.last_session.clone_from(session_id);
 		} else {
 			sessions.last_session = String::new();
 		}

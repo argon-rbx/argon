@@ -68,7 +68,7 @@ pub fn hook() {
 			backtrace = backtrace.replace('&', "ptr");
 
 			if backtrace.len() > MAX_BACKTRACE_LEN {
-				backtrace = backtrace[..MAX_BACKTRACE_LEN].to_owned();
+				backtrace.drain(..MAX_BACKTRACE_LEN);
 				backtrace.push_str("\n...\n");
 			}
 

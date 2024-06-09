@@ -97,8 +97,8 @@ impl Project {
 
 		let workspace_dir = workspace::get_dir(project_path);
 
-		project.path = project_path.to_owned();
-		project.workspace_dir = workspace_dir.to_owned();
+		project_path.clone_into(&mut project.path);
+		workspace_dir.clone_into(&mut project.workspace_dir);
 
 		Ok(project)
 	}

@@ -83,11 +83,11 @@ impl Snapshot {
 	}
 
 	pub fn set_name(&mut self, name: &str) {
-		self.name = name.to_owned();
+		name.clone_into(&mut self.name);
 	}
 
 	pub fn set_class(&mut self, class: &str) {
-		self.class = class.to_owned();
+		class.clone_into(&mut self.class);
 	}
 
 	pub fn set_properties(&mut self, properties: Properties) {
