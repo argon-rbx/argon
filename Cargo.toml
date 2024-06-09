@@ -63,7 +63,7 @@ dialoguer = "0.11.0"
 path-clean = "1.0.1"
 rmp-serde = "1.1.2"
 actix-web = "4.7.0"
-multimap = "0.9.1"
+multimap = "0.10.0"
 optfield = "0.3.0"
 
 json2lua = "0.1.2"
