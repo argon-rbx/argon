@@ -47,7 +47,7 @@ self_update = { version = "0.39.0", default-features = false, features = [
 
 notify-debouncer-full = "0.3.1"
 clap-verbosity-flag = "2.1.0"
-crossbeam-channel = "0.5.8"
+crossbeam-channel = "0.5.13"
 derive-from-one = "0.1.0"
 roblox_install = "1.0.0"
 panic-message = "0.3.0"
