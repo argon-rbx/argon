@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Sourcemap now includes project files in `filePaths`
+- Script `Enabled` and `RunContext` flags no longer comment first line
 
 ## [2.0.7] - 2024-05-12
 

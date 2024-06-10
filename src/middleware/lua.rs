@@ -84,7 +84,7 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 			let (header, source) = source.split_at(new_line);
 			(header.to_string(), source.to_string())
 		} else {
-			(String::new(), source.to_owned())
+			(source.to_owned(), String::new())
 		}
 	} else {
 		(String::new(), String::new())
@@ -96,8 +96,6 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 		new_header += "--disable ";
 	}
 
-	new_header.pop();
-
 	if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
 		match run_context.to_u32() {
 			1 => new_header += "--server ",
@@ -107,22 +105,24 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 		}
 	}
 
-	header = header.replace("--disable", "");
-	header = header.replace("--server", "");
-	header = header.replace("--client", "");
-	header = header.replace("--plugin", "");
-
-	if header.len() == header.match_indices(' ').count() {
-		header.clear();
-	}
-
-	new_header += &header;
+	new_header.pop();
 
 	if !new_header.is_empty() && !source.starts_with('\n') {
 		new_header += "\n";
 	}
 
-	source = new_header + &source;
+	if header.contains("--") {
+		header = header.replace("--disable", "");
+		header = header.replace("--server", "");
+		header = header.replace("--client", "");
+		header = header.replace("--plugin", "");
+
+		if header.len() == header.match_indices(' ').count() {
+			header.clear();
+		}
+	}
+
+	source = new_header + &header + &source;
 
 	vfs.write(path, source.as_bytes())?;
 
