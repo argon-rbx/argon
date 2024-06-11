@@ -1,10 +1,11 @@
 use anyhow::{bail, Result};
 use crossbeam_channel::{Receiver, Sender};
-use std::{collections::HashMap, sync::RwLock, time::Duration};
+use std::{collections::HashMap, sync::RwLock};
 
-use crate::messages::{self, Message};
-
-const TIMEOUT: Duration = Duration::from_secs(60);
+use crate::{
+	constants::QUEUE_TIMEOUT,
+	messages::{self, Message},
+};
 
 macro_rules! read {
 	($rwlock:expr) => {
@@ -99,7 +100,7 @@ impl Queue {
 
 		drop(queues);
 
-		let message = receiver.recv_timeout(TIMEOUT).ok();
+		let message = receiver.recv_timeout(QUEUE_TIMEOUT).ok();
 
 		Ok(message)
 	}

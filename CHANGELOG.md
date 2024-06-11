@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `relative_paths` setting to global config
+
 ### Fixed
 
 - Sourcemap now includes project files in `filePaths`

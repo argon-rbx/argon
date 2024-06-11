@@ -17,6 +17,11 @@ pub const CHANGES_TRESHOLD: usize = 5;
 // currently it is 512 MiB but it is a huge overkill
 pub const MAX_PAYLOAD_SIZE: usize = 536_870_912;
 
+/// How long the server should wait for the changes to
+/// appear in the queue before manually "timing out"
+/// the client request and sending back an empty `Changes`
+pub const QUEUE_TIMEOUT: Duration = Duration::from_secs(60);
+
 // VFS events will be ignored for this amount of time
 // after the last change that has been made by the client,
 // this saves a lot of computing time
