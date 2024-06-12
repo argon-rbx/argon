@@ -78,15 +78,15 @@ impl Core {
 	}
 
 	pub fn name(&self) -> String {
-		lock!(self.project).name.clone()
+		self.project().name.clone()
 	}
 
 	pub fn host(&self) -> Option<String> {
-		lock!(self.project).host.clone()
+		self.project().host.clone()
 	}
 
 	pub fn port(&self) -> Option<u16> {
-		lock!(self.project).port
+		self.project().port
 	}
 
 	pub fn project(&self) -> MutexGuard<'_, Project> {
@@ -107,7 +107,7 @@ impl Core {
 
 	/// Create snapshot of the tree
 	pub fn snapshot(&self) -> Snapshot {
-		let tree = lock!(self.tree);
+		let tree = self.tree();
 
 		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
 			let mut snapshot_children = vec![];
@@ -147,7 +147,7 @@ impl Core {
 		let writer = BufWriter::new(File::create(path)?);
 		let tree = lock!(&self.tree);
 
-		let root_refs = if lock!(self.project).is_place() {
+		let root_refs = if self.project().is_place() {
 			tree.place_root_refs().to_vec()
 		} else {
 			vec![tree.root_ref()]
@@ -169,13 +169,15 @@ impl Core {
 		let tree = lock!(&self.tree);
 		let dom = tree.inner();
 
-		fn walk(tree: &Tree, id: Ref, non_scripts: bool) -> Option<SourcemapNode> {
+		let workspace_dir = &self.project().workspace_dir;
+
+		fn walk(tree: &Tree, id: Ref, workspace_dir: &Path, non_scripts: bool) -> Option<SourcemapNode> {
 			let instance = tree.get_instance(id).unwrap();
 
 			let children: Vec<SourcemapNode> = instance
 				.children()
 				.iter()
-				.filter_map(|&child_id| walk(tree, child_id, non_scripts))
+				.filter_map(|&child_id| walk(tree, child_id, workspace_dir, non_scripts))
 				.collect();
 
 			if children.is_empty() && (!non_scripts && !util::is_script(&instance.class)) {
@@ -188,7 +190,11 @@ impl Core {
 					.iter()
 					.filter_map(|entry| match entry {
 						SourceEntry::File(path) | SourceEntry::Data(path) | SourceEntry::Project(path) => {
-							Some(path.to_owned())
+							if let Ok(path) = path.strip_prefix(workspace_dir) {
+								Some(path.to_owned())
+							} else {
+								Some(path.to_owned())
+							}
 						}
 						_ => None,
 					})
@@ -203,7 +209,7 @@ impl Core {
 			})
 		}
 
-		let sourcemap = walk(&tree, dom.root_ref(), non_scripts);
+		let sourcemap = walk(&tree, dom.root_ref(), workspace_dir, non_scripts);
 
 		if let Some(path) = path {
 			let writer = BufWriter::new(File::create(path)?);
@@ -216,7 +222,7 @@ impl Core {
 	}
 
 	pub fn open(&self, instance: Ref) -> Result<()> {
-		let tree = lock!(self.tree);
+		let tree = self.tree();
 
 		let mut sources = if let Some(meta) = tree.get_meta(instance) {
 			meta.source.relevant().to_owned()

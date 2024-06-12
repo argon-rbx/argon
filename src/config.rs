@@ -51,8 +51,6 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
-	/// Work on relative paths instead of absolute ones
-	pub relative_paths: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Share anonymous Argon usage statistics with the community
@@ -83,7 +81,6 @@ impl Default for Config {
 			rojo_mode: false,
 			ts_mode: false,
 
-			relative_paths: false,
 			move_to_bin: false,
 			share_stats: true,
 		}

@@ -6,8 +6,6 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::config::Config;
-
 /// Collection of extension methods for `Path`
 
 pub trait PathExt {
@@ -24,7 +22,7 @@ pub trait PathExt {
 
 impl PathExt for Path {
 	fn resolve(&self) -> Result<PathBuf> {
-		if self.is_absolute() || Config::new().relative_paths {
+		if self.is_absolute() {
 			return Ok(self.to_owned());
 		}
 

@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-- `relative_paths` setting to global config
+- `filePaths` in sourcemap are now relative instead of absolute
 
 ### Fixed
 
