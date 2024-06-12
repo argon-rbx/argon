@@ -69,7 +69,7 @@ impl Sourcemap {
 			argon_info!(
 				"Generated sourcemap of project: {} at: {}",
 				project_path.to_string().bold(),
-				output.to_string().bold()
+				output.resolve()?.to_string().bold()
 			);
 		}
 

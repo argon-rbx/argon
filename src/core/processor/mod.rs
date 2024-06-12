@@ -129,7 +129,10 @@ impl Handler {
 
 					match current_path.parent() {
 						Some(parent) => current_path = parent,
-						None => break vec![],
+						None => {
+							trace!("No ID found for path {:?}", path);
+							return;
+						}
 					}
 				}
 			};
@@ -155,7 +158,7 @@ impl Handler {
 				}
 			}
 		} else {
-			trace!("No ID found for path {:?}", path);
+			trace!("No changes detected when processing path: {:?}", path);
 		}
 	}
 

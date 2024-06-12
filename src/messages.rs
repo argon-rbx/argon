@@ -21,6 +21,7 @@ pub struct SyncDetails(pub ProjectDetails);
 pub struct ExecuteCode {
 	pub code: String,
 }
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Disconnect {
 	pub message: String,

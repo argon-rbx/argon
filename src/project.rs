@@ -1,4 +1,5 @@
 use anyhow::Result;
+use path_clean::PathClean;
 use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -170,7 +171,7 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
-	let path = path_clean::clean(path.resolve()?);
+	let path = path.resolve()?.clean();
 
 	if path.is_file() || path.get_name().ends_with(".project.json") {
 		return Ok(path);

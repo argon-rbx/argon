@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use colored::Colorize;
 use log::error;
+use path_clean::PathClean;
 use rbx_dom_weak::types::Tags;
 use std::{collections::HashMap, path::Path};
 
@@ -101,7 +102,7 @@ pub fn new_snapshot_node(
 		.with_meta(meta);
 
 	if let Some(custom_path) = node.path {
-		let path = path_clean::clean(path.with_file_name(custom_path));
+		let path = path.with_file_name(custom_path).clean();
 
 		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);

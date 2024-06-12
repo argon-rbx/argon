@@ -29,7 +29,7 @@ fn msgpack_to_lua(value: &Value) -> String {
 		Value::Boolean(b) => lua.push_str(&b.to_string()),
 		Value::Integer(i) => lua.push_str(&i.to_string()),
 		Value::F32(f) => {
-			if (*f as f64).is_infinite() {
+			if f.is_infinite() {
 				lua.push_str("math.huge")
 			} else {
 				lua.push_str(&f.to_string())
