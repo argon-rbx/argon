@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.8] - 2024-06-16
+
 ### Added
 
 - `lua_extension` global setting to control file extension when writing scripts
@@ -170,7 +172,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.7...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.8...HEAD
+[2.0.8]: https://github.com/argon-rbx/argon/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/argon-rbx/argon/compare/2.0.6...2.0.7
 [2.0.6]: https://github.com/argon-rbx/argon/compare/2.0.5...2.0.6
 [2.0.5]: https://github.com/argon-rbx/argon/compare/2.0.4...2.0.5
