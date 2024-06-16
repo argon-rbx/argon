@@ -3,7 +3,13 @@ use clap::{ArgAction, Parser};
 use colored::Colorize;
 use std::path::PathBuf;
 
-use crate::{argon_error, argon_info, config::Config, ext::PathExt, project, stats, workspace};
+use crate::{
+	argon_error, argon_info,
+	config::Config,
+	ext::PathExt,
+	project, stats,
+	workspace::{self, WorkspaceConfig},
+};
 
 /// Initialize a new Argon project
 #[derive(Parser)]
@@ -73,8 +79,19 @@ impl Init {
 		let docs = self.docs.unwrap_or(config.include_docs);
 		let ts = self.ts.unwrap_or(config.ts_mode);
 
+		let mut workspace_config = WorkspaceConfig {
+			project: &project.clone(),
+			template: &template,
+			license: &license,
+			git,
+			wally,
+			docs,
+			rojo_mode: config.rojo_mode,
+			use_lua: config.lua_extension,
+		};
+
 		if ts {
-			if workspace::init_ts(&project, &template, &license, git, wally, docs)? {
+			if workspace::init_ts(workspace_config)? {
 				let path = project.resolve()?.join("default.project.json");
 
 				argon_info!(
@@ -93,7 +110,8 @@ impl Init {
 			return Ok(());
 		}
 
-		workspace::init(&project_path, &template, &license, git, wally, docs, config.rojo_mode)?;
+		workspace_config.project = &project_path;
+		workspace::init(workspace_config)?;
 
 		argon_info!("Successfully initialized project: {}", project_path.to_string().bold());
 

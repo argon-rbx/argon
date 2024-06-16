@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 use crate::{
+	config::Config,
 	constants::default_sync_rules,
 	ext::PathExt,
 	glob::Glob,
@@ -396,6 +397,30 @@ impl Context {
 		self.sync_rules()
 			.iter()
 			.filter(|rule| rule.middleware == *middleware)
+			.collect()
+	}
+
+	pub fn sync_rules_of_type_filtered(&self, middleware: &Middleware) -> Vec<&SyncRule> {
+		let config = Config::new();
+
+		self.sync_rules_of_type(middleware)
+			.iter()
+			.filter(|rule| {
+				if let Some(child_pattern) = rule.child_pattern.as_ref() {
+					if child_pattern.as_str().starts_with(".src") && config.rojo_mode {
+						return false;
+					}
+				}
+
+				if let Some(pattern) = rule.pattern.as_ref().or(rule.child_pattern.as_ref()) {
+					if pattern.as_str().ends_with(".luau") && config.lua_extension {
+						return false;
+					}
+				}
+
+				true
+			})
+			.cloned()
 			.collect()
 	}
 

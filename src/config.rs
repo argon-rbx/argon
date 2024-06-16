@@ -51,6 +51,8 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
+	/// Use .lua file extension instead of .luau when writing scripts
+	pub lua_extension: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Share anonymous Argon usage statistics with the community
@@ -81,6 +83,7 @@ impl Default for Config {
 			rojo_mode: false,
 			ts_mode: false,
 
+			lua_extension: false,
 			move_to_bin: false,
 			share_stats: true,
 		}

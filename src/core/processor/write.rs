@@ -10,6 +10,7 @@ use std::{
 
 use crate::{
 	argon_error,
+	config::Config,
 	core::{
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
@@ -96,7 +97,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		if let Some(middleware) = Middleware::from_class(&snapshot.class) {
 			let file_path = parent_meta
 				.context
-				.sync_rules_of_type(&middleware)
+				.sync_rules_of_type_filtered(&middleware)
 				.iter()
 				.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
@@ -187,6 +188,8 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		tree: &mut Tree,
 		vfs: &Vfs,
 	) -> Result<Source> {
+		let config = Config::new();
+
 		let mut parent_path = parent_path.to_owned();
 
 		// Transform parent instance source from file to folder
@@ -195,6 +198,13 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.context
 				.sync_rules()
 				.iter()
+				.filter(|rule| {
+					if let Some(pattern) = rule.child_pattern.as_ref() {
+						!(pattern.as_str().starts_with(".src") && config.rojo_mode)
+					} else {
+						true
+					}
+				})
 				.find(|rule| rule.matches(&parent_path))
 				.with_context(|| format!("Failed to find sync rule for path: {}", parent_path.display()))?;
 
@@ -411,7 +421,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			} else {
 				let file_path = meta
 					.context
-					.sync_rules_of_type(&middleware)
+					.sync_rules_of_type_filtered(&middleware)
 					.iter()
 					.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
 

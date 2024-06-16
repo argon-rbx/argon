@@ -12,6 +12,18 @@ use crate::{
 	util,
 };
 
+#[derive(Debug)]
+pub struct WorkspaceConfig<'a> {
+	pub project: &'a Path,
+	pub template: &'a str,
+	pub license: &'a str,
+	pub git: bool,
+	pub wally: bool,
+	pub docs: bool,
+	pub rojo_mode: bool,
+	pub use_lua: bool,
+}
+
 fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
 	trace!("Getting {} license template..", license);
 
@@ -69,23 +81,15 @@ fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
 	Ok(())
 }
 
-pub fn init(
-	project: &Path,
-	template: &str,
-	license: &str,
-	git: bool,
-	wally: bool,
-	docs: bool,
-	rojo_mode: bool,
-) -> Result<()> {
-	let templates_dir = util::get_argon_dir()?.join("templates").join(template);
+pub fn init(workspace: WorkspaceConfig) -> Result<()> {
+	let templates_dir = util::get_argon_dir()?.join("templates").join(workspace.template);
 
 	if !templates_dir.exists() {
-		bail!("Template {} does not exist", template.bold())
+		bail!("Template {} does not exist", workspace.template.bold())
 	}
 
-	let project_name = get_name(project);
-	let workspace_dir = get_dir(project);
+	let project_name = get_name(workspace.project);
+	let workspace_dir = get_dir(workspace.project);
 
 	if !workspace_dir.exists() {
 		fs::create_dir_all(workspace_dir)?;
@@ -99,7 +103,7 @@ pub fn init(
 		let stem = path.get_stem();
 
 		let new_path = if name == "project.json" {
-			project.to_owned()
+			workspace.project.to_owned()
 		} else {
 			workspace_dir.join(name)
 		};
@@ -116,23 +120,23 @@ pub fn init(
 				fs::write(new_path, content)?;
 			}
 			".gitignore" | ".github" => {
-				if git {
+				if workspace.git {
 					fs::copy(path, new_path)?;
 				}
 			}
 			"wally.toml" => {
-				if wally || template == "package" {
+				if workspace.wally || workspace.template == "package" {
 					let content = fs::read_to_string(path)?;
 					let content = content.replace("$name", project_name);
 					let content = content.replace("$author", &util::get_username());
-					let content = content.replace("$license", license);
+					let content = content.replace("$license", workspace.license);
 
 					fs::write(new_path, content)?;
 				}
 			}
 			_ => match stem {
 				"README" | "CHANGELOG" => {
-					if docs {
+					if workspace.docs {
 						let content = fs::read_to_string(path)?;
 						let content = content.replace("$name", project_name);
 
@@ -142,13 +146,13 @@ pub fn init(
 				"LICENSE" => {
 					let fallback = fs::read_to_string(path)?;
 
-					if docs {
-						add_license(&new_path, license, &fallback)?;
+					if workspace.docs {
+						add_license(&new_path, workspace.license, &fallback)?;
 					}
 				}
 				_ => {
 					if path.is_dir() {
-						copy_dir(&path, &new_path, rojo_mode)?;
+						copy_dir(&path, &new_path, workspace.rojo_mode, workspace.use_lua)?;
 					} else {
 						fs::copy(path, new_path)?;
 					}
@@ -157,16 +161,17 @@ pub fn init(
 		}
 	}
 
-	if git {
+	if workspace.git {
 		initialize_repo(workspace_dir)?;
 	}
 
 	Ok(())
 }
 
-pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: bool, docs: bool) -> Result<bool> {
+pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 	argon_info!("Waiting for npm..");
 
+	let template = workspace.template;
 	let command = match template {
 		"place" => "game",
 		"plugin" => template,
@@ -182,8 +187,8 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		.arg(command)
 		.arg("--")
 		.arg("--skipBuild")
-		.arg(&format!("--git={}", git))
-		.args(["--dir", &project.to_string()])
+		.arg(&format!("--git={}", workspace.git))
+		.args(["--dir", &workspace.project.to_string()])
 		.arg(if util::env_yes() { "--yes" } else { "" })
 		.spawn()?;
 
@@ -201,7 +206,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 		return Ok(false);
 	}
 
-	if docs {
+	if workspace.docs {
 		let templates_dir = util::get_argon_dir()?.join("templates").join(template);
 
 		if !templates_dir.exists() {
@@ -210,7 +215,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			return Ok(true);
 		}
 
-		let project_name = project.get_name();
+		let project_name = workspace.project.get_name();
 
 		for entry in fs::read_dir(templates_dir)? {
 			let entry = entry?;
@@ -219,7 +224,7 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 			let name = path.get_name();
 			let stem = path.get_stem();
 
-			let new_path = project.join(name);
+			let new_path = workspace.project.join(name);
 
 			if new_path.exists() {
 				continue;
@@ -235,10 +240,10 @@ pub fn init_ts(project: &Path, template: &str, license: &str, git: bool, wally: 
 				"LICENSE" => {
 					let fallback = fs::read_to_string(path)?;
 
-					add_license(&new_path, license, &fallback)?;
+					add_license(&new_path, workspace.license, &fallback)?;
 				}
 				"wally" => {
-					if wally {
+					if workspace.wally {
 						let content = fs::read_to_string(path)?;
 						let content = content.replace("$name", project_name);
 						let content = content.replace("$author", &util::get_username());
@@ -276,7 +281,7 @@ pub fn get_name(project_path: &Path) -> &str {
 	project_path.get_parent().get_name()
 }
 
-fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
+fn copy_dir(from: &Path, to: &Path, rojo_mode: bool, use_lua: bool) -> Result<()> {
 	if !to.exists() {
 		fs::create_dir_all(to)?;
 	}
@@ -291,8 +296,12 @@ fn copy_dir(from: &Path, to: &Path, rojo_mode: bool) -> Result<()> {
 			name = name.replace(".src", "init");
 		}
 
+		if name.ends_with(".luau") && use_lua {
+			name = name.replace(".luau", ".lua");
+		}
+
 		if path.is_dir() {
-			copy_dir(&path, &to.join(name), rojo_mode)?;
+			copy_dir(&path, &to.join(name), rojo_mode, use_lua)?;
 		} else if name != ".gitkeep" {
 			fs::copy(&path, &to.join(name))?;
 		}

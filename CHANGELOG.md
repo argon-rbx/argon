@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `lua_extension` global setting to control file extension when writing scripts
+
 ### Changed
 
 - `filePaths` in sourcemap are now relative instead of absolute
@@ -13,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Sourcemap now includes project files in `filePaths`
-- Script `Enabled` and `RunContext` flags no longer comment first line
+- Script `Enabled` and `RunContext` flags no longer comment first line ([#28](https://github.com/argon-rbx/argon/issues/28))
+- `rojo_mode` setting is now respected in two-way sync ([#47](https://github.com/argon-rbx/argon/issues/47))
 
 ## [2.0.7] - 2024-05-12
 
