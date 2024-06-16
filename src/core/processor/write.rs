@@ -78,6 +78,15 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 	snapshot.properties = validate_properties(snapshot.properties, filter);
 
+	fn locate_instance_data(is_dir: bool, path: &Path, snapshot: &Snapshot, parent_meta: &Meta) -> Result<PathBuf> {
+		parent_meta
+			.context
+			.sync_rules_of_type(&Middleware::InstanceData)
+			.iter()
+			.find_map(|rule| rule.locate(path, &snapshot.name, is_dir))
+			.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))
+	}
+
 	fn write_instance(
 		has_children: bool,
 		path: &Path,
@@ -97,7 +106,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		if let Some(middleware) = Middleware::from_class(&snapshot.class) {
 			let file_path = parent_meta
 				.context
-				.sync_rules_of_type_filtered(&middleware)
+				.sync_rules_of_type(&middleware)
 				.iter()
 				.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
@@ -133,12 +142,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			let properties = middleware.write(properties, &file_path, vfs)?;
 
 			if !properties.is_empty() {
-				let data_path = parent_meta
-					.context
-					.sync_rules_of_type(&Middleware::InstanceData)
-					.iter()
-					.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
-					.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))?;
+				let data_path = locate_instance_data(has_children, path, snapshot, parent_meta)?;
 
 				if filter.matches_path(&data_path) {
 					filter_warn!(snapshot.id, &data_path);
@@ -162,12 +166,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			meta.source = Source::directory(path);
 
-			let data_path = parent_meta
-				.context
-				.sync_rules_of_type(&Middleware::InstanceData)
-				.iter()
-				.find_map(|rule| rule.locate(path, &snapshot.name, true))
-				.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))?;
+			let data_path = locate_instance_data(true, path, snapshot, parent_meta)?;
 
 			if filter.matches_path(&data_path) {
 				filter_warn!(snapshot.id, &data_path);
@@ -200,7 +199,8 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.iter()
 				.filter(|rule| {
 					if let Some(pattern) = rule.child_pattern.as_ref() {
-						!(pattern.as_str().starts_with(".src") && config.rojo_mode)
+						!((pattern.as_str().starts_with(".src") || pattern.as_str().ends_with(".data.json"))
+							&& config.rojo_mode)
 					} else {
 						true
 					}
@@ -421,7 +421,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			} else {
 				let file_path = meta
 					.context
-					.sync_rules_of_type_filtered(&middleware)
+					.sync_rules_of_type(&middleware)
 					.iter()
 					.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
 
