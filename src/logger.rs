@@ -77,6 +77,7 @@ pub fn init(verbosity: LevelFilter, log_style: WriteStyle) {
 	builder.filter_module("actix_server", LevelFilter::Warn);
 	builder.filter_module("actix_http", LevelFilter::Warn);
 	builder.filter_module("reqwest", LevelFilter::Warn);
+	builder.filter_module("rustls", LevelFilter::Warn);
 	builder.filter_module("hyper", LevelFilter::Warn);
 	builder.filter_module("mio", LevelFilter::Warn);
 

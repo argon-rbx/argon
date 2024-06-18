@@ -3,7 +3,10 @@ use chrono::Datelike;
 use colored::Colorize;
 use log::{debug, trace};
 use reqwest::{blocking::Client, header::USER_AGENT};
-use std::{fs, path::Path};
+use std::{
+	fs,
+	path::{Path, PathBuf},
+};
 
 use crate::{
 	argon_info, argon_warn,
@@ -172,13 +175,27 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 	argon_info!("Waiting for npm..");
 
 	let template = workspace.template;
-	let command = match template {
+	let mut project = workspace.project.to_owned();
+
+	let env_yes = util::env_yes();
+	let mut command = match template {
 		"place" => "game",
 		"plugin" => template,
 		"package" => template,
 		"model" => template,
 		_ => "init",
 	};
+
+	if project.get_name().ends_with(".project.json") {
+		project = workspace
+			.project
+			.parent()
+			.map_or(PathBuf::new(), |path| path.to_owned());
+	}
+
+	if command == "init" && env_yes {
+		command = "game";
+	}
 
 	let child = Program::new(ProgramName::Npm)
 		.message("Failed to initialize roblox-ts project")
@@ -188,8 +205,8 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 		.arg("--")
 		.arg("--skipBuild")
 		.arg(&format!("--git={}", workspace.git))
-		.args(["--dir", &workspace.project.to_string()])
-		.arg(if util::env_yes() { "--yes" } else { "" })
+		.args(["--dir", &project.to_string()])
+		.arg(if env_yes { "--yes" } else { "" })
 		.spawn()?;
 
 	if let Some(child) = child {
@@ -215,7 +232,7 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 			return Ok(true);
 		}
 
-		let project_name = workspace.project.get_name();
+		let project_name = project.get_name();
 
 		for entry in fs::read_dir(templates_dir)? {
 			let entry = entry?;
@@ -224,7 +241,7 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 			let name = path.get_name();
 			let stem = path.get_stem();
 
-			let new_path = workspace.project.join(name);
+			let new_path = project.join(name);
 
 			if new_path.exists() {
 				continue;
