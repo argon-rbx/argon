@@ -171,7 +171,7 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 	Ok(())
 }
 
-pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
+pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 	argon_info!("Waiting for npm..");
 
 	let template = workspace.template;
@@ -214,13 +214,13 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 
 		if let Some(code) = output.status.code() {
 			if code != 0 {
-				return Ok(false);
+				return Ok(None);
 			}
 		} else {
-			return Ok(false);
+			return Ok(None);
 		}
 	} else {
-		return Ok(false);
+		return Ok(None);
 	}
 
 	if workspace.docs {
@@ -229,7 +229,7 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 		if !templates_dir.exists() {
 			argon_warn!("Template {} does not exist, docs won't be added!", template.bold());
 
-			return Ok(true);
+			return Ok(Some(project));
 		}
 
 		let project_name = project.get_name();
@@ -273,7 +273,7 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<bool> {
 		}
 	}
 
-	Ok(true)
+	Ok(Some(project))
 }
 
 pub fn initialize_repo(directory: &Path) -> Result<()> {

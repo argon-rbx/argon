@@ -91,8 +91,8 @@ impl Init {
 		};
 
 		if ts {
-			if workspace::init_ts(workspace_config)? {
-				let path = project.resolve()?.join("default.project.json");
+			if let Some(path) = workspace::init_ts(workspace_config)? {
+				let path = path.resolve()?.join("default.project.json");
 
 				argon_info!(
 					"Successfully initialized roblox-ts project: {}",
