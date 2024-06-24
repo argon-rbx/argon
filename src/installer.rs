@@ -141,6 +141,7 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 		Err(err) => {
 			trace!("Failed to install Argon plugin from GitHub: {}", err);
 
+			#[allow(clippy::const_is_empty)]
 			if ARGON_PLUGIN.is_empty() {
 				argon_error!("No internet connection! Failed to install Argon plugin - no bundled binary found");
 				return Ok(());
