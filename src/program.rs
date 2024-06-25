@@ -115,6 +115,7 @@ impl Program {
 
 		let package_manager = Config::new().package_manager.as_str();
 
+		#[allow(unused_mut)]
 		let mut program = match (&self.program, package_manager) {
 			(ProgramName::Npm, _) => package_manager,
 			(ProgramName::Npx, "npm") => "npx",
