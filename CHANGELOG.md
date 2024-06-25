@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.9] - 2024-06-25
+
 ### Added
 
 - `package_manager` setting that allows to change package manager used when running roblox-ts related commands (bun, npm, pnpm, yarn)
@@ -180,7 +182,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.8...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.9...HEAD
+[2.0.9]: https://github.com/argon-rbx/argon/compare/2.0.8...2.0.9
 [2.0.8]: https://github.com/argon-rbx/argon/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/argon-rbx/argon/compare/2.0.6...2.0.7
 [2.0.6]: https://github.com/argon-rbx/argon/compare/2.0.5...2.0.6
