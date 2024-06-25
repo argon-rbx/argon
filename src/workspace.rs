@@ -10,6 +10,7 @@ use std::{
 
 use crate::{
 	argon_info, argon_warn,
+	config::Config,
 	ext::PathExt,
 	program::{Program, ProgramName},
 	util,
@@ -172,7 +173,9 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 }
 
 pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
-	argon_info!("Waiting for npm..");
+	let package_manager = &Config::new().package_manager;
+
+	argon_info!("Waiting for {}..", package_manager.bold());
 
 	let template = workspace.template;
 	let mut project = workspace.project.to_owned();
@@ -199,12 +202,12 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 
 	let child = Program::new(ProgramName::Npm)
 		.message("Failed to initialize roblox-ts project")
-		.arg("init")
+		.arg("create")
 		.arg("roblox-ts")
 		.arg(command)
-		.arg("--")
 		.arg("--skipBuild")
-		.arg(&format!("--git={}", workspace.git))
+		.arg(format!("--git={}", workspace.git))
+		.arg(format!("--packageManager={}", package_manager))
 		.args(["--dir", &project.to_string()])
 		.arg(if env_yes { "--yes" } else { "" })
 		.spawn()?;

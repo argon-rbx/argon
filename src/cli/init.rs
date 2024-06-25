@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
+use path_clean::PathClean;
 use std::path::PathBuf;
 
 use crate::{
@@ -92,7 +93,7 @@ impl Init {
 
 		if ts {
 			if let Some(path) = workspace::init_ts(workspace_config)? {
-				let path = path.resolve()?.join("default.project.json");
+				let path = path.resolve()?.join("default.project.json").clean();
 
 				argon_info!(
 					"Successfully initialized roblox-ts project: {}",

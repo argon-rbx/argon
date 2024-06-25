@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `package_manager` setting that allows to change package manager used when running roblox-ts related commands (bun, npm, pnpm, yarn)
+
 ### Fixed
 
 - `argon init` now works properly with `PATH` argument and `roblox-ts`, `--yes` options ([#51](https://github.com/argon-rbx/argon/issues/51))

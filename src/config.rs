@@ -51,6 +51,8 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
+	/// Package manager to use when running roblox-ts scripts (npm, yarn, etc.)
+	pub package_manager: String,
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
@@ -83,6 +85,7 @@ impl Default for Config {
 			rojo_mode: false,
 			ts_mode: false,
 
+			package_manager: String::from("npm"),
 			lua_extension: false,
 			move_to_bin: false,
 			share_stats: true,

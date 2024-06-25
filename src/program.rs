@@ -8,7 +8,7 @@ use std::{
 	process::{Child, Command, Output, Stdio},
 };
 
-use crate::{argon_error, ext::WriteStyleExt, logger, util};
+use crate::{argon_error, config::Config, ext::WriteStyleExt, logger, util};
 
 #[derive(PartialEq)]
 pub enum ProgramName {
@@ -43,6 +43,11 @@ impl Program {
 
 		if arg.is_empty() {
 			return self;
+		}
+
+		// npm create requires -- before the command
+		if self.args.len() == 1 && self.program == ProgramName::Npm && Config::new().package_manager.as_str() == "npm" {
+			self.args.push("--".to_owned());
 		}
 
 		self.args.push(arg);
@@ -108,21 +113,23 @@ impl Program {
 			return command;
 		};
 
-		#[cfg(not(target_os = "windows"))]
-		let program = match self.program {
-			ProgramName::Git => "git",
-			ProgramName::Npm => "npm",
-			ProgramName::Npx => "npx",
-			ProgramName::Argon => unreachable!(),
+		let package_manager = Config::new().package_manager.as_str();
+
+		let program = match (&self.program, package_manager) {
+			(ProgramName::Npm, _) => package_manager,
+			(ProgramName::Npx, "npm") => "npx",
+			(ProgramName::Npx, _) => package_manager,
+			(ProgramName::Git, _) => "git",
+			(ProgramName::Argon, _) => unreachable!(),
 		};
 
-		#[cfg(target_os = "windows")]
-		let program = match self.program {
-			ProgramName::Git => "git",
-			ProgramName::Npm => "npm.cmd",
-			ProgramName::Npx => "npx.cmd",
-			ProgramName::Argon => unreachable!(),
-		};
+		// #[cfg(target_os = "windows")]
+		// let program = match self.program {
+		// 	ProgramName::Git => "git",
+		// 	ProgramName::Npm => "npm.cmd",
+		// 	ProgramName::Npx => "npx.cmd",
+		// 	ProgramName::Argon => unreachable!(),
+		// };
 
 		let mut command = Command::new(program);
 		command.current_dir(self.current_dir.clone()).args(self.args.clone());
@@ -139,7 +146,7 @@ impl Program {
 		if error.kind() == ErrorKind::NotFound {
 			argon_error!("{}", self.get_error(&self.message));
 
-			if logger::prompt(self.get_prompt(), false) {
+			if logger::prompt(&self.get_prompt(), false) {
 				open::that(self.get_link())?;
 			}
 
@@ -152,28 +159,44 @@ impl Program {
 	fn get_error(&self, error: &str) -> String {
 		match self.program {
 			ProgramName::Git => format!(
-				"{}: Git is not installed. To suppress this message remove {} option or disable {} setting",
+				"{}: {} is not installed. To suppress this message remove {} option or disable {} setting",
 				error,
+				"Git".bold(),
 				"--git".bold(),
 				"use_git".bold()
 			),
-			ProgramName::Npm | ProgramName::Npx => format!("{}: npm is not installed", error),
+			ProgramName::Npm | ProgramName::Npx => {
+				format!(
+					"{}: {} is not installed",
+					error,
+					Config::new().package_manager.as_str().bold()
+				)
+			}
 			ProgramName::Argon => unreachable!(),
 		}
 	}
 
-	fn get_prompt(&self) -> &'static str {
+	fn get_prompt(&self) -> String {
 		match self.program {
-			ProgramName::Git => "Do you want to install Git now?",
-			ProgramName::Npm | ProgramName::Npx => "Do you want to install npm now?",
+			ProgramName::Git => format!("Do you want to install {} now?", "Git".bold()),
+			ProgramName::Npm | ProgramName::Npx => {
+				format!("Do you want to install {} now?", Config::new().package_manager.bold())
+			}
 			ProgramName::Argon => unreachable!(),
 		}
 	}
 
-	fn get_link(&self) -> &'static str {
+	fn get_link(&self) -> String {
 		match self.program {
-			ProgramName::Git => "https://git-scm.com/downloads",
-			ProgramName::Npm | ProgramName::Npx => "https://nodejs.org/en/download/",
+			ProgramName::Git => "https://git-scm.com/downloads".to_owned(),
+			ProgramName::Npm | ProgramName::Npx => match Config::new().package_manager.as_str() {
+				"yarn" => "https://yarnpkg.com/getting-started/install",
+				"pnpm" => "https://pnpm.io/installation",
+				"bun" => "https://bun.sh/docs/installation",
+				"npm" => "https://nodejs.org/en/download/",
+				package_manager => return format!("https://www.google.com/search?q={}", package_manager),
+			}
+			.to_owned(),
 			ProgramName::Argon => unreachable!(),
 		}
 	}
