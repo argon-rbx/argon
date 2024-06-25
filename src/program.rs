@@ -115,21 +115,23 @@ impl Program {
 
 		let package_manager = Config::new().package_manager.as_str();
 
-		let program = match (&self.program, package_manager) {
+		let mut program = match (&self.program, package_manager) {
 			(ProgramName::Npm, _) => package_manager,
 			(ProgramName::Npx, "npm") => "npx",
 			(ProgramName::Npx, _) => package_manager,
 			(ProgramName::Git, _) => "git",
 			(ProgramName::Argon, _) => unreachable!(),
-		};
+		}
+		.to_owned();
 
-		// #[cfg(target_os = "windows")]
-		// let program = match self.program {
-		// 	ProgramName::Git => "git",
-		// 	ProgramName::Npm => "npm.cmd",
-		// 	ProgramName::Npx => "npx.cmd",
-		// 	ProgramName::Argon => unreachable!(),
-		// };
+		#[cfg(target_os = "windows")]
+		if (self.program == ProgramName::Npm || self.program == ProgramName::Npx)
+			&& Command::new(package_manager)
+				.spawn()
+				.is_err_and(|err| err.kind() == ErrorKind::NotFound)
+		{
+			program += ".cmd";
+		}
 
 		let mut command = Command::new(program);
 		command.current_dir(self.current_dir.clone()).args(self.args.clone());
