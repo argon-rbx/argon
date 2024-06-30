@@ -107,7 +107,7 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 
 	new_header.pop();
 
-	if !new_header.is_empty() /*&& !source.starts_with('\n')*/ {
+	if !new_header.is_empty() {
 		new_header += "\n";
 	}
 
@@ -119,6 +119,10 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 
 		if header.len() == header.match_indices(' ').count() {
 			header.clear();
+
+			if source.starts_with('\n') {
+				source.remove(0);
+			}
 		}
 	}
 
