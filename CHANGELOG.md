@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Newline character not being added to the Lua file header in some cases ([#62](https://github.com/argon-rbx/argon/pull/62))
+
 ## [2.0.9] - 2024-06-25
 
 ### Added
