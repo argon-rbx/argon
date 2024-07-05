@@ -101,6 +101,10 @@ impl Sourcemap {
 			args.push(project.to_string())
 		}
 
+		if let Some(session) = self.session {
+			args.push(session);
+		}
+
 		if let Some(output) = self.output {
 			args.push(output.to_string())
 		}

@@ -169,7 +169,7 @@ impl Serve {
 	}
 
 	fn spawn(self) -> Result<()> {
-		let mut args = vec![String::from("run")];
+		let mut args = vec![String::from("serve")];
 
 		if let Some(project) = self.project {
 			args.push(project.to_string());

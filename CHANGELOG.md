@@ -9,12 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Newline character not being added to the Lua file header in some cases ([#62](https://github.com/argon-rbx/argon/pull/62))
+- `serve` command now works as expected when running with `run_async` setting enabled
 
 ## [2.0.9] - 2024-06-25
 
 ### Added
 
-- `package_manager` setting that allows to change package manager used when running roblox-ts related commands (bun, npm, pnpm, yarn)
+- `package_manager` setting that allows to change package manager used when running commands with roblox-ts ([#58](https://github.com/argon-rbx/argon/issues/58))
 
 ### Fixed
 
