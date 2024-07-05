@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `--async` parameter is now user-exposed for `serve`, `build` and `sourcemap` commands ([#66](https://github.com/argon-rbx/argon/issues/66))
+
 ### Fixed
 
 - Newline character not being added to the Lua file header in some cases ([#62](https://github.com/argon-rbx/argon/pull/62))

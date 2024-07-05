@@ -38,7 +38,11 @@ pub struct Sourcemap {
 	#[arg(short, long)]
 	non_scripts: bool,
 
-	/// Spawn the Argon child process
+	/// Run Argon asynchroniously
+	#[arg(short = 'A', long = "async")]
+	run_async: bool,
+
+	/// Spawn the Argon child process (internal)
 	#[arg(long, hide = true)]
 	argon_spawn: bool,
 }
@@ -47,7 +51,7 @@ impl Sourcemap {
 	pub fn main(self) -> Result<()> {
 		let config = Config::new();
 
-		if self.watch && !self.argon_spawn && config.run_async {
+		if self.watch && !self.argon_spawn && (self.run_async || config.run_async) {
 			return self.spawn();
 		}
 
