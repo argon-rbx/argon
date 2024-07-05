@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.10] - 2024-07-05
+
 ### Added
 
 - `--async` parameter is now user-exposed for `serve`, `build` and `sourcemap` commands ([#66](https://github.com/argon-rbx/argon/issues/66))
@@ -192,7 +194,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.9...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.10...HEAD
+[2.0.10]: https://github.com/argon-rbx/argon/compare/2.0.9...2.0.10
 [2.0.9]: https://github.com/argon-rbx/argon/compare/2.0.8...2.0.9
 [2.0.8]: https://github.com/argon-rbx/argon/compare/2.0.7...2.0.8
 [2.0.7]: https://github.com/argon-rbx/argon/compare/2.0.6...2.0.7
