@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `--async` parameter is now user-exposed for `serve`, `build` and `sourcemap` commands ([#66](https://github.com/argon-rbx/argon/issues/66))
+- `--default` parameter for `config` command that restores all settings to default values
 
 ### Fixed
 
