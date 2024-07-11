@@ -71,8 +71,13 @@ pub fn save_mesh(properties: &Properties) -> Option<String> {
 
 fn clear(path: &Path) -> Result<()> {
 	let ignore_name = path.get_name();
+	let parent = path.get_parent();
 
-	for entry in fs::read_dir(path.get_parent())? {
+	if !parent.exists() {
+		return Ok(());
+	}
+
+	for entry in fs::read_dir(parent)? {
 		let path = entry?.path();
 		let name = path.get_name();
 

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `Failed to clear temporary mesh models` error no longer appears after Roblox Studio update
+
 ## [2.0.11] - 2024-07-11
 
 ### Added
