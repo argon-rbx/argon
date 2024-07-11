@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Experimental support for syncing MeshPart's MeshId
 - Argon now provides the link to [argon.wiki/changelog](https://argon.wiki/changelog) when a new update gets installed
+- All project templates now include `Packages` folder in `use_wally` setting is enabled ([#71](https://github.com/argon-rbx/argon/issues/71))
 
 ### Changed
 

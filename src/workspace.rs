@@ -118,10 +118,31 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 
 		match name {
 			"project.json" => {
-				let content = fs::read_to_string(path)?;
-				let content = content.replace("$name", project_name);
+				let contents = fs::read_to_string(path)?;
+				let contents = contents.replace("$name", project_name);
 
-				fs::write(new_path, content)?;
+				if workspace.wally {
+					fs::write(new_path, contents)?;
+				} else {
+					let mut new_contents = String::new();
+					let mut iterator = contents.lines();
+
+					while let Some(line) = iterator.next() {
+						if line.contains("Packages") {
+							new_contents.pop();
+							new_contents.pop();
+							new_contents.push('\n');
+
+							iterator.nth(1);
+
+							continue;
+						} else {
+							new_contents.push_str(&(line.to_owned() + "\n"));
+						}
+					}
+
+					fs::write(new_path, new_contents)?;
+				}
 			}
 			".gitignore" | ".github" => {
 				if workspace.git {
@@ -130,21 +151,21 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 			}
 			"wally.toml" => {
 				if workspace.wally || workspace.template == "package" {
-					let content = fs::read_to_string(path)?;
-					let content = content.replace("$name", project_name);
-					let content = content.replace("$author", &util::get_username());
-					let content = content.replace("$license", workspace.license);
+					let contents = fs::read_to_string(path)?;
+					let contents = contents.replace("$name", project_name);
+					let contents = contents.replace("$author", &util::get_username());
+					let contents = contents.replace("$license", workspace.license);
 
-					fs::write(new_path, content)?;
+					fs::write(new_path, contents)?;
 				}
 			}
 			_ => match stem {
 				"README" | "CHANGELOG" => {
 					if workspace.docs {
-						let content = fs::read_to_string(path)?;
-						let content = content.replace("$name", project_name);
+						let contents = fs::read_to_string(path)?;
+						let contents = contents.replace("$name", project_name);
 
-						fs::write(new_path, content)?;
+						fs::write(new_path, contents)?;
 					}
 				}
 				"LICENSE" => {
@@ -252,10 +273,10 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 
 			match stem {
 				"README" | "CHANGELOG" => {
-					let content = fs::read_to_string(path)?;
-					let content = content.replace("$name", project_name);
+					let contents = fs::read_to_string(path)?;
+					let contents = contents.replace("$name", project_name);
 
-					fs::write(new_path, content)?;
+					fs::write(new_path, contents)?;
 				}
 				"LICENSE" => {
 					let fallback = fs::read_to_string(path)?;
@@ -264,11 +285,11 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 				}
 				"wally" => {
 					if workspace.wally {
-						let content = fs::read_to_string(path)?;
-						let content = content.replace("$name", project_name);
-						let content = content.replace("$author", &util::get_username());
+						let contents = fs::read_to_string(path)?;
+						let contents = contents.replace("$name", project_name);
+						let contents = contents.replace("$author", &util::get_username());
 
-						fs::write(new_path, content)?;
+						fs::write(new_path, contents)?;
 					}
 				}
 				_ => {}

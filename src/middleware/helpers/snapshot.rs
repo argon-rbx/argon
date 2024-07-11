@@ -25,6 +25,7 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 		}
 
 		Snapshot::new()
+			.with_meta(meta)
 			.with_name(&instance.name)
 			.with_class(&instance.class)
 			.with_properties(instance.properties)
