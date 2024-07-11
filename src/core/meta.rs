@@ -450,6 +450,8 @@ pub struct Meta {
 	pub context: Context,
 	/// Whether to keep unknown child instances
 	pub keep_unknowns: bool,
+	/// Custom Mesh Part source path
+	pub mesh_source: Option<String>,
 }
 
 impl Meta {
@@ -458,6 +460,7 @@ impl Meta {
 			source: Source::new(),
 			context: Context::new(),
 			keep_unknowns: false,
+			mesh_source: None,
 		}
 	}
 
@@ -473,6 +476,11 @@ impl Meta {
 
 	pub fn with_keep_unknowns(mut self, keep_unknowns: bool) -> Self {
 		self.keep_unknowns = keep_unknowns;
+		self
+	}
+
+	pub fn with_mesh_source(mut self, mesh_source: String) -> Self {
+		self.mesh_source = Some(mesh_source);
 		self
 	}
 

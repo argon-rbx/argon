@@ -13,6 +13,7 @@ use crate::{
 		snapshot::Snapshot,
 	},
 	ext::PathExt,
+	middleware::helpers,
 	project::{Project, ProjectNode},
 	util,
 	vfs::Vfs,
@@ -58,7 +59,7 @@ pub fn new_snapshot_node(
 		}
 	};
 
-	let properties = {
+	let mut properties = {
 		let mut properties = HashMap::new();
 
 		for (property, value) in &node.properties {
@@ -90,10 +91,14 @@ pub fn new_snapshot_node(
 		properties
 	};
 
-	let meta = Meta::new()
+	let mut meta = Meta::new()
 		.with_source(Source::project(name, path, node.clone(), node_path.clone()))
 		.with_context(context)
 		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| util::is_service(&class)));
+
+	if class == "MeshPart" {
+		meta.mesh_source = helpers::save_mesh(&mut properties);
+	}
 
 	let mut snapshot = Snapshot::new()
 		.with_name(name)

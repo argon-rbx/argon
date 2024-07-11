@@ -19,6 +19,8 @@ use crate::{
 	Properties,
 };
 
+mod helpers;
+
 pub mod csv;
 pub mod data;
 pub mod dir;
@@ -175,7 +177,7 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, path, context, vfs)? {
-			snapshot.set_data(instance_data);
+			snapshot.apply_data(instance_data);
 		}
 
 		Ok(Some(snapshot))
@@ -214,7 +216,7 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, parent, context, vfs)? {
-			snapshot.set_data(instance_data);
+			snapshot.apply_data(instance_data);
 		}
 
 		Ok(Some(snapshot))
@@ -229,7 +231,7 @@ fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 	let mut snapshot = dir::read_dir(path, context, vfs)?;
 
 	if let Some(instance_data) = get_instance_data(&snapshot.name, path, context, vfs)? {
-		snapshot.set_data(instance_data);
+		snapshot.apply_data(instance_data);
 	}
 
 	Ok(Some(snapshot))

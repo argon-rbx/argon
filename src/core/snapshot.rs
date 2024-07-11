@@ -1,7 +1,4 @@
-use rbx_dom_weak::{
-	types::{Ref, Variant},
-	Instance, WeakDom,
-};
+use rbx_dom_weak::types::{Ref, Variant};
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
@@ -68,7 +65,7 @@ impl Snapshot {
 	}
 
 	pub fn with_data(mut self, data: DataSnapshot) -> Self {
-		self.set_data(data);
+		self.apply_data(data);
 		self
 	}
 
@@ -98,13 +95,17 @@ impl Snapshot {
 		self.children = children;
 	}
 
-	pub fn set_data(&mut self, data: DataSnapshot) {
+	pub fn apply_data(&mut self, data: DataSnapshot) {
 		if let Some(class) = data.class {
 			self.class = class;
 		}
 
 		if let Some(keep_unknowns) = data.keep_unknowns {
 			self.meta.keep_unknowns = keep_unknowns;
+		}
+
+		if let Some(mesh_source) = data.mesh_source {
+			self.meta.mesh_source = Some(mesh_source);
 		}
 
 		self.extend_properties(data.properties);
@@ -129,31 +130,6 @@ impl Snapshot {
 
 	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
 		self.children.extend(children);
-	}
-
-	// Based on Rojo's InstanceSnapshot::from_tree (https://github.com/rojo-rbx/rojo/blob/master/src/snapshot/instance_snapshot.rs#L105)
-	pub fn from_dom(dom: WeakDom, id: Ref) -> Self {
-		let (_, mut raw_dom) = dom.into_raw();
-
-		fn walk(id: Ref, raw_dom: &mut HashMap<Ref, Instance>) -> Snapshot {
-			let instance = raw_dom
-				.remove(&id)
-				.expect("Provided ID does not exist in the current DOM");
-
-			let children = instance
-				.children()
-				.iter()
-				.map(|&child_id| walk(child_id, raw_dom))
-				.collect();
-
-			Snapshot::new()
-				.with_name(&instance.name)
-				.with_class(&instance.class)
-				.with_properties(instance.properties)
-				.with_children(children)
-		}
-
-		walk(id, &mut raw_dom)
 	}
 }
 

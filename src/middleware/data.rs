@@ -8,7 +8,9 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::{core::meta::Meta, ext::PathExt, resolution::UnresolvedValue, util, vfs::Vfs, Properties};
+use crate::{
+	core::meta::Meta, ext::PathExt, middleware::helpers, resolution::UnresolvedValue, util, vfs::Vfs, Properties,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,10 +29,11 @@ struct Data {
 
 #[derive(Debug, Default)]
 pub struct DataSnapshot {
+	pub path: PathBuf,
 	pub class: Option<String>,
 	pub properties: Properties,
 	pub keep_unknowns: Option<bool>,
-	pub path: PathBuf,
+	pub mesh_source: Option<String>,
 }
 
 #[profiling::function]
@@ -94,11 +97,18 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 		properties.insert(String::from("Tags"), Tags::from(data.tags).into());
 	}
 
+	let mesh_source = if class == "MeshPart" {
+		helpers::save_mesh(&mut properties)
+	} else {
+		None
+	};
+
 	Ok(DataSnapshot {
+		path: path.to_owned(),
 		class: data.class_name,
 		properties,
 		keep_unknowns: data.keep_unknowns,
-		path: path.to_owned(),
+		mesh_source,
 	})
 }
 

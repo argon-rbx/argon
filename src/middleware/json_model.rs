@@ -4,6 +4,7 @@ use rbx_dom_weak::types::Tags;
 use serde::Deserialize;
 use std::{collections::HashMap, path::Path};
 
+use super::helpers;
 use crate::{core::snapshot::Snapshot, resolution::UnresolvedValue, vfs::Vfs};
 
 #[derive(Debug, Deserialize)]
@@ -75,6 +76,10 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 	// Resolve tags
 	if let Some(tags) = model.tags {
 		properties.insert(String::from("Tags"), Tags::from(tags).into());
+	}
+
+	if class == "MeshPart" {
+		snapshot.meta.mesh_source = helpers::save_mesh(&mut properties);
 	}
 
 	snapshot.set_properties(properties);

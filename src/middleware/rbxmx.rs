@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
 
+use super::helpers;
 use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
 #[profiling::function]
@@ -9,10 +10,10 @@ pub fn read_rbxmx(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	let snapshot = if dom.root().children().len() == 1 {
 		let id = dom.root().children()[0];
-		Snapshot::from_dom(dom, id)
+		helpers::snapshot_from_dom(dom, id)
 	} else {
 		let id = dom.root_ref();
-		Snapshot::from_dom(dom, id).with_class("Folder")
+		helpers::snapshot_from_dom(dom, id).with_class("Folder")
 	};
 
 	Ok(snapshot)
