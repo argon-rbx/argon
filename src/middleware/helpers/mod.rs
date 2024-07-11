@@ -6,7 +6,7 @@ mod mesh_part;
 mod snapshot;
 
 #[inline]
-pub fn save_mesh(properties: &mut Properties) -> Option<String> {
+pub fn save_mesh(properties: &Properties) -> Option<String> {
 	mesh_part::save_mesh(properties)
 }
 

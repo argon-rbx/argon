@@ -59,7 +59,7 @@ pub fn new_snapshot_node(
 		}
 	};
 
-	let mut properties = {
+	let properties = {
 		let mut properties = HashMap::new();
 
 		for (property, value) in &node.properties {
@@ -97,7 +97,7 @@ pub fn new_snapshot_node(
 		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| util::is_service(&class)));
 
 	if class == "MeshPart" {
-		meta.mesh_source = helpers::save_mesh(&mut properties);
+		meta.mesh_source = helpers::save_mesh(&properties);
 	}
 
 	let mut snapshot = Snapshot::new()

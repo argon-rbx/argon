@@ -16,12 +16,12 @@ use crate::{ext::PathExt, util, Properties};
 
 static INDEX: RwLock<u32> = RwLock::new(0);
 
-pub fn save_mesh(properties: &mut Properties) -> Option<String> {
+pub fn save_mesh(properties: &Properties) -> Option<String> {
 	let mut mesh_properties: HashMap<&str, Variant> = HashMap::new();
-	mesh_properties.insert("MeshId", properties.remove("MeshId")?);
+	mesh_properties.insert("MeshId", properties.get("MeshId")?.clone());
 
-	if let Some(initial_size) = properties.remove("InitialSize") {
-		mesh_properties.insert("InitialSize", initial_size);
+	if let Some(initial_size) = properties.get("InitialSize") {
+		mesh_properties.insert("InitialSize", initial_size.clone());
 	}
 
 	let dom = WeakDom::new(InstanceBuilder::new("MeshPart").with_properties(mesh_properties));

@@ -79,7 +79,7 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 	}
 
 	if class == "MeshPart" {
-		snapshot.meta.mesh_source = helpers::save_mesh(&mut properties);
+		snapshot.meta.mesh_source = helpers::save_mesh(&properties);
 	}
 
 	snapshot.set_properties(properties);

@@ -57,23 +57,16 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 }
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes, tree: &mut Tree) {
-	// Update meta if it's different
-	match (snapshot.meta, tree.get_meta(id)) {
-		(snapshot_meta, Some(meta)) => {
-			if snapshot_meta != *meta {
-				tree.update_meta(id, snapshot_meta);
-			}
-		}
-		(snapshot_meta, None) => {
-			tree.insert_meta(id, snapshot_meta);
-		}
-	}
-
 	// Process instance changes
+	let mut updated_snapshot = UpdatedSnapshot::new(id);
+
+	updated_snapshot.meta = if snapshot.meta != *tree.get_meta(id).expect("Instance meta not found") {
+		Some(snapshot.meta)
+	} else {
+		None
+	};
 
 	let instance = tree.get_instance_mut(id).unwrap();
-
-	let mut updated_snapshot = UpdatedSnapshot::new(id);
 
 	updated_snapshot.name = if snapshot.name != instance.name {
 		instance.name.clone_from(&snapshot.name);

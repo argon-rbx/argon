@@ -98,7 +98,7 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 	}
 
 	let mesh_source = if class == "MeshPart" {
-		helpers::save_mesh(&mut properties)
+		helpers::save_mesh(&properties)
 	} else {
 		None
 	};

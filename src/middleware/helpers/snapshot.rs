@@ -8,7 +8,7 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 	let (_, mut raw_dom) = dom.into_raw();
 
 	fn walk(id: Ref, raw_dom: &mut HashMap<Ref, Instance>) -> Snapshot {
-		let mut instance = raw_dom
+		let instance = raw_dom
 			.remove(&id)
 			.expect("Provided ID does not exist in the current DOM");
 
@@ -21,7 +21,7 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 		let mut meta = Meta::new();
 
 		if instance.class == "MeshPart" {
-			meta.mesh_source = super::save_mesh(&mut instance.properties);
+			meta.mesh_source = super::save_mesh(&instance.properties);
 		}
 
 		Snapshot::new()
