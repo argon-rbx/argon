@@ -97,7 +97,7 @@ pub fn new_snapshot_node(
 		.with_keep_unknowns(node.keep_unknowns.unwrap_or_else(|| util::is_service(&class)));
 
 	if class == "MeshPart" {
-		meta.mesh_source = helpers::save_mesh(&properties);
+		meta.set_mesh_source(helpers::save_mesh(&properties));
 	}
 
 	let mut snapshot = Snapshot::new()
@@ -124,8 +124,10 @@ pub fn new_snapshot_node(
 				.source
 				.extend_relavants(path_snapshot.meta.source.relevant().to_owned());
 
-			path_snapshot.meta.source = snapshot.meta.source;
-			path_snapshot.meta.keep_unknowns = path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns;
+			path_snapshot.meta.set_source(snapshot.meta.source);
+			path_snapshot
+				.meta
+				.set_keep_unknowns(path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns);
 
 			snapshot = path_snapshot;
 

@@ -11,7 +11,7 @@ use self::data::DataSnapshot;
 use crate::{
 	constants::BLACKLISTED_PATHS,
 	core::{
-		meta::{Context, Meta, Source},
+		meta::{Context, Source},
 		snapshot::Snapshot,
 	},
 	ext::{PathExt, ResultExt},
@@ -173,7 +173,8 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 
 		if middleware != Middleware::Project {
 			snapshot.set_name(&name);
-			snapshot.set_meta(Meta::new().with_context(context).with_source(Source::file(path)));
+			snapshot.meta.set_context(context);
+			snapshot.meta.set_source(Source::file(path));
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, path, context, vfs)? {
@@ -198,11 +199,8 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 
 		if middleware != Middleware::Project {
 			snapshot.set_name(&name);
-			snapshot.set_meta(
-				Meta::new()
-					.with_context(context)
-					.with_source(Source::child_file(parent, path)),
-			);
+			snapshot.meta.set_context(context);
+			snapshot.meta.set_source(Source::child_file(parent, path));
 
 			for entry in vfs.read_dir(parent)? {
 				if entry == path {

@@ -7,6 +7,11 @@ use crate::{core::snapshot::Snapshot, vfs::Vfs};
 #[profiling::function]
 pub fn read_json(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let json = vfs.read_to_string(path)?;
+
+	if json.is_empty() {
+		return Ok(Snapshot::new().with_class("ModuleScript"));
+	}
+
 	let lua = json2lua::parse(&json)?;
 
 	let source = format!("return {}", lua);

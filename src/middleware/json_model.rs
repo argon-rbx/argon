@@ -28,7 +28,13 @@ struct JsonModel {
 
 #[profiling::function]
 pub fn read_json_model(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
-	let model = serde_json::from_str(&vfs.read_to_string(path)?)?;
+	let contents = vfs.read_to_string(path)?;
+
+	if contents.is_empty() {
+		return Ok(Snapshot::new().with_class("Folder"));
+	}
+
+	let model = serde_json::from_str(&contents)?;
 	let snapshot = walk(model)?;
 
 	Ok(snapshot)
@@ -79,7 +85,7 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 	}
 
 	if class == "MeshPart" {
-		snapshot.meta.mesh_source = helpers::save_mesh(&properties);
+		snapshot.meta.set_mesh_source(helpers::save_mesh(&properties));
 	}
 
 	snapshot.set_properties(properties);

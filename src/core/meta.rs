@@ -455,6 +455,8 @@ pub struct Meta {
 }
 
 impl Meta {
+	// Creating new meta
+
 	pub fn new() -> Self {
 		Self {
 			source: Source::new(),
@@ -462,26 +464,6 @@ impl Meta {
 			keep_unknowns: false,
 			mesh_source: None,
 		}
-	}
-
-	pub fn with_source<S: Into<Source>>(mut self, source: S) -> Self {
-		self.source = source.into();
-		self
-	}
-
-	pub fn with_context(mut self, context: &Context) -> Self {
-		self.context = context.clone();
-		self
-	}
-
-	pub fn with_keep_unknowns(mut self, keep_unknowns: bool) -> Self {
-		self.keep_unknowns = keep_unknowns;
-		self
-	}
-
-	pub fn with_mesh_source(mut self, mesh_source: String) -> Self {
-		self.mesh_source = Some(mesh_source);
-		self
 	}
 
 	pub fn from_project(project: &Project) -> Self {
@@ -507,5 +489,43 @@ impl Meta {
 			context,
 			..Self::default()
 		}
+	}
+
+	pub fn with_source<S: Into<Source>>(mut self, source: S) -> Self {
+		self.source = source.into();
+		self
+	}
+
+	pub fn with_context(mut self, context: &Context) -> Self {
+		self.context = context.clone();
+		self
+	}
+
+	pub fn with_keep_unknowns(mut self, keep_unknowns: bool) -> Self {
+		self.keep_unknowns = keep_unknowns;
+		self
+	}
+
+	pub fn with_mesh_source(mut self, mesh_source: String) -> Self {
+		self.mesh_source = Some(mesh_source);
+		self
+	}
+
+	// Overwriting meta fields
+
+	pub fn set_source<S: Into<Source>>(&mut self, source: S) {
+		self.source = source.into();
+	}
+
+	pub fn set_context(&mut self, context: &Context) {
+		self.context = context.clone();
+	}
+
+	pub fn set_keep_unknowns(&mut self, keep_unknowns: bool) {
+		self.keep_unknowns = keep_unknowns;
+	}
+
+	pub fn set_mesh_source(&mut self, mesh_source: Option<String>) {
+		self.mesh_source = mesh_source;
 	}
 }

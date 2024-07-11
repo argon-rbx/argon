@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Experimental support for syncing MeshPart's MeshId
+- Argon now provides the link to [argon.wiki/changelog](https://argon.wiki/changelog) when a new update gets installed
+
+### Changed
+
+- Empty files like `.json`, `.csv` or `.msgpack` no longe cause errors
 
 ## [2.0.10] - 2024-07-05
 

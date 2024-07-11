@@ -21,7 +21,7 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 		let mut meta = Meta::new();
 
 		if instance.class == "MeshPart" {
-			meta.mesh_source = super::save_mesh(&instance.properties);
+			meta.set_mesh_source(super::save_mesh(&instance.properties));
 		}
 
 		Snapshot::new()

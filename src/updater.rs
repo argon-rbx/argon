@@ -73,7 +73,10 @@ fn update_cli(prompt: bool) -> Result<bool> {
 
 			match update.update() {
 				Ok(_) => {
-					argon_info!("CLI updated! Restart the program to apply changes");
+					argon_info!(
+						"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
+						"https://argon.wiki/changelog/argon".bold()
+					);
 					return Ok(true);
 				}
 				Err(err) => argon_error!("Failed to update Argon: {}", err),
@@ -124,8 +127,9 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
 			match update.download() {
 				Ok(_) => {
 					argon_info!(
-						"Roblox plugin updated! Make sure you have {} setting enabled to see changes",
-						"Reload plugins on file changed".bold()
+						"Roblox plugin updated! Make sure you have {} setting enabled to see changes. Visit {} to read the changelog",
+						"Reload plugins on file changed".bold(),
+						"https://argon.wiki/changelog/argon-roblox".bold()
 					);
 
 					status.plugin_version = release.version;

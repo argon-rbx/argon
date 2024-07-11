@@ -10,6 +10,10 @@ use crate::{core::snapshot::Snapshot, vfs::Vfs};
 pub fn read_msgpack(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let msgpack = vfs.read(path)?;
 
+	if msgpack.is_empty() {
+		return Ok(Snapshot::new().with_class("ModuleScript"));
+	}
+
 	let mut deserializer = Deserializer::from_read_ref(&msgpack).with_human_readable();
 	let msgpack: Value = serde::Deserialize::deserialize(&mut deserializer)?;
 

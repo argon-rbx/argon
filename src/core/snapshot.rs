@@ -105,7 +105,7 @@ impl Snapshot {
 		}
 
 		if let Some(mesh_source) = data.mesh_source {
-			self.meta.mesh_source = Some(mesh_source);
+			self.meta.set_mesh_source(Some(mesh_source));
 		}
 
 		self.extend_properties(data.properties);

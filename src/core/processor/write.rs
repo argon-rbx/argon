@@ -124,14 +124,14 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				dir::write_dir(path, vfs)?;
 
-				meta.source = Source::child_file(path, &file_path);
+				meta.set_source(Source::child_file(path, &file_path));
 			} else {
 				if vfs.exists(&file_path) {
 					path_exists!(path);
 					return Ok(None);
 				}
 
-				meta.source = Source::file(&file_path);
+				meta.set_source(Source::file(&file_path));
 			}
 
 			if filter.matches_path(&file_path) {
@@ -164,7 +164,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			dir::write_dir(path, vfs)?;
 
-			meta.source = Source::directory(path);
+			meta.set_source(Source::directory(path));
 
 			let data_path = locate_instance_data(true, path, snapshot, parent_meta)?;
 
@@ -318,7 +318,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		SourceKind::Path(path) => {
 			let parent_source = add_non_project_instances(parent_id, path, snapshot, &parent_meta, tree, vfs)?;
 
-			parent_meta.source = parent_source;
+			parent_meta.set_source(parent_source);
 			tree.update_meta(parent_id, parent_meta);
 		}
 		SourceKind::Project(name, path, node, node_path) => {
@@ -331,7 +331,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let parent_source = Source::project(name, path, node.clone(), node_path.clone())
 					.with_relevants(parent_source.relevant().to_owned());
 
-				parent_meta.source = parent_source;
+				parent_meta.set_source(parent_source);
 				tree.update_meta(parent_id, parent_meta);
 			} else {
 				let mut project = Project::load(path)?;
@@ -671,7 +671,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 					}
 
 					vfs.remove(folder_path)?;
-					meta.source = source;
+					meta.set_source(source);
 				}
 			}
 		}

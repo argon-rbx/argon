@@ -19,6 +19,10 @@ struct LocalizationEntry {
 pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let contents = vfs.read(path)?;
 
+	if contents.is_empty() {
+		return Ok(Snapshot::new().with_class("LocalizationTable"));
+	}
+
 	let mut reader = ReaderBuilder::new()
 		.has_headers(true)
 		.flexible(true)
