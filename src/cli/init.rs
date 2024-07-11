@@ -32,6 +32,7 @@ pub struct Init {
 		short,
         long,
         default_missing_value("true"),
+		hide_possible_values = true,
         num_args(0..=1),
     	action = ArgAction::Set,
     )]
@@ -42,6 +43,7 @@ pub struct Init {
 		short,
         long,
         default_missing_value("true"),
+		hide_possible_values = true,
         num_args(0..=1),
     	action = ArgAction::Set,
     )]
@@ -52,6 +54,7 @@ pub struct Init {
 		short,
         long,
         default_missing_value("true"),
+		hide_possible_values = true,
         num_args(0..=1),
     	action = ArgAction::Set,
     )]
@@ -62,6 +65,7 @@ pub struct Init {
 		short,
         long,
         default_missing_value("true"),
+		hide_possible_values = true,
         num_args(0..=1),
     	action = ArgAction::Set,
     )]

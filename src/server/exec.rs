@@ -4,7 +4,7 @@ use log::error;
 use serde::Deserialize;
 use std::sync::Arc;
 
-use crate::{core::Core, messages, studio};
+use crate::{core::Core, server, studio};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -18,7 +18,7 @@ async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responde
 	let queue = core.queue();
 
 	let pushed = queue.push(
-		messages::ExecuteCode {
+		server::ExecuteCode {
 			code: request.code.clone(),
 		},
 		None,

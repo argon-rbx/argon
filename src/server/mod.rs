@@ -3,10 +3,15 @@ use actix_web::{
 	web::{self, Data},
 	App, HttpServer, Responder,
 };
-use serde::Deserialize;
+use derive_from_one::FromOne;
+use serde::{Deserialize, Serialize};
 use std::{io::Result, net::TcpListener, sync::Arc};
 
-use crate::{constants::MAX_PAYLOAD_SIZE, core::Core};
+use crate::{
+	constants::MAX_PAYLOAD_SIZE,
+	core::{changes::Changes, Core},
+	project::ProjectDetails,
+};
 
 mod details;
 mod exec;
@@ -19,8 +24,28 @@ mod subscribe;
 mod unsubscribe;
 mod write;
 
-async fn default_redirect() -> impl Responder {
-	web::Redirect::to("/")
+#[derive(Debug, Clone, Serialize, FromOne)]
+pub enum Message {
+	SyncChanges(SyncChanges),
+	SyncDetails(SyncDetails),
+	ExecuteCode(ExecuteCode),
+	Disconnect(Disconnect),
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SyncChanges(pub Changes);
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SyncDetails(pub ProjectDetails);
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExecuteCode {
+	pub code: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Disconnect {
+	pub message: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -65,13 +90,17 @@ impl Server {
 				.service(open::main)
 				.service(stop::main)
 				.service(home::main)
-				.default_service(web::to(default_redirect))
+				.default_service(web::to(Self::default_redirect))
 		})
 		.backlog(0)
 		.disable_signals()
 		.bind((self.host.clone(), self.port))?
 		.run()
 		.await
+	}
+
+	async fn default_redirect() -> impl Responder {
+		web::Redirect::to("/")
 	}
 }
 

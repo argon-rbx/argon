@@ -8,6 +8,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
+use super::helpers::syncback::{serialize_properties, validate_properties, verify_name};
 use crate::{
 	argon_error,
 	config::Config,
@@ -19,7 +20,6 @@ use crate::{
 	ext::PathExt,
 	middleware::{data, dir, Middleware},
 	project::{Project, ProjectNode},
-	syncback::{serialize_properties, validate_properties, verify_name},
 	vfs::Vfs,
 	Properties,
 };

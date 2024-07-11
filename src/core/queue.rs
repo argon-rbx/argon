@@ -4,7 +4,7 @@ use std::{collections::HashMap, sync::RwLock};
 
 use crate::{
 	constants::QUEUE_TIMEOUT,
-	messages::{self, Message},
+	server::{self, Message},
 };
 
 macro_rules! read {
@@ -168,7 +168,7 @@ impl Queue {
 		}
 
 		self.push(
-			messages::Disconnect {
+			server::Disconnect {
 				message: message.to_owned(),
 			},
 			Some(id),

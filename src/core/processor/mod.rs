@@ -12,12 +12,13 @@ use super::{changes::Changes, queue::Queue, tree::Tree};
 use crate::{
 	argon_error,
 	constants::{BLACKLISTED_PATHS, CHANGES_TRESHOLD},
-	lock, logger, messages,
+	lock, logger,
 	project::{Project, ProjectDetails},
-	stats,
+	server, stats,
 	vfs::{Vfs, VfsEvent},
 };
 
+mod helpers;
 pub mod read;
 pub mod write;
 
@@ -104,7 +105,7 @@ impl Handler {
 						Ok(project) => {
 							info!("Project reloaded");
 
-							let details = messages::SyncDetails(ProjectDetails::from_project(project, &tree));
+							let details = server::SyncDetails(ProjectDetails::from_project(project, &tree));
 
 							match self.queue.push(details, None) {
 								Ok(()) => trace!("Project details synced"),
@@ -149,7 +150,7 @@ impl Handler {
 		if !changes.is_empty() {
 			stats::files_synced(changes.total() as u32);
 
-			let result = self.queue.push(messages::SyncChanges(changes), None);
+			let result = self.queue.push(server::SyncChanges(changes), None);
 
 			match result {
 				Ok(()) => trace!("Added changes to the queue"),
