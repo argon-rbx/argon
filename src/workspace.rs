@@ -152,8 +152,8 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 			"wally.toml" => {
 				if workspace.wally || workspace.template == "package" {
 					let contents = fs::read_to_string(path)?;
-					let contents = contents.replace("$name", project_name);
-					let contents = contents.replace("$author", &util::get_username());
+					let contents = contents.replace("$name", &project_name.to_lowercase());
+					let contents = contents.replace("$author", &util::get_username().to_lowercase());
 					let contents = contents.replace("$license", workspace.license);
 
 					fs::write(new_path, contents)?;
@@ -286,8 +286,8 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 				"wally" => {
 					if workspace.wally {
 						let contents = fs::read_to_string(path)?;
-						let contents = contents.replace("$name", project_name);
-						let contents = contents.replace("$author", &util::get_username());
+						let contents = contents.replace("$name", &project_name.to_lowercase());
+						let contents = contents.replace("$author", &util::get_username().to_lowercase());
 
 						fs::write(new_path, contents)?;
 					}

@@ -8,7 +8,7 @@ use crate::{
 	argon_error, argon_info,
 	config::Config,
 	ext::PathExt,
-	project, stats,
+	logger, project, stats,
 	workspace::{self, WorkspaceConfig},
 };
 
@@ -112,7 +112,10 @@ impl Init {
 
 		if project_path.exists() {
 			argon_error!("Project {} already exists!", project_path.to_string().bold());
-			return Ok(());
+
+			if !logger::prompt("Would you like to continue and add potentially missing files?", false) {
+				return Ok(());
+			}
 		}
 
 		workspace_config.project = &project_path;
