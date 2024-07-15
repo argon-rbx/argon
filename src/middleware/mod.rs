@@ -33,6 +33,7 @@ pub mod rbxm;
 pub mod rbxmx;
 pub mod toml;
 pub mod txt;
+pub mod yaml;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Middleware {
@@ -48,6 +49,7 @@ pub enum Middleware {
 
 	JsonModule,
 	TomlModule,
+	YamlModule,
 	MsgpackModule,
 
 	JsonModel,
@@ -76,6 +78,7 @@ impl Middleware {
 			//
 			Middleware::JsonModule => json::read_json(path, vfs),
 			Middleware::TomlModule => toml::read_toml(path, vfs),
+			Middleware::YamlModule => yaml::read_yaml(path, vfs),
 			Middleware::MsgpackModule => msgpack::read_msgpack(path, vfs),
 			//
 			Middleware::JsonModel => json_model::read_json_model(path, vfs),

@@ -115,6 +115,12 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 			SyncRule::new(Middleware::TomlModule)
 				.with_pattern("*.toml")
 				.with_child_pattern(".src.toml"),
+			SyncRule::new(Middleware::YamlModule)
+				.with_pattern("*.yaml")
+				.with_child_pattern(".src.yaml"),
+			SyncRule::new(Middleware::YamlModule)
+				.with_pattern("*.yml")
+				.with_child_pattern(".src.yml"),
 			SyncRule::new(Middleware::MsgpackModule)
 				.with_pattern("*.msgpack")
 				.with_child_pattern(".src.msgpack"),

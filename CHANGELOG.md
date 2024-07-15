@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Support for `YAML` format that transforms to `ModuleScript` (both `.yaml` and `.yml` files extensions are allowed)
 - Option to re-init existing project with missing template files
 
 ### Fixed
