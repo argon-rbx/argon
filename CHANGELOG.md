@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.13] - 2024-07-19
+
 ### Added
 
 - Support for `YAML` format that transforms to `ModuleScript` (both `.yaml` and `.yml` files extensions are allowed)
@@ -221,7 +223,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.12...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.13...HEAD
+[2.0.13]: https://github.com/argon-rbx/argon/compare/2.0.12...2.0.13
 [2.0.12]: https://github.com/argon-rbx/argon/compare/2.0.11...2.0.12
 [2.0.11]: https://github.com/argon-rbx/argon/compare/2.0.10...2.0.11
 [2.0.10]: https://github.com/argon-rbx/argon/compare/2.0.9...2.0.10
