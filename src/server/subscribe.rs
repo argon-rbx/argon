@@ -1,5 +1,6 @@
 use actix_msgpack::MsgPack;
 use actix_web::{post, web::Data, HttpResponse, Responder};
+use log::trace;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -14,6 +15,8 @@ struct Request {
 
 #[post("/subscribe")]
 async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
+	trace!("Received request: subscribe");
+
 	let subscribed = core.queue().subscribe(request.client_id, &request.name);
 
 	if subscribed.is_ok() {

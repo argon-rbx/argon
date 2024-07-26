@@ -1,6 +1,6 @@
 use actix_msgpack::MsgPack;
 use actix_web::{post, web::Data, HttpResponse, Responder};
-use log::error;
+use log::{error, trace};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -15,6 +15,8 @@ struct Request {
 
 #[post("/exec")]
 async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responder {
+	trace!("Received request: exec");
+
 	let queue = core.queue();
 
 	let pushed = queue.push(

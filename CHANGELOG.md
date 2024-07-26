@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Integration for `wally install` command when `use_wally` and `detect_project` settings are enabled
+- Improved logging for client-server communication
 
 ### Fixed
 

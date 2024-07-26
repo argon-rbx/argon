@@ -4,12 +4,15 @@ use actix_web::{
 	web::{Data, Query},
 	HttpResponse, Responder,
 };
+use log::trace;
 use std::sync::Arc;
 
 use crate::{core::Core, server::AuthRequest};
 
 #[get("/read")]
 async fn main(request: Query<AuthRequest>, core: Data<Arc<Core>>) -> impl Responder {
+	trace!("Received request: read");
+
 	let id = request.client_id;
 	let queue = core.queue();
 
