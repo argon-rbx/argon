@@ -22,7 +22,7 @@ pub struct Sourcemap {
 	#[arg()]
 	project: Option<PathBuf>,
 
-	/// Session indentifier
+	/// Session identifier
 	#[arg()]
 	session: Option<String>,
 
@@ -38,7 +38,7 @@ pub struct Sourcemap {
 	#[arg(short, long)]
 	non_scripts: bool,
 
-	/// Run Argon asynchroniously
+	/// Run Argon asynchronously
 	#[arg(short = 'A', long = "async")]
 	run_async: bool,
 

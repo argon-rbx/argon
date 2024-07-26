@@ -16,6 +16,7 @@ pub enum ProgramName {
 	Git,
 	Npm,
 	Npx,
+	Wally,
 }
 
 pub struct Program {
@@ -121,6 +122,7 @@ impl Program {
 			(ProgramName::Npx, "npm") => "npx",
 			(ProgramName::Npx, _) => package_manager,
 			(ProgramName::Git, _) => "git",
+			(ProgramName::Wally, _) => "wally",
 			(ProgramName::Argon, _) => unreachable!(),
 		}
 		.to_owned();
@@ -175,18 +177,20 @@ impl Program {
 					Config::new().package_manager.as_str().bold()
 				)
 			}
+			ProgramName::Wally => format!("{}: {} is not installed", error, "Wally"),
 			ProgramName::Argon => unreachable!(),
 		}
 	}
 
 	fn get_prompt(&self) -> String {
-		match self.program {
-			ProgramName::Git => format!("Do you want to install {} now?", "Git".bold()),
-			ProgramName::Npm | ProgramName::Npx => {
-				format!("Do you want to install {} now?", Config::new().package_manager.bold())
-			}
+		let program = match self.program {
+			ProgramName::Git => "Git",
+			ProgramName::Npm | ProgramName::Npx => &Config::new().package_manager,
+			ProgramName::Wally => "Wally",
 			ProgramName::Argon => unreachable!(),
-		}
+		};
+
+		format!("Do you want to install {} now?", program.bold())
 	}
 
 	fn get_link(&self) -> String {
@@ -200,6 +204,7 @@ impl Program {
 				package_manager => return format!("https://www.google.com/search?q={}", package_manager),
 			}
 			.to_owned(),
+			ProgramName::Wally => "https://wally.run".to_owned(),
 			ProgramName::Argon => unreachable!(),
 		}
 	}

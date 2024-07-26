@@ -13,7 +13,7 @@ pub struct Exec {
 	#[arg()]
 	code: String,
 
-	/// Session indentifier
+	/// Session identifier
 	#[arg()]
 	session: Option<String>,
 

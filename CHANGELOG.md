@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Integration for `wally install` command when `use_wally` and `detect_project` settings are enabled
+
+### Fixed
+
+- Moved `Packages` from ServerScriptService to ReplicatedStorage in `place` template
+
 ## [2.0.13] - 2024-07-19
 
 ### Added

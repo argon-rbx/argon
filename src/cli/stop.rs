@@ -8,7 +8,7 @@ use crate::{argon_info, argon_warn, logger::Table, sessions, util};
 /// Stop Argon session by address, ID or all running sessions
 #[derive(Parser)]
 pub struct Stop {
-	/// Session indentifier
+	/// Session identifier
 	#[arg()]
 	session: Vec<String>,
 

@@ -10,6 +10,7 @@ use crate::{
 	core::Core,
 	exit,
 	ext::PathExt,
+	integration,
 	program::{Program, ProgramName},
 	project::{self, Project},
 	server::{self, Server},
@@ -23,7 +24,7 @@ pub struct Serve {
 	#[arg()]
 	project: Option<PathBuf>,
 
-	/// Session indentifier
+	/// Session identifier
 	#[arg()]
 	session: Option<String>,
 
@@ -43,7 +44,7 @@ pub struct Serve {
 	#[arg(short, long)]
 	ts: bool,
 
-	/// Run Argon asynchroniously
+	/// Run Argon asynchronously
 	#[arg(short = 'A', long = "async")]
 	run_async: bool,
 
@@ -83,7 +84,12 @@ impl Serve {
 			exit!("Cannot serve non-place project!");
 		}
 
+		let use_wally = config.use_wally && config.detect_project && project.is_wally();
 		let use_ts = self.ts || config.ts_mode || if config.detect_project { project.is_ts() } else { false };
+
+		if use_wally {
+			integration::check_wally_packages(&project.workspace_dir)?;
+		}
 
 		if use_ts {
 			debug!("Starting roblox-ts");

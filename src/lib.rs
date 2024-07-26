@@ -11,6 +11,7 @@ pub mod crash_handler;
 pub mod ext;
 pub mod glob;
 pub mod installer;
+pub mod integration;
 pub mod logger;
 pub mod middleware;
 pub mod program;

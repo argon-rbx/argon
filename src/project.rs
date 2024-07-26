@@ -141,10 +141,26 @@ impl Project {
 		}
 
 		fn walk(node: &ProjectNode) -> bool {
-			if let Some(path) = &node.path {
-				if path.ends_with("@rbxts") {
+			if node.path.as_ref().is_some_and(|p| p.ends_with("@rbxts")) {
+				return true;
+			}
+
+			for node in node.tree.values() {
+				if walk(node) {
 					return true;
 				}
+			}
+
+			false
+		}
+
+		walk(&self.node)
+	}
+
+	pub fn is_wally(&self) -> bool {
+		fn walk(node: &ProjectNode) -> bool {
+			if node.path.as_ref().is_some_and(|p| p == Path::new("Packages")) {
+				return true;
 			}
 
 			for node in node.tree.values() {
