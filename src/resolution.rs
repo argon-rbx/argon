@@ -1,9 +1,10 @@
 // Based on Rojo's resolution.rs (https://github.com/rojo-rbx/rojo/blob/master/src/resolution.rs)
 
-use anyhow::{bail, format_err};
+use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
-	Attributes, CFrame, Color3, Content, Enum, Font, MaterialColors, Matrix3, Tags, Variant, VariantType, Vector2,
-	Vector3,
+	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, Content, Enum, Faces, Font,
+	MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Tags,
+	Variant, VariantType, Vector2, Vector3,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
@@ -120,6 +121,10 @@ pub enum AmbiguousValue {
 	Attributes(Attributes),
 	Font(Font),
 	MaterialColors(MaterialColors),
+	ColorSequence(ColorSequence),
+	NumberSequence(Vec<NumberSequenceKeypoint>),
+	PhysicalProperties(PhysicalProperties),
+	Ray(Ray),
 }
 
 impl AmbiguousValue {
@@ -181,11 +186,9 @@ impl AmbiguousValue {
 				(VariantType::Vector2, AmbiguousValue::Array2(vector)) => {
 					Ok(Vector2::new(vector[0] as f32, vector[1] as f32).into())
 				}
-
 				(VariantType::Vector3, AmbiguousValue::Array3(vector)) => {
 					Ok(Vector3::new(vector[0] as f32, vector[1] as f32, vector[2] as f32).into())
 				}
-
 				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
 					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
 				}
@@ -215,8 +218,75 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Font, AmbiguousValue::Font(font)) => Ok(font.into()),
-
 				(VariantType::MaterialColors, AmbiguousValue::MaterialColors(colors)) => Ok(colors.into()),
+
+				(VariantType::Axes, AmbiguousValue::StringArray(axes)) => {
+					let mut bits: u8 = 0;
+
+					for axis in axes {
+						match axis.as_ref() {
+							"X" => bits |= 1,
+							"Y" => bits |= 2,
+							"Z" => bits |= 4,
+							_ => {
+								bail!("invalid axis '{}'", axis);
+							}
+						}
+					}
+
+					Ok(Axes::from_bits(bits).unwrap_or_else(Axes::empty).into())
+				}
+
+				(VariantType::BinaryString, AmbiguousValue::String(str)) => {
+					Ok(BinaryString::from(str.as_bytes()).into())
+				}
+
+				(VariantType::BrickColor, AmbiguousValue::Number(num)) => Ok(BrickColor::from_number(num as u16)
+					.context(format!("{} is not valid BrickColor ID", num))?
+					.into()),
+				(VariantType::BrickColor, AmbiguousValue::String(str)) => Ok(BrickColor::from_name(&str)
+					.context(format!("{} is not valid BrickColor name", str))?
+					.into()),
+
+				(VariantType::Color3uint8, AmbiguousValue::Array3(color)) => {
+					Ok(Color3uint8::new(color[0] as u8, color[1] as u8, color[2] as u8).into())
+				}
+
+				(VariantType::ColorSequence, AmbiguousValue::ColorSequence(sequence)) => Ok(sequence.into()),
+
+				(VariantType::Faces, AmbiguousValue::StringArray(faces)) => {
+					let mut bits: u8 = 0;
+
+					for face in faces {
+						match face.as_ref() {
+							"Right" => bits |= 1,
+							"Top" => bits |= 2,
+							"Back" => bits |= 4,
+							"Left" => bits |= 8,
+							"Bottom" => bits |= 16,
+							"Front" => bits |= 32,
+							_ => {
+								bail!("invalid face '{}'", face);
+							}
+						}
+					}
+
+					Ok(Faces::from_bits(bits).unwrap_or_else(Faces::empty).into())
+				}
+
+				(VariantType::NumberRange, AmbiguousValue::Array2(range)) => {
+					Ok(NumberRange::new(range[0] as f32, range[1] as f32).into())
+				}
+
+				(VariantType::NumberSequence, AmbiguousValue::NumberSequence(keypoints)) => {
+					Ok(NumberSequence { keypoints }.into())
+				}
+
+				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(properties)) => {
+					Ok(properties.into())
+				}
+
+				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(ray.into()),
 
 				(_, unresolved) => Err(format_err!(
 					"Wrong type of value for property {}.{}. Expected {:?}, got {}",
@@ -253,6 +323,10 @@ impl AmbiguousValue {
 			AmbiguousValue::Attributes(_) => "an object containing attributes",
 			AmbiguousValue::Font(_) => "an object describing a Font",
 			AmbiguousValue::MaterialColors(_) => "an object describing MaterialColors",
+			AmbiguousValue::ColorSequence(_) => "an object describing a ColorSequence",
+			AmbiguousValue::NumberSequence(_) => "an object describing a NumberSequence",
+			AmbiguousValue::PhysicalProperties(_) => "an object describing PhysicalProperties",
+			AmbiguousValue::Ray(_) => "an object describing a Ray",
 		}
 	}
 }
