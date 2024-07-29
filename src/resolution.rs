@@ -3,8 +3,8 @@
 use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
 	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, Content, Enum, Faces, Font,
-	MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Tags,
-	Variant, VariantType, Vector2, Vector3,
+	MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect,
+	Region3, Region3int16, Tags, UDim, UDim2, Variant, VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
@@ -118,6 +118,10 @@ pub enum AmbiguousValue {
 	Array4([f64; 4]),
 	#[serde(serialize_with = "serialize_array")]
 	Array12([f64; 12]),
+	#[serde(serialize_with = "serialize_vector_array")]
+	Array2Array2([[f64; 2]; 2]),
+	#[serde(serialize_with = "serialize_vector_array")]
+	Array3Array2([[f64; 3]; 2]),
 	Attributes(Attributes),
 	Font(Font),
 	MaterialColors(MaterialColors),
@@ -242,10 +246,10 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::BrickColor, AmbiguousValue::Number(num)) => Ok(BrickColor::from_number(num as u16)
-					.context(format!("{} is not valid BrickColor ID", num))?
+					.context(format!("{} is not valid BrickColor number", num))?
 					.into()),
-				(VariantType::BrickColor, AmbiguousValue::String(str)) => Ok(BrickColor::from_name(&str)
-					.context(format!("{} is not valid BrickColor name", str))?
+				(VariantType::BrickColor, AmbiguousValue::String(name)) => Ok(BrickColor::from_name(&name)
+					.context(format!("{} is not valid BrickColor name", name))?
 					.into()),
 
 				(VariantType::Color3uint8, AmbiguousValue::Array3(color)) => {
@@ -288,6 +292,45 @@ impl AmbiguousValue {
 
 				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(ray.into()),
 
+				(VariantType::Rect, AmbiguousValue::Array2Array2(rect)) => Ok(Rect::new(
+					Vector2::new(rect[0][0] as f32, rect[0][1] as f32),
+					Vector2::new(rect[1][0] as f32, rect[1][1] as f32),
+				)
+				.into()),
+				// TODO: Implement Ref
+				// (VariantType::Ref, AmbiguousValue::String(path)) => Ok(),
+				//
+				(VariantType::Region3, AmbiguousValue::Array3Array2(region)) => Ok(Region3::new(
+					Vector3::new(region[0][0] as f32, region[0][1] as f32, region[0][2] as f32),
+					Vector3::new(region[1][0] as f32, region[1][1] as f32, region[1][2] as f32),
+				)
+				.into()),
+
+				(VariantType::Region3int16, AmbiguousValue::Array3Array2(region)) => Ok(Region3int16::new(
+					Vector3int16::new(region[0][0] as i16, region[0][1] as i16, region[0][2] as i16),
+					Vector3int16::new(region[1][0] as i16, region[1][1] as i16, region[1][2] as i16),
+				)
+				.into()),
+
+				(VariantType::SharedString, AmbiguousValue::String(str)) => Ok(str.into()),
+
+				(VariantType::UDim, AmbiguousValue::Array2(udim)) => {
+					Ok(rbx_dom_weak::types::UDim::new(udim[0] as f32, udim[1] as i32).into())
+				}
+
+				(VariantType::UDim2, AmbiguousValue::Array2Array2(udim)) => Ok(UDim2::new(
+					UDim::new(udim[0][0] as f32, udim[0][1] as i32),
+					UDim::new(udim[1][0] as f32, udim[1][1] as i32),
+				)
+				.into()),
+
+				(VariantType::Vector2int16, AmbiguousValue::Array2(vector)) => {
+					Ok(Vector2int16::new(vector[0] as i16, vector[1] as i16).into())
+				}
+				(VariantType::Vector3int16, AmbiguousValue::Array3(vector)) => {
+					Ok(Vector3int16::new(vector[0] as i16, vector[1] as i16, vector[2] as i16).into())
+				}
+
 				(_, unresolved) => Err(format_err!(
 					"Wrong type of value for property {}.{}. Expected {:?}, got {}",
 					class,
@@ -320,6 +363,8 @@ impl AmbiguousValue {
 			AmbiguousValue::Array3(_) => "an array of three numbers",
 			AmbiguousValue::Array4(_) => "an array of four numbers",
 			AmbiguousValue::Array12(_) => "an array of twelve numbers",
+			AmbiguousValue::Array2Array2(_) => "an array of two arrays of two numbers",
+			AmbiguousValue::Array3Array2(_) => "an array of two arrays of three numbers",
 			AmbiguousValue::Attributes(_) => "an object containing attributes",
 			AmbiguousValue::Font(_) => "an object describing a Font",
 			AmbiguousValue::MaterialColors(_) => "an object describing MaterialColors",
@@ -401,6 +446,27 @@ where
 			seq.serialize_element(&(number as i64))?;
 		} else {
 			seq.serialize_element(&number)?;
+		}
+	}
+
+	seq.end()
+}
+
+fn serialize_vector_array<S, const N: usize>(array: &[[f64; N]; 2], serializer: S) -> Result<S::Ok, S::Error>
+where
+	S: Serializer,
+{
+	let mut seq = serializer.serialize_seq(Some(2))?;
+
+	for vector in array {
+		for number in vector {
+			let number = truncate_number(number);
+
+			if number.fract() == 0.0 {
+				seq.serialize_element(&(number as i64))?;
+			} else {
+				seq.serialize_element(&number)?;
+			}
 		}
 	}
 
