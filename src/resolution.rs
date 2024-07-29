@@ -176,40 +176,6 @@ impl AmbiguousValue {
 				Ok(Enum::from_u32(*resolved).into())
 			}
 			DataType::Value(variant) => match (variant, self) {
-				(VariantType::Bool, AmbiguousValue::Bool(bool)) => Ok(bool.into()),
-
-				(VariantType::Float32, AmbiguousValue::Number(num)) => Ok((num as f32).into()),
-				(VariantType::Float64, AmbiguousValue::Number(num)) => Ok(num.into()),
-				(VariantType::Int32, AmbiguousValue::Number(num)) => Ok((num as i32).into()),
-				(VariantType::Int64, AmbiguousValue::Number(num)) => Ok((num as i64).into()),
-
-				(VariantType::String, AmbiguousValue::String(str)) => Ok(str.into()),
-				(VariantType::Tags, AmbiguousValue::StringArray(tags)) => Ok(Tags::from(tags).into()),
-				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
-
-				(VariantType::Vector2, AmbiguousValue::Array2(vector)) => {
-					Ok(Vector2::new(vector[0] as f32, vector[1] as f32).into())
-				}
-				(VariantType::Vector3, AmbiguousValue::Array3(vector)) => {
-					Ok(Vector3::new(vector[0] as f32, vector[1] as f32, vector[2] as f32).into())
-				}
-				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
-					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
-				}
-
-				(VariantType::CFrame, AmbiguousValue::Array12(cf)) => {
-					let cf = cf.map(|v| v as f32);
-
-					let pos = Vector3::new(cf[0], cf[1], cf[2]);
-					let orientation = Matrix3::new(
-						Vector3::new(cf[3], cf[4], cf[5]),
-						Vector3::new(cf[6], cf[7], cf[8]),
-						Vector3::new(cf[9], cf[10], cf[11]),
-					);
-
-					Ok(CFrame::new(pos, orientation).into())
-				}
-
 				(VariantType::Attributes, AmbiguousValue::Attributes(attr)) => Ok(attr.into()),
 				(VariantType::Attributes, AmbiguousValue::Object(value)) => {
 					let mut attributes = Attributes::new();
@@ -220,9 +186,6 @@ impl AmbiguousValue {
 
 					Ok(attributes.into())
 				}
-
-				(VariantType::Font, AmbiguousValue::Font(font)) => Ok(font.into()),
-				(VariantType::MaterialColors, AmbiguousValue::MaterialColors(colors)) => Ok(colors.into()),
 
 				(VariantType::Axes, AmbiguousValue::StringArray(axes)) => {
 					let mut bits: u8 = 0;
@@ -245,6 +208,8 @@ impl AmbiguousValue {
 					Ok(BinaryString::from(str.as_bytes()).into())
 				}
 
+				(VariantType::Bool, AmbiguousValue::Bool(bool)) => Ok(bool.into()),
+
 				(VariantType::BrickColor, AmbiguousValue::Number(num)) => Ok(BrickColor::from_number(num as u16)
 					.context(format!("{} is not valid BrickColor number", num))?
 					.into()),
@@ -252,11 +217,29 @@ impl AmbiguousValue {
 					.context(format!("{} is not valid BrickColor name", name))?
 					.into()),
 
+				(VariantType::CFrame, AmbiguousValue::Array12(cf)) => {
+					let cf = cf.map(|v| v as f32);
+
+					let pos = Vector3::new(cf[0], cf[1], cf[2]);
+					let orientation = Matrix3::new(
+						Vector3::new(cf[3], cf[4], cf[5]),
+						Vector3::new(cf[6], cf[7], cf[8]),
+						Vector3::new(cf[9], cf[10], cf[11]),
+					);
+
+					Ok(CFrame::new(pos, orientation).into())
+				}
+
+				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
+					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
+				}
 				(VariantType::Color3uint8, AmbiguousValue::Array3(color)) => {
 					Ok(Color3uint8::new(color[0] as u8, color[1] as u8, color[2] as u8).into())
 				}
 
 				(VariantType::ColorSequence, AmbiguousValue::ColorSequence(sequence)) => Ok(sequence.into()),
+
+				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
 
 				(VariantType::Faces, AmbiguousValue::StringArray(faces)) => {
 					let mut bits: u8 = 0;
@@ -278,12 +261,35 @@ impl AmbiguousValue {
 					Ok(Faces::from_bits(bits).unwrap_or_else(Faces::empty).into())
 				}
 
+				(VariantType::Float32, AmbiguousValue::Number(num)) => Ok((num as f32).into()),
+				(VariantType::Float64, AmbiguousValue::Number(num)) => Ok(num.into()),
+
+				(VariantType::Font, AmbiguousValue::Font(font)) => Ok(font.into()),
+
+				(VariantType::Int32, AmbiguousValue::Number(num)) => Ok((num as i32).into()),
+				(VariantType::Int64, AmbiguousValue::Number(num)) => Ok((num as i64).into()),
+
+				(VariantType::MaterialColors, AmbiguousValue::MaterialColors(colors)) => Ok(colors.into()),
+
 				(VariantType::NumberRange, AmbiguousValue::Array2(range)) => {
 					Ok(NumberRange::new(range[0] as f32, range[1] as f32).into())
 				}
 
 				(VariantType::NumberSequence, AmbiguousValue::NumberSequence(keypoints)) => {
 					Ok(NumberSequence { keypoints }.into())
+				}
+
+				(VariantType::OptionalCFrame, AmbiguousValue::Array12(cf)) => {
+					let cf = cf.map(|v| v as f32);
+
+					let pos = Vector3::new(cf[0], cf[1], cf[2]);
+					let orientation = Matrix3::new(
+						Vector3::new(cf[3], cf[4], cf[5]),
+						Vector3::new(cf[6], cf[7], cf[8]),
+						Vector3::new(cf[9], cf[10], cf[11]),
+					);
+
+					Ok(CFrame::new(pos, orientation).into())
 				}
 
 				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(properties)) => {
@@ -305,7 +311,6 @@ impl AmbiguousValue {
 					Vector3::new(region[1][0] as f32, region[1][1] as f32, region[1][2] as f32),
 				)
 				.into()),
-
 				(VariantType::Region3int16, AmbiguousValue::Array3Array2(region)) => Ok(Region3int16::new(
 					Vector3int16::new(region[0][0] as i16, region[0][1] as i16, region[0][2] as i16),
 					Vector3int16::new(region[1][0] as i16, region[1][1] as i16, region[1][2] as i16),
@@ -313,6 +318,9 @@ impl AmbiguousValue {
 				.into()),
 
 				(VariantType::SharedString, AmbiguousValue::String(str)) => Ok(str.into()),
+				(VariantType::String, AmbiguousValue::String(str)) => Ok(str.into()),
+
+				(VariantType::Tags, AmbiguousValue::StringArray(tags)) => Ok(Tags::from(tags).into()),
 
 				(VariantType::UDim, AmbiguousValue::Array2(udim)) => {
 					Ok(rbx_dom_weak::types::UDim::new(udim[0] as f32, udim[1] as i32).into())
@@ -324,8 +332,15 @@ impl AmbiguousValue {
 				)
 				.into()),
 
+				(VariantType::Vector2, AmbiguousValue::Array2(vector)) => {
+					Ok(Vector2::new(vector[0] as f32, vector[1] as f32).into())
+				}
 				(VariantType::Vector2int16, AmbiguousValue::Array2(vector)) => {
 					Ok(Vector2int16::new(vector[0] as i16, vector[1] as i16).into())
+				}
+
+				(VariantType::Vector3, AmbiguousValue::Array3(vector)) => {
+					Ok(Vector3::new(vector[0] as f32, vector[1] as f32, vector[2] as f32).into())
 				}
 				(VariantType::Vector3int16, AmbiguousValue::Array3(vector)) => {
 					Ok(Vector3int16::new(vector[0] as i16, vector[1] as i16, vector[2] as i16).into())
