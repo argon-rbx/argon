@@ -23,7 +23,7 @@ plugin = []
 
 [dependencies]
 rbx_xml = "0.13.3"
-rbx_binary = "0.7.4"
+rbx_binary = "0.7.5"
 rbx_dom_weak = "2.7.0"
 rbx_reflection = "4.5.0"
 rbx_reflection_database = "0.2.10"
