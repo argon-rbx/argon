@@ -101,5 +101,3 @@ self_update = { version = "0.39.0", default-features = false, features = [
 [patch.crates-io]
 notify-debouncer-full = { path = "crates/notify-debouncer-full" }
 self_update = { path = "crates/self_update" }
-# Temporary until `InstanceBuilder::with_referent` is released
-rbx_dom_weak = { path = "crates/rbx_dom_weak" }
