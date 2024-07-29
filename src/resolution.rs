@@ -2,9 +2,10 @@
 
 use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
-	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, Content, Enum, Faces, Font,
-	MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect,
-	Region3, Region3int16, Tags, UDim, UDim2, Variant, VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
+	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
+	Content, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint,
+	PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2, Variant, VariantType, Vector2,
+	Vector2int16, Vector3, Vector3int16,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
@@ -118,17 +119,26 @@ pub enum AmbiguousValue {
 	Array4([f64; 4]),
 	#[serde(serialize_with = "serialize_array")]
 	Array12([f64; 12]),
-	#[serde(serialize_with = "serialize_vector_array")]
+	#[serde(serialize_with = "serialize_array_array")]
 	Array2Array2([[f64; 2]; 2]),
-	#[serde(serialize_with = "serialize_vector_array")]
+	#[serde(serialize_with = "serialize_array_array")]
 	Array3Array2([[f64; 3]; 2]),
 	Attributes(Attributes),
 	Font(Font),
 	MaterialColors(MaterialColors),
-	ColorSequence(ColorSequence),
+	ColorSequence(Vec<ColorSequenceKeypoint>),
 	NumberSequence(Vec<NumberSequenceKeypoint>),
 	PhysicalProperties(PhysicalProperties),
-	Ray(Ray),
+	#[allow(private_interfaces)]
+	Ray(AmbiguousRay),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct AmbiguousRay {
+	#[serde(serialize_with = "serialize_array")]
+	origin: [f64; 3],
+	#[serde(serialize_with = "serialize_array")]
+	direction: [f64; 3],
 }
 
 impl AmbiguousValue {
@@ -237,7 +247,9 @@ impl AmbiguousValue {
 					Ok(Color3uint8::new(color[0] as u8, color[1] as u8, color[2] as u8).into())
 				}
 
-				(VariantType::ColorSequence, AmbiguousValue::ColorSequence(sequence)) => Ok(sequence.into()),
+				(VariantType::ColorSequence, AmbiguousValue::ColorSequence(keypoints)) => {
+					Ok(ColorSequence { keypoints }.into())
+				}
 
 				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
 
@@ -296,7 +308,15 @@ impl AmbiguousValue {
 					Ok(properties.into())
 				}
 
-				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(ray.into()),
+				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(Ray::new(
+					Vector3::new(ray.origin[0] as f32, ray.origin[1] as f32, ray.origin[2] as f32),
+					Vector3::new(
+						ray.direction[0] as f32,
+						ray.direction[1] as f32,
+						ray.direction[2] as f32,
+					),
+				)
+				.into()),
 
 				(VariantType::Rect, AmbiguousValue::Array2Array2(rect)) => Ok(Rect::new(
 					Vector2::new(rect[0][0] as f32, rect[0][1] as f32),
@@ -467,14 +487,14 @@ where
 	seq.end()
 }
 
-fn serialize_vector_array<S, const N: usize>(array: &[[f64; N]; 2], serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_array_array<S, const N: usize>(array: &[[f64; N]; 2], serializer: S) -> Result<S::Ok, S::Error>
 where
 	S: Serializer,
 {
 	let mut seq = serializer.serialize_seq(Some(2))?;
 
-	for vector in array {
-		for number in vector {
+	for array in array {
+		for number in array {
 			let number = truncate_number(number);
 
 			if number.fract() == 0.0 {
