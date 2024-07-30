@@ -3,9 +3,9 @@
 use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
 	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-	Content, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange, NumberSequence, NumberSequenceKeypoint,
-	PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2, Variant, VariantType, Vector2,
-	Vector2int16, Vector3, Vector3int16,
+	Content, CustomPhysicalProperties, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange, NumberSequence,
+	NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2, Variant,
+	VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
@@ -43,6 +43,56 @@ impl UnresolvedValue {
 	// Based on Uplift Games' Rojo fork (https://github.com/UpliftGames/rojo/blob/syncback-incremental/src/resolution.rs#L43)
 	pub fn from_variant(variant: Variant, class_name: &str, prop_name: &str) -> Self {
 		Self::Ambiguous(match variant {
+			Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
+
+			Variant::Axes(axes) => {
+				let mut array = Vec::new();
+
+				if axes.contains(Axes::X) {
+					array.push("X".to_owned());
+				}
+
+				if axes.contains(Axes::Y) {
+					array.push("Y".to_owned());
+				}
+
+				if axes.contains(Axes::Z) {
+					array.push("Z".to_owned());
+				}
+
+				AmbiguousValue::StringArray(array)
+			}
+
+			Variant::BinaryString(binary) => {
+				AmbiguousValue::String(String::from_utf8(binary.into_vec()).unwrap_or_default())
+			}
+
+			Variant::Bool(bool) => AmbiguousValue::Bool(bool),
+
+			Variant::BrickColor(color) => AmbiguousValue::String(color.to_string()),
+
+			Variant::CFrame(cf) => AmbiguousValue::Array12([
+				cf.position.x as f64,
+				cf.position.y as f64,
+				cf.position.z as f64,
+				cf.orientation.x.x as f64,
+				cf.orientation.x.y as f64,
+				cf.orientation.x.z as f64,
+				cf.orientation.y.x as f64,
+				cf.orientation.y.y as f64,
+				cf.orientation.y.z as f64,
+				cf.orientation.z.x as f64,
+				cf.orientation.z.y as f64,
+				cf.orientation.z.z as f64,
+			]),
+
+			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
+			Variant::Color3uint8(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
+
+			Variant::ColorSequence(sequence) => AmbiguousValue::ColorSequence(sequence.keypoints.clone()),
+
+			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+
 			Variant::Enum(rbx_enum) => {
 				if let Some(property) = find_descriptor(class_name, prop_name) {
 					if let DataType::Enum(enum_name) = &property.data_type {
@@ -61,39 +111,117 @@ impl UnresolvedValue {
 				return Self::FullyQualified(variant);
 			}
 
-			Variant::Bool(bool) => AmbiguousValue::Bool(bool),
+			Variant::Faces(faces) => {
+				let mut array = Vec::new();
 
-			Variant::Float32(n) => AmbiguousValue::Number(n as f64),
-			Variant::Float64(n) => AmbiguousValue::Number(n),
-			Variant::Int32(n) => AmbiguousValue::Number(n as f64),
-			Variant::Int64(n) => AmbiguousValue::Number(n as f64),
+				if faces.contains(Faces::RIGHT) {
+					array.push("Right".to_owned());
+				}
 
-			Variant::String(str) => AmbiguousValue::String(str),
-			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
-			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+				if faces.contains(Faces::TOP) {
+					array.push("Top".to_owned());
+				}
 
-			Variant::Vector2(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
-			Variant::Vector3(vector) => AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64]),
-			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
+				if faces.contains(Faces::BACK) {
+					array.push("Back".to_owned());
+				}
 
-			Variant::CFrame(cf) => AmbiguousValue::Array12([
-				cf.position.x as f64,
-				cf.position.y as f64,
-				cf.position.z as f64,
-				cf.orientation.x.x as f64,
-				cf.orientation.x.y as f64,
-				cf.orientation.x.z as f64,
-				cf.orientation.y.x as f64,
-				cf.orientation.y.y as f64,
-				cf.orientation.y.z as f64,
-				cf.orientation.z.x as f64,
-				cf.orientation.z.y as f64,
-				cf.orientation.z.z as f64,
+				if faces.contains(Faces::LEFT) {
+					array.push("Left".to_owned());
+				}
+
+				if faces.contains(Faces::BOTTOM) {
+					array.push("Bottom".to_owned());
+				}
+
+				if faces.contains(Faces::FRONT) {
+					array.push("Front".to_owned());
+				}
+
+				AmbiguousValue::StringArray(array)
+			}
+
+			Variant::Float32(num) => AmbiguousValue::Number(num as f64),
+			Variant::Float64(num) => AmbiguousValue::Number(num),
+
+			Variant::Font(font) => AmbiguousValue::Font(font),
+
+			Variant::Int32(num) => AmbiguousValue::Number(num as f64),
+			Variant::Int64(num) => AmbiguousValue::Number(num as f64),
+
+			Variant::MaterialColors(colors) => AmbiguousValue::MaterialColors(colors),
+
+			Variant::NumberRange(range) => AmbiguousValue::Array2([range.min as f64, range.max as f64]),
+
+			Variant::NumberSequence(sequence) => AmbiguousValue::NumberSequence(sequence.keypoints.clone()),
+
+			Variant::OptionalCFrame(cf) => {
+				if let Some(cf) = cf {
+					AmbiguousValue::Array12([
+						cf.position.x as f64,
+						cf.position.y as f64,
+						cf.position.z as f64,
+						cf.orientation.x.x as f64,
+						cf.orientation.x.y as f64,
+						cf.orientation.x.z as f64,
+						cf.orientation.y.x as f64,
+						cf.orientation.y.y as f64,
+						cf.orientation.y.z as f64,
+						cf.orientation.z.x as f64,
+						cf.orientation.z.y as f64,
+						cf.orientation.z.z as f64,
+					])
+				} else {
+					AmbiguousValue::String("null".to_owned())
+				}
+			}
+
+			Variant::PhysicalProperties(PhysicalProperties::Custom(custom)) => {
+				AmbiguousValue::PhysicalProperties(custom)
+			}
+
+			Variant::Ray(ray) => AmbiguousValue::Ray(AmbiguousRay {
+				origin: [ray.origin.x as f64, ray.origin.y as f64, ray.origin.z as f64],
+				direction: [ray.direction.x as f64, ray.direction.y as f64, ray.direction.z as f64],
+			}),
+
+			Variant::Rect(rect) => AmbiguousValue::Array2Array2([
+				[rect.min.x as f64, rect.min.y as f64],
+				[rect.max.x as f64, rect.max.y as f64],
+			]),
+			// TODO: Implement Ref
+			// Variant::Ref(reference) => AmbiguousValue::
+			//
+			Variant::Region3(region) => AmbiguousValue::Array3Array2([
+				[region.min.x as f64, region.min.y as f64, region.min.z as f64],
+				[region.max.x as f64, region.max.y as f64, region.max.z as f64],
+			]),
+			Variant::Region3int16(region) => AmbiguousValue::Array3Array2([
+				[region.min.x as f64, region.min.y as f64, region.min.z as f64],
+				[region.max.x as f64, region.max.y as f64, region.max.z as f64],
 			]),
 
-			Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
-			Variant::Font(font) => AmbiguousValue::Font(font),
-			Variant::MaterialColors(colors) => AmbiguousValue::MaterialColors(colors),
+			Variant::SharedString(shared) => {
+				AmbiguousValue::String(String::from_utf8(shared.data().to_vec()).unwrap_or_default())
+			}
+			Variant::String(string) => AmbiguousValue::String(string),
+
+			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
+
+			Variant::UDim(udim) => AmbiguousValue::Array2([udim.scale as f64, udim.offset as f64]),
+
+			Variant::UDim2(udim) => AmbiguousValue::Array2Array2([
+				[udim.x.scale as f64, udim.x.offset as f64],
+				[udim.y.scale as f64, udim.y.offset as f64],
+			]),
+
+			Variant::Vector2(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
+			Variant::Vector2int16(vector) => AmbiguousValue::Array2([vector.x as f64, vector.y as f64]),
+
+			Variant::Vector3(vector) => AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64]),
+			Variant::Vector3int16(vector) => {
+				AmbiguousValue::Array3([vector.x as f64, vector.y as f64, vector.z as f64])
+			}
 
 			_ => {
 				return Self::FullyQualified(variant);
@@ -128,7 +256,7 @@ pub enum AmbiguousValue {
 	MaterialColors(MaterialColors),
 	ColorSequence(Vec<ColorSequenceKeypoint>),
 	NumberSequence(Vec<NumberSequenceKeypoint>),
-	PhysicalProperties(PhysicalProperties),
+	PhysicalProperties(CustomPhysicalProperties),
 	#[allow(private_interfaces)]
 	Ray(AmbiguousRay),
 }
@@ -304,8 +432,8 @@ impl AmbiguousValue {
 					Ok(CFrame::new(pos, orientation).into())
 				}
 
-				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(properties)) => {
-					Ok(properties.into())
+				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(custom)) => {
+					Ok(PhysicalProperties::Custom(custom).into())
 				}
 
 				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(Ray::new(
