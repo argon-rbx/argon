@@ -179,11 +179,9 @@ impl UnresolvedValue {
 			Variant::PhysicalProperties(PhysicalProperties::Custom(custom)) => {
 				AmbiguousValue::PhysicalProperties(custom)
 			}
+			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String(String::from("Default")),
 
-			Variant::Ray(ray) => AmbiguousValue::Ray(AmbiguousRay {
-				origin: [ray.origin.x as f64, ray.origin.y as f64, ray.origin.z as f64],
-				direction: [ray.direction.x as f64, ray.direction.y as f64, ray.direction.z as f64],
-			}),
+			Variant::Ray(ray) => AmbiguousValue::Ray(ray),
 
 			Variant::Rect(rect) => AmbiguousValue::Array2Array2([
 				[rect.min.x as f64, rect.min.y as f64],
@@ -238,7 +236,6 @@ pub enum AmbiguousValue {
 	StringArray(Vec<String>),
 	#[serde(serialize_with = "serialize_number")]
 	Number(f64),
-	Object(HashMap<String, UnresolvedValue>),
 	#[serde(serialize_with = "serialize_array")]
 	Array2([f64; 2]),
 	#[serde(serialize_with = "serialize_array")]
@@ -252,21 +249,13 @@ pub enum AmbiguousValue {
 	#[serde(serialize_with = "serialize_array_array")]
 	Array3Array2([[f64; 3]; 2]),
 	Attributes(Attributes),
-	Font(Font),
 	MaterialColors(MaterialColors),
 	ColorSequence(Vec<ColorSequenceKeypoint>),
 	NumberSequence(Vec<NumberSequenceKeypoint>),
+	Font(Font),
 	PhysicalProperties(CustomPhysicalProperties),
-	#[allow(private_interfaces)]
-	Ray(AmbiguousRay),
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-struct AmbiguousRay {
-	#[serde(serialize_with = "serialize_array")]
-	origin: [f64; 3],
-	#[serde(serialize_with = "serialize_array")]
-	direction: [f64; 3],
+	Ray(Ray),
+	Object(HashMap<String, UnresolvedValue>),
 }
 
 impl AmbiguousValue {
@@ -435,16 +424,15 @@ impl AmbiguousValue {
 				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(custom)) => {
 					Ok(PhysicalProperties::Custom(custom).into())
 				}
+				(VariantType::PhysicalProperties, AmbiguousValue::String(default)) => {
+					if default != "Default" {
+						bail!("string is not 'Default'");
+					}
 
-				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(Ray::new(
-					Vector3::new(ray.origin[0] as f32, ray.origin[1] as f32, ray.origin[2] as f32),
-					Vector3::new(
-						ray.direction[0] as f32,
-						ray.direction[1] as f32,
-						ray.direction[2] as f32,
-					),
-				)
-				.into()),
+					Ok(PhysicalProperties::Default.into())
+				}
+
+				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(ray.into()),
 
 				(VariantType::Rect, AmbiguousValue::Array2Array2(rect)) => Ok(Rect::new(
 					Vector2::new(rect[0][0] as f32, rect[0][1] as f32),
