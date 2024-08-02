@@ -19,10 +19,10 @@ pub enum UnresolvedValue {
 }
 
 impl UnresolvedValue {
-	pub fn resolve(self, class_name: &str, prop_name: &str) -> anyhow::Result<Variant> {
+	pub fn resolve(self, class: &str, property: &str) -> anyhow::Result<Variant> {
 		match self {
 			UnresolvedValue::FullyQualified(full) => Ok(full),
-			UnresolvedValue::Ambiguous(partial) => partial.resolve(class_name, prop_name),
+			UnresolvedValue::Ambiguous(partial) => partial.resolve(class, property),
 		}
 	}
 
@@ -41,7 +41,7 @@ impl UnresolvedValue {
 	}
 
 	// Based on Uplift Games' Rojo fork (https://github.com/UpliftGames/rojo/blob/syncback-incremental/src/resolution.rs#L43)
-	pub fn from_variant(variant: Variant, class_name: &str, prop_name: &str) -> Self {
+	pub fn from_variant(variant: Variant, class: &str, property: &str) -> Self {
 		Self::Ambiguous(match variant {
 			Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
 
@@ -94,7 +94,7 @@ impl UnresolvedValue {
 			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
 
 			Variant::Enum(rbx_enum) => {
-				if let Some(property) = find_descriptor(class_name, prop_name) {
+				if let Some(property) = find_descriptor(class, property) {
 					if let DataType::Enum(enum_name) = &property.data_type {
 						let database = rbx_reflection_database::get();
 
