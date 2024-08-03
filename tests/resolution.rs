@@ -80,8 +80,8 @@ mod unresolved_value {
 	#[test]
 	fn color3() {
 		assert_eq!(
-			resolve("Lighting", "Ambient", "[1.2, 3.4, 5.6]"),
-			Color3::new(1.2, 3.4, 5.6).into()
+			resolve("Lighting", "Ambient", "[0.3, 0.6, 0.9]"),
+			Color3::new(0.3, 0.6, 0.9).into()
 		);
 	}
 
@@ -365,5 +365,144 @@ mod unresolved_value {
 			resolve("TerrainRegion", "ExtentsMax", "[1, 2, 3]"),
 			Vector3int16::new(1, 2, 3).into()
 		);
+	}
+}
+
+mod resolved_value {
+	use argon::resolution::UnresolvedValue;
+
+	use rbx_dom_weak::types::{
+		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
+		Enum, Faces, Matrix3, Variant, Vector3,
+	};
+	use serde_json::{json, Value};
+
+	fn from_variant<V: Into<Variant>>(variant: V) -> Value {
+		let unresolved = UnresolvedValue::from_variant(variant.into(), "", "");
+		serde_json::to_value(unresolved).unwrap()
+	}
+
+	fn from_variant_enum(value: u32, class: &str, property: &str) -> Value {
+		let unresolved = UnresolvedValue::from_variant(Enum::from_u32(value).into(), class, property);
+		serde_json::to_value(&unresolved).unwrap()
+	}
+
+	#[test]
+	fn attributes() {
+		let mut attributes = Attributes::new();
+		attributes.insert("String".into(), Variant::String("Hello, world!".into()));
+		attributes.insert("Number".into(), Variant::Float64(4.2));
+		attributes.insert("Bool".into(), Variant::Bool(true));
+
+		assert_eq!(
+			from_variant(attributes),
+			json!({
+				"String": "Hello, world!",
+				"Number": 4.2,
+				"Bool": true,
+			})
+		);
+	}
+
+	#[test]
+	fn axes() {
+		assert_eq!(from_variant(Axes::empty()), json!([]));
+		assert_eq!(from_variant(Axes::X), json!(["X"]));
+		assert_eq!(from_variant(Axes::all()), json!(["X", "Y", "Z"]));
+	}
+
+	#[test]
+	fn binary_string() {
+		assert_eq!(
+			from_variant(BinaryString::from("Hello, world!".as_bytes())),
+			json!("Hello, world!")
+		);
+	}
+
+	#[test]
+	fn bool() {
+		assert_eq!(from_variant(true), json!(true));
+		assert_eq!(from_variant(false), json!(false));
+	}
+
+	#[test]
+	fn brick_color() {
+		assert_eq!(
+			from_variant(BrickColor::from_name("Electric blue").unwrap()),
+			json!("Electric blue")
+		);
+	}
+
+	#[test]
+	fn cframe() {
+		assert_eq!(
+			from_variant(CFrame::new(Vector3::new(1.0, 2.0, 3.0), Matrix3::identity())),
+			json!([1, 2, 3, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+		);
+	}
+
+	#[test]
+	fn color3() {
+		assert_eq!(from_variant(Color3::new(0.4, 0.6, 0.8)), json!([0.4, 0.6, 0.8]));
+	}
+
+	#[test]
+	fn color3_uint8() {
+		assert_eq!(from_variant(Color3uint8::new(0, 100, 200)), json!([0, 100, 200]));
+	}
+
+	#[test]
+	fn color_sequence() {
+		let keypoints = vec![
+			ColorSequenceKeypoint::new(0.0, Color3::new(1.0, 0.0, 0.0)),
+			ColorSequenceKeypoint::new(0.5, Color3::new(0.0, 1.0, 0.0)),
+			ColorSequenceKeypoint::new(1.0, Color3::new(0.0, 0.0, 1.0)),
+		];
+
+		assert_eq!(
+			from_variant(ColorSequence { keypoints }),
+			json!([
+				{"time": 0.0, "color": [1.0, 0.0, 0.0]},
+				{"time": 0.5, "color": [0.0, 1.0, 0.0]},
+				{"time": 1.0, "color": [0.0, 0.0, 1.0]},
+			])
+		);
+	}
+
+	#[test]
+	fn content() {
+		assert_eq!(
+			from_variant("rbxassetid://1234567890"),
+			json!("rbxassetid://1234567890")
+		);
+	}
+
+	#[test]
+	fn enums() {
+		assert_eq!(from_variant_enum(0, "Part", "Shape"), json!("Ball"));
+		assert_eq!(from_variant_enum(1, "Part", "Shape"), json!("Block"));
+		assert_eq!(from_variant_enum(2, "Part", "Shape"), json!("Cylinder"));
+	}
+
+	#[test]
+	fn faces() {
+		assert_eq!(from_variant(Faces::empty()), json!([]));
+		assert_eq!(from_variant(Faces::RIGHT), json!(["Right"]));
+		assert_eq!(
+			from_variant(Faces::all()),
+			json!(["Right", "Top", "Back", "Left", "Bottom", "Front"])
+		);
+	}
+
+	#[test]
+	fn float32() {
+		assert_eq!(from_variant(0.5f32), json!(0.5));
+		assert_eq!(from_variant(1234.5f32), json!(1234.5));
+	}
+
+	#[test]
+	fn float64() {
+		assert_eq!(from_variant(0.5f64), json!(0.5));
+		assert_eq!(from_variant(1234.5f64), json!(1234.5));
 	}
 }

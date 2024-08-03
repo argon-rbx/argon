@@ -43,7 +43,15 @@ impl UnresolvedValue {
 	// Based on Uplift Games' Rojo fork (https://github.com/UpliftGames/rojo/blob/syncback-incremental/src/resolution.rs#L43)
 	pub fn from_variant(variant: Variant, class: &str, property: &str) -> Self {
 		Self::Ambiguous(match variant {
-			Variant::Attributes(attr) => AmbiguousValue::Attributes(attr),
+			Variant::Attributes(attr) => {
+				let mut object = HashMap::new();
+
+				for (key, value) in attr {
+					object.insert(key, Self::from_variant(value, class, property));
+				}
+
+				AmbiguousValue::Object(object)
+			}
 
 			Variant::Axes(axes) => {
 				let mut array = Vec::new();
