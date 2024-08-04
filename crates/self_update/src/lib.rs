@@ -1,4 +1,3 @@
-#![cfg_attr(feature = "cargo-clippy", deny(clippy::all))]
 /*!
 
 [![Build status](https://ci.appveyor.com/api/projects/status/xlkq8rd73cla4ixw/branch/master?svg=true)](https://ci.appveyor.com/project/jaemk/self-update/branch/master)

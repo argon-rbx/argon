@@ -164,7 +164,7 @@ fn install_template(template: &Dir, path: &Path) -> Result<()> {
 	}
 
 	for dir in template.dirs() {
-		fs::create_dir(&path.join(dir.path()))?;
+		fs::create_dir(path.join(dir.path()))?;
 		install_template(dir, path)?;
 	}
 

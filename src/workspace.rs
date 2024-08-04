@@ -304,7 +304,7 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 	let output = Program::new(ProgramName::Git)
 		.message("Failed to initialize repository")
 		.arg("init")
-		.arg(&directory.to_string())
+		.arg(directory.to_string())
 		.output()?;
 
 	if output.is_some() {
@@ -344,7 +344,7 @@ fn copy_dir(from: &Path, to: &Path, rojo_mode: bool, use_lua: bool) -> Result<()
 		if path.is_dir() {
 			copy_dir(&path, &to.join(name), rojo_mode, use_lua)?;
 		} else if name != ".gitkeep" {
-			fs::copy(&path, &to.join(name))?;
+			fs::copy(&path, to.join(name))?;
 		}
 	}
 
