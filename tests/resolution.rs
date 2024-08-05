@@ -23,14 +23,14 @@ mod unresolved_value {
 	fn attributes() {
 		let mut attributes = Attributes::new();
 		attributes.insert("String".into(), Variant::String("Hello, world!".into()));
-		attributes.insert("Number".into(), Variant::Float64(4.2));
+		attributes.insert("Number".into(), Variant::Float64(13.37));
 		attributes.insert("Bool".into(), Variant::Bool(true));
 
 		assert_eq!(
 			resolve(
 				"Instance",
 				"Attributes",
-				r#"{"String": "Hello, world!", "Number": 4.2, "Bool": true}"#
+				r#"{"String": "Hello, world!", "Number": 13.37, "Bool": true}"#
 			),
 			attributes.into()
 		);
@@ -72,8 +72,8 @@ mod unresolved_value {
 	#[test]
 	fn cframe() {
 		assert_eq!(
-			resolve("Part", "CFrame", "[1, 2, 3, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
-			CFrame::new(Vector3::new(1.0, 2.0, 3.0), Matrix3::identity()).into()
+			resolve("Part", "CFrame", "[1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
+			CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity()).into()
 		);
 	}
 
@@ -142,18 +142,21 @@ mod unresolved_value {
 
 	#[test]
 	fn float32() {
-		assert_eq!(resolve("Players", "RespawnTime", "0.5"), Variant::Float32(0.5));
-		assert_eq!(resolve("Players", "RespawnTime", "123.456"), Variant::Float32(123.456));
+		assert_eq!(resolve("Players", "RespawnTime", "4.2"), Variant::Float32(4.2));
+		assert_eq!(
+			resolve("Players", "RespawnTime", "12345.678"),
+			Variant::Float32(12345.678)
+		);
 	}
 
 	#[test]
 	fn float64() {
-		assert_eq!(resolve("Sound", "PlaybackLoudness", "0.5"), Variant::Float64(0.5));
+		assert_eq!(resolve("Sound", "PlaybackLoudness", "4.2"), Variant::Float64(4.2));
 		assert_eq!(
-			resolve("Sound", "PlaybackLoudness", "123.456"),
-			Variant::Float64(123.456)
+			resolve("Sound", "PlaybackLoudness", "12345.6789"),
+			Variant::Float64(12345.6789)
 		);
-		assert_eq!(resolve_unambiguous("4.2"), Variant::Float64(4.2));
+		assert_eq!(resolve_unambiguous("6.9"), Variant::Float64(6.9));
 	}
 
 	#[test]
@@ -197,8 +200,8 @@ mod unresolved_value {
 	#[test]
 	fn number_range() {
 		assert_eq!(
-			resolve("ParticleEmitter", "Lifetime", "[5, 10]"),
-			NumberRange::new(5.0, 10.0).into()
+			resolve("ParticleEmitter", "Lifetime", "[1.2, 3.4]"),
+			NumberRange::new(1.2, 3.4).into()
 		);
 	}
 
@@ -223,26 +226,26 @@ mod unresolved_value {
 	#[test]
 	fn optional_cframe() {
 		assert_eq!(
-			resolve("Model", "WorldPivotData", "[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
-			CFrame::new(Vector3::new(0.0, 0.0, 0.0), Matrix3::identity()).into()
+			resolve("Model", "WorldPivotData", "[1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
+			CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity()).into()
 		);
 	}
 
 	#[test]
 	fn physical_properties() {
 		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
-			density: 1.0,
-			friction: 2.0,
-			elasticity: 3.0,
-			friction_weight: 4.0,
-			elasticity_weight: 5.0,
+			density: 1.2,
+			friction: 3.4,
+			elasticity: 5.6,
+			friction_weight: 7.8,
+			elasticity_weight: 9.0,
 		});
 
 		assert_eq!(
 			resolve(
 				"Part",
 				"CustomPhysicalProperties",
-				r#"{"density": 1, "friction": 2, "elasticity": 3, "frictionWeight": 4, "elasticityWeight": 5}"#
+				r#"{"density": 1.2, "friction": 3.4, "elasticity": 5.6, "frictionWeight": 7.8, "elasticityWeight": 9}"#
 			),
 			properties.into()
 		);
@@ -255,16 +258,20 @@ mod unresolved_value {
 	#[test]
 	fn ray() {
 		assert_eq!(
-			resolve("RayValue", "Value", r#"{"origin": [1, 2, 3], "direction": [4, 5, 6]}"#),
-			Ray::new(Vector3::new(1.0, 2.0, 3.0), Vector3::new(4.0, 5.0, 6.0)).into()
+			resolve(
+				"RayValue",
+				"Value",
+				r#"{"origin": [1.2, 3.4, 5.6], "direction": [1.2, 3.4, 5.6]}"#
+			),
+			Ray::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6)).into()
 		);
 	}
 
 	#[test]
 	fn rect() {
 		assert_eq!(
-			resolve("ImageButton", "SliceCenter", "[[1, 2], [3, 4]]"),
-			Rect::new(Vector2::new(1.0, 2.0), Vector2::new(3.0, 4.0)).into()
+			resolve("ImageButton", "SliceCenter", "[[1.2, 3.4], [5.6, 7.8]]"),
+			Rect::new(Vector2::new(1.2, 3.4), Vector2::new(5.6, 7.8)).into()
 		);
 	}
 
@@ -279,8 +286,8 @@ mod unresolved_value {
 		// Currently Region3 property does not exist
 
 		// assert_eq!(
-		// 	resolve("Not", "Available", "[[1, 2, 3], [4, 5, 6]]"),
-		// 	Region3::new(Vector3::new(1.0, 2.0, 3.0), Vector3::new(4.0, 5.0, 6.0)).into()
+		// 	resolve("Not", "Available", "[[1.2, 3.4, 5.6], [1.2, 3.4, 5.6]]"),
+		// 	Region3::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6)).into()
 		// );
 	}
 
@@ -369,11 +376,15 @@ mod unresolved_value {
 }
 
 mod resolved_value {
+
+	use approx::assert_relative_eq;
 	use argon::resolution::UnresolvedValue;
 
 	use rbx_dom_weak::types::{
 		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-		Enum, Faces, Matrix3, Variant, Vector3,
+		CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange, NumberSequence,
+		NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, SharedString, Tags, UDim, UDim2,
+		Variant, Vector2, Vector2int16, Vector3, Vector3int16,
 	};
 	use serde_json::{json, Value};
 
@@ -387,68 +398,100 @@ mod resolved_value {
 		serde_json::to_value(&unresolved).unwrap()
 	}
 
+	fn assert_eq(mut value: Value, mut expected: Value) {
+		if let Some(num) = value.as_number() {
+			assert_relative_eq!(
+				num.as_f64().unwrap(),
+				expected.as_number().unwrap().as_f64().unwrap(),
+				epsilon = 0.001
+			);
+		} else if let Some(arr) = value.as_array_mut() {
+			let expected = expected.as_array_mut().unwrap();
+
+			if arr.len() != expected.len() {
+				assert_eq!(arr, expected);
+			}
+
+			for (index, value) in arr.iter_mut().enumerate() {
+				assert_eq(value.take(), expected[index].take());
+			}
+		} else if let Some(obj) = value.as_object_mut() {
+			let expected = expected.as_object_mut().unwrap();
+
+			if obj.len() != expected.len() {
+				assert_eq!(obj, expected);
+			}
+
+			for (key, value) in obj.iter_mut() {
+				assert_eq(value.take(), expected[key].take());
+			}
+		} else {
+			assert_eq!(value, expected);
+		}
+	}
+
 	#[test]
 	fn attributes() {
 		let mut attributes = Attributes::new();
 		attributes.insert("String".into(), Variant::String("Hello, world!".into()));
-		attributes.insert("Number".into(), Variant::Float64(4.2));
+		attributes.insert("Number".into(), Variant::Float64(13.37));
 		attributes.insert("Bool".into(), Variant::Bool(true));
 
-		assert_eq!(
+		assert_eq(
 			from_variant(attributes),
 			json!({
 				"String": "Hello, world!",
-				"Number": 4.2,
+				"Number": 13.37,
 				"Bool": true,
-			})
+			}),
 		);
 	}
 
 	#[test]
 	fn axes() {
-		assert_eq!(from_variant(Axes::empty()), json!([]));
-		assert_eq!(from_variant(Axes::X), json!(["X"]));
-		assert_eq!(from_variant(Axes::all()), json!(["X", "Y", "Z"]));
+		assert_eq(from_variant(Axes::empty()), json!([]));
+		assert_eq(from_variant(Axes::X), json!(["X"]));
+		assert_eq(from_variant(Axes::all()), json!(["X", "Y", "Z"]));
 	}
 
 	#[test]
 	fn binary_string() {
-		assert_eq!(
+		assert_eq(
 			from_variant(BinaryString::from("Hello, world!".as_bytes())),
-			json!("Hello, world!")
+			json!("Hello, world!"),
 		);
 	}
 
 	#[test]
 	fn bool() {
-		assert_eq!(from_variant(true), json!(true));
-		assert_eq!(from_variant(false), json!(false));
+		assert_eq(from_variant(true), json!(true));
+		assert_eq(from_variant(false), json!(false));
 	}
 
 	#[test]
 	fn brick_color() {
-		assert_eq!(
+		assert_eq(
 			from_variant(BrickColor::from_name("Electric blue").unwrap()),
-			json!("Electric blue")
+			json!("Electric blue"),
 		);
 	}
 
 	#[test]
 	fn cframe() {
-		assert_eq!(
-			from_variant(CFrame::new(Vector3::new(1.0, 2.0, 3.0), Matrix3::identity())),
-			json!([1, 2, 3, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+		assert_eq(
+			from_variant(CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity())),
+			json!([1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]),
 		);
 	}
 
 	#[test]
 	fn color3() {
-		assert_eq!(from_variant(Color3::new(0.4, 0.6, 0.8)), json!([0.4, 0.6, 0.8]));
+		assert_eq(from_variant(Color3::new(0.3, 0.6, 0.9)), json!([0.3, 0.6, 0.9]));
 	}
 
 	#[test]
 	fn color3_uint8() {
-		assert_eq!(from_variant(Color3uint8::new(0, 100, 200)), json!([0, 100, 200]));
+		assert_eq(from_variant(Color3uint8::new(0, 100, 200)), json!([0, 100, 200]));
 	}
 
 	#[test]
@@ -459,50 +502,234 @@ mod resolved_value {
 			ColorSequenceKeypoint::new(1.0, Color3::new(0.0, 0.0, 1.0)),
 		];
 
-		assert_eq!(
+		assert_eq(
 			from_variant(ColorSequence { keypoints }),
 			json!([
-				{"time": 0.0, "color": [1.0, 0.0, 0.0]},
-				{"time": 0.5, "color": [0.0, 1.0, 0.0]},
-				{"time": 1.0, "color": [0.0, 0.0, 1.0]},
-			])
+				{"time": 0, "color": [1, 0, 0]},
+				{"time": 0.5, "color": [0, 1, 0]},
+				{"time": 1, "color": [0, 0, 1]},
+			]),
 		);
 	}
 
 	#[test]
 	fn content() {
-		assert_eq!(
+		assert_eq(
 			from_variant("rbxassetid://1234567890"),
-			json!("rbxassetid://1234567890")
+			json!("rbxassetid://1234567890"),
 		);
 	}
 
 	#[test]
 	fn enums() {
-		assert_eq!(from_variant_enum(0, "Part", "Shape"), json!("Ball"));
-		assert_eq!(from_variant_enum(1, "Part", "Shape"), json!("Block"));
-		assert_eq!(from_variant_enum(2, "Part", "Shape"), json!("Cylinder"));
+		assert_eq(from_variant_enum(0, "Part", "Shape"), json!("Ball"));
+		assert_eq(from_variant_enum(1, "Part", "Shape"), json!("Block"));
+		assert_eq(from_variant_enum(2, "Part", "Shape"), json!("Cylinder"));
 	}
 
 	#[test]
 	fn faces() {
-		assert_eq!(from_variant(Faces::empty()), json!([]));
-		assert_eq!(from_variant(Faces::RIGHT), json!(["Right"]));
-		assert_eq!(
+		assert_eq(from_variant(Faces::empty()), json!([]));
+		assert_eq(from_variant(Faces::RIGHT), json!(["Right"]));
+		assert_eq(
 			from_variant(Faces::all()),
-			json!(["Right", "Top", "Back", "Left", "Bottom", "Front"])
+			json!(["Right", "Top", "Back", "Left", "Bottom", "Front"]),
 		);
 	}
 
 	#[test]
 	fn float32() {
-		assert_eq!(from_variant(0.5f32), json!(0.5));
-		assert_eq!(from_variant(1234.5f32), json!(1234.5));
+		assert_eq(from_variant(4.2f32), json!(4.2));
+		assert_eq(from_variant(12345.678f32), json!(12345.678));
 	}
 
 	#[test]
 	fn float64() {
-		assert_eq!(from_variant(0.5f64), json!(0.5));
-		assert_eq!(from_variant(1234.5f64), json!(1234.5));
+		assert_eq(from_variant(4.2f64), json!(4.2));
+		assert_eq(from_variant(12345.6789f64), json!(12345.6789));
+	}
+
+	#[test]
+	fn font() {
+		let font = Font::new(
+			"rbxasset://fonts/families/Ubuntu.json",
+			FontWeight::Bold,
+			FontStyle::Italic,
+		);
+
+		let mut test1 =
+			json!({"family": "rbxasset://fonts/families/SourceSansPro.json", "weight": "Regular", "style": "Normal"});
+		let mut test2 = json!({"family": "rbxasset://fonts/families/Ubuntu.json", "weight": "Bold", "style": "Italic"});
+
+		test1["cachedFaceId"] = Value::Null;
+		test2["cachedFaceId"] = Value::Null;
+
+		assert_eq(from_variant(Font::default()), test1);
+		assert_eq(from_variant(font), test2);
+	}
+
+	#[test]
+	fn int32() {
+		assert_eq(from_variant(8i32), json!(8));
+		assert_eq(from_variant(999999999i32), json!(999999999));
+	}
+
+	#[test]
+	fn int64() {
+		assert_eq(from_variant(8i64), json!(8));
+		assert_eq(from_variant(999999999i64), json!(999999999));
+	}
+
+	#[test]
+	fn number_range() {
+		assert_eq(from_variant(NumberRange::new(1.2, 3.4)), json!([1.2, 3.4]));
+	}
+
+	#[test]
+	fn number_sequence() {
+		let keypoints = vec![
+			NumberSequenceKeypoint::new(0.0, 0.0, 0.0),
+			NumberSequenceKeypoint::new(0.5, 0.3, 0.0),
+			NumberSequenceKeypoint::new(1.0, 0.8, 0.0),
+		];
+
+		assert_eq(
+			from_variant(NumberSequence { keypoints }),
+			json!([
+				{"time": 0, "value": 0, "envelope": 0},
+				{"time": 0.5, "value": 0.3, "envelope": 0},
+				{"time": 1, "value": 0.8, "envelope": 0},
+			]),
+		);
+	}
+
+	#[test]
+	fn optional_cframe() {
+		assert_eq(
+			from_variant(CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity())),
+			json!([1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]),
+		);
+	}
+
+	#[test]
+	fn physical_properties() {
+		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
+			density: 1.2,
+			friction: 3.4,
+			elasticity: 5.6,
+			friction_weight: 7.8,
+			elasticity_weight: 9.0,
+		});
+
+		assert_eq(
+			from_variant(properties),
+			json!({
+				"density": 1.2,
+				"friction": 3.4,
+				"elasticity": 5.6,
+				"frictionWeight": 7.8,
+				"elasticityWeight": 9,
+			}),
+		);
+		assert_eq(from_variant(PhysicalProperties::Default), json!("Default"));
+	}
+
+	#[test]
+	fn ray() {
+		assert_eq(
+			from_variant(Ray::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6))),
+			json!({
+				"origin": [1.2, 3.4, 5.6],
+				"direction": [1.2, 3.4, 5.6],
+			}),
+		)
+	}
+
+	#[test]
+	fn rect() {
+		assert_eq(
+			from_variant(Rect::new(Vector2::new(1.2, 3.4), Vector2::new(5.6, 7.8))),
+			json!([[1.2, 3.4], [5.6, 7.8]]),
+		);
+	}
+
+	#[test]
+	fn refs() {
+		// TODO: Implement Ref
+		// assert_eq(from_variant(Ref::none()), json!(null));
+	}
+
+	#[test]
+	fn region3() {
+		assert_eq(
+			from_variant(Region3::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6))),
+			json!([[1.2, 3.4, 5.6], [1.2, 3.4, 5.6]]),
+		);
+	}
+
+	#[test]
+	fn region3_int16() {
+		assert_eq(
+			from_variant(Region3int16::new(
+				Vector3int16::new(1, 2, 3),
+				Vector3int16::new(4, 5, 6),
+			)),
+			json!([[1, 2, 3], [4, 5, 6]]),
+		);
+	}
+
+	#[test]
+	fn shared_string() {
+		assert_eq(
+			from_variant(SharedString::new("Hello, world!".as_bytes().to_vec())),
+			json!("Hello, world!"),
+		);
+	}
+
+	#[test]
+	fn string() {
+		assert_eq(from_variant("Argon"), json!("Argon"));
+	}
+
+	#[test]
+	fn tags() {
+		let mut tags = Tags::new();
+		tags.push("foo");
+		tags.push("bar");
+
+		assert_eq(from_variant(tags), json!(["foo", "bar"]));
+	}
+
+	#[test]
+	fn udim() {
+		assert_eq(from_variant(UDim::new(0.5, 500)), json!([0.5, 500]));
+	}
+
+	#[test]
+	fn udim2() {
+		assert_eq(
+			from_variant(UDim2::new(UDim::new(0.5, 500), UDim::new(1.0, 1000))),
+			json!([[0.5, 500], [1, 1000]]),
+		);
+	}
+
+	#[test]
+	fn vector2() {
+		assert_eq(from_variant(Vector2::new(1.2, 3.4)), json!([1.2, 3.4]));
+	}
+
+	#[test]
+	fn vector2_int16() {
+		assert_eq(from_variant(Vector2int16::new(1, 2)), json!([1, 2]));
+	}
+
+	#[test]
+	fn vector3() {
+		assert_eq(from_variant(Vector3::new(1.2, 3.4, 5.6)), json!([1.2, 3.4, 5.6]));
+	}
+
+	#[test]
+	fn vector3_int16() {
+		assert_eq(from_variant(Vector3int16::new(1, 2, 3)), json!([1, 2, 3]));
 	}
 }

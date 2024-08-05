@@ -98,6 +98,9 @@ self_update = { version = "0.39.0", default-features = false, features = [
 	"rustls",
 ] }
 
+[dev-dependencies]
+approx = "0.5.1"
+
 [patch.crates-io]
 notify-debouncer-full = { path = "crates/notify-debouncer-full" }
 self_update = { path = "crates/self_update" }
