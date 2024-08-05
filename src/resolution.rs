@@ -252,9 +252,9 @@ pub enum AmbiguousValue {
 	Array4([f64; 4]),
 	#[serde(serialize_with = "serialize_array")]
 	Array12([f64; 12]),
-	#[serde(serialize_with = "serialize_array_array")]
+	#[serde(serialize_with = "serialize_nested_array")]
 	Array2Array2([[f64; 2]; 2]),
-	#[serde(serialize_with = "serialize_array_array")]
+	#[serde(serialize_with = "serialize_nested_array")]
 	Array3Array2([[f64; 3]; 2]),
 	Attributes(Attributes),
 	MaterialColors(MaterialColors),
@@ -611,23 +611,34 @@ where
 	seq.end()
 }
 
-fn serialize_array_array<S, const N: usize>(array: &[[f64; N]; 2], serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_nested_array<S, const N: usize>(array: &[[f64; N]; 2], serializer: S) -> Result<S::Ok, S::Error>
 where
 	S: Serializer,
 {
 	let mut seq = serializer.serialize_seq(Some(2))?;
 
 	for array in array {
+		let mut new: Vec<Number> = Vec::with_capacity(array.len());
+
 		for number in array {
 			let number = truncate_number(number);
 
 			if number.fract() == 0.0 {
-				seq.serialize_element(&(number as i64))?;
+				new.push(Number::Int(number as i64));
 			} else {
-				seq.serialize_element(&number)?;
+				new.push(Number::Float(number));
 			}
 		}
+
+		seq.serialize_element(array.as_slice())?;
 	}
 
 	seq.end()
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+enum Number {
+	Int(i64),
+	Float(f64),
 }
