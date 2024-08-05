@@ -36,7 +36,7 @@ pub fn get_status() -> Result<UpdateStatus> {
 	Ok(status)
 }
 
-pub fn set_staus(status: &UpdateStatus) -> Result<()> {
+pub fn set_status(status: &UpdateStatus) -> Result<()> {
 	let path = util::get_argon_dir()?.join("update.toml");
 
 	fs::write(path, toml::to_string(status)?)?;
@@ -162,7 +162,7 @@ pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
 	}
 
 	status.last_checked = SystemTime::now();
-	set_staus(&status)?;
+	set_status(&status)?;
 
 	Ok(())
 }
@@ -180,7 +180,7 @@ pub fn force_update(cli: bool, plugin: bool) -> Result<bool> {
 	}
 
 	status.last_checked = SystemTime::now();
-	set_staus(&status)?;
+	set_status(&status)?;
 
 	Ok(updated)
 }

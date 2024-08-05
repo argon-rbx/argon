@@ -133,7 +133,7 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 					let mut status = updater::get_status()?;
 					status.plugin_version = release.version;
 
-					updater::set_staus(&status)?;
+					updater::set_status(&status)?;
 				}
 			}
 			_ => unreachable!(),

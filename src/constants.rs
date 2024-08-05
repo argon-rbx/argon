@@ -10,7 +10,7 @@ pub const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 // Maximum number of changes made by one of the connected
 // clients that can be applied to the underlying tree and
 // vfs without extra user confirmation
-pub const CHANGES_TRESHOLD: usize = 5;
+pub const CHANGES_THRESHOLD: usize = 5;
 
 // Maximum payload size that can be sent from client
 // to the server, usually containing changes to apply,

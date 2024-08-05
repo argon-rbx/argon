@@ -329,7 +329,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					add_non_project_instances(parent_id, &custom_path, snapshot, &parent_meta, tree, vfs)?;
 
 				let parent_source = Source::project(name, path, node.clone(), node_path.clone())
-					.with_relevants(parent_source.relevant().to_owned());
+					.with_relevant(parent_source.relevant().to_owned());
 
 				parent_meta.set_source(parent_source);
 				tree.update_meta(parent_id, parent_meta);

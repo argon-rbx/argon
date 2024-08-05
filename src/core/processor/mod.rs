@@ -11,7 +11,7 @@ use std::{
 use super::{changes::Changes, queue::Queue, tree::Tree};
 use crate::{
 	argon_error,
-	constants::{BLACKLISTED_PATHS, CHANGES_TRESHOLD},
+	constants::{BLACKLISTED_PATHS, CHANGES_THRESHOLD},
 	lock, logger,
 	project::{Project, ProjectDetails},
 	server, stats,
@@ -173,7 +173,7 @@ impl Handler {
 
 		trace!("Received client event: {:?} changes", changes.total());
 
-		if changes.total() > CHANGES_TRESHOLD {
+		if changes.total() > CHANGES_THRESHOLD {
 			let accept = logger::prompt(
 				&format!(
 					"You are about to apply {}, {} and {}. Do you want to continue?",

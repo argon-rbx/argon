@@ -121,8 +121,8 @@ impl Source {
 		}
 	}
 
-	pub fn with_relevants(mut self, relevants: Vec<SourceEntry>) -> Self {
-		self.relevant = relevants;
+	pub fn with_relevant(mut self, relevant: Vec<SourceEntry>) -> Self {
+		self.relevant = relevant;
 		self
 	}
 
@@ -146,7 +146,7 @@ impl Source {
 		}
 	}
 
-	pub fn extend_relavants(&mut self, entries: Vec<SourceEntry>) {
+	pub fn extend_relevant(&mut self, entries: Vec<SourceEntry>) {
 		self.relevant.extend(entries)
 	}
 
@@ -369,7 +369,7 @@ pub struct Context {
 	sync_rules: Vec<SyncRule>,
 	/// Rules that define which files are ignored
 	ignore_rules: Vec<IgnoreRule>,
-	/// Filter wihch ignores specific instances and properties
+	/// Filter which ignores specific instances and properties
 	syncback_filter: SyncbackFilter,
 	/// Whether to use legacy script context
 	legacy_scripts: bool,

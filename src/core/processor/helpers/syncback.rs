@@ -70,10 +70,10 @@ pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> P
 pub fn serialize_properties(class: &str, properties: Properties) -> HashMap<String, UnresolvedValue> {
 	properties
 		.iter()
-		.map(|(property, varaint)| {
+		.map(|(property, variant)| {
 			(
 				property.to_owned(),
-				UnresolvedValue::from_variant(varaint.clone(), class, property),
+				UnresolvedValue::from_variant(variant.clone(), class, property),
 			)
 		})
 		.collect()

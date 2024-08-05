@@ -9,7 +9,7 @@ use super::{VfsBackend, VfsEvent};
 
 #[derive(Debug)]
 pub enum VfsEntry {
-	Direcotry(Vec<PathBuf>),
+	Directory(Vec<PathBuf>),
 	File(Vec<u8>),
 }
 
@@ -40,7 +40,7 @@ impl VfsBackend for MemBackend {
 	fn read(&self, path: &Path) -> Result<Vec<u8>> {
 		match self.get_entry(path)? {
 			VfsEntry::File(contents) => Ok(contents.clone()),
-			VfsEntry::Direcotry(_) => not_file(path),
+			VfsEntry::Directory(_) => not_file(path),
 		}
 	}
 
@@ -49,14 +49,14 @@ impl VfsBackend for MemBackend {
 			VfsEntry::File(contents) => {
 				Ok(String::from_utf8(contents.clone()).map_err(|err| Error::new(ErrorKind::InvalidData, err))?)
 			}
-			VfsEntry::Direcotry(_) => not_file(path),
+			VfsEntry::Directory(_) => not_file(path),
 		}
 	}
 
 	fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
 		match self.get_entry(path)? {
 			VfsEntry::File(_) => not_dir(path),
-			VfsEntry::Direcotry(children) => Ok(children.clone()),
+			VfsEntry::Directory(children) => Ok(children.clone()),
 		}
 	}
 
@@ -65,7 +65,7 @@ impl VfsBackend for MemBackend {
 
 		match entry {
 			VfsEntry::File(old) => contents.clone_into(old),
-			VfsEntry::Direcotry(_) => return not_file(path),
+			VfsEntry::Directory(_) => return not_file(path),
 		}
 
 		Ok(())
@@ -80,11 +80,11 @@ impl VfsBackend for MemBackend {
 
 			match self.inner.get(&cur_path) {
 				Some(VfsEntry::File(_)) => return not_dir(&cur_path),
-				Some(VfsEntry::Direcotry(_)) => (),
+				Some(VfsEntry::Directory(_)) => (),
 				None => {
-					self.inner.insert(cur_path.clone(), VfsEntry::Direcotry(vec![]));
+					self.inner.insert(cur_path.clone(), VfsEntry::Directory(vec![]));
 
-					if let Some(VfsEntry::Direcotry(children)) = self.inner.get_mut(&last_path) {
+					if let Some(VfsEntry::Directory(children)) = self.inner.get_mut(&last_path) {
 						children.push(cur_path.clone());
 					}
 				}
@@ -103,7 +103,7 @@ impl VfsBackend for MemBackend {
 			Some(entry) => {
 				self.inner.insert(to.to_owned(), entry);
 
-				if let Some(VfsEntry::Direcotry(children)) = self.inner.get_mut(from.parent().unwrap()) {
+				if let Some(VfsEntry::Directory(children)) = self.inner.get_mut(from.parent().unwrap()) {
 					children.retain(|p| p != from);
 					children.push(to.to_owned());
 				}
@@ -118,7 +118,7 @@ impl VfsBackend for MemBackend {
 		let entry = self.inner.remove(path);
 
 		match entry {
-			Some(VfsEntry::Direcotry(_)) => {
+			Some(VfsEntry::Directory(_)) => {
 				self.inner.retain(|p, _| !p.starts_with(path));
 			}
 			None => return not_found(path),
@@ -133,7 +133,7 @@ impl VfsBackend for MemBackend {
 	}
 
 	fn is_dir(&self, path: &Path) -> bool {
-		matches!(self.inner.get(path), Some(VfsEntry::Direcotry(_)))
+		matches!(self.inner.get(path), Some(VfsEntry::Directory(_)))
 	}
 
 	fn is_file(&self, path: &Path) -> bool {

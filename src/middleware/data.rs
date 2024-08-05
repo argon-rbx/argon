@@ -146,10 +146,10 @@ pub fn write_data<'a>(
 
 	let properties = properties
 		.iter()
-		.map(|(property, varaint)| {
+		.map(|(property, variant)| {
 			(
 				property.to_owned(),
-				UnresolvedValue::from_variant(varaint.clone(), class, property),
+				UnresolvedValue::from_variant(variant.clone(), class, property),
 			)
 		})
 		.collect();
