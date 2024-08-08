@@ -189,11 +189,16 @@ impl UnresolvedValue {
 			}
 			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String(String::from("Default")),
 
-			Variant::Ray(ray) => AmbiguousValue::Ray(ray),
+			Variant::Ray(ray) => AmbiguousValue::Array3Array2([
+				[ray.origin.x as f64, ray.origin.y as f64, ray.origin.z as f64],
+				[ray.direction.x as f64, ray.direction.y as f64, ray.direction.z as f64],
+			]),
 
-			Variant::Rect(rect) => AmbiguousValue::Array2Array2([
-				[rect.min.x as f64, rect.min.y as f64],
-				[rect.max.x as f64, rect.max.y as f64],
+			Variant::Rect(rect) => AmbiguousValue::Array4([
+				rect.min.x as f64,
+				rect.min.y as f64,
+				rect.max.x as f64,
+				rect.max.y as f64,
 			]),
 			// TODO: Implement Ref
 			// Variant::Ref(reference) => AmbiguousValue::
@@ -262,7 +267,6 @@ pub enum AmbiguousValue {
 	NumberSequence(Vec<NumberSequenceKeypoint>),
 	Font(Font),
 	PhysicalProperties(CustomPhysicalProperties),
-	Ray(Ray),
 	Object(HashMap<String, UnresolvedValue>),
 }
 
@@ -440,11 +444,15 @@ impl AmbiguousValue {
 					Ok(PhysicalProperties::Default.into())
 				}
 
-				(VariantType::Ray, AmbiguousValue::Ray(ray)) => Ok(ray.into()),
+				(VariantType::Ray, AmbiguousValue::Array3Array2(ray)) => Ok(Ray::new(
+					Vector3::new(ray[0][0] as f32, ray[0][1] as f32, ray[0][2] as f32),
+					Vector3::new(ray[1][0] as f32, ray[1][1] as f32, ray[1][2] as f32),
+				)
+				.into()),
 
-				(VariantType::Rect, AmbiguousValue::Array2Array2(rect)) => Ok(Rect::new(
-					Vector2::new(rect[0][0] as f32, rect[0][1] as f32),
-					Vector2::new(rect[1][0] as f32, rect[1][1] as f32),
+				(VariantType::Rect, AmbiguousValue::Array4(rect)) => Ok(Rect::new(
+					Vector2::new(rect[0] as f32, rect[1] as f32),
+					Vector2::new(rect[2] as f32, rect[3] as f32),
 				)
 				.into()),
 				// TODO: Implement Ref
@@ -517,7 +525,6 @@ impl AmbiguousValue {
 			AmbiguousValue::String(_) => "a string",
 			AmbiguousValue::StringArray(_) => "an array of strings",
 			AmbiguousValue::Number(_) => "a number",
-			AmbiguousValue::Object(_) => "a generic object",
 			AmbiguousValue::Array2(_) => "an array of two numbers",
 			AmbiguousValue::Array3(_) => "an array of three numbers",
 			AmbiguousValue::Array4(_) => "an array of four numbers",
@@ -525,12 +532,12 @@ impl AmbiguousValue {
 			AmbiguousValue::Array2Array2(_) => "an array of two arrays of two numbers",
 			AmbiguousValue::Array3Array2(_) => "an array of two arrays of three numbers",
 			AmbiguousValue::Attributes(_) => "an object containing attributes",
-			AmbiguousValue::Font(_) => "an object describing a Font",
 			AmbiguousValue::MaterialColors(_) => "an object describing MaterialColors",
 			AmbiguousValue::ColorSequence(_) => "an object describing a ColorSequence",
 			AmbiguousValue::NumberSequence(_) => "an object describing a NumberSequence",
+			AmbiguousValue::Font(_) => "an object describing a Font",
 			AmbiguousValue::PhysicalProperties(_) => "an object describing PhysicalProperties",
-			AmbiguousValue::Ray(_) => "an object describing a Ray",
+			AmbiguousValue::Object(_) => "a generic object",
 		}
 	}
 }

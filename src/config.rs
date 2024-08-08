@@ -103,7 +103,7 @@ impl Config {
 		Self::new().clone()
 	}
 
-	/// This sould be called once, at the start of the program
+	/// This should be called once, at the start of the program
 	pub fn load() -> Result<()> {
 		let mut config = Self::default();
 

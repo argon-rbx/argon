@@ -258,11 +258,7 @@ mod unresolved_value {
 	#[test]
 	fn ray() {
 		assert_eq!(
-			resolve(
-				"RayValue",
-				"Value",
-				r#"{"origin": [1.2, 3.4, 5.6], "direction": [1.2, 3.4, 5.6]}"#
-			),
+			resolve("RayValue", "Value", "[[1.2, 3.4, 5.6], [1.2, 3.4, 5.6]]"),
 			Ray::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6)).into()
 		);
 	}
@@ -270,7 +266,7 @@ mod unresolved_value {
 	#[test]
 	fn rect() {
 		assert_eq!(
-			resolve("ImageButton", "SliceCenter", "[[1.2, 3.4], [5.6, 7.8]]"),
+			resolve("ImageButton", "SliceCenter", "[1.2, 3.4, 5.6, 7.8]"),
 			Rect::new(Vector2::new(1.2, 3.4), Vector2::new(5.6, 7.8)).into()
 		);
 	}
@@ -638,18 +634,15 @@ mod resolved_value {
 	fn ray() {
 		assert_eq(
 			from_variant(Ray::new(Vector3::new(1.2, 3.4, 5.6), Vector3::new(1.2, 3.4, 5.6))),
-			json!({
-				"origin": [1.2, 3.4, 5.6],
-				"direction": [1.2, 3.4, 5.6],
-			}),
-		)
+			json!([[1.2, 3.4, 5.6], [1.2, 3.4, 5.6]]),
+		);
 	}
 
 	#[test]
 	fn rect() {
 		assert_eq(
 			from_variant(Rect::new(Vector2::new(1.2, 3.4), Vector2::new(5.6, 7.8))),
-			json!([[1.2, 3.4], [5.6, 7.8]]),
+			json!([1.2, 3.4, 5.6, 7.8]),
 		);
 	}
 
