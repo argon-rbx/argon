@@ -6,15 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `smart_paths` setting that makes specifying paths faster and easier
+
 ### Changed
 
 - `RunContext` can no longer be specified inside script's source using comments
+
+### Fixed
+
+- Wally package detection no longer requires `use_wally` setting when `detect_project` is enabled
 
 ## [2.0.14] - 2024-08-09
 
 ### Added
 
-- Integration for `wally install` command when `use_wally` and `detect_project` settings are enabled
+- Integration for `wally install` command when `use_wally` or `detect_project` setting is enabled
 - Improved logging for client-server communication
 - All properties can be now specified implicitly
 

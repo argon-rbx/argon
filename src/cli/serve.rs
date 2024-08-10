@@ -84,8 +84,8 @@ impl Serve {
 			exit!("Cannot serve non-place project!");
 		}
 
-		let use_wally = config.use_wally && config.detect_project && project.is_wally();
-		let use_ts = self.ts || config.ts_mode || if config.detect_project { project.is_ts() } else { false };
+		let use_wally = config.use_wally || (config.detect_project && project.is_wally());
+		let use_ts = self.ts || config.ts_mode || (config.detect_project && project.is_ts());
 
 		if use_wally {
 			integration::check_wally_packages(&project.workspace_dir)?;

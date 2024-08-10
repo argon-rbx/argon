@@ -103,7 +103,7 @@ impl Build {
 			} else {
 				let ext = path.get_ext();
 
-				if ext.is_empty() {
+				if ext.is_empty() && !config.smart_paths {
 					fs::create_dir_all(&path)?;
 
 					path.join(self.get_default_file(&project))
@@ -143,8 +143,8 @@ impl Build {
 		}
 		.resolve()?;
 
-		let use_wally = config.use_wally && config.detect_project && project.is_wally();
-		let use_ts = self.ts || config.ts_mode || if config.detect_project { project.is_ts() } else { false };
+		let use_wally = config.use_wally || (config.detect_project && project.is_wally());
+		let use_ts = self.ts || config.ts_mode || (config.detect_project && project.is_ts());
 
 		if use_wally {
 			integration::check_wally_packages(&project.workspace_dir)?;

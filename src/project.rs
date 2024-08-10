@@ -9,6 +9,7 @@ use std::{
 };
 
 use crate::{
+	config::Config,
 	core::{
 		meta::{NodePath, SyncRule},
 		tree::Tree,
@@ -193,6 +194,14 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 		return Ok(path);
 	}
 
+	if Config::new().smart_paths {
+		let path = path.with_file_name(path.get_name().to_owned() + ".project.json");
+
+		if path.exists() {
+			return Ok(path);
+		}
+	}
+
 	let default_project = path.join("default.project.json");
 	if default_project.exists() {
 		return Ok(default_project);
@@ -203,7 +212,7 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	if let Some(path) = Glob::from_path(&glob)?.first() {
 		Ok(path)
 	} else {
-		Ok(path.join("default.project.json"))
+		Ok(default_project)
 	}
 }
 

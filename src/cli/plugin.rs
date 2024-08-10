@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use std::{fs, path::PathBuf};
 
-use crate::{argon_info, installer, util};
+use crate::{argon_info, config::Config, installer, util};
 
 /// Install Argon Roblox Studio plugin locally
 #[derive(Parser)]
@@ -18,7 +18,7 @@ pub struct Plugin {
 impl Plugin {
 	pub fn main(self) -> Result<()> {
 		let plugin_path = if let Some(path) = self.path {
-			if path.is_dir() {
+			if path.is_dir() || (Config::new().smart_paths && path.extension().is_none()) {
 				path.join("Argon.rbxm")
 			} else {
 				path

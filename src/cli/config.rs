@@ -29,7 +29,11 @@ pub struct Config {
 impl Config {
 	pub fn main(self) -> Result<()> {
 		if self.list {
-			argon_info!("List of all available config options:\n\n{}", GlobalConfig::list());
+			argon_info!(
+				"List of all available config options:\n\n{}\nVisit {} to learn more details!",
+				GlobalConfig::list(),
+				"https://argon.wiki/docs/configuration#global-config".bold()
+			);
 
 			return Ok(());
 		}

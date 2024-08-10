@@ -48,7 +48,7 @@ pub struct Sourcemap {
 }
 
 impl Sourcemap {
-	pub fn main(self) -> Result<()> {
+	pub fn main(mut self) -> Result<()> {
 		let config = Config::new();
 
 		if self.watch && !self.argon_spawn && (self.run_async || config.run_async) {
@@ -62,6 +62,18 @@ impl Sourcemap {
 				"No project files found in {}",
 				project_path.get_parent().to_string().bold()
 			);
+		}
+
+		if let Some(path) = self.output.as_ref() {
+			if config.smart_paths && (path.is_dir() || path.extension().is_none()) {
+				let output = if path.get_name() == "sourcemap" {
+					path.with_extension("json")
+				} else {
+					path.join("sourcemap.json")
+				};
+
+				self.output = Some(output);
+			}
 		}
 
 		let project = Project::load(&project_path)?;

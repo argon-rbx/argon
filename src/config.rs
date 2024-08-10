@@ -34,6 +34,8 @@ pub struct Config {
 	pub scan_ports: bool,
 	/// Automatically detect project type
 	pub detect_project: bool,
+	/// Use smart path resolver when running commands
+	pub smart_paths: bool,
 	/// Always run commands with sourcemap generation
 	pub with_sourcemap: bool,
 	/// Build using XML format by default
@@ -51,7 +53,7 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
-	/// Package manager to use when running roblox-ts scripts (npm, yarn, etc.)
+	/// Package manager to use when running roblox-ts scripts (npm, bun, etc.)
 	pub package_manager: String,
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
@@ -75,6 +77,7 @@ impl Default for Config {
 			run_async: false,
 			scan_ports: true,
 			detect_project: true,
+			smart_paths: false,
 			with_sourcemap: false,
 			build_xml: false,
 
