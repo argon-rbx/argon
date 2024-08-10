@@ -43,31 +43,14 @@ pub fn read_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptTy
 	let source = vfs.read_to_string(path)?;
 
 	if script_type != ScriptType::Module {
-		let mut overridden = false;
-
 		if let Some(line) = source.lines().next() {
 			if line.contains("--disable") {
 				properties.insert(String::from("Disabled"), Variant::Bool(true));
 			}
-
-			if script_type == ScriptType::Server {
-				if line.contains("--server") {
-					properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(1)));
-					overridden = true;
-				} else if line.contains("--client") {
-					properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(2)));
-					overridden = true;
-				} else if line.contains("--plugin") {
-					properties.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(3)));
-					overridden = true;
-				}
-			}
 		}
 
-		if !overridden {
-			if let Some(run_context) = run_context {
-				properties.insert(String::from("RunContext"), run_context);
-			}
+		if let Some(run_context) = run_context {
+			properties.insert(String::from("RunContext"), run_context);
 		}
 	}
 
@@ -93,29 +76,11 @@ pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<P
 	let mut new_header = String::new();
 
 	if properties.remove("Disabled").is_some() {
-		new_header += "--disable ";
-	}
-
-	if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
-		match run_context.to_u32() {
-			1 => new_header += "--server ",
-			2 => new_header += "--client ",
-			3 => new_header += "--plugin ",
-			_ => {}
-		}
-	}
-
-	new_header.pop();
-
-	if !new_header.is_empty() {
-		new_header += "\n";
+		new_header += "--disable\n";
 	}
 
 	if header.contains("--") {
 		header = header.replace("--disable", "");
-		header = header.replace("--server", "");
-		header = header.replace("--client", "");
-		header = header.replace("--plugin", "");
 
 		if header.len() == header.match_indices(' ').count() {
 			header.clear();

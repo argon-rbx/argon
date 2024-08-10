@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- `RunContext` can no longer be specified inside script's source using comments
+
 ## [2.0.14] - 2024-08-09
 
 ### Added

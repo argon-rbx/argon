@@ -70,7 +70,9 @@ jobs:
         uses: shogo82148/actions-create-release@v1
         with:
           release_name: ${{ github.ref_name }}
-          body: ${{ steps.read-changes.outputs.changes }}
+          body: |
+            ## Changelog
+            ${{ steps.read-changes.outputs.changes }}
           prerelease: ${{ contains(github.ref_name, 'pre') }}
           notes_start_tag: ${{ steps.previus-tag.outputs.tag }}
           generate_release_notes: true
