@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use colored::Colorize;
 use log::{debug, info};
@@ -9,7 +9,6 @@ use crate::{
 	argon_info,
 	config::Config,
 	core::Core,
-	exit,
 	ext::PathExt,
 	integration,
 	program::{Program, ProgramName},
@@ -79,7 +78,7 @@ impl Build {
 		};
 
 		if !project_path.exists() {
-			exit!(
+			bail!(
 				"No project files found in {}",
 				project_path.get_parent().to_string().bold()
 			);
@@ -90,7 +89,7 @@ impl Build {
 		let mut xml = self.xml || config.build_xml;
 		let path = if self.plugin {
 			if project.is_place() {
-				exit!("Cannot build plugin from place project");
+				bail!("Cannot build plugin from place project");
 			}
 
 			let plugins_path = RobloxStudio::locate()?.plugins_path().to_owned();
@@ -113,7 +112,7 @@ impl Build {
 					} else if ext == "rbxl" || ext == "rbxm" {
 						xml = false;
 					} else {
-						exit!(
+						bail!(
 							"Invalid file extension: {}. Only {}, {}, {}, {} extensions are allowed",
 							ext.bold(),
 							"rbxl".bold(),
@@ -124,9 +123,9 @@ impl Build {
 					}
 
 					if ext.starts_with("rbxm") && project.is_place() {
-						exit!("Cannot build model or plugin from place project");
+						bail!("Cannot build model or plugin from place project");
 					} else if ext.starts_with("rbxl") && !project.is_place() {
-						exit!("Cannot build place from plugin or model project");
+						bail!("Cannot build place from plugin or model project");
 					}
 
 					let parent = path.get_parent();

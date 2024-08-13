@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - `RunContext` can no longer be specified inside script's source using comments
+- Argon now returns proper exit code when it fails
 
 ### Fixed
 

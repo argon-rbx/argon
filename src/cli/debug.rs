@@ -1,10 +1,10 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 
 #[cfg(not(target_os = "linux"))]
 use keybd_event::{KeyBondingInstance, KeyboardKey};
 
-use crate::{exit, studio};
+use crate::studio;
 
 /// Start or stop Roblox playtest with selected mode
 #[derive(Parser)]
@@ -20,13 +20,13 @@ impl Debug {
 
 		if let Some(mode) = DebugMode::from_str(&mode) {
 			if !studio::is_running(None)? {
-				exit!("There is no running Roblox Studio instance!");
+				bail!("There is no running Roblox Studio instance!");
 			}
 
 			studio::focus(None)?;
 			send_keys(&mode);
 		} else {
-			exit!("Invalid debug mode!");
+			bail!("Invalid debug mode!");
 		}
 
 		Ok(())

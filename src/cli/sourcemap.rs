@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use colored::Colorize;
 use log::info;
@@ -8,7 +8,6 @@ use crate::{
 	argon_info,
 	config::Config,
 	core::Core,
-	exit,
 	ext::PathExt,
 	program::{Program, ProgramName},
 	project::{self, Project},
@@ -58,7 +57,7 @@ impl Sourcemap {
 		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 
 		if !project_path.exists() {
-			exit!(
+			bail!(
 				"No project files found in {}",
 				project_path.get_parent().to_string().bold()
 			);

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use colored::Colorize;
 use log::{debug, info};
@@ -8,7 +8,6 @@ use crate::{
 	argon_error, argon_info, argon_warn,
 	config::Config,
 	core::Core,
-	exit,
 	ext::PathExt,
 	integration,
 	program::{Program, ProgramName},
@@ -71,7 +70,7 @@ impl Serve {
 		};
 
 		if !project_path.exists() {
-			exit!(
+			bail!(
 				"No project files found in {}. Run {} to create new one",
 				project_path.get_parent().to_string().bold(),
 				"argon init".bold(),
@@ -81,7 +80,7 @@ impl Serve {
 		let project = Project::load(&project_path)?;
 
 		if !project.is_place() {
-			exit!("Cannot serve non-place project!");
+			bail!("Cannot serve non-place project!");
 		}
 
 		let use_wally = config.use_wally || (config.detect_project && project.is_wally());
@@ -124,7 +123,7 @@ impl Serve {
 
 				port = new_port;
 			} else {
-				exit!(
+				bail!(
 					"Port {} is already in use! Enable {} setting to use first available port automatically",
 					port.to_string().bold(),
 					"scan_ports".bold()

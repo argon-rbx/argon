@@ -1,10 +1,10 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use colored::Colorize;
 use open;
 use std::fs::{self, File};
 
-use crate::{argon_info, config::Config as GlobalConfig, exit, ext::PathExt, logger, util};
+use crate::{argon_info, config::Config as GlobalConfig, ext::PathExt, logger, util};
 
 /// Edit global config with default editor or CLI
 #[derive(Parser)]
@@ -60,14 +60,14 @@ impl Config {
 
 				if config.has_setting(&setting) {
 					if let Err(err) = config.set(&setting, &value) {
-						exit!("Failed to parse value: {}", err);
+						bail!("Failed to parse value: {}", err);
 					}
 
 					config.save()?;
 
 					argon_info!("Set {} to {}", setting.bold(), value.bold());
 				} else {
-					exit!("Setting {} does not exist", setting.bold());
+					bail!("Setting {} does not exist", setting.bold());
 				}
 			}
 			(Some(setting), None) => {
@@ -84,7 +84,7 @@ impl Config {
 
 					argon_info!("Set {} to its default value", setting.bold());
 				} else {
-					exit!("Setting {} does not exist", setting.bold());
+					bail!("Setting {} does not exist", setting.bold());
 				}
 			}
 			_ => {

@@ -5,6 +5,7 @@ use std::{
 	env,
 	io::{self, IsTerminal},
 	mem::ManuallyDrop,
+	process::ExitCode,
 	thread,
 };
 
@@ -12,7 +13,7 @@ use argon::{argon_error, cli::Cli, config::Config, crash_handler, installer, log
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
-fn main() {
+fn main() -> ExitCode {
 	crash_handler::hook();
 
 	let config_state = Config::load();
@@ -87,11 +88,19 @@ fn main() {
 		puffin::set_scopes_on(true);
 	}
 
-	match cli.main() {
-		Ok(()) => debug!("Successfully executed command!"),
-		Err(err) => argon_error!("Command execution failed: {}", err),
+	let exit_code = match cli.main() {
+		Ok(()) => {
+			debug!("Successfully executed command!");
+			ExitCode::SUCCESS
+		}
+		Err(err) => {
+			argon_error!("{}", err);
+			ExitCode::FAILURE
+		}
 	};
 
 	handle.join().ok();
 	stats::save().ok();
+
+	exit_code
 }
