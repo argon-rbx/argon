@@ -323,7 +323,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		}
 		SourceKind::Project(name, path, node, node_path) => {
 			if let Some(custom_path) = &node.path {
-				let custom_path = path.with_file_name(custom_path).clean();
+				let custom_path = path.with_file_name(custom_path.path()).clean();
 
 				let parent_source =
 					add_non_project_instances(parent_id, &custom_path, snapshot, &parent_meta, tree, vfs)?;
@@ -524,7 +524,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			if let Some(properties) = snapshot.properties {
 				if let Some(custom_path) = node.path {
-					let custom_path = path.with_file_name(custom_path).clean();
+					let custom_path = path.with_file_name(custom_path.path()).clean();
 
 					update_non_project_properties(&custom_path, properties, instance, &mut meta, vfs)?;
 

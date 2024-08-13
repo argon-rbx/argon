@@ -1,4 +1,5 @@
 use anyhow::Result;
+use colored::Colorize;
 use path_clean::PathClean;
 use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
@@ -14,18 +15,34 @@ use crate::{
 		meta::{NodePath, SyncRule},
 		tree::Tree,
 	},
-	ext::PathExt,
+	ext::{PathExt, ResultExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
 	workspace,
 };
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PathNode {
+	Required(PathBuf),
+	Optional { optional: PathBuf },
+}
+
+impl PathNode {
+	pub fn path(&self) -> &Path {
+		match self {
+			PathNode::Required(path) => path.as_ref(),
+			PathNode::Optional { optional } => optional.as_ref(),
+		}
+	}
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProjectNode {
 	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
 	#[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
-	pub path: Option<PathBuf>,
+	pub path: Option<PathNode>,
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
@@ -95,7 +112,12 @@ pub struct Project {
 impl Project {
 	pub fn load(project_path: &Path) -> Result<Self> {
 		let project = fs::read_to_string(project_path)?;
-		let mut project: Project = serde_json::from_str(&project)?;
+		let mut project: Project = serde_json::from_str(&project).with_desc(|| {
+			format!(
+				"Failed to parse project at {}",
+				project_path.display().to_string().bold()
+			)
+		})?;
 
 		let workspace_dir = workspace::get_dir(project_path);
 
@@ -142,7 +164,7 @@ impl Project {
 		}
 
 		fn walk(node: &ProjectNode) -> bool {
-			if node.path.as_ref().is_some_and(|p| p.ends_with("@rbxts")) {
+			if node.path.as_ref().is_some_and(|p| p.path().ends_with("@rbxts")) {
 				return true;
 			}
 
@@ -160,7 +182,7 @@ impl Project {
 
 	pub fn is_wally(&self) -> bool {
 		fn walk(node: &ProjectNode) -> bool {
-			if node.path.as_ref().is_some_and(|p| p == Path::new("Packages")) {
+			if node.path.as_ref().is_some_and(|p| p.path() == Path::new("Packages")) {
 				return true;
 			}
 

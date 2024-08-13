@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `smart_paths` setting that makes specifying paths faster and easier
+- Optional paths that can be specified in projects and are not required to exist
 
 ### Changed
 

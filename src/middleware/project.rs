@@ -14,7 +14,7 @@ use crate::{
 	},
 	ext::PathExt,
 	middleware::helpers,
-	project::{Project, ProjectNode},
+	project::{PathNode, Project, ProjectNode},
 	util,
 	vfs::Vfs,
 };
@@ -106,8 +106,8 @@ pub fn new_snapshot_node(
 		.with_properties(properties)
 		.with_meta(meta);
 
-	if let Some(custom_path) = node.path {
-		let path = path.with_file_name(custom_path).clean();
+	if let Some(path_node) = node.path {
+		let path = path.with_file_name(path_node.path()).clean();
 
 		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
@@ -132,7 +132,7 @@ pub fn new_snapshot_node(
 			snapshot = path_snapshot;
 
 			vfs.watch(&path, vfs.is_dir(&path))?;
-		} else {
+		} else if let PathNode::Required(_) = path_node {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \
 				to watch for file changes in this path or remove it from the project to suppress this warning",
