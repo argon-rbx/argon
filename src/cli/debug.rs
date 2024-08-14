@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 #[cfg(not(target_os = "linux"))]
 use keybd_event::{KeyBondingInstance, KeyboardKey};
@@ -9,32 +9,26 @@ use crate::studio;
 /// Start or stop Roblox playtest with selected mode
 #[derive(Parser)]
 pub struct Debug {
-	/// Debug mode to use (Play, Run, Start, Stop)
-	#[arg()]
-	mode: Option<String>,
+	/// Debug mode to use (`play`, `run`, `start` or `stop`)
+	#[arg(hide_possible_values = true)]
+	mode: Option<DebugMode>,
 }
 
 impl Debug {
 	pub fn main(self) -> Result<()> {
-		let mode = self.mode.unwrap_or(String::from("play"));
-
-		if let Some(mode) = DebugMode::from_str(&mode) {
-			if !studio::is_running(None)? {
-				bail!("There is no running Roblox Studio instance!");
-			}
-
-			studio::focus(None)?;
-			send_keys(&mode);
-		} else {
-			bail!("Invalid debug mode!");
+		if !studio::is_running(None)? {
+			bail!("There is no running Roblox Studio instance!");
 		}
+
+		studio::focus(None)?;
+		send_keys(self.mode.unwrap_or_default());
 
 		Ok(())
 	}
 }
 
 #[allow(unused_variables)]
-fn send_keys(mode: &DebugMode) {
+fn send_keys(mode: DebugMode) {
 	#[cfg(not(target_os = "linux"))]
 	{
 		let mut kb = KeyBondingInstance::new().unwrap();
@@ -64,21 +58,11 @@ fn send_keys(mode: &DebugMode) {
 	}
 }
 
+#[derive(Clone, Default, ValueEnum)]
 enum DebugMode {
+	#[default]
 	Play,
 	Run,
 	Start,
 	Stop,
-}
-
-impl DebugMode {
-	fn from_str(mode: &str) -> Option<Self> {
-		match mode.to_lowercase().as_str() {
-			"play" => Some(Self::Play),
-			"run" => Some(Self::Run),
-			"start" => Some(Self::Start),
-			"stop" => Some(Self::Stop),
-			_ => None,
-		}
-	}
 }

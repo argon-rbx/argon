@@ -1,29 +1,27 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use crate::{argon_error, argon_info, config::Config, updater};
 
 /// Forcefully update Argon CLI and plugin if available
 #[derive(Parser)]
 pub struct Update {
-	/// Update the Argon CLI only
-	#[arg(short, long)]
-	pub cli: bool,
-	/// Update the Argon plugin only
-	#[arg(short, long)]
-	pub plugin: bool,
+	/// Whether to update `cli` or `plugin` or `both`
+	#[arg(hide_possible_values = true)]
+	mode: Option<UpdateMode>,
 }
 
 impl Update {
-	pub fn main(mut self) -> Result<()> {
+	pub fn main(self) -> Result<()> {
 		let config = Config::new();
 
-		if !self.cli && !self.plugin {
-			self.cli = true;
-			self.plugin = config.install_plugin;
-		}
+		let (cli, plugin) = match self.mode.unwrap_or_default() {
+			UpdateMode::Both => (true, config.install_plugin),
+			UpdateMode::Cli => (true, false),
+			UpdateMode::Plugin => (false, true),
+		};
 
-		match updater::force_update(self.cli, self.plugin) {
+		match updater::force_update(cli, plugin) {
 			Ok(updated) => {
 				if !updated {
 					argon_info!("Everything is up to date!");
@@ -34,4 +32,12 @@ impl Update {
 
 		Ok(())
 	}
+}
+
+#[derive(Clone, Default, ValueEnum)]
+enum UpdateMode {
+	Cli,
+	Plugin,
+	#[default]
+	Both,
 }
