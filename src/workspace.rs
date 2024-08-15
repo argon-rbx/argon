@@ -28,63 +28,6 @@ pub struct WorkspaceConfig<'a> {
 	pub use_lua: bool,
 }
 
-fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
-	trace!("Getting {} license template..", license);
-
-	let url = format!("https://api.github.com/licenses/{}", license);
-
-	let license_template = || -> Result<String> {
-		match Client::new().get(url).header(USER_AGENT, "Argon").send() {
-			Ok(response) => {
-				let json = response.json::<serde_json::Value>()?;
-
-				if let Some(body) = json["body"].as_str() {
-					Ok(body.to_owned())
-				} else {
-					bail!("Bad SPDX License ID")
-				}
-			}
-			Err(_) => {
-				bail!("No internet connection");
-			}
-		}
-	}();
-
-	let name = util::get_username();
-	let year = chrono::Utc::now().year();
-
-	match license_template {
-		Ok(license) => {
-			// Apache
-			let license = license.replace("[yyyy]", &year.to_string());
-			let license = license.replace("[name of copyright owner]", &name);
-
-			// MIT & BSD
-			let license = license.replace("[year]", &year.to_string());
-			let license = license.replace("[fullname]", &name);
-
-			// GNU
-			let license = license.replace("<year>", &year.to_string());
-			let license = license.replace("<name of author>", &name);
-
-			fs::write(path, license)?;
-		}
-		Err(err) => {
-			let license = fallback.replace("$license", license);
-			let license = license.replace("$year", &year.to_string());
-			let license = license.replace("$owner", &name);
-
-			fs::write(path, license)?;
-
-			argon_warn!("Failed to add license: {}. Using basic fallback instead!", err);
-
-			return Ok(());
-		}
-	}
-
-	Ok(())
-}
-
 pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 	let templates_dir = util::get_argon_dir()?.join("templates").join(workspace.template);
 
@@ -92,8 +35,8 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 		bail!("Template {} does not exist", workspace.template.bold())
 	}
 
-	let project_name = get_name(workspace.project);
-	let workspace_dir = get_dir(workspace.project);
+	let workspace_dir = workspace.project.get_parent();
+	let project_name = workspace_dir.get_name();
 
 	if !workspace_dir.exists() {
 		fs::create_dir_all(workspace_dir)?;
@@ -314,12 +257,61 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 	Ok(())
 }
 
-pub fn get_dir(project_path: &Path) -> &Path {
-	project_path.get_parent()
-}
+fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
+	trace!("Getting {} license template..", license);
 
-pub fn get_name(project_path: &Path) -> &str {
-	project_path.get_parent().get_name()
+	let url = format!("https://api.github.com/licenses/{}", license);
+
+	let license_template = || -> Result<String> {
+		match Client::new().get(url).header(USER_AGENT, "Argon").send() {
+			Ok(response) => {
+				let json = response.json::<serde_json::Value>()?;
+
+				if let Some(body) = json["body"].as_str() {
+					Ok(body.to_owned())
+				} else {
+					bail!("Bad SPDX License ID")
+				}
+			}
+			Err(_) => {
+				bail!("No internet connection");
+			}
+		}
+	}();
+
+	let name = util::get_username();
+	let year = chrono::Utc::now().year();
+
+	match license_template {
+		Ok(license) => {
+			// Apache
+			let license = license.replace("[yyyy]", &year.to_string());
+			let license = license.replace("[name of copyright owner]", &name);
+
+			// MIT & BSD
+			let license = license.replace("[year]", &year.to_string());
+			let license = license.replace("[fullname]", &name);
+
+			// GNU
+			let license = license.replace("<year>", &year.to_string());
+			let license = license.replace("<name of author>", &name);
+
+			fs::write(path, license)?;
+		}
+		Err(err) => {
+			let license = fallback.replace("$license", license);
+			let license = license.replace("$year", &year.to_string());
+			let license = license.replace("$owner", &name);
+
+			fs::write(path, license)?;
+
+			argon_warn!("Failed to add license: {}. Using basic fallback instead!", err);
+
+			return Ok(());
+		}
+	}
+
+	Ok(())
 }
 
 fn copy_dir(from: &Path, to: &Path, rojo_mode: bool, use_lua: bool) -> Result<()> {

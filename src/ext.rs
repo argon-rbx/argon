@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use env_logger::WriteStyle;
+use path_clean::PathClean;
 use std::{
 	env,
 	fmt::Display,
@@ -29,7 +30,7 @@ impl PathExt for Path {
 		let current_dir = env::current_dir()?;
 		let absolute = current_dir.join(self);
 
-		Ok(absolute)
+		Ok(absolute.clean())
 	}
 
 	fn to_string(&self) -> String {

@@ -1,6 +1,5 @@
 use anyhow::Result;
 use colored::Colorize;
-use path_clean::PathClean;
 use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,7 +17,6 @@ use crate::{
 	ext::{PathExt, ResultExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
-	workspace,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -119,7 +117,7 @@ impl Project {
 			)
 		})?;
 
-		let workspace_dir = workspace::get_dir(project_path);
+		let workspace_dir = project_path.get_parent();
 
 		project_path.clone_into(&mut project.path);
 		workspace_dir.clone_into(&mut project.workspace_dir);
@@ -210,7 +208,7 @@ impl Project {
 }
 
 pub fn resolve(path: PathBuf) -> Result<PathBuf> {
-	let path = path.resolve()?.clean();
+	let path = path.resolve()?;
 
 	if path.is_file() || path.get_name().ends_with(".project.json") {
 		return Ok(path);
@@ -225,6 +223,7 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	}
 
 	let default_project = path.join("default.project.json");
+
 	if default_project.exists() {
 		return Ok(default_project);
 	}

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use lazy_static::lazy_static;
-use log::{debug, trace, warn};
+use log::{debug, warn};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -149,7 +149,7 @@ pub fn track() -> Result<()> {
 		minutes_used(5);
 
 		match save() {
-			Ok(_) => trace!("Stats saved successfully"),
+			Ok(_) => debug!("Stats saved successfully"),
 			Err(err) => warn!("Failed to save stats: {}", err),
 		}
 	});
