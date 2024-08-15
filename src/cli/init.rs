@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use path_clean::PathClean;
 use std::path::PathBuf;
 
 use crate::{
@@ -74,6 +73,9 @@ pub struct Init {
 
 impl Init {
 	pub fn main(self) -> Result<()> {
+		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
+
+		Config::load_workspace(project_path.get_parent());
 		let config = Config::new();
 
 		let project = self.project.unwrap_or_default();
@@ -97,7 +99,7 @@ impl Init {
 
 		if ts {
 			if let Some(path) = workspace::init_ts(workspace_config)? {
-				let path = path.resolve()?.join("default.project.json").clean();
+				let path = path.resolve()?.join("default.project.json");
 
 				argon_info!(
 					"Successfully initialized roblox-ts project: {}",
@@ -107,8 +109,6 @@ impl Init {
 
 			return Ok(());
 		}
-
-		let project_path = project::resolve(project)?;
 
 		if project_path.exists() {
 			argon_error!("Project {} already exists!", project_path.to_string().bold());

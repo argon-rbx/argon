@@ -114,7 +114,8 @@ impl Program {
 			return command;
 		};
 
-		let package_manager = Config::new().package_manager.as_str();
+		let config = Config::new();
+		let package_manager = config.package_manager.as_str();
 
 		#[allow(unused_mut)]
 		let mut program = match (&self.program, package_manager) {

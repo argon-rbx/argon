@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for workspace-defined Argon config (`argon.toml`)
+
 ### Changed
 
 - `update` command now consumes `cli`, `plugin` or `both` argument instead of respective option

@@ -48,13 +48,14 @@ pub struct Sourcemap {
 
 impl Sourcemap {
 	pub fn main(mut self) -> Result<()> {
+		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
+
+		Config::load_workspace(project_path.get_parent());
 		let config = Config::new();
 
 		if self.watch && !self.argon_spawn && (self.run_async || config.run_async) {
 			return self.spawn();
 		}
-
-		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 
 		if !project_path.exists() {
 			bail!(
@@ -65,7 +66,7 @@ impl Sourcemap {
 
 		if let Some(path) = self.output.as_ref() {
 			if config.smart_paths && (path.is_dir() || path.extension().is_none()) {
-				let output = if path.get_name() == "sourcemap" {
+				let output = if path.get_name().to_lowercase() == "sourcemap" {
 					path.with_extension("json")
 				} else {
 					path.join("sourcemap.json")

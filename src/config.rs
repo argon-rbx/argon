@@ -1,16 +1,34 @@
 use anyhow::Result;
+use colored::Colorize;
 use config_derive::{Get, Iter, Set, Val};
 use documented::DocumentedFields;
+use lazy_static::lazy_static;
+use log::{debug, info};
 use optfield::optfield;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
-use std::{fs, sync::OnceLock};
+use std::{
+	fmt::{self, Display, Formatter},
+	fs, mem,
+	path::{Path, PathBuf},
+	sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 use toml;
 
-use crate::{logger::Table, util};
+use crate::{argon_error, ext::PathExt, logger::Table, util};
 
-static CONFIG: OnceLock<Config> = OnceLock::new();
+lazy_static! {
+	static ref CONFIG: RwLock<Config> = RwLock::new(Config::default());
+}
 
-#[optfield(GlobalConfig, merge_fn, attrs = (derive(Deserialize)))]
+#[derive(Debug, Clone, Default, Deserialize)]
+pub enum ConfigKind {
+	#[default]
+	Default,
+	Global(PathBuf),
+	Workspace(PathBuf),
+}
+
+#[optfield(OptConfig, merge_fn, attrs = (derive(Deserialize)))]
 #[derive(Debug, Clone, Deserialize, DocumentedFields, Val, Iter, Get, Set)]
 pub struct Config {
 	/// Default server host name
@@ -61,6 +79,9 @@ pub struct Config {
 	pub move_to_bin: bool,
 	/// Share anonymous Argon usage statistics with the community
 	pub share_stats: bool,
+
+	#[serde(skip)]
+	kind: ConfigKind,
 }
 
 impl Default for Config {
@@ -92,34 +113,106 @@ impl Default for Config {
 			lua_extension: false,
 			move_to_bin: false,
 			share_stats: true,
+
+			kind: ConfigKind::default(),
+		}
+	}
+}
+
+impl ConfigKind {
+	pub fn path(&self) -> Option<&Path> {
+		match self {
+			Self::Default => None,
+			Self::Global(path) | Self::Workspace(path) => Some(path),
 		}
 	}
 }
 
 impl Config {
-	pub fn new() -> &'static Self {
-		CONFIG.get().expect("Config not loaded!")
+	pub fn new() -> RwLockReadGuard<'static, Self> {
+		CONFIG.read().unwrap()
 	}
 
-	/// This should only be used by the `config` CLI command
-	pub fn new_mut() -> Self {
-		Self::new().clone()
+	pub fn new_mut() -> RwLockWriteGuard<'static, Self> {
+		CONFIG.try_write().expect("Failed to acquire write lock on config")
 	}
 
-	/// This should be called once, at the start of the program
-	pub fn load() -> Result<()> {
+	pub fn load() -> Result<ConfigKind> {
 		let mut config = Self::default();
 
-		let load_result = config.merge_toml();
+		let config_kind = || -> Result<ConfigKind> {
+			let workspace_config = PathBuf::from("argon.toml").resolve()?;
+			let global_config = util::get_argon_dir()?.join("config.toml");
 
-		CONFIG.set(config).expect("Config already loaded");
+			let kind = if workspace_config.exists() {
+				ConfigKind::Workspace(workspace_config)
+			} else if global_config.exists() {
+				ConfigKind::Global(global_config)
+			} else {
+				ConfigKind::Default
+			};
 
-		load_result
+			if let Some(path) = kind.path() {
+				config.merge_opt(toml::from_str(&fs::read_to_string(path)?)?);
+			}
+
+			config.kind = kind.clone();
+
+			Ok(kind)
+		}();
+
+		*CONFIG.write().unwrap() = config;
+
+		config_kind
 	}
 
-	pub fn save(&self) -> Result<()> {
-		let path = util::get_argon_dir()?.join("config.toml");
+	pub fn load_global() {
+		Self::load_specific(ConfigKind::Global(util::get_argon_dir().unwrap().join("config.toml")))
+	}
 
+	pub fn load_workspace(path: &Path) {
+		Self::load_specific(ConfigKind::Workspace(path.join("argon.toml")))
+	}
+
+	#[inline]
+	fn load_specific(kind: ConfigKind) {
+		if mem::discriminant(&kind) == mem::discriminant(&CONFIG.read().unwrap().kind) {
+			debug!("{} config file already loaded", kind);
+			return;
+		}
+
+		let path = kind.path().unwrap();
+
+		if !path.exists() {
+			debug!("{} config file not found", kind);
+			return;
+		}
+
+		let mut config = Self::default();
+
+		let load_result = || -> Result<()> {
+			config.merge_opt(toml::from_str(&fs::read_to_string(path)?)?);
+
+			config.kind = match kind {
+				ConfigKind::Global(_) => ConfigKind::Global(path.to_owned()),
+				ConfigKind::Workspace(_) => ConfigKind::Workspace(path.to_owned()),
+				_ => ConfigKind::Default,
+			};
+
+			*CONFIG.write().unwrap() = config;
+
+			Ok(())
+		}();
+
+		match load_result {
+			Ok(()) => info!("{} config file loaded", kind),
+			Err(err) => {
+				argon_error!("Failed to load {} config file: {}", kind.to_string().bold(), err);
+			}
+		}
+	}
+
+	pub fn save(&self, path: &Path) -> Result<()> {
 		fs::write(path, toml::to_string(self)?)?;
 
 		Ok(())
@@ -144,13 +237,14 @@ impl Config {
 		table
 	}
 
-	fn merge_toml(&mut self) -> Result<()> {
-		let path = util::get_argon_dir()?.join("config.toml");
-		let config = toml::from_str(&fs::read_to_string(path)?)?;
+	pub fn kind(&self) -> &ConfigKind {
+		&self.kind
+	}
+}
 
-		self.merge_opt(config);
-
-		Ok(())
+impl Display for ConfigKind {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "{:?}", self)
 	}
 }
 

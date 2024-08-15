@@ -16,8 +16,8 @@ const PROFILER_ADDRESS: &str = "localhost:8888";
 fn main() -> ExitCode {
 	crash_handler::hook();
 
-	let config_state = Config::load();
-	let config = Config::new();
+	let config_kind = Config::load();
+	let config = Config::new().clone();
 
 	let is_managed = installer::is_managed();
 	let installation = installer::verify(is_managed, config.install_plugin);
@@ -47,8 +47,8 @@ fn main() -> ExitCode {
 
 	logger::init(verbosity, log_style);
 
-	match config_state {
-		Ok(()) => info!("Config file loaded"),
+	match config_kind {
+		Ok(kind) => info!("{} config file loaded", kind),
 		Err(err) => warn!("Failed to load config file: {}", err),
 	}
 

@@ -62,13 +62,15 @@ pub struct Build {
 
 impl Build {
 	pub fn main(self) -> Result<()> {
+		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
+
+		Config::load_workspace(project_path.get_parent());
 		let config = Config::new();
 
 		if self.watch && !self.argon_spawn && (self.run_async || config.run_async) {
 			return self.spawn();
 		}
 
-		let project_path = project::resolve(self.project.clone().unwrap_or_default())?;
 		let sourcemap_path = {
 			if self.sourcemap || config.with_sourcemap {
 				Some(project_path.with_file_name("sourcemap.json"))
