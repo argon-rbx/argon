@@ -184,9 +184,11 @@ impl Program {
 	}
 
 	fn get_prompt(&self) -> String {
+		let config = Config::new();
+
 		let program = match self.program {
 			ProgramName::Git => "Git",
-			ProgramName::Npm | ProgramName::Npx => &Config::new().package_manager,
+			ProgramName::Npm | ProgramName::Npx => &config.package_manager,
 			ProgramName::Wally => "Wally",
 			ProgramName::Argon => unreachable!(),
 		};
