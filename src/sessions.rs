@@ -177,13 +177,18 @@ pub fn remove_all() -> Result<()> {
 }
 
 fn cleanup(mut sessions: Sessions) -> Result<()> {
+	let mut did_remove = false;
+
 	for (id, session) in sessions.active_sessions.clone() {
 		if !util::process_exists(session.pid) {
 			sessions.active_sessions.remove(&id);
+			did_remove = true;
 		}
 	}
 
-	set_sessions(&sessions)?;
+	if did_remove {
+		set_sessions(&sessions)?;
+	}
 
 	Ok(())
 }
