@@ -130,9 +130,7 @@ impl Table {
 	}
 
 	pub fn set_header(&mut self, row: Vec<&str>) {
-		let row = row.iter().map(|s| s.to_string()).collect();
-
-		self.add_row(row);
+		self.add_row(row.iter().map(|s| s.to_string()).collect());
 	}
 }
 

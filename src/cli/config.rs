@@ -2,13 +2,14 @@ use anyhow::{bail, Result};
 use clap::{Parser, ValueEnum};
 use colored::Colorize;
 use open;
-use std::{
-	env,
-	fs::{self, File},
-	path::PathBuf,
-};
+use std::{env, fs::File, path::PathBuf};
 
-use crate::{argon_info, config::Config as ArgonConfig, ext::PathExt, logger, util};
+use crate::{
+	argon_info,
+	config::{Config as ArgonConfig, ConfigKind},
+	ext::PathExt,
+	logger, util,
+};
 
 /// Edit global config with default editor or CLI
 #[derive(Parser)]
@@ -29,55 +30,71 @@ pub struct Config {
 	#[arg(short, long)]
 	default: bool,
 
+	/// Export current config to the custom file
+	#[arg(short, long)]
+	export: Option<PathBuf>,
+
 	/// Which config file to work with (`global` or `workspace`)
 	#[arg(short, long, hide_possible_values = true)]
 	config: Option<ConfigType>,
-
-	/// Save current config to the custom file
-	#[arg(short, long)]
-	output: Option<PathBuf>,
 }
 
 impl Config {
 	pub fn main(self) -> Result<()> {
+		let config = ArgonConfig::new();
+
+		let config_kind = match self.config.unwrap_or_default() {
+			ConfigType::Default => ConfigKind::Default,
+			ConfigType::Global => ConfigKind::Global(util::get_argon_dir()?.join("config.toml")),
+			ConfigType::Workspace => ConfigKind::Workspace(env::current_dir()?.join("argon.toml")),
+		};
+
+		if *config.kind() == ConfigKind::Default
+			|| (config_kind != ConfigKind::Default && *config.kind() != config_kind)
+		{
+			drop(config);
+			ArgonConfig::load_virtual(config_kind)?;
+		} else {
+			drop(config);
+		};
+
+		let config = ArgonConfig::new();
+		let config_path = config.kind().path().unwrap().to_owned();
+
 		if self.list {
 			argon_info!(
 				"List of all available config options:\n\n{}\nVisit {} to learn more details!",
-				ArgonConfig::list(),
+				config.list(),
 				"https://argon.wiki/docs/configuration#global-config".bold()
 			);
 
 			return Ok(());
 		}
 
-		match self.config.unwrap_or_default() {
-			ConfigType::Global => ArgonConfig::load_global(),
-			ConfigType::Workspace => ArgonConfig::load_workspace(&env::current_dir()?),
-			_ => {}
-		}
-
-		let config = ArgonConfig::new();
-		let config_path = if let Some(path) = config.kind().path() {
-			path.to_owned()
-		} else {
-			util::get_argon_dir()?.join("config.toml")
-		};
-
 		if self.default {
 			if config_path.exists() {
-				if config.move_to_bin {
-					trash::delete(config_path)?;
-				} else {
-					fs::remove_file(config_path)?;
-				}
+				File::create(config_path)?;
 			}
 
-			argon_info!("Restored all settings to default values");
+			argon_info!(
+				"Restored all settings to default values in {} config",
+				config.kind().to_string().bold()
+			);
 
 			return Ok(());
 		}
 
-		let output = self.output.unwrap_or(config_path);
+		if let Some(path) = self.export {
+			config.save(&path)?;
+
+			argon_info!(
+				"Exported {} to {} config",
+				config.kind().to_string().bold(),
+				path.to_string().bold()
+			);
+
+			return Ok(());
+		}
 
 		match (self.setting, self.value) {
 			(Some(setting), Some(value)) => {
@@ -89,9 +106,14 @@ impl Config {
 						bail!("Failed to parse value: {}", err);
 					}
 
-					config.save(&output)?;
+					config.save(&config_path)?;
 
-					argon_info!("Set {} to {}", setting.bold(), value.bold());
+					argon_info!(
+						"Set {} setting to {} in {} config",
+						setting.bold(),
+						value.bold(),
+						config.kind().to_string().bold()
+					);
 				} else {
 					bail!("Setting {} does not exist", setting.bold());
 				}
@@ -107,16 +129,19 @@ impl Config {
 						.set(&setting, &default.get(&setting).unwrap().to_string())
 						.unwrap();
 
-					config.save(&output)?;
+					config.save(&config_path)?;
 
-					argon_info!("Set {} to its default value", setting.bold());
+					argon_info!(
+						"Set {} to its default value in {} config",
+						setting.bold(),
+						config.kind().to_string().bold()
+					);
 				} else {
 					bail!("Setting {} does not exist", setting.bold());
 				}
 			}
 			_ => {
-				// TODO: fix this when there is workspace config
-				if !output.exists() {
+				if !config_path.exists() {
 					let create_config = logger::prompt(
 						&format!(
 							"{} config does not exist. Would you like to create one?",
@@ -126,15 +151,15 @@ impl Config {
 					);
 
 					if create_config {
-						File::create(&output)?;
+						File::create(&config_path)?;
 					} else {
 						return Ok(());
 					}
 				}
 
-				argon_info!("Opened config file. Manually go to: {}", output.to_string().bold());
+				argon_info!("Opened config file. Manually go to: {}", config_path.to_string().bold());
 
-				open::that(output)?;
+				open::that(config_path)?;
 			}
 		}
 
@@ -142,7 +167,7 @@ impl Config {
 	}
 }
 
-#[derive(Clone, Default, ValueEnum)]
+#[derive(Clone, Default, ValueEnum, PartialEq)]
 enum ConfigType {
 	#[default]
 	Default,

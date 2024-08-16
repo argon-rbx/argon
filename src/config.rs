@@ -7,20 +7,21 @@ use log::{debug, info};
 use optfield::optfield;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::{
-	fmt::{self, Display, Formatter},
+	env,
+	fmt::{self, Debug, Display, Formatter},
 	fs, mem,
 	path::{Path, PathBuf},
 	sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use toml;
 
-use crate::{argon_error, ext::PathExt, logger::Table, util};
+use crate::{argon_error, logger::Table, util};
 
 lazy_static! {
 	static ref CONFIG: RwLock<Config> = RwLock::new(Config::default());
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 pub enum ConfigKind {
 	#[default]
 	Default,
@@ -141,7 +142,7 @@ impl Config {
 		let mut config = Self::default();
 
 		let config_kind = || -> Result<ConfigKind> {
-			let workspace_config = PathBuf::from("argon.toml").resolve()?;
+			let workspace_config = env::current_dir()?.join("argon.toml");
 			let global_config = util::get_argon_dir()?.join("config.toml");
 
 			let kind = if workspace_config.exists() {
@@ -166,8 +167,22 @@ impl Config {
 		config_kind
 	}
 
-	pub fn load_global() {
-		Self::load_specific(ConfigKind::Global(util::get_argon_dir().unwrap().join("config.toml")))
+	pub fn load_virtual(kind: ConfigKind) -> Result<()> {
+		let kind = match kind {
+			ConfigKind::Default => ConfigKind::Global(util::get_argon_dir()?.join("config.toml")),
+			_ => kind,
+		};
+
+		if kind.path().unwrap().exists() {
+			Self::load_specific(kind);
+		} else {
+			*CONFIG.write().unwrap() = Config {
+				kind,
+				..Default::default()
+			};
+		}
+
+		Ok(())
 	}
 
 	pub fn load_workspace(path: &Path) {
@@ -222,15 +237,29 @@ impl Config {
 		self.get(setting).is_some()
 	}
 
-	pub fn list() -> Table {
+	pub fn list(&self) -> Table {
 		let defaults = Self::default();
 		let mut table = Table::new();
+		let defaults_only = self == &defaults;
 
-		table.set_header(vec!["Setting", "Default", "Description"]);
+		if defaults_only {
+			table.set_header(vec!["Setting", "Default", "Description"]);
+		} else {
+			table.set_header(vec!["Setting", "Default", "Current", "Description"]);
+		}
 
 		for (setting, default) in &defaults {
 			if let Ok(doc) = Self::get_field_docs(setting) {
-				table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
+				if defaults_only {
+					table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
+				} else {
+					table.add_row(vec![
+						setting.to_owned(),
+						default.to_string(),
+						self.get(setting).map(|v| v.to_string()).unwrap(),
+						doc.trim().to_owned(),
+					]);
+				}
 			}
 		}
 
@@ -244,7 +273,27 @@ impl Config {
 
 impl Display for ConfigKind {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		write!(f, "{:?}", self)
+		write!(
+			f,
+			"{}",
+			match self {
+				Self::Default => "Default",
+				Self::Global(_) => "Global",
+				Self::Workspace(_) => "Workspace",
+			}
+		)
+	}
+}
+
+impl PartialEq for Config {
+	fn eq(&self, other: &Self) -> bool {
+		for (k, v) in self {
+			if other.get(k) != Some(v) {
+				return false;
+			}
+		}
+
+		true
 	}
 }
 

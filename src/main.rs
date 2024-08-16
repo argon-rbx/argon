@@ -48,8 +48,8 @@ fn main() -> ExitCode {
 	logger::init(verbosity, log_style);
 
 	match config_kind {
-		Ok(kind) => info!("{} config file loaded", kind),
-		Err(err) => warn!("Failed to load config file: {}", err),
+		Ok(kind) => info!("{:?} config loaded", kind),
+		Err(err) => error!("Failed to load config file: {}", err),
 	}
 
 	match installation {
