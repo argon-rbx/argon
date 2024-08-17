@@ -9,10 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Support for workspace-defined Argon config (`argon.toml`)
+- Default templates can now be updated when available (`update_templates` setting)
 
 ### Changed
 
-- `update` command now consumes `cli`, `plugin` or `both` argument instead of respective option
+- `update` command now uses `cli`, `plugin`, `templates` or `all` argument instead of respective option
+
+### Fixed
+
+- Automatic updates are no longer cause output mess when running `update` command
+- Plugin no longer updates when running `argon update` for the first time
 
 ## [2.0.15] - 2024-08-13
 

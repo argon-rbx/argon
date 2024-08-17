@@ -3,17 +3,23 @@ use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::{fs, time::SystemTime};
+use std::{fs, sync::Once, time::SystemTime};
 
 use crate::{
-	argon_error, argon_info, logger,
+	argon_error, argon_info,
+	constants::TEMPLATES_VERSION,
+	installer::{get_plugin_version, install_templates},
+	logger,
 	util::{self, get_plugin_path},
 };
+
+static UPDATE_FORCED: Once = Once::new();
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateStatus {
 	pub last_checked: SystemTime,
 	pub plugin_version: String,
+	pub templates_version: u8,
 }
 
 pub fn get_status() -> Result<UpdateStatus> {
@@ -28,7 +34,8 @@ pub fn get_status() -> Result<UpdateStatus> {
 
 	let status = UpdateStatus {
 		last_checked: SystemTime::UNIX_EPOCH,
-		plugin_version: String::from("0.0.0"),
+		plugin_version: get_plugin_version(),
+		templates_version: TEMPLATES_VERSION,
 	};
 
 	fs::write(path, toml::to_string(&status)?)?;
@@ -147,18 +154,48 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
 	Ok(false)
 }
 
-pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
+fn update_templates(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
+	if status.templates_version < TEMPLATES_VERSION {
+		if !prompt || logger::prompt("Default templates have changed! Would you like to update?", true) {
+			if !prompt {
+				argon_info!("Default templates have changed! Updating..",);
+			}
+
+			install_templates(true)?;
+
+			status.templates_version = TEMPLATES_VERSION;
+
+			return Ok(true);
+		} else {
+			trace!("Templates are out of date!");
+		}
+	} else {
+		trace!("Project templates are up to date!");
+	}
+
+	Ok(false)
+}
+
+pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<()> {
 	let mut status = get_status()?;
+
+	if UPDATE_FORCED.is_completed() {
+		return Ok(());
+	}
 
 	if status.last_checked.elapsed()?.as_secs() < 3600 {
 		debug!("Update check already performed within the last hour");
 		return Ok(());
 	}
 
-	update_cli(should_prompt)?;
+	update_cli(prompt)?;
 
-	if with_plugin {
-		update_plugin(&mut status, should_prompt)?;
+	if plugin {
+		update_plugin(&mut status, prompt)?;
+	}
+
+	if templates {
+		update_templates(&mut status, prompt)?;
 	}
 
 	status.last_checked = SystemTime::now();
@@ -167,7 +204,9 @@ pub fn check_for_updates(with_plugin: bool, should_prompt: bool) -> Result<()> {
 	Ok(())
 }
 
-pub fn force_update(cli: bool, plugin: bool) -> Result<bool> {
+pub fn force_update(cli: bool, plugin: bool, templates: bool) -> Result<bool> {
+	UPDATE_FORCED.call_once(|| {});
+
 	let mut status = get_status()?;
 	let mut updated = false;
 
@@ -176,6 +215,10 @@ pub fn force_update(cli: bool, plugin: bool) -> Result<bool> {
 	}
 
 	if plugin && update_plugin(&mut status, false)? {
+		updated = true;
+	}
+
+	if templates && update_templates(&mut status, false)? {
 		updated = true;
 	}
 

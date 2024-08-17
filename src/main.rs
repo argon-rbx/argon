@@ -59,7 +59,7 @@ fn main() -> ExitCode {
 
 	let handle = thread::spawn(move || {
 		if !is_managed && config.check_updates {
-			match updater::check_for_updates(config.install_plugin, !config.auto_update) {
+			match updater::check_for_updates(config.install_plugin, config.update_templates, !config.auto_update) {
 				Ok(()) => info!("Update check completed successfully!"),
 				Err(err) => warn!("Update check failed: {}", err),
 			}

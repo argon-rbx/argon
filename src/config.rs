@@ -66,6 +66,8 @@ pub struct Config {
 	pub auto_update: bool,
 	/// Install Roblox plugin locally and keep it updated
 	pub install_plugin: bool,
+	/// Update default project templates when available
+	pub update_templates: bool,
 
 	/// Use Rojo namespace by default
 	pub rojo_mode: bool,
@@ -106,6 +108,7 @@ impl Default for Config {
 			check_updates: true,
 			auto_update: false,
 			install_plugin: true,
+			update_templates: true,
 
 			rojo_mode: false,
 			ts_mode: false,

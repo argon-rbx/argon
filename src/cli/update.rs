@@ -15,13 +15,14 @@ impl Update {
 	pub fn main(self) -> Result<()> {
 		let config = Config::new();
 
-		let (cli, plugin) = match self.mode.unwrap_or_default() {
-			UpdateMode::Both => (true, config.install_plugin),
-			UpdateMode::Cli => (true, false),
-			UpdateMode::Plugin => (false, true),
+		let (cli, plugin, templates) = match self.mode.unwrap_or_default() {
+			UpdateMode::All => (true, config.install_plugin, config.update_templates),
+			UpdateMode::Cli => (true, false, false),
+			UpdateMode::Plugin => (false, true, false),
+			UpdateMode::Templates => (false, false, true),
 		};
 
-		match updater::force_update(cli, plugin) {
+		match updater::force_update(cli, plugin, templates) {
 			Ok(updated) => {
 				if !updated {
 					argon_info!("Everything is up to date!");
@@ -38,6 +39,7 @@ impl Update {
 enum UpdateMode {
 	Cli,
 	Plugin,
+	Templates,
 	#[default]
-	Both,
+	All,
 }

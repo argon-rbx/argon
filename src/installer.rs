@@ -2,6 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 use include_dir::{include_dir, Dir};
 use log::trace;
+use rbx_dom_weak::types::Variant;
 use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
 use std::{env, fs, path::Path};
 
@@ -30,22 +31,11 @@ pub fn is_managed() -> bool {
 }
 
 pub fn verify(is_managed: bool, with_plugin: bool) -> Result<()> {
-	let argon_dir = util::get_argon_dir()?;
-	let templates_dir = argon_dir.join("templates");
-
-	if !argon_dir.exists() {
-		fs::create_dir(&argon_dir)?;
-	}
-
-	if !templates_dir.exists() {
-		fs::create_dir(&templates_dir)?;
-	}
-
 	if !is_managed {
-		let bin_dir = argon_dir.join("bin");
+		let bin_dir = util::get_argon_dir()?.join("bin");
 
 		if !bin_dir.exists() {
-			fs::create_dir(&bin_dir)?;
+			fs::create_dir_all(&bin_dir)?;
 		}
 
 		globenv::set_path(&bin_dir.to_string())?;
@@ -59,44 +49,13 @@ pub fn verify(is_managed: bool, with_plugin: bool) -> Result<()> {
 		if !exe_path.exists() {
 			fs::copy(env::current_exe()?, &exe_path)?;
 
-			let remove_exe = logger::prompt("Installation completed! Do you want to remove this executable?", true);
-
-			if remove_exe {
+			if logger::prompt("Installation completed! Do you want to remove this executable?", true) {
 				self_replace::self_delete()?;
 			}
 		}
 	}
 
-	let place_template = templates_dir.join("place");
-	let plugin_template = templates_dir.join("plugin");
-	let package_template = templates_dir.join("package");
-	let model_template = templates_dir.join("model");
-	let quick_template = templates_dir.join("quick");
-
-	if !place_template.exists() {
-		fs::create_dir(&place_template)?;
-		install_template(&PLACE_TEMPLATE, &place_template)?;
-	}
-
-	if !plugin_template.exists() {
-		fs::create_dir(&plugin_template)?;
-		install_template(&PLUGIN_TEMPLATE, &plugin_template)?;
-	}
-
-	if !package_template.exists() {
-		fs::create_dir(&package_template)?;
-		install_template(&PACKAGE_TEMPLATE, &package_template)?;
-	}
-
-	if !model_template.exists() {
-		fs::create_dir(&model_template)?;
-		install_template(&MODEL_TEMPLATE, &model_template)?;
-	}
-
-	if !quick_template.exists() {
-		fs::create_dir(&quick_template)?;
-		install_template(&QUICK_TEMPLATE, &quick_template)?;
-	}
+	install_templates(false)?;
 
 	if with_plugin {
 		let plugin_path = get_plugin_path()?;
@@ -156,6 +115,43 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 	Ok(())
 }
 
+pub fn install_templates(update: bool) -> Result<()> {
+	let templates_dir = util::get_argon_dir()?.join("templates");
+
+	let place_template = templates_dir.join("place");
+	let plugin_template = templates_dir.join("plugin");
+	let package_template = templates_dir.join("package");
+	let model_template = templates_dir.join("model");
+	let quick_template = templates_dir.join("quick");
+
+	if update || !place_template.exists() {
+		fs::create_dir_all(&place_template)?;
+		install_template(&PLACE_TEMPLATE, &place_template)?;
+	}
+
+	if update || !plugin_template.exists() {
+		fs::create_dir_all(&plugin_template)?;
+		install_template(&PLUGIN_TEMPLATE, &plugin_template)?;
+	}
+
+	if update || !package_template.exists() {
+		fs::create_dir_all(&package_template)?;
+		install_template(&PACKAGE_TEMPLATE, &package_template)?;
+	}
+
+	if update || !model_template.exists() {
+		fs::create_dir_all(&model_template)?;
+		install_template(&MODEL_TEMPLATE, &model_template)?;
+	}
+
+	if update || !quick_template.exists() {
+		fs::create_dir_all(&quick_template)?;
+		install_template(&QUICK_TEMPLATE, &quick_template)?;
+	}
+
+	Ok(())
+}
+
 fn install_template(template: &Dir, path: &Path) -> Result<()> {
 	for file in template.files() {
 		if file.path().get_name() != ".gitkeep" {
@@ -164,9 +160,26 @@ fn install_template(template: &Dir, path: &Path) -> Result<()> {
 	}
 
 	for dir in template.dirs() {
-		fs::create_dir(path.join(dir.path()))?;
+		fs::create_dir_all(path.join(dir.path()))?;
 		install_template(dir, path)?;
 	}
 
 	Ok(())
+}
+
+pub fn get_plugin_version() -> String {
+	// May seem hacky, but this function will only be
+	// called once for most users and is non-critical anyway
+	if let Ok(dom) = rbx_binary::from_reader(ARGON_PLUGIN) {
+		for (_, instance) in dom.into_raw().1 {
+			if instance.name == "manifest" && instance.class == "ModuleScript" {
+				if let Some(Variant::String(source)) = instance.properties.get("Source") {
+					let source = &source[source.find(r#"["version"] = ""#).unwrap_or(0) + 15..];
+					return source[..source.find(r#"","#).unwrap_or(6)].to_owned();
+				}
+			}
+		}
+	}
+
+	String::from("0.0.0")
 }
