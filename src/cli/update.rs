@@ -3,10 +3,10 @@ use clap::{Parser, ValueEnum};
 
 use crate::{argon_error, argon_info, config::Config, updater};
 
-/// Forcefully update Argon CLI and plugin if available
+/// Forcefully update Argon components if available
 #[derive(Parser)]
 pub struct Update {
-	/// Whether to update `cli` or `plugin` or `both`
+	/// Whether to update `cli`, `plugin`, `templates` or `all`
 	#[arg(hide_possible_values = true)]
 	mode: Option<UpdateMode>,
 }

@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::{
+	fmt::Display,
+	path::{Path, PathBuf},
+};
 
 use crate::{
 	config::Config,
@@ -40,6 +43,12 @@ impl NodePath {
 
 	pub fn is_root(&self) -> bool {
 		self.inner.is_empty()
+	}
+}
+
+impl Display for NodePath {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "tree/{}", self.inner.join("/"))
 	}
 }
 

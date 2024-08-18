@@ -75,7 +75,7 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 				properties.insert(property, value);
 			}
 			Err(err) => {
-				error!("Failed to parse property: {}", err);
+				error!("Failed to parse property: {} at {}", err, path.display());
 			}
 		}
 	}
@@ -87,7 +87,7 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 				properties.insert(String::from("Attributes"), value);
 			}
 			Err(err) => {
-				error!("Failed to parse attributes: {}", err);
+				error!("Failed to parse attributes: {} at {}", err, path.display());
 			}
 		}
 	}

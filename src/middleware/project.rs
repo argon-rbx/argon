@@ -14,7 +14,7 @@ use crate::{
 	},
 	ext::PathExt,
 	middleware::helpers,
-	project::{PathNode, Project, ProjectNode},
+	project::{Project, ProjectNode, ProjectPath},
 	util,
 	vfs::Vfs,
 };
@@ -68,7 +68,12 @@ pub fn new_snapshot_node(
 					properties.insert(property.to_owned(), value);
 				}
 				Err(err) => {
-					error!("Failed to parse property: {}", err);
+					error!(
+						"Failed to parse property: {} at {}, JSON path: {}",
+						err,
+						path.display(),
+						node_path
+					);
 				}
 			}
 		}
@@ -79,7 +84,12 @@ pub fn new_snapshot_node(
 					properties.insert(String::from("Attributes"), value);
 				}
 				Err(err) => {
-					error!("Failed to parse attributes: {}", err);
+					error!(
+						"Failed to parse attributes: {} at {}, JSON path: {}",
+						err,
+						path.display(),
+						node_path
+					);
 				}
 			}
 		}
@@ -132,7 +142,7 @@ pub fn new_snapshot_node(
 			snapshot = path_snapshot;
 
 			vfs.watch(&path, vfs.is_dir(&path))?;
-		} else if let PathNode::Required(_) = path_node {
+		} else if let ProjectPath::Required(_) = path_node {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \
 				to watch for file changes in this path or remove it from the project to suppress this warning",

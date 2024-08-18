@@ -11,7 +11,7 @@ use crate::{
 	logger, util,
 };
 
-/// Edit global config with default editor or CLI
+/// Edit global or workspace config with editor or CLI
 #[derive(Parser)]
 pub struct Config {
 	/// Setting to change (if left empty config will be opened)

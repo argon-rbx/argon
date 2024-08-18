@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Support for workspace-defined Argon config (`argon.toml`)
 - Default templates can now be updated when available (`update_templates` setting)
+- Improved property parsing error details - filesystem and JSON path
 
 ### Changed
 

@@ -45,12 +45,13 @@ macro_rules! bad_name {
 
 macro_rules! filter_warn {
 	($id:expr) => {
-		warn!("Instance {:?} does not pass syncback filter! Skipping..", $id);
+		warn!("Instance {} does not pass syncback filter! Skipping..", $id);
 	};
 	($id:expr, $path:expr) => {
 		warn!(
-			"Path: {:?} (source of instance: {:?}) does not pass syncback filter! Skipping..",
-			$path, $id
+			"Path: {} (source of instance: {}) does not pass syncback filter! Skipping..",
+			$path.display(),
+			$id
 		);
 	};
 }

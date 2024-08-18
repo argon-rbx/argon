@@ -35,12 +35,12 @@ pub fn read_json_model(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	}
 
 	let model = serde_json::from_str(&contents)?;
-	let snapshot = walk(model)?;
+	let snapshot = walk(model, path)?;
 
 	Ok(snapshot)
 }
 
-fn walk(model: JsonModel) -> Result<Snapshot> {
+fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 	let mut snapshot = Snapshot::new();
 	let mut properties = HashMap::new();
 
@@ -61,7 +61,7 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 					properties.insert(property, value);
 				}
 				Err(err) => {
-					error!("Failed to parse property: {}", err);
+					error!("Failed to parse property: {} at {}", err, path.display());
 				}
 			}
 		}
@@ -74,7 +74,7 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 				properties.insert(String::from("Attributes"), value);
 			}
 			Err(err) => {
-				error!("Failed to parse attributes: {}", err);
+				error!("Failed to parse attributes: {} at {}", err, path.display());
 			}
 		}
 	}
@@ -92,7 +92,7 @@ fn walk(model: JsonModel) -> Result<Snapshot> {
 
 	// Append children
 	for child in model.children.unwrap_or_default() {
-		snapshot.add_child(walk(child)?);
+		snapshot.add_child(walk(child, path)?);
 	}
 
 	Ok(snapshot)

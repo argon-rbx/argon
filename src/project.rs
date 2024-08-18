@@ -21,16 +21,16 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PathNode {
+pub enum ProjectPath {
 	Required(PathBuf),
 	Optional { optional: PathBuf },
 }
 
-impl PathNode {
+impl ProjectPath {
 	pub fn path(&self) -> &Path {
 		match self {
-			PathNode::Required(path) => path.as_ref(),
-			PathNode::Optional { optional } => optional.as_ref(),
+			ProjectPath::Required(path) => path.as_ref(),
+			ProjectPath::Optional { optional } => optional.as_ref(),
 		}
 	}
 }
@@ -40,7 +40,7 @@ pub struct ProjectNode {
 	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
 	#[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
-	pub path: Option<PathNode>,
+	pub path: Option<ProjectPath>,
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 

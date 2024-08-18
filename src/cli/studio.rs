@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use crate::{argon_info, config::Config, ext::PathExt, studio};
 
-/// Launch a new instance of Roblox Studio
+/// Launch a new Roblox Studio instance
 #[derive(Parser)]
 pub struct Studio {
 	/// Path to place or model to open
