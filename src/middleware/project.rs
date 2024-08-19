@@ -23,6 +23,8 @@ use crate::{
 pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let project: Project = Project::load(path)?;
 
+	vfs.watch(path, false)?;
+
 	let meta = Meta::from_project(&project);
 	let mut snapshot = new_snapshot_node(&project.name, path, project.node, NodePath::new(), &meta.context, vfs)?;
 
@@ -30,8 +32,6 @@ pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	source.add_project(path);
 
 	snapshot.set_meta(meta.with_source(source));
-
-	vfs.watch(path, false)?;
 
 	Ok(snapshot)
 }
@@ -119,6 +119,8 @@ pub fn new_snapshot_node(
 	if let Some(path_node) = node.path {
 		let path = path.with_file_name(path_node.path()).clean();
 
+		vfs.watch(&path, vfs.is_dir(&path))?;
+
 		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
 			path_snapshot.extend_properties(snapshot.properties);
 			path_snapshot.set_name(&snapshot.name);
@@ -140,8 +142,6 @@ pub fn new_snapshot_node(
 				.set_keep_unknowns(path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns);
 
 			snapshot = path_snapshot;
-
-			vfs.watch(&path, vfs.is_dir(&path))?;
 		} else if let ProjectPath::Required(_) = path_node {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \

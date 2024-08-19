@@ -82,7 +82,7 @@ impl VfsBackend for StdBackend {
 	fn watch(&mut self, path: &Path, recursive: bool) -> Result<()> {
 		let path = path.to_owned();
 
-		if !self.watching || self.watched_paths.iter().any(|p| p.starts_with(&path)) {
+		if !self.watching || self.watched_paths.iter().any(|p| path.starts_with(p)) {
 			return Ok(());
 		}
 
