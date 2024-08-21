@@ -47,7 +47,15 @@ impl UnresolvedValue {
 				let mut object = HashMap::new();
 
 				for (key, value) in attr {
-					object.insert(key, Self::from_variant(value, class, property));
+					object.insert(
+						key,
+						match value {
+							Variant::Bool(bool) => UnresolvedValue::Ambiguous(AmbiguousValue::Bool(bool)),
+							Variant::Float64(num) => UnresolvedValue::Ambiguous(AmbiguousValue::Number(num)),
+							Variant::String(str) => UnresolvedValue::Ambiguous(AmbiguousValue::String(str)),
+							_ => UnresolvedValue::FullyQualified(value),
+						},
+					);
 				}
 
 				AmbiguousValue::Object(object)
@@ -215,7 +223,7 @@ impl UnresolvedValue {
 			Variant::SharedString(shared) => {
 				AmbiguousValue::String(String::from_utf8(shared.data().to_vec()).unwrap_or_default())
 			}
-			Variant::String(string) => AmbiguousValue::String(string),
+			Variant::String(str) => AmbiguousValue::String(str),
 
 			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
 

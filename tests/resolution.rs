@@ -25,12 +25,17 @@ mod unresolved_value {
 		attributes.insert("String".into(), Variant::String("Hello, world!".into()));
 		attributes.insert("Number".into(), Variant::Float64(13.37));
 		attributes.insert("Bool".into(), Variant::Bool(true));
+		attributes.insert("3D".into(), Variant::Vector3(Vector3::new(1.0, 2.0, 3.0)));
+		attributes.insert(
+			"2D".into(),
+			Variant::UDim2(UDim2::new(UDim::new(0.5, 200), UDim::new(0.5, 100))),
+		);
 
 		assert_eq!(
 			resolve(
 				"Instance",
 				"Attributes",
-				r#"{"String": "Hello, world!", "Number": 13.37, "Bool": true}"#
+				r#"{"String": "Hello, world!", "Number": 13.37, "Bool": true, "3D": {"Vector3": [1, 2, 3]}, "2D": {"UDim2": [[0.5, 200], [0.5, 100]]}}"#
 			),
 			attributes.into()
 		);
@@ -432,6 +437,11 @@ mod resolved_value {
 		attributes.insert("String".into(), Variant::String("Hello, world!".into()));
 		attributes.insert("Number".into(), Variant::Float64(13.37));
 		attributes.insert("Bool".into(), Variant::Bool(true));
+		attributes.insert("3D".into(), Variant::Vector3(Vector3::new(1.0, 2.0, 3.0)));
+		attributes.insert(
+			"2D".into(),
+			Variant::UDim2(UDim2::new(UDim::new(0.5, 200), UDim::new(0.5, 100))),
+		);
 
 		assert_eq(
 			from_variant(attributes),
@@ -439,6 +449,12 @@ mod resolved_value {
 				"String": "Hello, world!",
 				"Number": 13.37,
 				"Bool": true,
+				"3D": {
+					"Vector3": [1, 2, 3]
+				},
+				"2D": {
+					"UDim2": [[0.5, 200], [0.5, 100]]
+				}
 			}),
 		);
 	}
