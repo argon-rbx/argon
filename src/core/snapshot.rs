@@ -27,7 +27,7 @@ impl Snapshot {
 		Self {
 			id: Ref::none(),
 			meta: Meta::new(),
-			name: String::from(""),
+			name: String::new(),
 			class: String::from("Folder"),
 			properties: HashMap::new(),
 			children: Vec::new(),

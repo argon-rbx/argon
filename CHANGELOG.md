@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Child projects no longer cause root project to ignore file changes
-- Attributes not longer serialize in ambiguously for complex types
+- Attributes no longer serialize ambiguously for complex types
 
 ## [2.0.16] - 2024-08-18
 
