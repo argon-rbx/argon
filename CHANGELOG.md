@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.17] - 2024-08-21
+
 ### Fixed
 
 - Child projects no longer cause root project to ignore file changes
@@ -273,7 +275,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.16...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.17...HEAD
+[2.0.17]: https://github.com/argon-rbx/argon/compare/2.0.16...2.0.17
 [2.0.16]: https://github.com/argon-rbx/argon/compare/2.0.15...2.0.16
 [2.0.15]: https://github.com/argon-rbx/argon/compare/2.0.14...2.0.15
 [2.0.14]: https://github.com/argon-rbx/argon/compare/2.0.13...2.0.14
