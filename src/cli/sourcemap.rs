@@ -122,6 +122,7 @@ impl Sourcemap {
 		}
 
 		if let Some(output) = self.output {
+			args.push(String::from("--output"));
 			args.push(output.to_string())
 		}
 
