@@ -2391,9 +2391,9 @@ dependencies = [
 
 [[package]]
 name = "rbx_dom_weak"
-version = "2.8.0"
+version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34d35df0f09290d32976f655366342676a6645b87c39b6949473b9d28a969733"
+checksum = "fcd2a17d09e46af0805f8b311a926402172b97e8d9388745c9adf8f448901841"
 dependencies = [
  "rbx_types",
  "serde",
