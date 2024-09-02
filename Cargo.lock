@@ -70,9 +70,9 @@ dependencies = [
 
 [[package]]
 name = "actix-msgpack"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32b134f33ce7b600c4440bec78e544bae0940e764050c18c12c9f855fd20b6e3"
+checksum = "1f525e5f2861e8755093ab2ddd15046f3ecebf37ebda3bc39e29fd51256cc4a3"
 dependencies = [
  "actix-web",
  "derive_more",
