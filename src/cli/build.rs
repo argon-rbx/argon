@@ -71,12 +71,10 @@ impl Build {
 			return self.spawn();
 		}
 
-		let sourcemap_path = {
-			if self.sourcemap || config.with_sourcemap {
-				Some(project_path.with_file_name("sourcemap.json"))
-			} else {
-				None
-			}
+		let sourcemap_path = if self.sourcemap || config.with_sourcemap {
+			Some(project_path.with_file_name("sourcemap.json"))
+		} else {
+			None
 		};
 
 		if !project_path.exists() {

@@ -180,7 +180,7 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 			snapshot.meta.set_source(Source::file(path));
 		}
 
-		if let Some(instance_data) = get_instance_data(&name, path, context, vfs)? {
+		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), path, context, vfs)? {
 			snapshot.apply_data(instance_data);
 		}
 
@@ -216,7 +216,7 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 			}
 		}
 
-		if let Some(instance_data) = get_instance_data(&name, parent, context, vfs)? {
+		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), parent, context, vfs)? {
 			snapshot.apply_data(instance_data);
 		}
 
@@ -231,18 +231,24 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 fn new_snapshot_dir(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	let mut snapshot = dir::read_dir(path, context, vfs)?;
 
-	if let Some(instance_data) = get_instance_data(&snapshot.name, path, context, vfs)? {
+	if let Some(instance_data) = get_instance_data(&snapshot.name, None, path, context, vfs)? {
 		snapshot.apply_data(instance_data);
 	}
 
 	Ok(Some(snapshot))
 }
 
-fn get_instance_data(name: &str, path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<DataSnapshot>> {
+fn get_instance_data(
+	name: &str,
+	class: Option<&str>,
+	path: &Path,
+	context: &Context,
+	vfs: &Vfs,
+) -> Result<Option<DataSnapshot>> {
 	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData) {
 		if let Some(data_path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
-				let data = data::read_data(&data_path, vfs).with_desc(|| {
+				let data = data::read_data(&data_path, class, vfs).with_desc(|| {
 					format!(
 						"Failed to get instance data at {}",
 						data_path.display().to_string().bold()

@@ -37,7 +37,7 @@ pub struct DataSnapshot {
 }
 
 #[profiling::function]
-pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
+pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnapshot> {
 	let data = vfs.read_to_string(path)?;
 
 	if data.is_empty() {
@@ -48,22 +48,20 @@ pub fn read_data(path: &Path, vfs: &Vfs) -> Result<DataSnapshot> {
 
 	let mut properties = HashMap::new();
 
-	let class = {
-		if let Some(class_name) = &data.class_name {
-			class_name.to_owned()
+	let class = if let Some(class) = class.or(data.class_name.as_deref()) {
+		class.to_owned()
+	} else {
+		let name = path.get_name();
+
+		if util::is_service(name) {
+			name.to_owned()
 		} else {
-			let name = path.get_name();
+			let parent_name = path.get_parent().get_name();
 
-			if util::is_service(name) {
-				name.to_owned()
+			if util::is_service(parent_name) {
+				parent_name.to_owned()
 			} else {
-				let parent_name = path.get_parent().get_name();
-
-				if util::is_service(parent_name) {
-					parent_name.to_owned()
-				} else {
-					String::from("Folder")
-				}
+				String::from("Folder")
 			}
 		}
 	};

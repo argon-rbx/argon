@@ -49,14 +49,12 @@ pub fn new_snapshot_node(
 		bail!("Failed to load project: $className and $path cannot be set at the same time");
 	}
 
-	let class = {
-		if let Some(class_name) = &node.class_name {
-			class_name.to_owned()
-		} else if util::is_service(name) {
-			name.to_owned()
-		} else {
-			String::from("Folder")
-		}
+	let class = if let Some(class_name) = &node.class_name {
+		class_name.to_owned()
+	} else if util::is_service(name) {
+		name.to_owned()
+	} else {
+		String::from("Folder")
 	};
 
 	let properties = {

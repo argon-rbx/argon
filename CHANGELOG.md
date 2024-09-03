@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Same level `.data.json` files for non-`Folder` instances can now parse properties correctly
+
+### Fixed
+
 - `build` and `sourcemap` commands now properly read `--output` option with combination of `--async`
 
 ## [2.0.17] - 2024-08-21
