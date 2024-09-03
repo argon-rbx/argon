@@ -1,6 +1,7 @@
 use anyhow::Result;
 use colored::Colorize;
 use log::trace;
+use rbx_dom_weak::types::{Enum, Variant};
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::{self, Display, Formatter},
@@ -113,10 +114,30 @@ impl Middleware {
 		})
 	}
 
-	pub fn from_class(class: &str) -> Option<Self> {
+	pub fn from_class(class: &str, properties: Option<&mut Properties>) -> Option<Self> {
 		// TODO: Implement matcher for detecting remaining middleware
 		match class {
-			"Script" => Some(Middleware::ServerScript),
+			"Script" => {
+				if let Some(properties) = properties {
+					if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
+						let run_context = run_context.to_u32();
+
+						return Some(match run_context {
+							1 => Middleware::ServerScript,
+							2 => Middleware::ClientScript,
+							_ => {
+								// This is currently unreachable so we can handle it inefficiently just for safety
+								properties
+									.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(run_context)));
+
+								Middleware::ServerScript
+							}
+						});
+					}
+				}
+
+				Some(Middleware::ServerScript)
+			}
 			"LocalScript" => Some(Middleware::ClientScript),
 			"ModuleScript" => Some(Middleware::ModuleScript),
 			"StringValue" => Some(Middleware::StringValue),

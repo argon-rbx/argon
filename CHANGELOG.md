@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Same level `.data.json` files for non-`Folder` instances can now parse properties correctly
+- If project has `legacyScripts` disabled, scripts are now properly written when syncing back from client
 
 ### Fixed
 

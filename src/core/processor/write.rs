@@ -102,9 +102,16 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
 		let filter = parent_meta.context.syncback_filter();
-		let properties = snapshot.properties.clone();
+		let mut properties = snapshot.properties.clone();
 
-		if let Some(middleware) = Middleware::from_class(&snapshot.class) {
+		if let Some(middleware) = Middleware::from_class(
+			&snapshot.class,
+			if !parent_meta.context.use_legacy_scripts() {
+				Some(&mut properties)
+			} else {
+				None
+			},
+		) {
 			let file_path = parent_meta
 				.context
 				.sync_rules_of_type(&middleware)
@@ -414,9 +421,16 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			return Ok(());
 		}
 
-		let properties = validate_properties(properties, filter);
+		let mut properties = validate_properties(properties, filter);
 
-		if let Some(middleware) = Middleware::from_class(&instance.class) {
+		if let Some(middleware) = Middleware::from_class(
+			&instance.class,
+			if !meta.context.use_legacy_scripts() {
+				Some(&mut properties)
+			} else {
+				None
+			},
+		) {
 			let file_path = if let Some(file) = meta.source.get_file() {
 				Some(file.path().to_owned())
 			} else {
