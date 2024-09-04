@@ -431,20 +431,31 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				None
 			},
 		) {
-			let file_path = if let Some(file) = meta.source.get_file() {
-				Some(file.path().to_owned())
-			} else {
-				let file_path = meta
-					.context
-					.sync_rules_of_type(&middleware)
-					.iter()
-					.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
+			let new_path = meta
+				.context
+				.sync_rules_of_type(&middleware)
+				.iter()
+				.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
 
-				if let Some(file_path) = &file_path {
-					meta.source.add_file(file_path);
+			let file_path = if let Some(SourceEntry::File(path)) = meta.source.get_file_mut() {
+				let mut current_path = path.to_owned();
+
+				if let Some(new_path) = new_path {
+					if current_path != new_path {
+						vfs.rename(&current_path, &new_path)?;
+
+						*path = new_path.clone();
+						current_path = new_path;
+					}
 				}
 
-				file_path
+				Some(current_path)
+			} else {
+				if let Some(new_path) = &new_path {
+					meta.source.add_file(new_path);
+				}
+
+				new_path
 			};
 
 			if let Some(file_path) = file_path {

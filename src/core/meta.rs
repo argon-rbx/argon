@@ -167,13 +167,20 @@ impl Source {
 		&mut self.inner
 	}
 
+	pub fn get_file(&self) -> Option<&SourceEntry> {
+		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::File(_)))
+	}
+
+	pub fn get_file_mut(&mut self) -> Option<&mut SourceEntry> {
+		self.relevant
+			.iter_mut()
+			.find(|entry| matches!(entry, SourceEntry::File(_)))
+	}
+
 	pub fn get_folder_mut(&mut self) -> Option<&mut SourceEntry> {
 		self.relevant
 			.iter_mut()
 			.find(|entry| matches!(entry, SourceEntry::Folder(_)))
-	}
-	pub fn get_file(&self) -> Option<&SourceEntry> {
-		self.relevant.iter().find(|entry| matches!(entry, SourceEntry::File(_)))
 	}
 
 	pub fn get_data(&self) -> Option<&SourceEntry> {
