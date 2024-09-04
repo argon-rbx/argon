@@ -1,5 +1,6 @@
 use anyhow::Result;
 use colored::Colorize;
+use json_formatter::JsonFormatter;
 use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -126,10 +127,15 @@ impl Project {
 	}
 
 	pub fn save(&self, path: &Path) -> Result<()> {
-		let mut project = serde_json::to_string_pretty(self)?;
-		project.push('\n');
+		let formatter = JsonFormatter::with_array_breaks(false);
 
-		fs::write(path, project)?;
+		let mut writer = Vec::new();
+		let mut serializer = serde_json::Serializer::with_formatter(&mut writer, formatter);
+
+		self.serialize(&mut serializer)?;
+		writer.push(b'\n');
+
+		fs::write(path, &writer)?;
 
 		Ok(())
 	}

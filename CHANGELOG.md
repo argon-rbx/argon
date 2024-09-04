@@ -9,15 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Support for syncing back `RunContext` property with `legacyScripts` disabled
-
-### Fixed
-
-- Same level `.data.json` files for non-`Folder` instances can now parse properties correctly
-- If project has `legacyScripts` disabled, scripts are now properly written when syncing back from client
+- Pretty-printed project serialization when syncing back from client
 
 ### Fixed
 
 - `build` and `sourcemap` commands now properly read `--output` option with combination of `--async`
+- Same level `.data.json` files for non-`Folder` instances can now parse properties correctly
+- If project has `legacyScripts` disabled, scripts are now properly written when syncing back from client
 
 ## [2.0.17] - 2024-08-21
 
