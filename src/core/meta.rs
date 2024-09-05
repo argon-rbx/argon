@@ -466,6 +466,8 @@ pub struct Meta {
 	pub context: Context,
 	/// Whether to keep unknown child instances
 	pub keep_unknowns: bool,
+	/// Original name of the instance
+	pub original_name: Option<String>,
 	/// Custom Mesh Part source path
 	pub mesh_source: Option<String>,
 }
@@ -478,6 +480,7 @@ impl Meta {
 			source: Source::new(),
 			context: Context::new(),
 			keep_unknowns: false,
+			original_name: None,
 			mesh_source: None,
 		}
 	}
@@ -522,6 +525,11 @@ impl Meta {
 		self
 	}
 
+	pub fn with_original_name(mut self, original_name: &str) -> Self {
+		self.original_name = Some(original_name.to_owned());
+		self
+	}
+
 	pub fn with_mesh_source(mut self, mesh_source: String) -> Self {
 		self.mesh_source = Some(mesh_source);
 		self
@@ -539,6 +547,10 @@ impl Meta {
 
 	pub fn set_keep_unknowns(&mut self, keep_unknowns: bool) {
 		self.keep_unknowns = keep_unknowns;
+	}
+
+	pub fn set_original_name(&mut self, original_name: &str) {
+		self.original_name = Some(original_name.to_owned());
 	}
 
 	pub fn set_mesh_source(&mut self, mesh_source: Option<String>) {

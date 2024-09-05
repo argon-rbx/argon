@@ -78,6 +78,8 @@ pub struct Config {
 	pub package_manager: String,
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
+	/// Automatically rename corrupted or duplicate instances when syncing back
+	pub rename_instances: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Share anonymous Argon usage statistics with the community
@@ -94,7 +96,7 @@ impl Default for Config {
 			port: 8000,
 			template: String::from("place"),
 			license: String::from("Apache-2.0"),
-			include_docs: true,
+			include_docs: false,
 			use_git: true,
 			use_wally: false,
 
@@ -115,6 +117,7 @@ impl Default for Config {
 
 			package_manager: String::from("npm"),
 			lua_extension: false,
+			rename_instances: true,
 			move_to_bin: false,
 			share_stats: true,
 

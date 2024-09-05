@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Automatic renaming instances with corrupted names (`rename_instances` setting)
+- Support for instances with the same names (`rename_instances` setting)
 - Support for syncing back `RunContext` property with `legacyScripts` disabled
 - Pretty-printed project serialization when syncing back from client
 
@@ -16,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `build` and `sourcemap` commands now properly read `--output` option with combination of `--async`
 - Same level `.data.json` files for non-`Folder` instances can now parse properties correctly
 - If project has `legacyScripts` disabled, scripts are now properly written when syncing back from client
+
+### Changed
+
+- `include_docs` setting is now disabled by default
 
 ## [2.0.17] - 2024-08-21
 

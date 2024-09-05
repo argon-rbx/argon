@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
-use colored::Colorize;
 use log::{error, trace, warn};
 use path_clean::PathClean;
 use rbx_dom_weak::{types::Ref, Instance};
@@ -10,10 +9,10 @@ use std::{
 
 use super::helpers::syncback::{serialize_properties, validate_properties, verify_name};
 use crate::{
-	argon_error,
 	config::Config,
 	core::{
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
+		processor::helpers::syncback::{verify_path, RenameStatus},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
@@ -23,25 +22,6 @@ use crate::{
 	vfs::Vfs,
 	Properties,
 };
-
-macro_rules! path_exists {
-	($path:expr) => {
-		argon_error!(
-			"Instance with path: {} already exists! Skipping..",
-			$path.to_string().bold()
-		)
-	};
-}
-
-macro_rules! bad_name {
-	($name:expr, $err:expr) => {
-		argon_error!(
-			"Instance with name: {} is corrupted: {}! Skipping..",
-			$name.bold(),
-			$err
-		);
-	};
-}
 
 macro_rules! filter_warn {
 	($id:expr) => {
@@ -90,17 +70,21 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 	fn write_instance(
 		has_children: bool,
-		path: &Path,
-		snapshot: &Snapshot,
+		path: &mut PathBuf,
+		snapshot: &mut Snapshot,
 		parent_meta: &Meta,
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
-		if let Err(err) = verify_name(&snapshot.name) {
-			bad_name!(snapshot.name, err);
-			return Ok(None);
+		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
+
+		match verify_name(&snapshot.name, &mut meta) {
+			RenameStatus::Bad => return Ok(None),
+			RenameStatus::Renamed(renamed) => {
+				snapshot.name = renamed;
+			}
+			_ => {}
 		}
 
-		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
 		let filter = parent_meta.context.syncback_filter();
 		let mut properties = snapshot.properties.clone();
 
@@ -112,7 +96,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				None
 			},
 		) {
-			let file_path = parent_meta
+			let mut file_path = parent_meta
 				.context
 				.sync_rules_of_type(&middleware)
 				.iter()
@@ -120,8 +104,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
 
 			if has_children {
-				if vfs.exists(path) {
-					path_exists!(path);
+				if !verify_path(path, &snapshot.name, &mut meta, vfs) {
 					return Ok(None);
 				}
 
@@ -134,8 +117,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				meta.set_source(Source::child_file(path, &file_path));
 			} else {
-				if vfs.exists(&file_path) {
-					path_exists!(path);
+				if !verify_path(&mut file_path, &snapshot.name, &mut meta, vfs) {
 					return Ok(None);
 				}
 
@@ -160,8 +142,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				}
 			}
 		} else {
-			if vfs.exists(path) {
-				path_exists!(path);
+			if !verify_path(path, &snapshot.name, &mut meta, vfs) {
 				return Ok(None);
 			}
 
@@ -190,8 +171,8 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	fn add_non_project_instances(
 		parent_id: Ref,
 		parent_path: &Path,
-		snapshot: Snapshot,
-		parent_meta: &Meta,
+		mut snapshot: Snapshot,
+		parent_meta: &mut Meta,
 		tree: &mut Tree,
 		vfs: &Vfs,
 	) -> Result<Source> {
@@ -214,13 +195,13 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					}
 				})
 				.find(|rule| rule.matches(&parent_path))
-				.with_context(|| format!("Failed to find sync rule for path: {}", parent_path.display()))?;
+				.with_context(|| format!("Failed to find sync rule for path: {}", parent_path.display()))?
+				.clone();
 
 			let name = sync_rule.get_name(&parent_path);
-			let folder_path = parent_path.with_file_name(&name);
+			let mut folder_path = parent_path.with_file_name(&name);
 
-			if vfs.exists(&folder_path) {
-				path_exists!(folder_path);
+			if !verify_path(&mut folder_path, &snapshot.name, parent_meta, vfs) {
 				return Ok(parent_meta.source.clone());
 			}
 
@@ -258,24 +239,25 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			parent_meta.source.clone()
 		};
 
-		let path = parent_path.join(&snapshot.name);
+		let mut path = parent_path.join(&snapshot.name);
 
 		if snapshot.children.is_empty() {
-			if let Some(meta) = write_instance(false, &path, &snapshot, parent_meta, vfs)? {
+			if let Some(meta) = write_instance(false, &mut path, &mut snapshot, parent_meta, vfs)? {
 				let snapshot = snapshot.with_meta(meta);
 
 				tree.insert_instance_with_ref(snapshot, parent_id);
 			}
-		} else if let Some(meta) = write_instance(true, &path, &snapshot, parent_meta, vfs)? {
+		} else if let Some(mut meta) = write_instance(true, &mut path, &mut snapshot, parent_meta, vfs)? {
 			let snapshot = snapshot.with_meta(meta.clone());
 
 			tree.insert_instance_with_ref(snapshot.clone(), parent_id);
 
-			let filter = meta.context.syncback_filter();
+			// let filter = meta.context.syncback_filter();
 
 			for mut child in snapshot.children {
-				child.properties = validate_properties(child.properties.clone(), filter);
-				add_non_project_instances(snapshot.id, &path, child, &meta, tree, vfs)?;
+				child.properties = validate_properties(child.properties.clone(), meta.context.syncback_filter());
+
+				add_non_project_instances(snapshot.id, &path, child, &mut meta, tree, vfs)?;
 			}
 		}
 
@@ -322,9 +304,9 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		parent_node.tree.insert(snapshot.name, node);
 	}
 
-	match parent_meta.source.get() {
+	match parent_meta.source.get().clone() {
 		SourceKind::Path(path) => {
-			let parent_source = add_non_project_instances(parent_id, path, snapshot, &parent_meta, tree, vfs)?;
+			let parent_source = add_non_project_instances(parent_id, &path, snapshot, &mut parent_meta, tree, vfs)?;
 
 			parent_meta.set_source(parent_source);
 			tree.update_meta(parent_id, parent_meta);
@@ -334,23 +316,23 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let custom_path = path.with_file_name(custom_path.path()).clean();
 
 				let parent_source =
-					add_non_project_instances(parent_id, &custom_path, snapshot, &parent_meta, tree, vfs)?;
+					add_non_project_instances(parent_id, &custom_path, snapshot, &mut parent_meta, tree, vfs)?;
 
-				let parent_source = Source::project(name, path, node.clone(), node_path.clone())
+				let parent_source = Source::project(&name, &path, node.clone(), node_path.clone())
 					.with_relevant(parent_source.relevant().to_owned());
 
 				parent_meta.set_source(parent_source);
 				tree.update_meta(parent_id, parent_meta);
 			} else {
-				let mut project = Project::load(path)?;
+				let mut project = Project::load(&path)?;
 
 				let node = project
-					.find_node_by_path(node_path)
+					.find_node_by_path(&node_path)
 					.context(format!("Failed to find project node with path {:?}", node_path))?;
 
-				add_project_instances(parent_id, path, node_path.clone(), snapshot, node, &parent_meta, tree);
+				add_project_instances(parent_id, &path, node_path.clone(), snapshot, node, &parent_meta, tree);
 
-				project.save(path)?;
+				project.save(&path)?;
 			}
 		}
 		SourceKind::None => panic!(
@@ -485,17 +467,19 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			}
 
 			// It has to be done after updating properties as it may change the file path
-			if let Some(name) = snapshot.name {
-				if let Err(err) = verify_name(&name) {
-					bad_name!(name, err);
-					return Ok(());
+			if let Some(mut name) = snapshot.name {
+				match verify_name(&name, &mut meta) {
+					RenameStatus::Bad => return Ok(()),
+					RenameStatus::Renamed(renamed) => {
+						name = renamed;
+					}
+					_ => {}
 				}
 
-				let new_path = path.with_file_name(path.get_name().replace(&instance.name, &name));
+				let mut new_path = path.with_file_name(path.get_name().replace(&instance.name, &name));
 				*meta.source.get_mut() = SourceKind::Path(new_path.clone());
 
-				if vfs.exists(&new_path) {
-					path_exists!(new_path);
+				if !verify_path(&mut new_path, &name, &mut meta, vfs) {
 					return Ok(());
 				}
 

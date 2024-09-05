@@ -32,6 +32,7 @@ config-derive = { version = "*", path = "crates/config-derive" }
 json-formatter = { version = "*", path = "crates/json-formatter" }
 profiling = { version = "*", path = "crates/profiling/profiling" }
 
+uuid = { version = "1.10.0", features = ["v4", "fast-rng"] }
 serde = { version = "1.0.209", features = ["derive"] }
 rmpv = { version = "1.3.0", features = ["with-serde"] }
 clap = { version = "4.5.16", features = ["derive", "cargo"] }

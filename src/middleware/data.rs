@@ -25,6 +25,8 @@ struct Data {
 
 	#[serde(alias = "ignoreUnknownInstances", default)]
 	keep_unknowns: Option<bool>,
+	#[serde(default)]
+	original_name: Option<String>,
 }
 
 #[derive(Debug, Default)]
@@ -33,6 +35,7 @@ pub struct DataSnapshot {
 	pub class: Option<String>,
 	pub properties: Properties,
 	pub keep_unknowns: Option<bool>,
+	pub original_name: Option<String>,
 	pub mesh_source: Option<String>,
 }
 
@@ -106,6 +109,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 		class: data.class_name,
 		properties,
 		keep_unknowns: data.keep_unknowns,
+		original_name: data.original_name,
 		mesh_source,
 	})
 }
@@ -125,6 +129,8 @@ struct WritableData {
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub keep_unknowns: Option<bool>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub original_name: Option<String>,
 }
 
 #[profiling::function]
@@ -160,6 +166,10 @@ pub fn write_data<'a>(
 
 	if meta.keep_unknowns {
 		data.keep_unknowns = Some(true);
+	}
+
+	if let Some(original_name) = meta.original_name.as_ref() {
+		data.original_name = Some(original_name.to_owned());
 	}
 
 	if data == WritableData::default() {
