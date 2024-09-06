@@ -1,5 +1,8 @@
 use colored::Colorize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+	collections::HashMap,
+	path::{Path, PathBuf},
+};
 use uuid::Uuid;
 
 use crate::{
@@ -24,16 +27,10 @@ const FORBIDDEN_FILE_NAMES: [&str; 22] = [
 	"LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
-pub enum RenameStatus {
-	Ok,
-	Bad,
-	Renamed(String),
-}
-
-pub fn verify_name(name: &str, meta: &mut Meta) -> RenameStatus {
+pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 	let verify = || -> Option<(String, String)> {
 		if name.is_empty() {
-			return Some(("file name cannot be empty".into(), "argon".into()));
+			return Some(("file name cannot be empty".into(), "EmptyName".into()));
 		}
 
 		if name.len() > 255 {
@@ -73,8 +70,6 @@ pub fn verify_name(name: &str, meta: &mut Meta) -> RenameStatus {
 				}
 			}
 
-			// bail!("file name cannot contain ASCII control characters");
-
 			if !forbidden_chars.is_empty() {
 				let message = if forbidden_chars.len() == 1 {
 					format!(
@@ -106,6 +101,10 @@ pub fn verify_name(name: &str, meta: &mut Meta) -> RenameStatus {
 					name = name.replace(char, "");
 				}
 
+				if name.is_empty() {
+					name = "EmptyName".into();
+				}
+
 				return Some((message, name));
 			}
 		}
@@ -132,9 +131,10 @@ pub fn verify_name(name: &str, meta: &mut Meta) -> RenameStatus {
 				message
 			);
 
-			meta.set_original_name(name);
+			meta.set_original_name(Some(name.to_owned()));
+			*name = renamed;
 
-			return RenameStatus::Renamed(renamed);
+			return true;
 		} else {
 			argon_error!(
 				"Instance with name: {} is corrupted: {}! Skipping..",
@@ -142,33 +142,37 @@ pub fn verify_name(name: &str, meta: &mut Meta) -> RenameStatus {
 				message
 			);
 
-			return RenameStatus::Bad;
+			return false;
 		}
+	} else if meta.original_name.is_some() {
+		meta.set_original_name(None);
 	}
 
-	RenameStatus::Ok
+	true
 }
 
-pub fn verify_path(path: &mut PathBuf, name: &str, meta: &mut Meta, vfs: &Vfs) -> bool {
-	if !vfs.exists(path) {
+pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: &Vfs) -> bool {
+	if !vfs.exists(path) || meta.source.get().path().is_some_and(|p| p == path) {
 		return true;
 	}
 
 	if Config::new().rename_instances {
-		let suffix = path.get_name().strip_prefix(name).unwrap_or_default();
-		let renamed = path.with_file_name(format!("{}_{}{}", name, Uuid::new_v4(), suffix));
+		let suffix = path.get_name().strip_prefix(name.as_str()).unwrap_or_default();
+
+		let renamed = format!("{}_{}", name, Uuid::new_v4());
+		let renamed_path = path.with_file_name(&format!("{}{}", renamed, suffix));
 
 		argon_warn!(
 			"Instance with path: {} got renamed to: {}, because it already exists!",
 			path.to_string().bold(),
-			renamed.to_string().bold()
+			renamed_path.to_string().bold()
 		);
 
-		meta.set_original_name(name);
+		meta.set_original_name(Some(name.to_owned()));
 
-		*path = renamed;
+		*path = renamed_path;
+		*name = renamed;
 
-		// RenameStatus::Renamed(renamed.to_string_lossy().to_string())
 		true
 	} else {
 		argon_error!(
@@ -202,4 +206,12 @@ pub fn serialize_properties(class: &str, properties: Properties) -> HashMap<Stri
 			)
 		})
 		.collect()
+}
+
+pub fn rename_path(path: &Path, from: &str, to: &str) -> PathBuf {
+	path.with_file_name(format!(
+		"{}{}",
+		to,
+		path.get_name().strip_prefix(from).unwrap_or_default()
+	))
 }

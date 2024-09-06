@@ -7,17 +7,19 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use super::helpers::syncback::{serialize_properties, validate_properties, verify_name};
+use super::helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path};
 use crate::{
 	config::Config,
 	core::{
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
-		processor::helpers::syncback::{verify_path, RenameStatus},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
 	},
 	ext::PathExt,
-	middleware::{data, dir, Middleware},
+	middleware::{
+		data::{self, write_original_name},
+		dir, Middleware,
+	},
 	project::{Project, ProjectNode},
 	vfs::Vfs,
 	Properties,
@@ -76,15 +78,6 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
-
-		match verify_name(&snapshot.name, &mut meta) {
-			RenameStatus::Bad => return Ok(None),
-			RenameStatus::Renamed(renamed) => {
-				snapshot.name = renamed;
-			}
-			_ => {}
-		}
-
 		let filter = parent_meta.context.syncback_filter();
 		let mut properties = snapshot.properties.clone();
 
@@ -104,7 +97,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
 
 			if has_children {
-				if !verify_path(path, &snapshot.name, &mut meta, vfs) {
+				if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
 					return Ok(None);
 				}
 
@@ -117,7 +110,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				meta.set_source(Source::child_file(path, &file_path));
 			} else {
-				if !verify_path(&mut file_path, &snapshot.name, &mut meta, vfs) {
+				if !verify_path(&mut file_path, &mut snapshot.name, &mut meta, vfs) {
 					return Ok(None);
 				}
 
@@ -130,19 +123,16 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			}
 
 			let properties = middleware.write(properties, &file_path, vfs)?;
+			let data_path = locate_instance_data(has_children, path, snapshot, parent_meta)?;
 
-			if !properties.is_empty() {
-				let data_path = locate_instance_data(has_children, path, snapshot, parent_meta)?;
-
-				if filter.matches_path(&data_path) {
-					filter_warn!(snapshot.id, &data_path);
-				} else {
-					let data_path = data::write_data(true, &snapshot.class, properties, &data_path, &meta, vfs)?;
-					meta.source.set_data(data_path);
-				}
+			if filter.matches_path(&data_path) {
+				filter_warn!(snapshot.id, &data_path);
+			} else {
+				let data_path = data::write_data(true, &snapshot.class, properties, &data_path, &meta, vfs)?;
+				meta.source.set_data(data_path);
 			}
 		} else {
-			if !verify_path(path, &snapshot.name, &mut meta, vfs) {
+			if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
 				return Ok(None);
 			}
 
@@ -201,7 +191,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			let name = sync_rule.get_name(&parent_path);
 			let mut folder_path = parent_path.with_file_name(&name);
 
-			if !verify_path(&mut folder_path, &snapshot.name, parent_meta, vfs) {
+			if !verify_path(&mut folder_path, &mut snapshot.name, parent_meta, vfs) {
 				return Ok(parent_meta.source.clone());
 			}
 
@@ -239,6 +229,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			parent_meta.source.clone()
 		};
 
+		if !verify_name(&mut snapshot.name, &mut snapshot.meta) {
+			return Ok(parent_source);
+		}
+
 		let mut path = parent_path.join(&snapshot.name);
 
 		if snapshot.children.is_empty() {
@@ -252,11 +246,8 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 			tree.insert_instance_with_ref(snapshot.clone(), parent_id);
 
-			// let filter = meta.context.syncback_filter();
-
 			for mut child in snapshot.children {
 				child.properties = validate_properties(child.properties.clone(), meta.context.syncback_filter());
-
 				add_non_project_instances(snapshot.id, &path, child, &mut meta, tree, vfs)?;
 			}
 		}
@@ -444,15 +435,23 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let properties = middleware.write(properties.clone(), &file_path, vfs)?;
 
 				if let Some(data_path) = locate_instance_data(&instance.name, path, meta, vfs) {
-					let data_path = data::write_data(true, &instance.class, properties, &data_path, meta, vfs)?;
-					meta.source.set_data(data_path)
+					if filter.matches_path(&data_path) {
+						filter_warn!(instance.referent(), &data_path);
+					} else {
+						let data_path = data::write_data(true, &instance.class, properties, &data_path, meta, vfs)?;
+						meta.source.set_data(data_path)
+					}
 				}
 			} else {
 				error!("Failed to locate file for path {:?}", path.display());
 			}
 		} else if let Some(data_path) = locate_instance_data(&instance.name, path, meta, vfs) {
-			let data_path = data::write_data(false, &instance.class, properties.clone(), &data_path, meta, vfs)?;
-			meta.source.set_data(data_path)
+			if filter.matches_path(&data_path) {
+				filter_warn!(instance.referent(), &data_path);
+			} else {
+				let data_path = data::write_data(false, &instance.class, properties.clone(), &data_path, meta, vfs)?;
+				meta.source.set_data(data_path)
+			}
 		}
 
 		instance.properties = properties;
@@ -461,27 +460,21 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	}
 
 	match meta.source.get().clone() {
-		SourceKind::Path(path) => {
-			if let Some(properties) = snapshot.properties {
-				update_non_project_properties(&path, properties, instance, &mut meta, vfs)?;
-			}
-
-			// It has to be done after updating properties as it may change the file path
+		SourceKind::Path(mut path) => {
 			if let Some(mut name) = snapshot.name {
-				match verify_name(&name, &mut meta) {
-					RenameStatus::Bad => return Ok(()),
-					RenameStatus::Renamed(renamed) => {
-						name = renamed;
-					}
-					_ => {}
-				}
+				let original_name = meta.original_name.clone();
 
-				let mut new_path = path.with_file_name(path.get_name().replace(&instance.name, &name));
-				*meta.source.get_mut() = SourceKind::Path(new_path.clone());
-
-				if !verify_path(&mut new_path, &name, &mut meta, vfs) {
+				if !verify_name(&mut name, &mut meta) {
 					return Ok(());
 				}
+
+				path = rename_path(&path, &instance.name, &name);
+
+				if !verify_path(&mut path, &mut name, &mut meta, vfs) {
+					return Ok(());
+				}
+
+				*meta.source.get_mut() = SourceKind::Path(path.clone());
 
 				let filter = meta.context.syncback_filter();
 
@@ -492,14 +485,22 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 						filter_warn!(snapshot.id, path);
 					} else {
 						vfs.rename(path, &new_path)?;
-						*path = new_path;
+						*path = new_path.clone();
+
+						for mut entry in meta.source.relevant_mut() {
+							match &mut entry {
+								SourceEntry::File(path) | SourceEntry::Data(path) => {
+									*path = new_path.join(path.get_name());
+								}
+								_ => continue,
+							}
+						}
 					}
 				} else {
 					for mut entry in meta.source.relevant_mut() {
 						match &mut entry {
 							SourceEntry::File(path) | SourceEntry::Data(path) => {
-								let name = path.get_name().replace(&instance.name, &name);
-								let new_path = path.with_file_name(name);
+								let new_path = rename_path(path, &instance.name, &name);
 
 								if filter.matches_path(path) && filter.matches_path(&new_path) {
 									filter_warn!(snapshot.id, path);
@@ -514,7 +515,21 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					}
 				}
 
+				if original_name != meta.original_name && snapshot.properties.is_none() {
+					if let Some(data_path) = locate_instance_data(&name, &path, &meta, vfs) {
+						if filter.matches_path(&data_path) {
+							filter_warn!(instance.referent(), &data_path);
+						} else {
+							write_original_name(&data_path, &meta, vfs)?;
+						}
+					}
+				}
+
 				instance.name = name;
+			}
+
+			if let Some(properties) = snapshot.properties {
+				update_non_project_properties(&path, properties, instance, &mut meta, vfs)?;
 			}
 
 			tree.update_meta(snapshot.id, meta);

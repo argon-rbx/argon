@@ -59,6 +59,16 @@ pub enum SourceKind {
 	None,
 }
 
+impl SourceKind {
+	pub fn path(&self) -> Option<&Path> {
+		match self {
+			SourceKind::Path(path) => Some(path),
+			SourceKind::Project(_, path, _, _) => Some(path),
+			_ => None,
+		}
+	}
+}
+
 #[derive(Debug, Clone, PartialEq)]
 #[repr(usize)]
 pub enum SourceEntry {
@@ -466,6 +476,7 @@ pub struct Meta {
 	pub context: Context,
 	/// Whether to keep unknown child instances
 	pub keep_unknowns: bool,
+	#[serde(skip)]
 	/// Original name of the instance
 	pub original_name: Option<String>,
 	/// Custom Mesh Part source path
@@ -525,8 +536,8 @@ impl Meta {
 		self
 	}
 
-	pub fn with_original_name(mut self, original_name: &str) -> Self {
-		self.original_name = Some(original_name.to_owned());
+	pub fn with_original_name(mut self, original_name: String) -> Self {
+		self.original_name = Some(original_name);
 		self
 	}
 
@@ -549,8 +560,8 @@ impl Meta {
 		self.keep_unknowns = keep_unknowns;
 	}
 
-	pub fn set_original_name(&mut self, original_name: &str) {
-		self.original_name = Some(original_name.to_owned());
+	pub fn set_original_name(&mut self, original_name: Option<String>) {
+		self.original_name = original_name;
 	}
 
 	pub fn set_mesh_source(&mut self, mesh_source: Option<String>) {

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use json_formatter::JsonFormatter;
 use log::error;
-use rbx_dom_weak::types::{Tags, Variant};
+use rbx_dom_weak::types::Tags;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::{BTreeMap, HashMap},
@@ -119,13 +119,8 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 struct WritableData {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub class_name: Option<String>,
-
 	#[serde(skip_serializing_if = "BTreeMap::is_empty")]
 	pub properties: BTreeMap<String, UnresolvedValue>,
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub attributes: Option<Variant>,
-	#[serde(skip_serializing_if = "Vec::is_empty")]
-	pub tags: Vec<String>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub keep_unknowns: Option<bool>,
@@ -191,4 +186,58 @@ pub fn write_data<'a>(
 	vfs.write(path, &writer)?;
 
 	Ok(Some(path))
+}
+
+#[profiling::function]
+pub fn write_original_name(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<()> {
+	let data = if vfs.exists(path) {
+		let data = vfs.read_to_string(path)?;
+
+		if data.is_empty() {
+			return Ok(());
+		}
+
+		let data: Data = serde_json::from_str(&data)?;
+
+		if data.original_name == meta.original_name {
+			return Ok(());
+		}
+
+		let data = WritableData {
+			class_name: data.class_name,
+			properties: data.properties.into_iter().collect(),
+			keep_unknowns: data.keep_unknowns,
+			original_name: meta.original_name.clone(),
+		};
+
+		if data == WritableData::default() {
+			vfs.remove(path)?;
+			return Ok(());
+		}
+
+		data
+	} else {
+		let data = WritableData {
+			original_name: meta.original_name.clone(),
+			..WritableData::default()
+		};
+
+		if data == WritableData::default() {
+			return Ok(());
+		}
+
+		data
+	};
+
+	let formatter = JsonFormatter::with_array_breaks(false);
+
+	let mut writer = Vec::new();
+	let mut serializer = serde_json::Serializer::with_formatter(&mut writer, formatter);
+
+	data.serialize(&mut serializer)?;
+	writer.push(b'\n');
+
+	vfs.write(path, &writer)?;
+
+	Ok(())
 }
