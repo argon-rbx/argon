@@ -78,6 +78,8 @@ pub struct Config {
 	pub package_manager: String,
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
+	/// Line ending to use when writing files (LF, CRLF, CR)
+	pub line_ending: String,
 	/// Automatically rename corrupted or duplicate instances when syncing back
 	pub rename_instances: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
@@ -117,6 +119,7 @@ impl Default for Config {
 
 			package_manager: String::from("npm"),
 			lua_extension: false,
+			line_ending: String::from("LF"),
 			rename_instances: true,
 			move_to_bin: false,
 			share_stats: true,

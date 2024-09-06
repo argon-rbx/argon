@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Support for instances with the same names (`rename_instances` setting)
 - Support for syncing back `RunContext` property with `legacyScripts` disabled
 - Pretty-printed project serialization when syncing back from client
+- `line_ending` setting to control line endings when writing files
 
 ### Fixed
 

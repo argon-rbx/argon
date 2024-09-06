@@ -1,11 +1,15 @@
 use anyhow::{bail, Result};
 use env_logger::WriteStyle;
+use log::warn;
 use path_clean::PathClean;
 use std::{
 	env,
 	fmt::Display,
+	io::{self, Write},
 	path::{Path, PathBuf},
 };
+
+use crate::config::Config;
 
 /// Collection of extension methods for `Path`
 
@@ -146,5 +150,28 @@ impl WriteStyleExt for WriteStyle {
 		};
 
 		String::from(write_style)
+	}
+}
+
+/// Collection of extension methods for `io::Write`
+
+pub trait WriterExt {
+	fn end(&mut self) -> io::Result<usize>;
+}
+
+impl<T: Write> WriterExt for T {
+	fn end(&mut self) -> io::Result<usize> {
+		self.write(match Config::new().line_ending.to_uppercase().as_str() {
+			"LF" => b"\n",
+			"CRLF" => b"\r\n",
+			"CR" => b"\r",
+			line_ending => {
+				warn!(
+					"Config specifies invalid line ending: {}, using LF instead",
+					line_ending
+				);
+				b"\n"
+			}
+		})
 	}
 }

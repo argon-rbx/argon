@@ -3,6 +3,7 @@ use colored::Colorize;
 use json_formatter::JsonFormatter;
 use rbx_dom_weak::types::Ref;
 use serde::{Deserialize, Serialize};
+use serde_json::Serializer;
 use std::{
 	collections::{BTreeMap, HashMap},
 	fs, mem,
@@ -15,7 +16,7 @@ use crate::{
 		meta::{NodePath, SyncRule},
 		tree::Tree,
 	},
-	ext::{PathExt, ResultExt},
+	ext::{PathExt, ResultExt, WriterExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
 };
@@ -130,10 +131,10 @@ impl Project {
 		let formatter = JsonFormatter::with_array_breaks(false);
 
 		let mut writer = Vec::new();
-		let mut serializer = serde_json::Serializer::with_formatter(&mut writer, formatter);
+		let mut serializer = Serializer::with_formatter(&mut writer, formatter);
 
 		self.serialize(&mut serializer)?;
-		writer.push(b'\n');
+		writer.end()?;
 
 		fs::write(path, &writer)?;
 
