@@ -93,7 +93,7 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.lua")
 				.with_child_pattern(".src.lua")
 				.with_exclude("init.lua"),
-			// Lua scripts for Argon
+			// Lua scripts for Rojo
 			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.lua")
 				.with_child_pattern("init.server.lua")

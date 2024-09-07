@@ -27,7 +27,7 @@ pub mod data;
 pub mod dir;
 pub mod json;
 pub mod json_model;
-pub mod lua;
+pub mod luau;
 pub mod msgpack;
 pub mod project;
 pub mod rbxm;
@@ -71,7 +71,7 @@ impl Middleware {
 			Middleware::InstanceData => unreachable!(),
 			//
 			Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript => {
-				lua::read_lua(path, context, vfs, self.clone().into())
+				luau::read_luau(path, context, vfs, self.clone().into())
 			}
 			//
 			Middleware::StringValue => txt::read_txt(path, vfs),
@@ -98,7 +98,7 @@ impl Middleware {
 	pub fn write(&self, properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
 		match self {
 			Middleware::ServerScript | Middleware::ClientScript | Middleware::ModuleScript => {
-				lua::write_lua(properties, path, vfs)
+				luau::write_luau(properties, path, vfs)
 			}
 			Middleware::StringValue => txt::write_txt(properties, path, vfs),
 			Middleware::LocalizationTable => csv::write_csv(properties, path, vfs),
@@ -187,7 +187,7 @@ pub fn new_snapshot(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<
 }
 
 /// Create a snapshot of a regular file,
-/// example: `foo/bar.lua`
+/// example: `foo/bar.luau`
 fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve(path)) {
 		let middleware = resolved.middleware;
@@ -212,7 +212,7 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 }
 
 /// Create a snapshot of a directory that has a child source or data,
-/// example: `foo/bar/.src.lua`
+/// example: `foo/bar/.src.luau`
 fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve_child(path)) {
 		let middleware = resolved.middleware;

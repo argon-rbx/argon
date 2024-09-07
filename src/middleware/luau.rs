@@ -28,7 +28,7 @@ impl From<Middleware> for ScriptType {
 }
 
 #[profiling::function]
-pub fn read_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
+pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptType) -> Result<Snapshot> {
 	let (class_name, run_context) = match (context.use_legacy_scripts(), &script_type) {
 		(false, ScriptType::Server) => ("Script", Some(Variant::Enum(Enum::from_u32(1)))),
 		(false, ScriptType::Client) => ("Script", Some(Variant::Enum(Enum::from_u32(2)))),
@@ -61,7 +61,7 @@ pub fn read_lua(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptTy
 }
 
 #[profiling::function]
-pub fn write_lua(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
+pub fn write_luau(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
 	let (mut header, mut source) = if let Some(Variant::String(source)) = properties.remove("Source") {
 		if let Some(new_line) = source.find('\n') {
 			let (header, source) = source.split_at(new_line);
