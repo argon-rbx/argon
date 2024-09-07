@@ -117,29 +117,31 @@ pub fn new_snapshot_node(
 	if let Some(path_node) = node.path {
 		let path = path.with_file_name(path_node.path()).clean();
 
-		vfs.watch(&path, vfs.is_dir(&path))?;
+		if vfs.exists(&path) {
+			vfs.watch(&path, vfs.is_dir(&path))?;
 
-		if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
-			path_snapshot.extend_properties(snapshot.properties);
-			path_snapshot.set_name(&snapshot.name);
+			if let Some(mut path_snapshot) = new_snapshot(&path, context, vfs)? {
+				path_snapshot.extend_properties(snapshot.properties);
+				path_snapshot.set_name(&snapshot.name);
 
-			if path_snapshot.class == "Folder" {
-				path_snapshot.set_class(&snapshot.class);
+				if path_snapshot.class == "Folder" {
+					path_snapshot.set_class(&snapshot.class);
+				}
+
+				// We want to keep the original inner source
+				// but with addition of new relevant paths
+				snapshot
+					.meta
+					.source
+					.extend_relevant(path_snapshot.meta.source.relevant().to_owned());
+
+				path_snapshot.meta.set_source(snapshot.meta.source);
+				path_snapshot
+					.meta
+					.set_keep_unknowns(path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns);
+
+				snapshot = path_snapshot;
 			}
-
-			// We want to keep the original inner source
-			// but with addition of new relevant paths
-			snapshot
-				.meta
-				.source
-				.extend_relevant(path_snapshot.meta.source.relevant().to_owned());
-
-			path_snapshot.meta.set_source(snapshot.meta.source);
-			path_snapshot
-				.meta
-				.set_keep_unknowns(path_snapshot.meta.keep_unknowns || snapshot.meta.keep_unknowns);
-
-			snapshot = path_snapshot;
 		} else if let ProjectPath::Required(_) = path_node {
 			argon_warn!(
 				"Path specified in the project does not exist: {}. Please create this path and restart Argon \
