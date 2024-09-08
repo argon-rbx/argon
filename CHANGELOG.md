@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.18] - 2024-09-08
+
 ### Added
 
 - Automatic renaming instances with corrupted names (`rename_instances` setting)
@@ -294,7 +296,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.17...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.18...HEAD
+[2.0.18]: https://github.com/argon-rbx/argon/compare/2.0.17...2.0.18
 [2.0.17]: https://github.com/argon-rbx/argon/compare/2.0.16...2.0.17
 [2.0.16]: https://github.com/argon-rbx/argon/compare/2.0.15...2.0.16
 [2.0.15]: https://github.com/argon-rbx/argon/compare/2.0.14...2.0.15
