@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use log::trace;
 use rbx_dom_weak::types::Ref;
 use serde::Serialize;
+use snapshot::AddedSnapshot;
 use std::{
 	fs::File,
 	io::BufWriter,
@@ -105,8 +106,8 @@ impl Core {
 		self.processor.clone()
 	}
 
-	/// Create snapshot of the tree or subtree
-	pub fn snapshot(&self, instance: Ref) -> Snapshot {
+	/// Create snapshot of the tree or a subtree
+	pub fn snapshot(&self, instance: Ref) -> Option<AddedSnapshot> {
 		let tree = self.tree();
 
 		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
@@ -130,16 +131,23 @@ impl Core {
 			snapshot_children
 		}
 
-		let root = tree.get_instance(instance).unwrap_or_else(|| tree.root());
+		let root = if instance.is_some() {
+			tree.get_instance(instance)?
+		} else {
+			tree.root()
+		};
 		let meta = tree.get_meta(root.referent()).unwrap();
 
-		Snapshot::new()
-			.with_id(root.referent())
-			.with_name(&root.name)
-			.with_class(&root.class)
-			.with_properties(root.properties.clone())
-			.with_children(walk(tree.root().children(), &tree))
-			.with_meta(meta.clone())
+		Some(
+			Snapshot::new()
+				.with_id(root.referent())
+				.with_name(&root.name)
+				.with_class(&root.class)
+				.with_properties(root.properties.clone())
+				.with_children(walk(root.children(), &tree))
+				.with_meta(meta.clone())
+				.as_new(root.parent()),
+		)
 	}
 
 	/// Build the tree into a file, either XML or binary

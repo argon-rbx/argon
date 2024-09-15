@@ -135,6 +135,20 @@ impl Snapshot {
 	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
 		self.children.extend(children);
 	}
+
+	// Miscellaneous
+
+	pub fn as_new(&self, parent: Ref) -> AddedSnapshot {
+		AddedSnapshot {
+			id: self.id,
+			meta: self.meta.clone(),
+			parent,
+			name: self.name.clone(),
+			class: self.class.clone(),
+			properties: self.properties.clone(),
+			children: self.children.clone(),
+		}
+	}
 }
 
 impl Debug for Snapshot {
@@ -181,15 +195,15 @@ pub struct AddedSnapshot {
 	pub children: Vec<Snapshot>,
 }
 
-impl AddedSnapshot {
-	pub fn to_snapshot(self) -> Snapshot {
-		Snapshot {
-			id: self.id,
-			meta: self.meta,
-			name: self.name,
-			class: self.class,
-			properties: self.properties,
-			children: self.children,
+impl From<AddedSnapshot> for Snapshot {
+	fn from(snapshot: AddedSnapshot) -> Self {
+		Self {
+			id: snapshot.id,
+			meta: snapshot.meta,
+			name: snapshot.name,
+			class: snapshot.class,
+			properties: snapshot.properties,
+			children: snapshot.children,
 		}
 	}
 }

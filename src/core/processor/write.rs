@@ -50,7 +50,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	}
 
 	let parent_id = snapshot.parent;
-	let mut snapshot = snapshot.to_snapshot();
+	let mut snapshot = Snapshot::from(snapshot);
 	let mut parent_meta = tree.get_meta(parent_id).unwrap().clone();
 	let filter = parent_meta.context.syncback_filter();
 
