@@ -1,16 +1,12 @@
-use actix_msgpack::MsgPackResponseBuilder;
-use actix_web::{
-	get,
-	web::{Data, Query},
-	HttpResponse, Responder,
-};
+use actix_msgpack::{MsgPack, MsgPackResponseBuilder};
+use actix_web::{post, web::Data, HttpResponse, Responder};
 use log::trace;
 use std::sync::Arc;
 
 use crate::{core::Core, server::AuthRequest};
 
-#[get("/read")]
-async fn main(request: Query<AuthRequest>, core: Data<Arc<Core>>) -> impl Responder {
+#[post("/read")]
+async fn main(request: MsgPack<AuthRequest>, core: Data<Arc<Core>>) -> impl Responder {
 	trace!("Received request: read");
 
 	let id = request.client_id;

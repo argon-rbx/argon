@@ -105,8 +105,8 @@ impl Core {
 		self.processor.clone()
 	}
 
-	/// Create snapshot of the tree
-	pub fn snapshot(&self) -> Snapshot {
+	/// Create snapshot of the tree or subtree
+	pub fn snapshot(&self, instance: Ref) -> Snapshot {
 		let tree = self.tree();
 
 		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
@@ -130,7 +130,7 @@ impl Core {
 			snapshot_children
 		}
 
-		let root = tree.root();
+		let root = tree.get_instance(instance).unwrap_or_else(|| tree.root());
 		let meta = tree.get_meta(root.referent()).unwrap();
 
 		Snapshot::new()

@@ -42,15 +42,15 @@ impl Tree {
 			.with_name(snapshot.name)
 			.with_properties(snapshot.properties);
 
-		let referent = self.dom.insert(parent, builder);
+		let id = self.dom.insert(parent, builder);
 
-		self.insert_meta(referent, snapshot.meta);
+		self.insert_meta(id, snapshot.meta);
 
 		for child in snapshot.children {
-			self.insert_instance(child, referent);
+			self.insert_instance(child, id);
 		}
 
-		referent
+		id
 	}
 
 	pub fn insert_instance_non_recursive(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
@@ -58,11 +58,11 @@ impl Tree {
 			.with_name(snapshot.name)
 			.with_properties(snapshot.properties);
 
-		let referent = self.dom.insert(parent, builder);
+		let id = self.dom.insert(parent, builder);
 
-		self.insert_meta(referent, snapshot.meta);
+		self.insert_meta(id, snapshot.meta);
 
-		referent
+		id
 	}
 
 	pub fn insert_instance_with_ref(&mut self, snapshot: Snapshot, parent: Ref) {
@@ -71,9 +71,9 @@ impl Tree {
 			.with_referent(snapshot.id)
 			.with_properties(snapshot.properties);
 
-		let referent = self.dom.insert(parent, builder);
+		let id = self.dom.insert(parent, builder);
 
-		self.insert_meta(referent, snapshot.meta);
+		self.insert_meta(id, snapshot.meta);
 	}
 
 	pub fn remove_instance(&mut self, id: Ref) {
