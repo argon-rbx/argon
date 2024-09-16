@@ -98,29 +98,6 @@ impl Handler {
 				return;
 			}
 
-			if lock!(self.project).path == path {
-				if let VfsEvent::Write(_) = event {
-					debug!("Project file was modified. Reloading project..");
-
-					match lock!(self.project).reload() {
-						Ok(project) => {
-							info!("Project reloaded");
-
-							let details = server::SyncDetails(ProjectDetails::from_project(project, &tree));
-
-							match self.queue.push(details, None) {
-								Ok(()) => trace!("Project details synced"),
-								Err(err) => warn!("Failed to sync project details: {}", err),
-							}
-						}
-						Err(err) => error!("Failed to reload project: {}", err),
-					}
-				} else if let VfsEvent::Delete(_) = event {
-					argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
-					return;
-				}
-			}
-
 			let ids = {
 				let mut current_path = path;
 
@@ -161,6 +138,29 @@ impl Handler {
 			}
 		} else {
 			trace!("No changes detected when processing path: {:?}", path);
+		}
+
+		if lock!(self.project).path == path {
+			if let VfsEvent::Write(_) = event {
+				debug!("Project file was modified. Reloading project..");
+
+				match lock!(self.project).reload() {
+					Ok(project) => {
+						info!("Project reloaded");
+
+						let details = server::SyncDetails(ProjectDetails::from_project(project, &tree));
+
+						match self.queue.push(details, None) {
+							Ok(()) => trace!("Project details synced"),
+							Err(err) => warn!("Failed to sync project details: {}", err),
+						}
+					}
+					Err(err) => error!("Failed to reload project: {}", err),
+				}
+			} else if let VfsEvent::Delete(_) = event {
+				argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
+				return;
+			}
 		}
 	}
 

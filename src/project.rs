@@ -251,7 +251,7 @@ pub struct ProjectDetails {
 	name: String,
 	game_id: Option<u64>,
 	place_ids: Vec<u64>,
-	root_dirs: Vec<Ref>,
+	root_refs: Vec<Ref>,
 }
 
 impl ProjectDetails {
@@ -263,7 +263,7 @@ impl ProjectDetails {
 			game_id: project.game_id,
 			place_ids: project.place_ids.clone(),
 
-			root_dirs: if project.is_place() {
+			root_refs: if project.is_place() {
 				tree.place_root_refs().to_owned()
 			} else {
 				vec![tree.root_ref()]
