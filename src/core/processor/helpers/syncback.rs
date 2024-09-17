@@ -28,32 +28,13 @@ const FORBIDDEN_FILE_NAMES: [&str; 22] = [
 ];
 
 pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
-	let verify = || -> Option<(String, String)> {
-		if name.is_empty() {
-			return Some(("file name cannot be empty".into(), "EmptyName".into()));
-		}
+	let verify = || -> (Vec<String>, String) {
+		let mut messages = vec![];
+		let mut name = name.clone();
 
 		if name.len() > 255 {
-			return Some((
-				"file name cannot be longer than 255 characters".into(),
-				name[..255].into(),
-			));
-		}
-
-		#[cfg(windows)]
-		if name.ends_with('.') {
-			return Some((
-				"file name cannot end with a period".into(),
-				name[..name.len() - 1].into(),
-			));
-		}
-
-		#[cfg(windows)]
-		if name.ends_with(' ') {
-			return Some((
-				"file name cannot end with a space".into(),
-				name[..name.len() - 1].into(),
-			));
+			messages.push("file name cannot be longer than 255 characters".into());
+			name = name[..255].into();
 		}
 
 		{
@@ -95,40 +76,48 @@ pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 					)
 				};
 
-				let mut name = name.to_owned();
+				messages.push(message);
 
 				for char in forbidden_chars {
 					name = name.replace(char, "");
 				}
-
-				if name.is_empty() {
-					name = "EmptyName".into();
-				}
-
-				return Some((message, name));
 			}
 		}
 
 		#[cfg(windows)]
-		for file_name in FORBIDDEN_FILE_NAMES {
-			if name == file_name {
-				return Some((
-					format!("file cannot be named {}", file_name.bold()),
-					format!("{}{}", name, name.chars().last().unwrap()),
-				));
+		if name.ends_with('.') || name.ends_with(' ') {
+			messages.push("file name cannot end with a period or space".into());
+
+			while name.ends_with('.') || name.ends_with(' ') {
+				name = name[..name.len() - 1].into();
 			}
 		}
 
-		None
+		if name.is_empty() {
+			messages.push("file name cannot be empty".into());
+			name = "EmptyName".into();
+		} else {
+			#[cfg(windows)]
+			for file_name in FORBIDDEN_FILE_NAMES {
+				if name == file_name {
+					messages.push(format!("file cannot be named {}", file_name.bold()));
+					name = format!("{}{}", name, name.chars().last().unwrap());
+				}
+			}
+		}
+
+		(messages, name)
 	};
 
-	if let Some((message, renamed)) = verify() {
+	let (messages, renamed) = verify();
+
+	if !messages.is_empty() {
 		if Config::new().rename_instances {
 			argon_warn!(
 				"Instance with name: {} got renamed to: {}, because: {}!",
 				name.bold(),
 				renamed.bold(),
-				message
+				messages.iter().map(|m| m.as_str()).collect::<Vec<&str>>().join(" & ")
 			);
 
 			meta.set_original_name(Some(name.to_owned()));
@@ -139,7 +128,7 @@ pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 			argon_error!(
 				"Instance with name: {} is corrupted: {}! Skipping..",
 				name.bold(),
-				message
+				messages.iter().map(|m| m.as_str()).collect::<Vec<&str>>().join(" & ")
 			);
 
 			return false;
@@ -160,7 +149,7 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 		let suffix = path.get_name().strip_prefix(name.as_str()).unwrap_or_default();
 
 		let renamed = format!("{}_{}", name, Uuid::new_v4());
-		let renamed_path = path.with_file_name(&format!("{}{}", renamed, suffix));
+		let renamed_path = path.with_file_name(format!("{}{}", renamed, suffix));
 
 		argon_warn!(
 			"Instance with path: {} got renamed to: {}, because it already exists!",
@@ -185,7 +174,7 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 }
 
 pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
-	// Temporary solution for serde failing to deserialize empty HashMap
+	// Temporary solution for empty Luau maps being serialized as arrays
 	if properties.contains_key("ArgonEmpty") {
 		HashMap::new()
 	} else {

@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Support for automatic instance hydration with client tree
 
+### Fixed
+
+- Syncback instance name filter now works for more complex cases (e.g. `CON../`)
+
 ## [2.0.18] - 2024-09-08
 
 ### Added
