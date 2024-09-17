@@ -75,7 +75,7 @@ globenv = "0.2.1"
 
 puffin = "0.19.0"
 colored = "2.0.4"
-anyhow = "1.0.87"
+anyhow = "1.0.89"
 chrono = "0.4.38"
 notify = "6.1.1"
 whoami = "1.5.2"
@@ -94,7 +94,7 @@ keybd_event = "0.1.2"
 winsafe = { version = "0.0.22", features = ["user"] }
 
 [build-dependencies]
-anyhow = "1.0.87"
+anyhow = "1.0.89"
 self_update = { version = "0.39.0", default-features = false, features = [
 	"rustls",
 ] }
