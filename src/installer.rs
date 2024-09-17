@@ -18,6 +18,7 @@ const PLUGIN_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/
 const PACKAGE_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/package");
 const MODEL_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/model");
 const QUICK_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/quick");
+const EMPTY_TEMPLATE: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/templates/empty");
 
 const ARGON_PLUGIN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/Argon.rbxm"));
 
@@ -123,6 +124,7 @@ pub fn install_templates(update: bool) -> Result<()> {
 	let package_template = templates_dir.join("package");
 	let model_template = templates_dir.join("model");
 	let quick_template = templates_dir.join("quick");
+	let empty_template = templates_dir.join("empty");
 
 	if update || !place_template.exists() {
 		fs::create_dir_all(&place_template)?;
@@ -147,6 +149,11 @@ pub fn install_templates(update: bool) -> Result<()> {
 	if update || !quick_template.exists() {
 		fs::create_dir_all(&quick_template)?;
 		install_template(&QUICK_TEMPLATE, &quick_template)?;
+	}
+
+	if update || !empty_template.exists() {
+		fs::create_dir_all(&empty_template)?;
+		install_template(&EMPTY_TEMPLATE, &empty_template)?;
 	}
 
 	Ok(())

@@ -42,10 +42,12 @@ pub struct Config {
 	pub license: String,
 	/// Include documentation in the project (README, CHANGELOG, etc.)
 	pub include_docs: bool,
-	/// Use git for source control
+	/// Use Git for source control
 	pub use_git: bool,
 	/// Use Wally for package management
 	pub use_wally: bool,
+	/// Use selene for codebase linting
+	pub use_selene: bool,
 
 	/// Run Argon asynchronously, freeing up the terminal
 	pub run_async: bool,
@@ -101,6 +103,7 @@ impl Default for Config {
 			include_docs: false,
 			use_git: true,
 			use_wally: false,
+			use_selene: false,
 
 			run_async: false,
 			scan_ports: true,

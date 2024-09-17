@@ -48,6 +48,17 @@ pub struct Init {
     )]
 	wally: Option<bool>,
 
+	/// Setup selene
+	#[arg(
+		short,
+        long,
+        default_missing_value("true"),
+		hide_possible_values = true,
+        num_args(0..=1),
+    	action = ArgAction::Set,
+    )]
+	selene: Option<bool>,
+
 	/// Include docs (README, CHANGELOG, etc.)
 	#[arg(
 		short,
@@ -83,6 +94,7 @@ impl Init {
 		let license = self.license.unwrap_or(config.license.clone());
 		let git = self.git.unwrap_or(config.use_git);
 		let wally = self.wally.unwrap_or(config.use_wally);
+		let selene = self.selene.unwrap_or(config.use_selene);
 		let docs = self.docs.unwrap_or(config.include_docs);
 		let ts = self.ts.unwrap_or(config.ts_mode);
 
@@ -92,6 +104,7 @@ impl Init {
 			license: &license,
 			git,
 			wally,
+			selene,
 			docs,
 			rojo_mode: config.rojo_mode,
 			use_lua: config.lua_extension,

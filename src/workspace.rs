@@ -23,15 +23,16 @@ pub struct WorkspaceConfig<'a> {
 	pub license: &'a str,
 	pub git: bool,
 	pub wally: bool,
+	pub selene: bool,
 	pub docs: bool,
 	pub rojo_mode: bool,
 	pub use_lua: bool,
 }
 
 pub fn init(workspace: WorkspaceConfig) -> Result<()> {
-	let templates_dir = util::get_argon_dir()?.join("templates").join(workspace.template);
+	let template_dir = util::get_argon_dir()?.join("templates").join(workspace.template);
 
-	if !templates_dir.exists() {
+	if !template_dir.exists() {
 		bail!("Template {} does not exist", workspace.template.bold())
 	}
 
@@ -42,12 +43,11 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 		fs::create_dir_all(workspace_dir)?;
 	}
 
-	for entry in fs::read_dir(templates_dir)? {
+	for entry in fs::read_dir(template_dir)? {
 		let entry = entry?;
 
 		let path = entry.path();
 		let name = path.get_name();
-		let stem = path.get_stem();
 
 		let new_path = if name == "project.json" {
 			workspace.project.to_owned()
@@ -102,7 +102,12 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 					fs::write(new_path, contents)?;
 				}
 			}
-			_ => match stem {
+			"selene.toml" => {
+				if workspace.selene {
+					fs::copy(path, new_path)?;
+				}
+			}
+			_ => match path.get_stem() {
 				"README" | "CHANGELOG" => {
 					if workspace.docs {
 						let contents = fs::read_to_string(path)?;
@@ -112,9 +117,8 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 					}
 				}
 				"LICENSE" => {
-					let fallback = fs::read_to_string(path)?;
-
 					if workspace.docs {
+						let fallback = fs::read_to_string(path)?;
 						add_license(&new_path, workspace.license, &fallback)?;
 					}
 				}
@@ -190,53 +194,55 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 		return Ok(None);
 	}
 
-	if workspace.docs {
-		let templates_dir = util::get_argon_dir()?.join("templates").join(template);
+	let template_dir = util::get_argon_dir()?.join("templates").join(template);
 
-		if !templates_dir.exists() {
-			argon_warn!("Template {} does not exist, docs won't be added!", template.bold());
+	if !template_dir.exists() {
+		argon_warn!(
+			"Template {} does not exist, additional files won't be added!",
+			template.bold()
+		);
 
-			return Ok(Some(project));
+		return Ok(Some(project));
+	}
+
+	let project_name = project.get_name();
+
+	for entry in fs::read_dir(template_dir)? {
+		let entry = entry?;
+
+		let path = entry.path();
+		let new_path = project.join(path.get_name());
+
+		if new_path.exists() {
+			continue;
 		}
 
-		let project_name = project.get_name();
+		match path.get_stem() {
+			"wally" => {
+				if workspace.wally || template == "package" {
+					let contents = fs::read_to_string(path)?;
+					let contents = contents.replace("$name", &project_name.to_lowercase());
+					let contents = contents.replace("$author", &util::get_username().to_lowercase());
 
-		for entry in fs::read_dir(templates_dir)? {
-			let entry = entry?;
-
-			let path = entry.path();
-			let name = path.get_name();
-			let stem = path.get_stem();
-
-			let new_path = project.join(name);
-
-			if new_path.exists() {
-				continue;
+					fs::write(new_path, contents)?;
+				}
 			}
-
-			match stem {
-				"README" | "CHANGELOG" => {
+			"README" | "CHANGELOG" => {
+				if workspace.docs {
 					let contents = fs::read_to_string(path)?;
 					let contents = contents.replace("$name", project_name);
 
 					fs::write(new_path, contents)?;
 				}
-				"LICENSE" => {
+			}
+			"LICENSE" => {
+				if workspace.docs {
 					let fallback = fs::read_to_string(path)?;
-
 					add_license(&new_path, workspace.license, &fallback)?;
 				}
-				"wally" => {
-					if workspace.wally {
-						let contents = fs::read_to_string(path)?;
-						let contents = contents.replace("$name", &project_name.to_lowercase());
-						let contents = contents.replace("$author", &util::get_username().to_lowercase());
-
-						fs::write(new_path, contents)?;
-					}
-				}
-				_ => {}
 			}
+
+			_ => {}
 		}
 	}
 

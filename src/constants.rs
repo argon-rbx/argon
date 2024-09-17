@@ -15,7 +15,7 @@ pub const CHANGES_THRESHOLD: usize = 5;
 // Current version of the project templates, this constant
 // should be manually bumped when there are any changes
 // made to the `assets/templates` directory
-pub const TEMPLATES_VERSION: u8 = 1;
+pub const TEMPLATES_VERSION: u8 = 2;
 
 // Maximum payload size that can be sent from client
 // to the server, usually containing changes to apply,

@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Support for automatic instance hydration with client tree
+- New `empty` template that describes empty `DataModel` and contains only necessary files to get started
+- New `selene` setting that allows to setup selene for codebase linting when initializing a new project
 
 ### Fixed
 
