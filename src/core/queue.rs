@@ -1,8 +1,11 @@
 use anyhow::{bail, Result};
+use colored::Colorize;
 use crossbeam_channel::{Receiver, Sender};
 use std::{collections::HashMap, sync::RwLock};
 
 use crate::{
+	argon_warn,
+	config::Config,
 	constants::QUEUE_TIMEOUT,
 	server::{self, Message},
 };
@@ -36,13 +39,15 @@ struct Channel {
 pub struct Queue {
 	queues: RwLock<HashMap<u32, Channel>>,
 	listeners: RwLock<Vec<Listener>>,
+	unsynced_changes: RwLock<u16>,
 }
 
 impl Queue {
 	pub fn new() -> Self {
 		Self {
 			queues: RwLock::new(HashMap::new()),
-			listeners: RwLock::new(vec![]),
+			listeners: RwLock::new(Vec::new()),
+			unsynced_changes: RwLock::new(0),
 		}
 	}
 
@@ -64,12 +69,29 @@ impl Queue {
 		}
 
 		let message: Message = message.into();
+		let mut did_push = false;
 
 		for listener in read!(self.listeners).iter() {
 			let queues = read!(self.queues);
 			let sender = queues.get(&listener.id).unwrap().sender.clone();
 
 			sender.send(message.clone())?;
+
+			did_push = true;
+		}
+
+		if !did_push {
+			let max_unsynced_changes = Config::new().max_unsynced_changes;
+			let mut unsynced_changes = write!(self.unsynced_changes);
+
+			*unsynced_changes += 1;
+
+			if max_unsynced_changes > 0 && *unsynced_changes >= max_unsynced_changes {
+				argon_warn!(
+					"There are {} unsynced changes. Connect at least one client to this server or increase max_unsynced_changes setting to suppress this warning",
+					unsynced_changes.to_string().bold()
+				);
+			}
 		}
 
 		Ok(())

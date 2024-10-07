@@ -215,11 +215,13 @@ impl Handler {
 			}
 
 			Ok(())
-		};
+		}();
 
-		match result() {
+		match result {
 			Ok(()) => trace!("Changes applied successfully"),
 			Err(err) => error!("Failed to apply changes: {}", err),
 		}
+
+		self.queue.push(server::SyncbackChanges(), Some(0)).ok();
 	}
 }

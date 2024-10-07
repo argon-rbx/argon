@@ -84,6 +84,8 @@ pub struct Config {
 	pub line_ending: String,
 	/// Automatically rename corrupted or duplicate instances when syncing back
 	pub rename_instances: bool,
+	/// Maximum number of unsynced changes before showing a warning
+	pub max_unsynced_changes: u16,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Share anonymous Argon usage statistics with the community
@@ -124,6 +126,7 @@ impl Default for Config {
 			lua_extension: false,
 			line_ending: String::from("LF"),
 			rename_instances: true,
+			max_unsynced_changes: 10,
 			move_to_bin: false,
 			share_stats: true,
 

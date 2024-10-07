@@ -28,7 +28,7 @@ const FORBIDDEN_FILE_NAMES: [&str; 22] = [
 ];
 
 pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
-	let verify = || -> (Vec<String>, String) {
+	let (messages, renamed) = {
 		let mut messages = vec![];
 		let mut name = name.clone();
 
@@ -108,8 +108,6 @@ pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 
 		(messages, name)
 	};
-
-	let (messages, renamed) = verify();
 
 	if !messages.is_empty() {
 		if Config::new().rename_instances {

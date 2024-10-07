@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Warning about unsynced changes when running `serve` and no client is connected (`max_unsynced_changes` setting)
+
+### Fixed
+
+- Sourcemap now regenerates when writing client changes
+
 ## [2.0.19] - 2024-09-19
 
 ### Added

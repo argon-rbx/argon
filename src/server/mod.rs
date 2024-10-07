@@ -27,6 +27,7 @@ mod write;
 #[derive(Debug, Clone, Serialize, FromOne)]
 pub enum Message {
 	SyncChanges(SyncChanges),
+	SyncbackChanges(SyncbackChanges),
 	SyncDetails(SyncDetails),
 	ExecuteCode(ExecuteCode),
 	Disconnect(Disconnect),
@@ -34,6 +35,9 @@ pub enum Message {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SyncChanges(pub Changes);
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SyncbackChanges();
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SyncDetails(pub ProjectDetails);
