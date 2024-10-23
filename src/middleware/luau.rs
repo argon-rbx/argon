@@ -43,12 +43,6 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 	let source = vfs.read_to_string(path)?;
 
 	if script_type != ScriptType::Module {
-		if let Some(line) = source.lines().next() {
-			if line.contains("--disable") {
-				properties.insert(String::from("Disabled"), Variant::Bool(true));
-			}
-		}
-
 		if let Some(run_context) = run_context {
 			properties.insert(String::from("RunContext"), run_context);
 		}
@@ -62,38 +56,9 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 
 #[profiling::function]
 pub fn write_luau(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
-	let (mut header, mut source) = if let Some(Variant::String(source)) = properties.remove("Source") {
-		if let Some(new_line) = source.find('\n') {
-			let (header, source) = source.split_at(new_line);
-			(header.to_string(), source.to_string())
-		} else {
-			(source.to_owned(), String::new())
-		}
-	} else {
-		(String::new(), String::new())
-	};
-
-	let mut new_header = String::new();
-
-	if properties.remove("Disabled").is_some() {
-		new_header += "--disable\n";
+	if let Some(Variant::String(value)) = properties.remove("Source") {
+		vfs.write(path, value.as_bytes())?;
 	}
-
-	if header.contains("--") {
-		header = header.replace("--disable", "");
-
-		if header.len() == header.match_indices(' ').count() {
-			header.clear();
-
-			if source.starts_with('\n') {
-				source.remove(0);
-			}
-		}
-	}
-
-	source = new_header + &header + &source;
-
-	vfs.write(path, source.as_bytes())?;
 
 	Ok(properties)
 }

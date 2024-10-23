@@ -7,11 +7,6 @@ use crate::{core::meta::SyncRule, middleware::Middleware};
 // be able to set them in `sync_rules` or project `$path`
 pub const BLACKLISTED_PATHS: [&str; 1] = [".DS_Store"];
 
-// Maximum number of changes made by one of the connected
-// clients that can be applied to the underlying tree and
-// vfs without extra user confirmation
-pub const CHANGES_THRESHOLD: usize = 5;
-
 // Current version of the project templates, this constant
 // should be manually bumped when there are any changes
 // made to the `assets/templates` directory

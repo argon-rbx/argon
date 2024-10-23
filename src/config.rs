@@ -76,18 +76,21 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
-	/// Package manager to use when running roblox-ts scripts (npm, bun, etc.)
-	pub package_manager: String,
+	/// Automatically rename corrupted or duplicate instances when syncing back
+	pub rename_instances: bool,
+	/// Move files to the bin instead of deleting them (two-way sync)
+	pub move_to_bin: bool,
+	/// Number of changes allowed before prompting user for confirmation
+	pub changes_threshold: usize,
+	/// Maximum number of unsynced changes before showing a warning
+	pub max_unsynced_changes: u16,
+
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
 	/// Line ending to use when writing files (LF, CRLF, CR)
 	pub line_ending: String,
-	/// Automatically rename corrupted or duplicate instances when syncing back
-	pub rename_instances: bool,
-	/// Maximum number of unsynced changes before showing a warning
-	pub max_unsynced_changes: u16,
-	/// Move files to the bin instead of deleting them (two-way sync)
-	pub move_to_bin: bool,
+	/// Package manager to use when running roblox-ts scripts (npm, bun, etc.)
+	pub package_manager: String,
 	/// Share anonymous Argon usage statistics with the community
 	pub share_stats: bool,
 
@@ -122,12 +125,14 @@ impl Default for Config {
 			rojo_mode: false,
 			ts_mode: false,
 
-			package_manager: String::from("npm"),
+			rename_instances: true,
+			move_to_bin: false,
+			changes_threshold: 5,
+			max_unsynced_changes: 10,
+
 			lua_extension: false,
 			line_ending: String::from("LF"),
-			rename_instances: true,
-			max_unsynced_changes: 10,
-			move_to_bin: false,
+			package_manager: String::from("npm"),
 			share_stats: true,
 
 			kind: ConfigKind::default(),

@@ -9,10 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Warning about unsynced changes when running `serve` and no client is connected (`max_unsynced_changes` setting)
+- `changes_threshold` setting to control how many changes are allowed before prompting user for confirmation
 
 ### Fixed
 
 - Sourcemap now regenerates when writing client changes
+
+### Changed
+
+- Removed `--disable` script flag - create data file with `Disabled` property set to `true` instead
 
 ## [2.0.19] - 2024-09-19
 

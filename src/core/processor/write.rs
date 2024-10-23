@@ -97,12 +97,12 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
 
 			if has_children {
-				if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
+				if filter.matches_path(path) {
+					filter_warn!(snapshot.id, path);
 					return Ok(None);
 				}
 
-				if filter.matches_path(path) {
-					filter_warn!(snapshot.id, path);
+				if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
 					return Ok(None);
 				}
 
@@ -132,12 +132,12 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				meta.source.set_data(data_path);
 			}
 		} else {
-			if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
+			if filter.matches_path(path) {
+				filter_warn!(snapshot.id, path);
 				return Ok(None);
 			}
 
-			if filter.matches_path(path) {
-				filter_warn!(snapshot.id, path);
+			if !verify_path(path, &mut snapshot.name, &mut meta, vfs) {
 				return Ok(None);
 			}
 
