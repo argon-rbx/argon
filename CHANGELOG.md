@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.20] - 2024-10-24
+
 ### Added
 
 - Warning about unsynced changes when running `serve` and no client is connected (`max_unsynced_changes` setting)
@@ -322,7 +324,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.19...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.20...HEAD
+[2.0.20]: https://github.com/argon-rbx/argon/compare/2.0.19...2.0.20
 [2.0.19]: https://github.com/argon-rbx/argon/compare/2.0.18...2.0.19
 [2.0.18]: https://github.com/argon-rbx/argon/compare/2.0.17...2.0.18
 [2.0.17]: https://github.com/argon-rbx/argon/compare/2.0.16...2.0.17
