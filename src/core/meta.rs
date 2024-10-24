@@ -352,6 +352,13 @@ impl IgnoreRule {
 		}
 	}
 
+	pub fn matches_with_dir(&self, path: &Path) -> bool {
+		match path.strip_prefix(&self.path) {
+			Ok(suffix) => self.pattern.matches_path_with_dir(suffix),
+			Err(_) => false,
+		}
+	}
+
 	pub fn from_globs(globs: Vec<Glob>, path: PathBuf) -> Vec<Self> {
 		globs
 			.into_iter()
@@ -373,7 +380,7 @@ pub struct SyncbackFilter {
 
 impl SyncbackFilter {
 	pub fn matches_path(&self, path: &Path) -> bool {
-		self.ignore_rules.iter().any(|rule| rule.matches(path))
+		self.ignore_rules.iter().any(|rule| rule.matches_with_dir(path))
 	}
 
 	pub fn matches_name(&self, name: &str) -> bool {

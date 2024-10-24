@@ -35,6 +35,20 @@ impl Glob {
 		self.pattern.matches_path(path)
 	}
 
+	pub fn matches_path_with_dir(&self, path: &Path) -> bool {
+		let matches = self.pattern.matches_path(path);
+
+		if !matches && self.pattern.as_str().ends_with("/**") {
+			if let Ok(pattern) = Pattern::new(self.pattern.as_str().strip_suffix("/**").unwrap()) {
+				return pattern.matches_path(path);
+			} else {
+				return false;
+			}
+		}
+
+		matches
+	}
+
 	pub fn first(&self) -> Option<PathBuf> {
 		let path = glob(self.pattern.as_str()).unwrap().next();
 
