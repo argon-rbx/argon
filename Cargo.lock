@@ -367,7 +367,7 @@ dependencies = [
  "lazy_static",
  "log",
  "multimap",
- "notify",
+ "notify 7.0.0",
  "notify-debouncer-full",
  "open",
  "optfield",
@@ -1595,6 +1595,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "inotify"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdd168d97690d0b8c412d6b6c10360277f4d7ee495c5d0d5d5fe0854923255cc"
+dependencies = [
+ "bitflags 1.3.2",
+ "inotify-sys",
+ "libc",
+]
+
+[[package]]
 name = "inotify-sys"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1901,6 +1912,7 @@ checksum = "4569e456d394deccd22ce1c1913e6ea0e54519f577285001215d33557431afe4"
 dependencies = [
  "hermit-abi",
  "libc",
+ "log",
  "wasi",
  "windows-sys 0.52.0",
 ]
@@ -1950,7 +1962,7 @@ dependencies = [
  "crossbeam-channel",
  "filetime",
  "fsevent-sys",
- "inotify",
+ "inotify 0.9.6",
  "kqueue",
  "libc",
  "log",
@@ -1960,15 +1972,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "notify"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c533b4c39709f9ba5005d8002048266593c1cfaf3c5f0739d5b8ab0c6c504009"
+dependencies = [
+ "bitflags 2.6.0",
+ "filetime",
+ "fsevent-sys",
+ "inotify 0.10.2",
+ "kqueue",
+ "libc",
+ "log",
+ "mio 1.0.1",
+ "notify-types",
+ "walkdir",
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "notify-debouncer-full"
 version = "0.3.1"
 dependencies = [
  "crossbeam-channel",
  "file-id",
  "log",
- "notify",
+ "notify 6.1.1",
  "parking_lot",
  "walkdir",
+]
+
+[[package]]
+name = "notify-types"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7393c226621f817964ffb3dc5704f9509e107a8b024b489cc2c1b217378785df"
+dependencies = [
+ "instant",
 ]
 
 [[package]]
