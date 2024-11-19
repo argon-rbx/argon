@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced old `argon run` with `argon serve` command in `place` template README
+
 ## [2.0.20] - 2024-10-24
 
 ### Added
