@@ -3,5 +3,10 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+      time: "06:00"
+    open-pull-requests-limit: 40
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
