@@ -79,6 +79,7 @@ pub struct SyncbackSettings {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
+	#[serde(default = "default_project_name")]
 	pub name: String,
 	#[serde(rename = "tree")]
 	pub node: ProjectNode,
@@ -270,4 +271,8 @@ impl ProjectDetails {
 			},
 		}
 	}
+}
+
+fn default_project_name() -> String {
+	String::from("default")
 }

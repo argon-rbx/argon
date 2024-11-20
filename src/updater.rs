@@ -51,7 +51,7 @@ pub fn set_status(status: &UpdateStatus) -> Result<()> {
 	Ok(())
 }
 
-fn update_cli(prompt: bool) -> Result<bool> {
+fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
 
@@ -65,7 +65,7 @@ fn update_cli(prompt: bool) -> Result<bool> {
 
 	let release = update.get_latest_release()?;
 
-	if bump_is_greater(current_version, &release.version)? {
+	if bump_is_greater(current_version, &release.version)? || force {
 		if !prompt
 			|| logger::prompt(
 				&format!(
@@ -98,7 +98,7 @@ fn update_cli(prompt: bool) -> Result<bool> {
 	Ok(false)
 }
 
-fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
+fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = &status.plugin_version;
 	let plugin_path = get_plugin_path()?;
@@ -115,7 +115,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
 
 	let release = update.get_latest_release()?;
 
-	if bump_is_greater(current_version, &release.version)? {
+	if bump_is_greater(current_version, &release.version)? || force {
 		if !prompt
 			|| logger::prompt(
 				&format!(
@@ -154,8 +154,8 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
 	Ok(false)
 }
 
-fn update_templates(status: &mut UpdateStatus, prompt: bool) -> Result<bool> {
-	if status.templates_version < TEMPLATES_VERSION {
+fn update_templates(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
+	if status.templates_version < TEMPLATES_VERSION || force {
 		if !prompt || logger::prompt("Default templates have changed! Would you like to update?", true) {
 			if !prompt {
 				argon_info!("Default templates have changed! Updating..",);
@@ -188,14 +188,14 @@ pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<
 		return Ok(());
 	}
 
-	update_cli(prompt)?;
+	update_cli(prompt, false)?;
 
 	if plugin {
-		update_plugin(&mut status, prompt)?;
+		update_plugin(&mut status, prompt, false)?;
 	}
 
 	if templates {
-		update_templates(&mut status, prompt)?;
+		update_templates(&mut status, prompt, false)?;
 	}
 
 	status.last_checked = SystemTime::now();
@@ -204,21 +204,21 @@ pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<
 	Ok(())
 }
 
-pub fn force_update(cli: bool, plugin: bool, templates: bool) -> Result<bool> {
+pub fn manual_update(cli: bool, plugin: bool, templates: bool, force: bool) -> Result<bool> {
 	UPDATE_FORCED.call_once(|| {});
 
 	let mut status = get_status()?;
 	let mut updated = false;
 
-	if cli && update_cli(false)? {
+	if cli && update_cli(false, force)? {
 		updated = true;
 	}
 
-	if plugin && update_plugin(&mut status, false)? {
+	if plugin && update_plugin(&mut status, false, force)? {
 		updated = true;
 	}
 
-	if templates && update_templates(&mut status, false)? {
+	if templates && update_templates(&mut status, false, force)? {
 		updated = true;
 	}
 

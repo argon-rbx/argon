@@ -6,9 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `--force` parameter for `update` command that forces update even if there is no newer version
+
 ### Fixed
 
 - Replaced old `argon run` with `argon serve` command in `place` template README
+
+### Changed
+
+- `name` field in project file is now optional (defaults to `default`)
 
 ## [2.0.20] - 2024-10-24
 

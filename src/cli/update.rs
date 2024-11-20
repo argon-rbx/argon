@@ -9,6 +9,9 @@ pub struct Update {
 	/// Whether to update `cli`, `plugin`, `templates` or `all`
 	#[arg(hide_possible_values = true)]
 	mode: Option<UpdateMode>,
+	/// Whether to force update even if there is no newer version
+	#[arg(short, long)]
+	force: bool,
 }
 
 impl Update {
@@ -22,7 +25,7 @@ impl Update {
 			UpdateMode::Templates => (false, false, true),
 		};
 
-		match updater::force_update(cli, plugin, templates) {
+		match updater::manual_update(cli, plugin, templates, self.force) {
 			Ok(updated) => {
 				if !updated {
 					argon_info!("Everything is up to date!");
