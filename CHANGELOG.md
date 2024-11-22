@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Replaced old `argon run` with `argon serve` command in `place` template README
+- Latest instance name is now saved in the tree when it was automatically renamed due to the forbidden characters
 
 ### Changed
 

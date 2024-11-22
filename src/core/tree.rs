@@ -39,7 +39,7 @@ impl Tree {
 
 	pub fn insert_instance(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
 		let builder = InstanceBuilder::new(snapshot.class)
-			.with_name(snapshot.name)
+			.with_name(snapshot.meta.original_name.as_ref().unwrap_or(&snapshot.name))
 			.with_properties(snapshot.properties);
 
 		let id = self.dom.insert(parent, builder);
@@ -55,7 +55,7 @@ impl Tree {
 
 	pub fn insert_instance_non_recursive(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
 		let builder = InstanceBuilder::new(snapshot.class)
-			.with_name(snapshot.name)
+			.with_name(snapshot.meta.original_name.as_ref().unwrap_or(&snapshot.name))
 			.with_properties(snapshot.properties);
 
 		let id = self.dom.insert(parent, builder);
@@ -67,7 +67,7 @@ impl Tree {
 
 	pub fn insert_instance_with_ref(&mut self, snapshot: Snapshot, parent: Ref) {
 		let builder = InstanceBuilder::new(snapshot.class)
-			.with_name(snapshot.name)
+			.with_name(snapshot.meta.original_name.as_ref().unwrap_or(&snapshot.name))
 			.with_referent(snapshot.id)
 			.with_properties(snapshot.properties);
 

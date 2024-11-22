@@ -525,7 +525,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					}
 				}
 
-				instance.name = name;
+				instance.name = meta.original_name.clone().unwrap_or(name);
 			}
 
 			if let Some(properties) = snapshot.properties {
