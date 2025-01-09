@@ -28,6 +28,7 @@ pub mod dir;
 pub mod json;
 pub mod json_model;
 pub mod luau;
+pub mod md;
 pub mod msgpack;
 pub mod project;
 pub mod rbxm;
@@ -46,6 +47,7 @@ pub enum Middleware {
 	ModuleScript,
 
 	StringValue,
+	RichStringValue,
 	LocalizationTable,
 
 	JsonModule,
@@ -75,6 +77,7 @@ impl Middleware {
 			}
 			//
 			Middleware::StringValue => txt::read_txt(path, vfs),
+			Middleware::RichStringValue => md::read_md(path, vfs),
 			Middleware::LocalizationTable => csv::read_csv(path, vfs),
 			//
 			Middleware::JsonModule => json::read_json(path, vfs),
