@@ -12,7 +12,6 @@ use std::{
 use crate::config::Config;
 
 /// Collection of extension methods for `Path`
-
 pub trait PathExt {
 	fn resolve(&self) -> Result<PathBuf>;
 	fn to_string(&self) -> String;
@@ -93,7 +92,6 @@ impl PathExt for Path {
 }
 
 /// Additional methods for `anyhow::Error`, similar to `context` and `with_context`
-
 pub trait ResultExt<T, E> {
 	fn desc<D>(self, desc: D) -> Result<T, anyhow::Error>
 	where
@@ -136,7 +134,6 @@ where
 }
 
 /// `to_string` implementation for `WriteStyle`
-
 pub trait WriteStyleExt {
 	fn to_string(&self) -> String;
 }
@@ -154,7 +151,6 @@ impl WriteStyleExt for WriteStyle {
 }
 
 /// Collection of extension methods for `io::Write`
-
 pub trait WriterExt {
 	fn end(&mut self) -> io::Result<usize>;
 }

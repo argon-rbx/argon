@@ -105,6 +105,9 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 			SyncRule::new(Middleware::StringValue)
 				.with_pattern("*.txt")
 				.with_child_pattern(".src.txt"),
+			SyncRule::new(Middleware::RichStringValue)
+				.with_pattern("*.md")
+				.with_child_pattern(".src.md"),
 			SyncRule::new(Middleware::LocalizationTable)
 				.with_pattern("*.csv")
 				.with_child_pattern(".src.csv"),
