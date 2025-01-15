@@ -18,5 +18,5 @@ pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 
 #[inline]
 pub fn markdown_to_rich_text(text: &str) -> String {
-	markdown::Parser::new().parse(text)
+	markdown::parse(text)
 }
