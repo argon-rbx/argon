@@ -76,8 +76,10 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
-	/// Automatically rename corrupted or duplicate instances when syncing back
+	/// Automatically rename corrupted instances when syncing back
 	pub rename_instances: bool,
+	/// Keep duplicate instances (by adding UUID suffixes) when syncing back
+	pub keep_duplicates: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Number of changes allowed before prompting user for confirmation
@@ -126,6 +128,7 @@ impl Default for Config {
 			ts_mode: false,
 
 			rename_instances: true,
+			keep_duplicates: false,
 			move_to_bin: false,
 			changes_threshold: 5,
 			max_unsynced_changes: 10,

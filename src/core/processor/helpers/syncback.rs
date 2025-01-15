@@ -143,7 +143,7 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 		return true;
 	}
 
-	if Config::new().rename_instances {
+	if Config::new().keep_duplicates {
 		let suffix = path.get_name().strip_prefix(name.as_str()).unwrap_or_default();
 
 		let renamed = format!("{}_{}", name, Uuid::new_v4());

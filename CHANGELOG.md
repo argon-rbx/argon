@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Support for `.md` (Markdown) files that get transformed into `StringValue` containing rich text
+- Separate `keep_duplicates` setting which was previously controlled by `rename_instances` setting
 
 ### Fixed
 
