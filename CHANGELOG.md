@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix meta changes not being updated in the tree (sourcemap regeneration issue for new `.src` and `init` files)
+
 ## [2.0.21] - 2024-11-22
 
 ### Added

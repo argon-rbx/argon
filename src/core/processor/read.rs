@@ -61,6 +61,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 	let mut updated_snapshot = UpdatedSnapshot::new(id);
 
 	updated_snapshot.meta = if snapshot.meta != *tree.get_meta(id).expect("Instance meta not found") {
+		tree.update_meta(id, snapshot.meta.clone());
 		Some(snapshot.meta)
 	} else {
 		None
@@ -146,7 +147,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 }
 
 fn insert_children(snapshot: &mut Snapshot, parent: Ref, tree: &mut Tree) {
-	let id = tree.insert_instance_non_recursive(snapshot.clone(), parent);
+	let id = tree.insert_instance(snapshot.clone(), parent);
 
 	snapshot.set_id(id);
 
