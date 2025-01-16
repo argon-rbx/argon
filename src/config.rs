@@ -124,7 +124,7 @@ impl Default for Config {
 			install_plugin: true,
 			update_templates: true,
 
-			rojo_mode: false,
+			rojo_mode: true,
 			ts_mode: false,
 
 			rename_instances: true,

@@ -40,7 +40,7 @@ fn format_list(elements: &[ListItem], ordered: bool) -> String {
 
 	for (index, item) in elements.iter().enumerate() {
 		let prefix = if ordered {
-			format!("{}. ", index + 1)
+			format!("{}.", index + 1)
 		} else {
 			String::from(LIST_ELEMENT_PREFIX)
 		};
