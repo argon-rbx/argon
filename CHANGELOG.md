@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.22] - 2025-01-26
+
 ### Added
 
 - Support for `.md` (Markdown) files that get transformed into `StringValue` containing rich text
@@ -353,7 +355,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.21...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.22...HEAD
+[2.0.22]: https://github.com/argon-rbx/argon/compare/2.0.21...2.0.22
 [2.0.21]: https://github.com/argon-rbx/argon/compare/2.0.20...2.0.21
 [2.0.20]: https://github.com/argon-rbx/argon/compare/2.0.19...2.0.20
 [2.0.19]: https://github.com/argon-rbx/argon/compare/2.0.18...2.0.19
