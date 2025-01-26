@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Fix meta changes not being updated in the tree (sourcemap regeneration issue for new `.src` and `init` files)
+- Argon no longer crashes when removing files that are described by multiple sync rules
 
 ### Changed
 

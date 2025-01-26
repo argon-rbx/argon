@@ -28,7 +28,7 @@ pub fn is_managed() -> bool {
 		Err(_) => return false,
 	};
 
-	path.contains(&["tool-storage"]) || (path.contains(&["bin"]) && !path.contains(&[".argon", "bin"]))
+	!path.contains(&[".argon", "bin"]) && (path.contains(&["bin"]) || path.contains(&["tool-storage"]))
 }
 
 pub fn verify(is_managed: bool, with_plugin: bool) -> Result<()> {

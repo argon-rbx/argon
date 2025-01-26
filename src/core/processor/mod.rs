@@ -120,7 +120,9 @@ impl Handler {
 			let mut changes = Changes::new();
 
 			for id in ids {
-				changes.extend(read::process_changes(id, &mut tree, &self.vfs));
+				if let Some(processed) = read::process_changes(id, &mut tree, &self.vfs) {
+					changes.extend(processed);
+				}
 			}
 
 			changes

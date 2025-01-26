@@ -13,12 +13,12 @@ use crate::{
 	vfs::Vfs,
 };
 
-pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
+pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
 	trace!("Processing changes for instance: {:?}", id);
 
 	let mut changes = Changes::new();
 
-	let meta = tree.get_meta(id).unwrap();
+	let meta = tree.get_meta(id)?;
 	let source = meta.source.get();
 
 	let snapshot = match source {
@@ -27,7 +27,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 				Ok(snapshot) => Some(snapshot),
 				Err(err) => {
 					error!("Failed to process changes: {}, source: {:?}", err, source);
-					return changes;
+					return Some(changes);
 				}
 			}
 		}
@@ -35,7 +35,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 			Ok(snapshot) => snapshot,
 			Err(err) => {
 				error!("Failed to process changes: {}, source: {:?}", err, source);
-				return changes;
+				return Some(changes);
 			}
 		},
 		SourceKind::None => panic!(
@@ -53,7 +53,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		changes.remove(id);
 	}
 
-	changes
+	Some(changes)
 }
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes, tree: &mut Tree) {
