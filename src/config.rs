@@ -97,6 +97,7 @@ pub struct Config {
 	pub share_stats: bool,
 
 	#[serde(skip)]
+	/// Internal
 	kind: ConfigKind,
 }
 
