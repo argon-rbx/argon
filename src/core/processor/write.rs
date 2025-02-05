@@ -64,7 +64,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	fn locate_instance_data(is_dir: bool, path: &Path, snapshot: &Snapshot, parent_meta: &Meta) -> Result<PathBuf> {
 		parent_meta
 			.context
-			.sync_rules_of_type(&Middleware::InstanceData)
+			.sync_rules_of_type(&Middleware::InstanceData, true)
 			.iter()
 			.find_map(|rule| rule.locate(path, &snapshot.name, is_dir))
 			.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))
@@ -91,7 +91,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		) {
 			let mut file_path = parent_meta
 				.context
-				.sync_rules_of_type(&middleware)
+				.sync_rules_of_type(&middleware, true)
 				.iter()
 				.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
@@ -202,7 +202,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			let data_paths = if let Some(data) = parent_meta.source.get_data() {
 				let new_path = parent_meta
 					.context
-					.sync_rules_of_type(&Middleware::InstanceData)
+					.sync_rules_of_type(&Middleware::InstanceData, true)
 					.iter()
 					.find_map(|rule| rule.locate(&folder_path, &name, true))
 					.with_context(|| format!("Failed to locate data path for parent: {}", folder_path.display()))?;
@@ -368,7 +368,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			Some(data.path().to_owned())
 		} else {
 			meta.context
-				.sync_rules_of_type(&Middleware::InstanceData)
+				.sync_rules_of_type(&Middleware::InstanceData, true)
 				.iter()
 				.find_map(|rule| rule.locate(path, name, vfs.is_dir(path)))
 		};
@@ -406,7 +406,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		) {
 			let new_path = meta
 				.context
-				.sync_rules_of_type(&middleware)
+				.sync_rules_of_type(&middleware, true)
 				.iter()
 				.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
 
@@ -685,7 +685,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 					if let Some(data) = meta.source.get_data() {
 						let data_path = meta
 							.context
-							.sync_rules_of_type(&Middleware::InstanceData)
+							.sync_rules_of_type(&Middleware::InstanceData, true)
 							.iter()
 							.find_map(|rule| rule.locate(folder_path, name, false));
 

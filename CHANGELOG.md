@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Legacy `.src` and `.data` files are working again when `rojo_mode` setting is enabled
+
 ## [2.0.22] - 2025-01-26
 
 ### Added

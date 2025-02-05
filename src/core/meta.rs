@@ -426,20 +426,20 @@ impl Context {
 		}
 	}
 
-	pub fn sync_rules_of_type(&self, middleware: &Middleware) -> Vec<&SyncRule> {
+	pub fn sync_rules_of_type(&self, middleware: &Middleware, syncback: bool) -> Vec<&SyncRule> {
 		let config = Config::new();
 
 		self.sync_rules()
 			.iter()
 			.filter(|rule| {
 				if let Some(child_pattern) = rule.child_pattern.as_ref() {
-					if child_pattern.as_str().starts_with(".src") && config.rojo_mode {
+					if child_pattern.as_str().starts_with(".src") && config.rojo_mode && syncback {
 						return false;
 					}
 				}
 
 				if let Some(pattern) = rule.pattern.as_ref().or(rule.child_pattern.as_ref()) {
-					if pattern.as_str().ends_with(".data.json") && config.rojo_mode {
+					if pattern.as_str().ends_with(".data.json") && config.rojo_mode && syncback {
 						return false;
 					}
 

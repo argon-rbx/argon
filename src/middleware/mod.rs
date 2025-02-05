@@ -269,7 +269,7 @@ fn get_instance_data(
 	context: &Context,
 	vfs: &Vfs,
 ) -> Result<Option<DataSnapshot>> {
-	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData) {
+	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData, false) {
 		if let Some(data_path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
 				let data = data::read_data(&data_path, class, vfs).with_desc(|| {
