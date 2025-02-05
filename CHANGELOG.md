@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.23] - 2025-02-05
+
 ### Fixed
 
 - Legacy `.src` and `.data` files are working again when `rojo_mode` setting is enabled
@@ -359,7 +361,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.22...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.23...HEAD
+[2.0.23]: https://github.com/argon-rbx/argon/compare/2.0.22...2.0.23
 [2.0.22]: https://github.com/argon-rbx/argon/compare/2.0.21...2.0.22
 [2.0.21]: https://github.com/argon-rbx/argon/compare/2.0.20...2.0.21
 [2.0.20]: https://github.com/argon-rbx/argon/compare/2.0.19...2.0.20
