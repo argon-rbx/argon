@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use log::trace;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, Ustr};
 use serde::Serialize;
 use snapshot::AddedSnapshot;
 use std::{
@@ -211,7 +211,7 @@ impl Core {
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),
-				class_name: instance.class.clone(),
+				class_name: instance.class,
 				file_paths,
 				children,
 			})
@@ -253,7 +253,7 @@ impl Core {
 #[serde(rename_all = "camelCase")]
 struct SourcemapNode {
 	name: String,
-	class_name: String,
+	class_name: Ustr,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
 	file_paths: Vec<PathBuf>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]

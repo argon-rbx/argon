@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for `Enum` attributes and `Content` properties
+- Improved performance of `.rbxm` parsing
+
+### Changed
+
+- Updated `rbx-dom` library to the latest major version
+
 ## [2.0.23] - 2025-02-05
 
 ### Fixed

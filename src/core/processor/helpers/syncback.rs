@@ -1,8 +1,6 @@
 use colored::Colorize;
-use std::{
-	collections::HashMap,
-	path::{Path, PathBuf},
-};
+use rbx_dom_weak::{HashMapExt, Ustr, UstrMap};
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
@@ -173,8 +171,8 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 
 pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
 	// Temporary solution for empty Luau maps being serialized as arrays
-	if properties.contains_key("ArgonEmpty") {
-		HashMap::new()
+	if properties.contains_key(&Ustr::from("ArgonEmpty")) {
+		UstrMap::new()
 	} else {
 		properties
 			.into_iter()
@@ -183,12 +181,12 @@ pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> P
 	}
 }
 
-pub fn serialize_properties(class: &str, properties: Properties) -> HashMap<String, UnresolvedValue> {
+pub fn serialize_properties(class: &str, properties: Properties) -> UstrMap<UnresolvedValue> {
 	properties
 		.iter()
 		.map(|(property, variant)| {
 			(
-				property.to_owned(),
+				*property,
 				UnresolvedValue::from_variant(variant.clone(), class, property),
 			)
 		})

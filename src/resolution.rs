@@ -3,9 +3,9 @@
 use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
 	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-	Content, CustomPhysicalProperties, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange, NumberSequence,
-	NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2, Variant,
-	VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
+	Content, ContentId, ContentType, CustomPhysicalProperties, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange,
+	NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2,
+	Variant, VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
@@ -105,9 +105,14 @@ impl UnresolvedValue {
 			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
 			Variant::Color3uint8(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
 
-			Variant::ColorSequence(sequence) => AmbiguousValue::ColorSequence(sequence.keypoints.clone()),
+			Variant::ColorSequence(sequence) => AmbiguousValue::ColorSequence(sequence.keypoints),
 
-			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+			Variant::Content(content) => AmbiguousValue::String(match content.value() {
+				ContentType::Object(referent) => referent.to_string(),
+				ContentType::Uri(uri) => uri.to_string(),
+				_ => String::new(),
+			}),
+			Variant::ContentId(content) => AmbiguousValue::String(content.into_string()),
 
 			Variant::Enum(rbx_enum) => {
 				if let Some(property) = find_descriptor(class, property) {
@@ -169,7 +174,7 @@ impl UnresolvedValue {
 
 			Variant::NumberRange(range) => AmbiguousValue::Array2([range.min as f64, range.max as f64]),
 
-			Variant::NumberSequence(sequence) => AmbiguousValue::NumberSequence(sequence.keypoints.clone()),
+			Variant::NumberSequence(sequence) => AmbiguousValue::NumberSequence(sequence.keypoints),
 
 			Variant::OptionalCFrame(cf) => {
 				if let Some(cf) = cf {
@@ -335,7 +340,7 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Axes, AmbiguousValue::StringArray(axes)) => {
-					let mut bits: u8 = 0;
+					let mut bits = 0;
 
 					for axis in axes {
 						match axis.as_ref() {
@@ -389,9 +394,10 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
+				(VariantType::ContentId, AmbiguousValue::String(content)) => Ok(ContentId::from(content).into()),
 
 				(VariantType::Faces, AmbiguousValue::StringArray(faces)) => {
-					let mut bits: u8 = 0;
+					let mut bits = 0;
 
 					for face in faces {
 						match face.as_ref() {

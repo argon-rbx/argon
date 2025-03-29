@@ -1,5 +1,4 @@
-use rbx_dom_weak::{types::Ref, Instance, WeakDom};
-use std::collections::HashMap;
+use rbx_dom_weak::{types::Ref, AHashMap, Instance, WeakDom};
 
 use crate::core::{meta::Meta, snapshot::Snapshot};
 
@@ -7,7 +6,7 @@ use crate::core::{meta::Meta, snapshot::Snapshot};
 pub fn snapshot_from_dom(dom: WeakDom, id: Ref) -> Snapshot {
 	let (_, mut raw_dom) = dom.into_raw();
 
-	fn walk(id: Ref, raw_dom: &mut HashMap<Ref, Instance>) -> Snapshot {
+	fn walk(id: Ref, raw_dom: &mut AHashMap<Ref, Instance>) -> Snapshot {
 		let instance = raw_dom
 			.remove(&id)
 			.expect("Provided ID does not exist in the current DOM");

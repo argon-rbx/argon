@@ -1,7 +1,7 @@
 use anyhow::Result;
 use colored::Colorize;
 use json_formatter::JsonFormatter;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use serde_json::Serializer;
 use std::{
@@ -40,14 +40,14 @@ impl ProjectPath {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProjectNode {
 	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-	pub class_name: Option<String>,
+	pub class_name: Option<Ustr>,
 	#[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
 	pub path: Option<ProjectPath>,
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
 	#[serde(rename = "$properties", default, skip_serializing_if = "HashMap::is_empty")]
-	pub properties: HashMap<String, UnresolvedValue>,
+	pub properties: UstrMap<UnresolvedValue>,
 	#[serde(rename = "$attributes", skip_serializing_if = "Option::is_none")]
 	pub attributes: Option<UnresolvedValue>,
 	#[serde(rename = "$tags", default, skip_serializing_if = "Vec::is_empty")]

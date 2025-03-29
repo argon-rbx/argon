@@ -1,8 +1,8 @@
 use anyhow::Result;
-use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::{types::Variant, HashMapExt, Ustr, UstrMap};
 use rmp_serde::Deserializer;
 use rmpv::Value;
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use crate::{core::snapshot::Snapshot, vfs::Vfs};
 
@@ -19,8 +19,8 @@ pub fn read_msgpack(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	let lua = format!("return {}", msgpack_to_lua(&msgpack));
 
-	let mut properties = HashMap::new();
-	properties.insert(String::from("Source"), Variant::String(lua));
+	let mut properties = UstrMap::new();
+	properties.insert(Ustr::from("Source"), Variant::String(lua));
 
 	Ok(Snapshot::new().with_class("ModuleScript").with_properties(properties))
 }

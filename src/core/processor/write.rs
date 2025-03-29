@@ -1,11 +1,8 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use log::{error, trace, warn};
 use path_clean::PathClean;
-use rbx_dom_weak::{types::Ref, Instance};
-use std::{
-	collections::HashMap,
-	path::{Path, PathBuf},
-};
+use rbx_dom_weak::{types::Ref, HashMapExt, Instance, Ustr, UstrMap};
+use std::path::{Path, PathBuf};
 
 use super::helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path};
 use crate::{
@@ -265,7 +262,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		tree: &mut Tree,
 	) {
 		let mut node = ProjectNode {
-			class_name: Some(snapshot.class.clone()),
+			class_name: Some(snapshot.class),
 			properties: serialize_properties(&snapshot.class, snapshot.properties.clone()),
 			..ProjectNode::default()
 		};
@@ -557,7 +554,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 						.find_node_by_path(&node_path)
 						.context(format!("Failed to find project node with path {:?}", node_path))?;
 
-					node.properties = HashMap::new();
+					node.properties = UstrMap::new();
 					node.attributes = None;
 					node.tags = vec![];
 					node.keep_unknowns = None;
@@ -566,10 +563,10 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 						.find_node_by_path(&node_path)
 						.context(format!("Failed to find project node with path {:?}", node_path))?;
 
-					let class = node.class_name.as_ref().unwrap_or(&name);
+					let class = node.class_name.unwrap_or(Ustr::from(&name));
 					let properties = validate_properties(properties, meta.context.syncback_filter());
 
-					node.properties = serialize_properties(class, properties.clone());
+					node.properties = serialize_properties(&class, properties.clone());
 					node.tags = vec![];
 					node.keep_unknowns = None;
 

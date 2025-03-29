@@ -2,8 +2,8 @@ use anyhow::{bail, Result};
 use colored::Colorize;
 use log::error;
 use path_clean::PathClean;
-use rbx_dom_weak::types::Tags;
-use std::{collections::HashMap, path::Path};
+use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
+use std::path::Path;
 
 use super::new_snapshot;
 use crate::{
@@ -58,12 +58,12 @@ pub fn new_snapshot_node(
 	};
 
 	let properties = {
-		let mut properties = HashMap::new();
+		let mut properties = UstrMap::new();
 
 		for (property, value) in &node.properties {
 			match value.clone().resolve(&class, property) {
 				Ok(value) => {
-					properties.insert(property.to_owned(), value);
+					properties.insert(*property, value);
 				}
 				Err(err) => {
 					error!(
@@ -79,7 +79,7 @@ pub fn new_snapshot_node(
 		if let Some(attributes) = &node.attributes {
 			match attributes.clone().resolve(&class, "Attributes") {
 				Ok(value) => {
-					properties.insert(String::from("Attributes"), value);
+					properties.insert(Ustr::from("Attributes"), value);
 				}
 				Err(err) => {
 					error!(
@@ -93,7 +93,7 @@ pub fn new_snapshot_node(
 		}
 
 		if !node.tags.is_empty() {
-			properties.insert(String::from("Tags"), Tags::from(node.tags.clone()).into());
+			properties.insert(Ustr::from("Tags"), Tags::from(node.tags.clone()).into());
 		}
 
 		properties

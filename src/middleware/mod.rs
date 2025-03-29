@@ -1,7 +1,10 @@
 use anyhow::Result;
 use colored::Colorize;
 use log::trace;
-use rbx_dom_weak::types::{Enum, Variant};
+use rbx_dom_weak::{
+	types::{Enum, Variant},
+	Ustr,
+};
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::{self, Display, Formatter},
@@ -122,7 +125,7 @@ impl Middleware {
 		match class {
 			"Script" => {
 				if let Some(properties) = properties {
-					if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
+					if let Some(Variant::Enum(run_context)) = properties.remove(&Ustr::from("RunContext")) {
 						let run_context = run_context.to_u32();
 
 						return Some(match run_context {
@@ -130,8 +133,7 @@ impl Middleware {
 							2 => Middleware::ClientScript,
 							_ => {
 								// This is currently unreachable so we can handle it inefficiently just for safety
-								properties
-									.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(run_context)));
+								properties.insert(Ustr::from("RunContext"), Variant::Enum(Enum::from_u32(run_context)));
 
 								Middleware::ServerScript
 							}

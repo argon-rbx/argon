@@ -3,7 +3,7 @@ mod unresolved_value {
 
 	use rbx_dom_weak::types::{
 		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-		Content, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
+		Content, ContentId, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
 		NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3int16, Tags, UDim, UDim2,
 		Variant, Vector2, Vector3, Vector3int16,
 	};
@@ -119,8 +119,16 @@ mod unresolved_value {
 	#[test]
 	fn content() {
 		assert_eq!(
+			resolve("Decal", "TextureContent", r#""rbxasset://some-uri.png""#),
+			Content::from("rbxasset://some-uri.png").into(),
+		);
+	}
+
+	#[test]
+	fn content_id() {
+		assert_eq!(
 			resolve("Decal", "Texture", r#""rbxassetid://1234567890""#),
-			Content::from("rbxassetid://1234567890").into(),
+			ContentId::from("rbxassetid://1234567890").into(),
 		);
 	}
 
@@ -277,7 +285,7 @@ mod unresolved_value {
 	}
 
 	#[test]
-	fn refs() {
+	fn referent() {
 		// TODO: Implement Ref
 		// assert_eq!(resolve("Model", "PrimaryPart", ""), Ref::none().into());
 	}
@@ -302,7 +310,7 @@ mod unresolved_value {
 
 	#[test]
 	fn shared_string() {
-		// Currently there is not valid SharedString property to test
+		// Currently there is no valid SharedString property to test
 
 		// assert_eq!(
 		// 	resolve("Not", "Available", r#""Hello, world!""#),
@@ -383,9 +391,9 @@ mod resolved_value {
 
 	use rbx_dom_weak::types::{
 		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-		CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange, NumberSequence,
-		NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, SharedString, Tags, UDim, UDim2,
-		Variant, Vector2, Vector2int16, Vector3, Vector3int16,
+		Content, ContentId, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
+		NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, SharedString,
+		Tags, UDim, UDim2, Variant, Vector2, Vector2int16, Vector3, Vector3int16,
 	};
 	use serde_json::{json, Value};
 
@@ -527,7 +535,15 @@ mod resolved_value {
 	#[test]
 	fn content() {
 		assert_eq(
-			from_variant("rbxassetid://1234567890"),
+			from_variant(Content::from("rbxasset://some-uri.png")),
+			json!("rbxasset://some-uri.png"),
+		);
+	}
+
+	#[test]
+	fn content_id() {
+		assert_eq(
+			from_variant(ContentId::from("rbxassetid://1234567890")),
 			json!("rbxassetid://1234567890"),
 		);
 	}
@@ -663,7 +679,7 @@ mod resolved_value {
 	}
 
 	#[test]
-	fn refs() {
+	fn referent() {
 		// TODO: Implement Ref
 		// assert_eq(from_variant(Ref::none()), json!(null));
 	}

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use log::error;
-use rbx_dom_weak::types::Tags;
+use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
 use serde::Deserialize;
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use super::helpers;
 use crate::{core::snapshot::Snapshot, resolution::UnresolvedValue, vfs::Vfs};
@@ -13,10 +13,10 @@ struct JsonModel {
 	#[serde(alias = "Name")]
 	name: Option<String>,
 	#[serde(alias = "ClassName")]
-	class_name: Option<String>,
+	class_name: Option<Ustr>,
 
 	#[serde(alias = "Properties")]
-	properties: Option<HashMap<String, UnresolvedValue>>,
+	properties: Option<UstrMap<UnresolvedValue>>,
 	#[serde(alias = "Attributes")]
 	attributes: Option<UnresolvedValue>,
 	#[serde(alias = "Tags")]
@@ -42,10 +42,10 @@ pub fn read_json_model(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 	let mut snapshot = Snapshot::new();
-	let mut properties = HashMap::new();
+	let mut properties = UstrMap::new();
 
 	// Apply class
-	let class = model.class_name.unwrap_or(snapshot.class.clone());
+	let class = model.class_name.unwrap_or(snapshot.class);
 	snapshot.set_class(&class);
 
 	// Apply name
@@ -71,7 +71,7 @@ fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 	if let Some(attributes) = model.attributes {
 		match attributes.resolve(&class, "Attributes") {
 			Ok(value) => {
-				properties.insert(String::from("Attributes"), value);
+				properties.insert(Ustr::from("Attributes"), value);
 			}
 			Err(err) => {
 				error!("Failed to parse attributes: {} at {}", err, path.display());
@@ -81,7 +81,7 @@ fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 
 	// Resolve tags
 	if let Some(tags) = model.tags {
-		properties.insert(String::from("Tags"), Tags::from(tags).into());
+		properties.insert(Ustr::from("Tags"), Tags::from(tags).into());
 	}
 
 	if class == "MeshPart" {
