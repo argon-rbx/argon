@@ -4,10 +4,10 @@ use path_clean::PathClean;
 use rbx_dom_weak::{types::Ref, HashMapExt, Instance, Ustr, UstrMap};
 use std::path::{Path, PathBuf};
 
-use super::helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path};
 use crate::{
 	config::Config,
 	core::{
+		helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path},
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,

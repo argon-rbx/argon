@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::{debug, error, trace};
-use rbx_dom_weak::{types::Variant, InstanceBuilder, WeakDom};
+use rbx_dom_weak::{types::Variant, InstanceBuilder, Ustr, WeakDom};
 use roblox_install::RobloxStudio;
 use std::{
 	collections::HashMap,
@@ -14,14 +14,21 @@ use std::{
 
 use crate::{ext::PathExt, util, Properties};
 
+const CUSTOM_MESH_PART_PROPERTIES: [&str; 2] = ["MeshContent", "InitialSize"];
+
 static INDEX: RwLock<u32> = RwLock::new(0);
 
 pub fn save_mesh(properties: &Properties) -> Option<String> {
 	let mut mesh_properties: HashMap<&str, Variant> = HashMap::new();
-	mesh_properties.insert("MeshId", properties.get("MeshId")?.clone());
 
-	if let Some(initial_size) = properties.get("InitialSize") {
-		mesh_properties.insert("InitialSize", initial_size.clone());
+	for property in CUSTOM_MESH_PART_PROPERTIES {
+		if let Some(value) = properties.get(&Ustr::from(property)) {
+			mesh_properties.insert(property, value.clone());
+		}
+	}
+
+	if mesh_properties.is_empty() {
+		return None;
 	}
 
 	let dom = WeakDom::new(InstanceBuilder::new("MeshPart").with_properties(mesh_properties));

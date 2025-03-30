@@ -19,8 +19,6 @@ use crate::{
 	vfs::{Vfs, VfsEvent},
 };
 
-mod helpers;
-
 pub mod read;
 pub mod write;
 

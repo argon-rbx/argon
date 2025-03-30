@@ -19,6 +19,7 @@ use self::{
 use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, stats, util, vfs::Vfs};
 
 pub mod changes;
+pub mod helpers;
 pub mod meta;
 pub mod processor;
 pub mod queue;

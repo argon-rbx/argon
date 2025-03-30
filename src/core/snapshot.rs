@@ -5,7 +5,7 @@ use rbx_dom_weak::{
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Debug, Formatter};
 
-use super::meta::Meta;
+use super::{helpers::apply_migrations, meta::Meta};
 use crate::{middleware::data::DataSnapshot, Properties};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -89,6 +89,7 @@ impl Snapshot {
 
 	pub fn set_properties(&mut self, properties: Properties) {
 		self.properties = properties;
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn set_children(&mut self, children: Vec<Snapshot>) {
@@ -120,6 +121,7 @@ impl Snapshot {
 
 	pub fn add_property(&mut self, name: &str, value: Variant) {
 		self.properties.insert(name.into(), value);
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn add_child(&mut self, child: Snapshot) {
@@ -130,6 +132,7 @@ impl Snapshot {
 
 	pub fn extend_properties(&mut self, properties: Properties) {
 		self.properties.extend(properties);
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
