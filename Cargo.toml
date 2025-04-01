@@ -26,7 +26,7 @@ rbx_xml = "1.0.0"
 rbx_binary = "1.0.0"
 rbx_dom_weak = "3.0.0"
 rbx_reflection = "5.0.0"
-rbx_reflection_database = "1.0.0"
+rbx_reflection_database = "1.0.1"
 
 config-derive = { version = "*", path = "crates/config-derive" }
 json-formatter = { version = "*", path = "crates/json-formatter" }
