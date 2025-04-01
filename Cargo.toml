@@ -92,7 +92,7 @@ csv = "1.3.1"
 keybd_event = "0.1.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winsafe = { version = "0.0.22", features = ["user"] }
+winsafe = { version = "0.0.23", features = ["user"] }
 
 [build-dependencies]
 anyhow = "1.0.95"
