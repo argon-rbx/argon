@@ -56,7 +56,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	let current_version = cargo_crate_version!();
 
 	let update = Update::configure()
-		.repo_owner("argon-rbx")
+		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
 		.show_download_progress(true)
@@ -104,7 +104,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 	let plugin_path = get_plugin_path()?;
 
 	let update = Update::configure()
-		.repo_owner("argon-rbx")
+		.repo_owner("LupaHQ")
 		.repo_name("argon-roblox")
 		.bin_name("Argon.rbxm")
 		.target("")

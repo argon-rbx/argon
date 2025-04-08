@@ -2,7 +2,7 @@
 name = "argon-rbx"
 authors = ["Dervex"]
 description = "Full featured tool for Roblox development"
-repository = "https://github.com/argon-rbx/argon"
+repository = "https://github.com/LupaHQ/argon"
 documentation = "https://argon.wiki/docs"
 homepage = "https://argon.wiki"
 license = "Apache-2.0"
