@@ -16,6 +16,7 @@ use crate::{
 mod details;
 mod exec;
 mod home;
+mod log;
 mod open;
 mod read;
 mod snapshot;
@@ -31,6 +32,7 @@ pub enum Message {
 	SyncDetails(SyncDetails),
 	ExecuteCode(ExecuteCode),
 	Disconnect(Disconnect),
+	Log(LogMessage),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -50,6 +52,13 @@ pub struct ExecuteCode {
 #[derive(Debug, Clone, Serialize)]
 pub struct Disconnect {
 	pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogMessage {
+	pub timestamp: i64,
+	pub message: String,
+	pub level: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -94,6 +103,7 @@ impl Server {
 				.service(open::main)
 				.service(stop::main)
 				.service(home::main)
+				.service(log::main)
 				.default_service(web::to(Self::default_redirect))
 		})
 		.backlog(0)

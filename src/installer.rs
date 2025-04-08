@@ -75,7 +75,7 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 	let style = util::get_progress_style();
 
 	let update = Update::configure()
-		.repo_owner("argon-rbx")
+		.repo_owner("LupaHQ")
 		.repo_name("argon-roblox")
 		.bin_name("Argon.rbxm")
 		.target("")
