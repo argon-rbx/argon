@@ -19,7 +19,7 @@ fn main() -> Result<()> {
 	}
 
 	builder
-		.repo_owner("argon-rbx")
+		.repo_owner("LupaHQ")
 		.repo_name("argon-roblox")
 		.bin_name("Argon.rbxm")
 		.bin_install_path(out_path)
