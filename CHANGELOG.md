@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.1] - 2025-04-08
+
 ### Added
 
 - Support for `Enum` attributes and `Content` properties
@@ -370,7 +372,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.23...HEAD
+[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.1...HEAD
+[0.0.1]: https://github.com/LupaHQ/argon/compare/2.0.23...0.0.1
 [2.0.23]: https://github.com/argon-rbx/argon/compare/2.0.22...2.0.23
 [2.0.22]: https://github.com/argon-rbx/argon/compare/2.0.21...2.0.22
 [2.0.21]: https://github.com/argon-rbx/argon/compare/2.0.20...2.0.21
