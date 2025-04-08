@@ -2,8 +2,7 @@ use actix_msgpack::MsgPack;
 use actix_web::{post, web::Data, HttpResponse, Responder};
 use log::{trace, warn, error, info};
 use serde::Deserialize;
-use std::{fs::{OpenOptions, self}, io::Write, path::PathBuf, sync::Arc};
-use serde_json;
+use std::{fs::OpenOptions, io::Write, path::PathBuf, sync::Arc};
 
 use crate::core::Core;
 
