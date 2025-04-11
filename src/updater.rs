@@ -1,11 +1,9 @@
 use anyhow::{anyhow, Result};
-use chrono::Utc;
-use clap::ValueEnum;
 use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::{fs, io::Read, path::Path, sync::Once, time::SystemTime};
+use std::{fs, sync::Once, time::SystemTime};
 
 use crate::{
 	argon_error, argon_info,
@@ -181,7 +179,6 @@ fn update_templates(status: &mut UpdateStatus, prompt: bool, force: bool) -> Res
 }
 
 fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
-	let style = util::get_progress_style();
 	let current_version = &status.vscode_version;
 
 	// Get the latest release from GitHub

@@ -30,7 +30,7 @@ pub enum UpdateMode {
 }
 
 impl Update {
-	pub fn run(&self) -> Result<()> {
+	pub fn main(&self) -> Result<()> {
 		match self.mode {
 			UpdateMode::All => {
 				updater::manual_update(true, true, true, true, self.force)?;

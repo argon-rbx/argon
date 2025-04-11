@@ -120,18 +120,18 @@ impl Cli {
 
 	pub fn main(self) -> Result<()> {
 		match self.command {
-			Commands::Init(command) => command.run(),
-			Commands::Serve(command) => command.run(),
-			Commands::Build(command) => command.run(),
-			Commands::Sourcemap(command) => command.run(),
-			Commands::Stop(command) => command.run(),
-			Commands::Studio(command) => command.run(),
-			Commands::Debug(command) => command.run(),
-			Commands::Exec(command) => command.run(),
-			Commands::Update(command) => command.run(),
-			Commands::Plugin(command) => command.run(),
-			Commands::Config(command) => command.run(),
-			Commands::Doc(command) => command.run(),
+			Commands::Init(command) => command.main(),
+			Commands::Serve(command) => command.main(),
+			Commands::Build(command) => command.main(),
+			Commands::Sourcemap(command) => command.main(),
+			Commands::Stop(command) => command.main(),
+			Commands::Studio(command) => command.main(),
+			Commands::Debug(command) => command.main(),
+			Commands::Exec(command) => command.main(),
+			Commands::Update(command) => command.main(),
+			Commands::Plugin(command) => command.main(),
+			Commands::Config(command) => command.main(),
+			Commands::Doc(command) => command.main(),
 		}
 	}
 }
