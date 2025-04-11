@@ -1,9 +1,11 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use chrono::Utc;
+use clap::ValueEnum;
 use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::{fs, sync::Once, time::SystemTime};
+use std::{fs, io::Read, path::Path, sync::Once, time::SystemTime};
 
 use crate::{
 	argon_error, argon_info,
@@ -37,7 +39,7 @@ pub fn get_status() -> Result<UpdateStatus> {
 		last_checked: SystemTime::UNIX_EPOCH,
 		plugin_version: get_plugin_version(),
 		templates_version: TEMPLATES_VERSION,
-		vscode_version: cargo_crate_version!(),
+		vscode_version: cargo_crate_version!().to_string(),
 	};
 
 	fs::write(path, toml::to_string(&status)?)?;
