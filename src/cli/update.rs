@@ -1,7 +1,7 @@
-use anyhow::Result;
 use clap::{Parser, ValueEnum};
 
-use crate::{argon_error, argon_info, config::Config, updater};
+use crate::{updater};
+use anyhow::Result;
 
 /// Forcefully update Argon components if available
 #[derive(Debug, Parser)]
