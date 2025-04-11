@@ -20,6 +20,7 @@ pub struct UpdateStatus {
 	pub last_checked: SystemTime,
 	pub plugin_version: String,
 	pub templates_version: u8,
+	pub vscode_version: String,
 }
 
 pub fn get_status() -> Result<UpdateStatus> {
@@ -36,6 +37,7 @@ pub fn get_status() -> Result<UpdateStatus> {
 		last_checked: SystemTime::UNIX_EPOCH,
 		plugin_version: get_plugin_version(),
 		templates_version: TEMPLATES_VERSION,
+		vscode_version: cargo_crate_version!(),
 	};
 
 	fs::write(path, toml::to_string(&status)?)?;
@@ -176,6 +178,94 @@ fn update_templates(status: &mut UpdateStatus, prompt: bool, force: bool) -> Res
 	Ok(false)
 }
 
+fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
+	let style = util::get_progress_style();
+	let current_version = &status.vscode_version;
+
+	// Get the latest release from GitHub
+	let release = reqwest::blocking::get(
+		"https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest",
+	)?
+	.json::<serde_json::Value>()?;
+
+	let latest_version = release["tag_name"].as_str().ok_or_else(|| anyhow!("Failed to get tag name"))?;
+	
+	// Remove leading 'v' if present
+	let latest_version = latest_version.trim_start_matches('v');
+
+	if bump_is_greater(current_version, latest_version)? || force {
+		if !prompt
+			|| logger::prompt(
+				&format!(
+					"New version of Argon VS Code extension: {} is available! Would you like to update?",
+					latest_version.bold()
+				),
+				true,
+			) {
+			if !prompt {
+				argon_info!(
+					"New version of Argon VS Code extension: {} is available! Updating..",
+					latest_version.bold()
+				);
+			}
+
+			// Find the VSIX asset
+			let assets = release["assets"].as_array().ok_or_else(|| anyhow!("Failed to get assets"))?;
+			let vsix_asset = assets.iter().find(|asset| {
+				asset["name"].as_str().map_or(false, |name| name.ends_with(".vsix"))
+			}).ok_or_else(|| anyhow!("Failed to find VSIX asset"))?;
+
+			let download_url = vsix_asset["browser_download_url"].as_str().ok_or_else(|| anyhow!("Failed to get download URL"))?;
+			
+			// Download the VSIX file to a temporary location
+			let temp_dir = std::env::temp_dir();
+			let vsix_path = temp_dir.join(format!("argon-{}.vsix", latest_version));
+			
+			argon_info!("Downloading VS Code extension...");
+			
+			let mut response = reqwest::blocking::get(download_url)?;
+			let mut file = std::fs::File::create(&vsix_path)?;
+			std::io::copy(&mut response, &mut file)?;
+			
+			// Install the extension using the VS Code CLI
+			argon_info!("Installing VS Code extension...");
+			
+			let output = std::process::Command::new("code")
+				.arg("--install-extension")
+				.arg(&vsix_path)
+				.arg("--force")
+				.output();
+				
+			match output {
+				Ok(output) if output.status.success() => {
+					// Clean up the temporary file
+					let _ = std::fs::remove_file(vsix_path);
+					
+					argon_info!(
+						"VS Code extension updated! Please reload VS Code to apply changes. Visit {} to read the changelog",
+						"https://argon.wiki/changelog/argon-vscode".bold()
+					);
+					status.vscode_version = latest_version.to_string();
+					return Ok(true);
+				}
+				Ok(output) => {
+					let stderr = String::from_utf8_lossy(&output.stderr);
+					argon_error!("Failed to install VS Code extension: {}", stderr);
+				}
+				Err(err) => {
+					argon_error!("Failed to run VS Code CLI: {}", err);
+				}
+			}
+		} else {
+			trace!("Argon VS Code extension is out of date!");
+		}
+	} else {
+		trace!("Argon VS Code extension is up to date!");
+	}
+
+	Ok(false)
+}
+
 pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<()> {
 	let mut status = get_status()?;
 
@@ -204,7 +294,7 @@ pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<
 	Ok(())
 }
 
-pub fn manual_update(cli: bool, plugin: bool, templates: bool, force: bool) -> Result<bool> {
+pub fn manual_update(cli: bool, plugin: bool, templates: bool, vscode: bool, force: bool) -> Result<bool> {
 	UPDATE_FORCED.call_once(|| {});
 
 	let mut status = get_status()?;
@@ -219,6 +309,10 @@ pub fn manual_update(cli: bool, plugin: bool, templates: bool, force: bool) -> R
 	}
 
 	if templates && update_templates(&mut status, false, force)? {
+		updated = true;
+	}
+
+	if vscode && update_vscode(&mut status, false, force)? {
 		updated = true;
 	}
 

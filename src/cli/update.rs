@@ -4,45 +4,51 @@ use clap::{Parser, ValueEnum};
 use crate::{argon_error, argon_info, config::Config, updater};
 
 /// Forcefully update Argon components if available
-#[derive(Parser)]
+#[derive(Debug, Parser)]
 pub struct Update {
-	/// Whether to update `cli`, `plugin`, `templates` or `all`
-	#[arg(hide_possible_values = true)]
-	mode: Option<UpdateMode>,
-	/// Whether to force update even if there is no newer version
-	#[arg(short, long)]
-	force: bool,
+	/// Update mode
+	#[clap(short, long, value_enum, default_value_t = UpdateMode::All)]
+	pub mode: UpdateMode,
+
+	/// Force update
+	#[clap(short, long)]
+	pub force: bool,
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum UpdateMode {
+	/// Update everything
+	All,
+	/// Update only the CLI
+	Cli,
+	/// Update only the plugin
+	Plugin,
+	/// Update only the templates
+	Templates,
+	/// Update only the VS Code extension
+	Vscode,
 }
 
 impl Update {
-	pub fn main(self) -> Result<()> {
-		let config = Config::new();
-
-		let (cli, plugin, templates) = match self.mode.unwrap_or_default() {
-			UpdateMode::All => (true, config.install_plugin, config.update_templates),
-			UpdateMode::Cli => (true, false, false),
-			UpdateMode::Plugin => (false, true, false),
-			UpdateMode::Templates => (false, false, true),
-		};
-
-		match updater::manual_update(cli, plugin, templates, self.force) {
-			Ok(updated) => {
-				if !updated {
-					argon_info!("Everything is up to date!");
-				}
+	pub fn run(&self) -> Result<()> {
+		match self.mode {
+			UpdateMode::All => {
+				updater::manual_update(true, true, true, true, self.force)?;
 			}
-			Err(err) => argon_error!("Failed to update Argon: {}", err),
+			UpdateMode::Cli => {
+				updater::manual_update(true, false, false, false, self.force)?;
+			}
+			UpdateMode::Plugin => {
+				updater::manual_update(false, true, false, false, self.force)?;
+			}
+			UpdateMode::Templates => {
+				updater::manual_update(false, false, true, false, self.force)?;
+			}
+			UpdateMode::Vscode => {
+				updater::manual_update(false, false, false, true, self.force)?;
+			}
 		}
 
 		Ok(())
 	}
-}
-
-#[derive(Clone, Default, ValueEnum)]
-enum UpdateMode {
-	Cli,
-	Plugin,
-	Templates,
-	#[default]
-	All,
 }

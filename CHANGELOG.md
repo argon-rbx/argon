@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.4] - 2025-04-11
+
+### Added
+- Added VS Code extension update functionality
+- Support for updating the extension through the CLI
+
 ## [0.0.3] - 2025-04-10
 
 ### Fixed
