@@ -211,7 +211,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			// Find the VSIX asset
 			let assets = release["assets"].as_array().ok_or_else(|| anyhow!("Failed to get assets"))?;
 			let vsix_asset = assets.iter().find(|asset| {
-				asset["name"].as_str().map_or(false, |name| name.ends_with(".vsix"))
+				asset["name"].as_str().is_some_and(|name| name.ends_with(".vsix"))
 			}).ok_or_else(|| anyhow!("Failed to find VSIX asset"))?;
 
 			let download_url = vsix_asset["browser_download_url"].as_str().ok_or_else(|| anyhow!("Failed to get download URL"))?;
