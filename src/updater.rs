@@ -3,8 +3,8 @@ use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater, Extract};
 use serde::{Deserialize, Serialize};
-use std::{fs, sync::Once, time::SystemTime};
 use std::io;
+use std::{fs, sync::Once, time::SystemTime};
 
 use crate::{
 	argon_error, argon_info,
@@ -88,9 +88,12 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 			current_version,
 			asset_name.replace("{version}", current_version)
 		);
-		
+
 		if !prompt {
-			argon_info!("Checking for updates using direct download from {}", download_url.bold());
+			argon_info!(
+				"Checking for updates using direct download from {}",
+				download_url.bold()
+			);
 		}
 	}
 
@@ -104,7 +107,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		// Use the identifier to match the specific asset name pattern
 		.identifier(&asset_name)
 		.no_confirm(true);
-	
+
 	// Check the latest release first
 	let release = match update.build() {
 		Ok(u) => match u.get_latest_release() {
@@ -167,12 +170,12 @@ fn download_direct_fallback(version: &str, prompt: bool, force: bool, asset_patt
 		version,
 		asset_pattern.replace("{version}", version)
 	);
-	
+
 	argon_info!("Attempting direct download from {}", download_url);
-	
+
 	// Create a reqwest client
 	let client = reqwest::blocking::Client::new();
-	
+
 	// Check if the file exists by sending a HEAD request
 	let response = match client.head(&download_url).send() {
 		Ok(resp) => {
@@ -181,47 +184,47 @@ fn download_direct_fallback(version: &str, prompt: bool, force: bool, asset_patt
 				return Ok(false);
 			}
 			client.get(&download_url).send()?
-		},
+		}
 		Err(err) => {
 			argon_error!("Failed to check file existence: {}", err);
 			return Ok(false);
 		}
 	};
-	
+
 	if !response.status().is_success() {
 		argon_error!("Failed to download update: HTTP status {}", response.status());
 		return Ok(false);
 	}
-	
+
 	// Download the file
 	let target_file = temp_dir.path().join(asset_pattern.replace("{version}", version));
 	let mut file = std::fs::File::create(&target_file)?;
 	io::copy(&mut response.bytes()?.as_ref(), &mut file)?;
-	
+
 	// Extract the binary
 	let extract_dir = temp_dir.path().join("extracted");
 	std::fs::create_dir_all(&extract_dir)?;
-	
+
 	// Use the self_update extract functionality
 	let bin_name = format!("argon{}", if cfg!(windows) { ".exe" } else { "" });
-	
+
 	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 	{
 		Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name)?;
-		
+
 		// Get the executable path
 		let new_exe = extract_dir.join(&bin_name);
-		
+
 		// Replace the current executable
 		self_replace::self_replace(new_exe)?;
-		
+
 		argon_info!(
 			"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
 			"https://argon.wiki/changelog/argon".bold()
 		);
 		Ok(true)
 	}
-	
+
 	#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
 	{
 		argon_error!("Unsupported platform for direct download");
