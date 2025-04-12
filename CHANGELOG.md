@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.0.7] - 2025-04-12
 
+<<<<<<< HEAD
+=======
+### Fixed
+- Improved updater code with better identifier matching
+- Removed useless format! calls for better performance
+- Fixed code style issues and formatting
+
+>>>>>>> 8310500 (Bump version to 0.0.7)
 ## [0.0.6] - 2025-04-12
 
 ### Fixed
@@ -347,6 +355,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+<<<<<<< HEAD
 - `.src` and `init` files in sourcemap generation
 - `Open In Editor` now opens folders only if instance has no other sources
 - Plugin now installs and updates correctly on Windows
@@ -439,3 +448,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 [2.0.0-pre3]: https://github.com/argon-rbx/argon/compare/2.0.0-pre2...2.0.0-pre3
 [2.0.0-pre2]: https://github.com/argon-rbx/argon/compare/2.0.0-pre1...2.0.0-pre2
 [2.0.0-pre1]: https://github.com/argon-rbx/argon/compare/1.3.0...2.0.0-pre1
+=======
+- `.src` and `init`
+>>>>>>> 8310500 (Bump version to 0.0.7)
