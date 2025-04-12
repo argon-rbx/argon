@@ -88,9 +88,12 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 			current_version,
 			asset_name.replace("{version}", current_version)
 		);
-		
+
 		if !prompt {
-			argon_info!("Checking for updates using direct download from {}", download_url.bold());
+			argon_info!(
+				"Checking for updates using direct download from {}",
+				download_url.bold()
+			);
 		}
 	}
 
@@ -105,7 +108,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		// Use the identifier to match the specific asset name pattern
 		.identifier(&asset_name)
 		.no_confirm(true);
-	
+
 	// Check the latest release first
 	let release = match update_config.build() {
 		Ok(u) => match u.get_latest_release() {
@@ -168,65 +171,142 @@ fn download_direct_fallback(version: &str, _prompt: bool, _force: bool, asset_pa
 		version,
 		asset_pattern.replace("{version}", version)
 	);
-	
+
 	argon_info!("Attempting direct download from {}", download_url);
-	
+
 	// Create a reqwest client
 	let client = reqwest::blocking::Client::new();
-	
+
 	// Check if the file exists by sending a HEAD request
 	let response = match client.head(&download_url).send() {
 		Ok(resp) => {
 			if !resp.status().is_success() {
-				argon_error!("File does not exist at URL: {}", download_url);
+				argon_error!(
+					"File does not exist at URL: {} - HTTP status: {}",
+					download_url,
+					resp.status()
+				);
 				return Ok(false);
 			}
-			client.get(&download_url).send()?
-		},
+			match client.get(&download_url).send() {
+				Ok(response) => response,
+				Err(err) => {
+					argon_error!("Failed to send GET request to URL: {} - Error: {}", download_url, err);
+					return Ok(false);
+				}
+			}
+		}
 		Err(err) => {
-			argon_error!("Failed to check file existence: {}", err);
+			argon_error!(
+				"Failed to check file existence at URL: {} - Error: {}",
+				download_url,
+				err
+			);
 			return Ok(false);
 		}
 	};
-	
+
 	if !response.status().is_success() {
-		argon_error!("Failed to download update: HTTP status {}", response.status());
+		argon_error!(
+			"Failed to download update: HTTP status {} from URL: {}",
+			response.status(),
+			download_url
+		);
 		return Ok(false);
 	}
-	
+
 	// Download the file
+	argon_info!("Download successful, saving file to {}", temp_dir.display());
 	let target_file = temp_dir.join(asset_pattern.replace("{version}", version));
-	let mut file = std::fs::File::create(&target_file)?;
-	io::copy(&mut response.bytes()?.as_ref(), &mut file)?;
-	
+	let mut file = match std::fs::File::create(&target_file) {
+		Ok(file) => file,
+		Err(err) => {
+			argon_error!("Failed to create file at {}: {}", target_file.display(), err);
+			return Ok(false);
+		}
+	};
+
+	// Get response bytes
+	let bytes = match response.bytes() {
+		Ok(bytes) => bytes,
+		Err(err) => {
+			argon_error!("Failed to read response body: {}", err);
+			return Ok(false);
+		}
+	};
+
+	// Copy response to file
+	match io::copy(&mut bytes.as_ref(), &mut file) {
+		Ok(size) => argon_info!("Downloaded {} bytes to {}", size, target_file.display()),
+		Err(err) => {
+			argon_error!("Failed to write file data: {}", err);
+			return Ok(false);
+		}
+	};
+
 	// Extract the binary
 	let extract_dir = temp_dir.join("extracted");
-	std::fs::create_dir_all(&extract_dir)?;
-	
+	match std::fs::create_dir_all(&extract_dir) {
+		Ok(_) => argon_info!("Created extraction directory at {}", extract_dir.display()),
+		Err(err) => {
+			argon_error!("Failed to create extraction directory: {}", err);
+			return Ok(false);
+		}
+	};
+
 	// Use the self_update extract functionality
 	let bin_name = format!("argon{}", if cfg!(windows) { ".exe" } else { "" });
-	
+
 	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 	{
-		Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name)?;
-		
+		argon_info!(
+			"Extracting {} from {} to {}",
+			bin_name,
+			target_file.display(),
+			extract_dir.display()
+		);
+		let extraction_result = Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name);
+		if let Err(err) = extraction_result {
+			argon_error!("Failed to extract file: {}", err);
+			return Ok(false);
+		}
+
 		// Get the executable path
 		let new_exe = extract_dir.join(&bin_name);
-		
+		if !new_exe.exists() {
+			argon_error!("Extracted file doesn't exist at expected path: {}", new_exe.display());
+			return Ok(false);
+		}
+
 		// Replace the current executable - using std::fs to copy the file over
-		let current_exe = std::env::current_exe()?;
-		fs::copy(&new_exe, &current_exe)?;
-		
+		let current_exe = match std::env::current_exe() {
+			Ok(path) => path,
+			Err(err) => {
+				argon_error!("Failed to get current executable path: {}", err);
+				return Ok(false);
+			}
+		};
+
+		argon_info!(
+			"Replacing current executable at {} with new version from {}",
+			current_exe.display(),
+			new_exe.display()
+		);
+		if let Err(err) = fs::copy(&new_exe, &current_exe) {
+			argon_error!("Failed to copy new executable: {}", err);
+			return Ok(false);
+		}
+
 		argon_info!(
 			"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
 			"https://argon.wiki/changelog/argon".bold()
 		);
 		Ok(true)
 	}
-	
+
 	#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
 	{
-		argon_error!("Unsupported platform for direct download");
+		argon_error!("Unsupported platform for direct download: {}", std::env::consts::OS);
 		Ok(false)
 	}
 }
