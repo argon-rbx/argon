@@ -1,9 +1,10 @@
 use anyhow::{anyhow, Result};
 use colored::Colorize;
 use log::{debug, trace, warn};
-use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
+use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater, Extract};
 use serde::{Deserialize, Serialize};
 use std::{fs, sync::Once, time::SystemTime};
+use std::io;
 
 use crate::{
 	argon_error, argon_info,
@@ -77,7 +78,24 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		}
 	};
 
-	let update = Update::configure()
+	// For M1/M2 Macs, try direct download method first since releases often don't include aarch64 assets
+	#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+	{
+		trace!("Detected M1/M2 Mac (aarch64), attempting direct download first");
+		// Try direct download first for Apple Silicon
+		let download_url = format!(
+			"https://github.com/LupaHQ/argon/releases/download/{}/{}",
+			current_version,
+			asset_name.replace("{version}", current_version)
+		);
+		
+		if !prompt {
+			argon_info!("Checking for updates using direct download from {}", download_url.bold());
+		}
+	}
+
+	// Configure the update
+	let mut update = Update::configure()
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
@@ -85,10 +103,23 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		.set_progress_style(style.0, style.1)
 		// Use the identifier to match the specific asset name pattern
 		.identifier(&asset_name)
-		.no_confirm(true)
-		.build()?;
-
-	let release = update.get_latest_release()?;
+		.no_confirm(true);
+	
+	// Check the latest release first
+	let release = match update.build() {
+		Ok(u) => match u.get_latest_release() {
+			Ok(release) => release,
+			Err(err) => {
+				trace!("Failed to get latest release: {}", err);
+				// If we can't get the release or there are no assets, we'll use a direct download fallback
+				return download_direct_fallback(current_version, prompt, force, &asset_name);
+			}
+		},
+		Err(err) => {
+			trace!("Failed to build update: {}", err);
+			return download_direct_fallback(current_version, prompt, force, &asset_name);
+		}
+	};
 
 	if bump_is_greater(current_version, &release.version)? || force {
 		if !prompt
@@ -103,7 +134,8 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 				argon_info!("New Argon version: {} is available! Updating..", release.version.bold());
 			}
 
-			match update.update() {
+			// Try to update through normal GitHub release asset
+			match update.build()?.update() {
 				Ok(_) => {
 					argon_info!(
 						"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
@@ -111,7 +143,11 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 					);
 					return Ok(true);
 				}
-				Err(err) => argon_error!("Failed to update Argon: {}", err),
+				Err(err) => {
+					trace!("Failed to update through asset: {}", err);
+					// If update through asset fails, try direct download
+					return download_direct_fallback(&release.version, prompt, true, &asset_name);
+				}
 			}
 		} else {
 			trace!("Argon is out of date!");
@@ -121,6 +157,76 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	}
 
 	Ok(false)
+}
+
+// Fallback download function that directly fetches the release without relying on GitHub release assets
+fn download_direct_fallback(version: &str, prompt: bool, force: bool, asset_pattern: &str) -> Result<bool> {
+	let temp_dir = tempfile::tempdir()?;
+	let download_url = format!(
+		"https://github.com/LupaHQ/argon/releases/download/{}/{}",
+		version,
+		asset_pattern.replace("{version}", version)
+	);
+	
+	argon_info!("Attempting direct download from {}", download_url);
+	
+	// Create a reqwest client
+	let client = reqwest::blocking::Client::new();
+	
+	// Check if the file exists by sending a HEAD request
+	let response = match client.head(&download_url).send() {
+		Ok(resp) => {
+			if !resp.status().is_success() {
+				argon_error!("File does not exist at URL: {}", download_url);
+				return Ok(false);
+			}
+			client.get(&download_url).send()?
+		},
+		Err(err) => {
+			argon_error!("Failed to check file existence: {}", err);
+			return Ok(false);
+		}
+	};
+	
+	if !response.status().is_success() {
+		argon_error!("Failed to download update: HTTP status {}", response.status());
+		return Ok(false);
+	}
+	
+	// Download the file
+	let target_file = temp_dir.path().join(asset_pattern.replace("{version}", version));
+	let mut file = std::fs::File::create(&target_file)?;
+	io::copy(&mut response.bytes()?.as_ref(), &mut file)?;
+	
+	// Extract the binary
+	let extract_dir = temp_dir.path().join("extracted");
+	std::fs::create_dir_all(&extract_dir)?;
+	
+	// Use the self_update extract functionality
+	let bin_name = format!("argon{}", if cfg!(windows) { ".exe" } else { "" });
+	
+	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+	{
+		Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name)?;
+		
+		// Get the executable path
+		let new_exe = extract_dir.join(&bin_name);
+		
+		// Replace the current executable
+		self_replace::self_replace(new_exe)?;
+		
+		argon_info!(
+			"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
+			"https://argon.wiki/changelog/argon".bold()
+		);
+		Ok(true)
+	}
+	
+	#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+	{
+		argon_error!("Unsupported platform for direct download");
+		Ok(false)
+	}
 }
 
 fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
