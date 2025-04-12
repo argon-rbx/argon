@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added fallback method for downloading updates when releases don't have proper assets
 - Improved error handling for M1/M2 Mac updates
 - Added missing vscode update mode to TypeScript definition
+- Enhanced error logging for update diagnostics
 
 ## [0.0.7] - 2025-04-12
 
