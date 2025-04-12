@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.6] - 2025-04-12
+
+### Fixed
+- Fixed auto-update for Apple Silicon (M1/M2) Macs
+- Added correct asset name mapping for all supported platforms
+
 ## [0.0.5] - 2025-04-11
 
 ### Changed

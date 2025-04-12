@@ -57,14 +57,34 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
 
-	let update = Update::configure()
+	// This creates a custom matcher for the GitHub releases that matches our asset naming convention
+	let mut update = Update::configure()
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
-		.build()?;
-
+		.no_confirm(true);
+		
+	// Map Rust target triples to our asset naming convention
+	#[cfg(target_os = "linux")]
+	{
+		update = update.target_zip_asset_name("argon-{version}-linux-x86_64.zip");
+	}
+	#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+	{
+		update = update.target_zip_asset_name("argon-{version}-macos-x86_64.zip");
+	}
+	#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+	{
+		update = update.target_zip_asset_name("argon-{version}-macos-aarch64.zip");
+	}
+	#[cfg(target_os = "windows")]
+	{
+		update = update.target_zip_asset_name("argon-{version}-windows-x86_64.zip");
+	}
+	
+	let update = update.build()?;
 	let release = update.get_latest_release()?;
 
 	if bump_is_greater(current_version, &release.version)? || force {
