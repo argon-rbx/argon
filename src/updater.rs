@@ -88,17 +88,15 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 			current_version,
 			asset_name.replace("{version}", current_version)
 		);
-
+		
 		if !prompt {
-			argon_info!(
-				"Checking for updates using direct download from {}",
-				download_url.bold()
-			);
+			argon_info!("Checking for updates using direct download from {}", download_url.bold());
 		}
 	}
 
 	// Configure the update
-	let mut update = Update::configure()
+	let mut configure = Update::configure();
+	let update_config = configure
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
@@ -107,9 +105,9 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		// Use the identifier to match the specific asset name pattern
 		.identifier(&asset_name)
 		.no_confirm(true);
-
+	
 	// Check the latest release first
-	let release = match update.build() {
+	let release = match update_config.build() {
 		Ok(u) => match u.get_latest_release() {
 			Ok(release) => release,
 			Err(err) => {
@@ -138,7 +136,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 			}
 
 			// Try to update through normal GitHub release asset
-			match update.build()?.update() {
+			match update_config.build()?.update() {
 				Ok(_) => {
 					argon_info!(
 						"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
@@ -163,19 +161,19 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 }
 
 // Fallback download function that directly fetches the release without relying on GitHub release assets
-fn download_direct_fallback(version: &str, prompt: bool, force: bool, asset_pattern: &str) -> Result<bool> {
-	let temp_dir = tempfile::tempdir()?;
+fn download_direct_fallback(version: &str, _prompt: bool, _force: bool, asset_pattern: &str) -> Result<bool> {
+	let temp_dir = std::env::temp_dir();
 	let download_url = format!(
 		"https://github.com/LupaHQ/argon/releases/download/{}/{}",
 		version,
 		asset_pattern.replace("{version}", version)
 	);
-
+	
 	argon_info!("Attempting direct download from {}", download_url);
-
+	
 	// Create a reqwest client
 	let client = reqwest::blocking::Client::new();
-
+	
 	// Check if the file exists by sending a HEAD request
 	let response = match client.head(&download_url).send() {
 		Ok(resp) => {
@@ -184,47 +182,48 @@ fn download_direct_fallback(version: &str, prompt: bool, force: bool, asset_patt
 				return Ok(false);
 			}
 			client.get(&download_url).send()?
-		}
+		},
 		Err(err) => {
 			argon_error!("Failed to check file existence: {}", err);
 			return Ok(false);
 		}
 	};
-
+	
 	if !response.status().is_success() {
 		argon_error!("Failed to download update: HTTP status {}", response.status());
 		return Ok(false);
 	}
-
+	
 	// Download the file
-	let target_file = temp_dir.path().join(asset_pattern.replace("{version}", version));
+	let target_file = temp_dir.join(asset_pattern.replace("{version}", version));
 	let mut file = std::fs::File::create(&target_file)?;
 	io::copy(&mut response.bytes()?.as_ref(), &mut file)?;
-
+	
 	// Extract the binary
-	let extract_dir = temp_dir.path().join("extracted");
+	let extract_dir = temp_dir.join("extracted");
 	std::fs::create_dir_all(&extract_dir)?;
-
+	
 	// Use the self_update extract functionality
 	let bin_name = format!("argon{}", if cfg!(windows) { ".exe" } else { "" });
-
+	
 	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 	{
 		Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name)?;
-
+		
 		// Get the executable path
 		let new_exe = extract_dir.join(&bin_name);
-
-		// Replace the current executable
-		self_replace::self_replace(new_exe)?;
-
+		
+		// Replace the current executable - using std::fs to copy the file over
+		let current_exe = std::env::current_exe()?;
+		fs::copy(&new_exe, &current_exe)?;
+		
 		argon_info!(
 			"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
 			"https://argon.wiki/changelog/argon".bold()
 		);
 		Ok(true)
 	}
-
+	
 	#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
 	{
 		argon_error!("Unsupported platform for direct download");
