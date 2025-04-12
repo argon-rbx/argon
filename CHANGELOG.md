@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.9] - 2025-04-14
+
+### Added
+- Improved VS Code extension update mechanism with better version detection
+- Added detailed logging for VS Code extension update process
+- Added validation of downloaded VSIX file before installation
+
+### Fixed
+- Fixed VS Code extension version detection when updating from CLI
+- Improved error handling for VS Code extension installation
+- Added proper fallback for when VS Code CLI is not available
+
 ## [0.0.8] - 2025-04-13
 
 ### Fixed
@@ -421,7 +433,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.7...HEAD
+[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.9...HEAD
+[0.0.9]: https://github.com/LupaHQ/argon/compare/0.0.8...0.0.9
+[0.0.8]: https://github.com/LupaHQ/argon/compare/0.0.7...0.0.8
 [0.0.7]: https://github.com/LupaHQ/argon/compare/0.0.2...0.0.7
 [0.0.2]: https://github.com/LupaHQ/argon/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/LupaHQ/argon/compare/2.0.23...0.0.1

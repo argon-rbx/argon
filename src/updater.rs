@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater, Extract};
@@ -34,11 +34,23 @@ pub fn get_status() -> Result<UpdateStatus> {
 		}
 	}
 
+	// Try to get installed VS Code extension version
+	let vscode_version = match get_vscode_version() {
+		Some(version) => {
+			trace!("Using detected VS Code extension version: {}", version);
+			version
+		}
+		None => {
+			trace!("Could not detect VS Code extension version, using default version");
+			"0.0.0".to_string() // Use a baseline version if not detected
+		}
+	};
+
 	let status = UpdateStatus {
 		last_checked: SystemTime::UNIX_EPOCH,
 		plugin_version: get_plugin_version(),
 		templates_version: TEMPLATES_VERSION,
-		vscode_version: cargo_crate_version!().to_string(),
+		vscode_version,
 	};
 
 	fs::write(path, toml::to_string(&status)?)?;
@@ -389,21 +401,108 @@ fn update_templates(status: &mut UpdateStatus, prompt: bool, force: bool) -> Res
 	Ok(false)
 }
 
+// Get the currently installed VS Code extension version
+fn get_vscode_version() -> Option<String> {
+	// Try to get version using VS Code CLI
+	let output = std::process::Command::new("code")
+		.arg("--list-extensions")
+		.arg("--show-versions")
+		.output();
+
+	match output {
+		Ok(output) if output.status.success() => {
+			let stdout = String::from_utf8_lossy(&output.stdout);
+			trace!("VS Code extensions list: {}", stdout);
+			// Look for the extension - might be "lemonade-labs.argon@x.y.z" or "argon@x.y.z"
+			for line in stdout.lines() {
+				if line.contains("lemonade-labs.argon@") || line.contains("argon@") {
+					if let Some(version) = line.split('@').nth(1) {
+						trace!("Found VS Code extension version: {}", version.trim());
+						return Some(version.trim().to_string());
+					}
+				}
+			}
+			trace!("VS Code extension not found in installed extensions");
+			None
+		}
+		Ok(output) => {
+			trace!(
+				"VS Code CLI returned error: {}",
+				String::from_utf8_lossy(&output.stderr)
+			);
+			None
+		}
+		Err(err) => {
+			trace!("Could not run VS Code CLI: {}", err);
+			None
+		}
+	}
+}
+
 fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
+	trace!("Checking for VS Code extension updates");
+
+	// Refresh our current version from installed extensions
+	if let Some(current) = get_vscode_version() {
+		trace!("Current VS Code extension version: {}", current);
+		status.vscode_version = current;
+	} else {
+		trace!(
+			"Could not detect current VS Code extension version, using stored: {}",
+			status.vscode_version
+		);
+	}
+
 	let current_version = &status.vscode_version;
 
 	// Get the latest release from GitHub
-	let release = reqwest::blocking::get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest")?
-		.json::<serde_json::Value>()?;
+	trace!("Fetching latest VS Code extension release from GitHub");
+	let client = reqwest::blocking::Client::builder().user_agent("argon-cli").build()?;
 
-	let latest_version = release["tag_name"]
-		.as_str()
-		.ok_or_else(|| anyhow!("Failed to get tag name"))?;
+	let release = match client
+		.get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest")
+		.send()
+	{
+		Ok(response) => {
+			if !response.status().is_success() {
+				trace!("GitHub API request failed with status: {}", response.status());
+				return Ok(false);
+			}
 
-	// Remove leading 'v' if present
-	let latest_version = latest_version.trim_start_matches('v');
+			match response.json::<serde_json::Value>() {
+				Ok(json) => json,
+				Err(err) => {
+					trace!("Failed to parse GitHub API response: {}", err);
+					return Ok(false);
+				}
+			}
+		}
+		Err(err) => {
+			trace!("Failed to get latest release information: {}", err);
+			return Ok(false);
+		}
+	};
 
-	if bump_is_greater(current_version, latest_version)? || force {
+	let latest_version = match release["tag_name"].as_str() {
+		Some(tag) => tag.trim_start_matches('v'),
+		None => {
+			trace!("Failed to get tag name from release");
+			return Ok(false);
+		}
+	};
+
+	trace!("Latest VS Code extension version: {}", latest_version);
+
+	// Compare versions and update if needed
+	let update_needed = match bump_is_greater(current_version, latest_version) {
+		Ok(result) => result || force,
+		Err(err) => {
+			trace!("Failed to compare versions: {}", err);
+			force // If comparison fails, only update if forced
+		}
+	};
+
+	if update_needed {
 		if !prompt
 			|| logger::prompt(
 				&format!(
@@ -420,30 +519,99 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			}
 
 			// Find the VSIX asset
-			let assets = release["assets"]
-				.as_array()
-				.ok_or_else(|| anyhow!("Failed to get assets"))?;
-			let vsix_asset = assets
+			let assets = match release["assets"].as_array() {
+				Some(assets) => assets,
+				None => {
+					trace!("Failed to get assets from release");
+					return Ok(false);
+				}
+			};
+
+			let vsix_asset = match assets
 				.iter()
 				.find(|asset| asset["name"].as_str().is_some_and(|name| name.ends_with(".vsix")))
-				.ok_or_else(|| anyhow!("Failed to find VSIX asset"))?;
+			{
+				Some(asset) => asset,
+				None => {
+					trace!("Failed to find VSIX asset in release");
+					return Ok(false);
+				}
+			};
 
-			let download_url = vsix_asset["browser_download_url"]
-				.as_str()
-				.ok_or_else(|| anyhow!("Failed to get download URL"))?;
+			let download_url = match vsix_asset["browser_download_url"].as_str() {
+				Some(url) => url,
+				None => {
+					trace!("Failed to get download URL from asset");
+					return Ok(false);
+				}
+			};
 
 			// Download the VSIX file to a temporary location
 			let temp_dir = std::env::temp_dir();
 			let vsix_path = temp_dir.join(format!("argon-{}.vsix", latest_version));
 
-			argon_info!("Downloading VS Code extension...");
+			// Delete existing file if it exists
+			if vsix_path.exists() {
+				if let Err(err) = std::fs::remove_file(&vsix_path) {
+					trace!("Failed to remove existing VSIX file: {}", err);
+				}
+			}
 
-			let mut response = reqwest::blocking::get(download_url)?;
-			let mut file = std::fs::File::create(&vsix_path)?;
-			std::io::copy(&mut response, &mut file)?;
+			argon_info!("Downloading VS Code extension...");
+			trace!("Downloading from URL: {}", download_url);
+
+			let mut response = match client.get(download_url).send() {
+				Ok(response) => {
+					if !response.status().is_success() {
+						argon_error!("Failed to download: HTTP status {}", response.status());
+						return Ok(false);
+					}
+					response
+				}
+				Err(err) => {
+					argon_error!("Failed to download VS Code extension: {}", err);
+					return Ok(false);
+				}
+			};
+
+			let mut file = match std::fs::File::create(&vsix_path) {
+				Ok(file) => file,
+				Err(err) => {
+					argon_error!("Failed to create temporary file: {}", err);
+					return Ok(false);
+				}
+			};
+
+			match std::io::copy(&mut response, &mut file) {
+				Ok(size) => trace!("Downloaded {} bytes to {}", size, vsix_path.display()),
+				Err(err) => {
+					argon_error!("Failed to save VS Code extension: {}", err);
+					return Ok(false);
+				}
+			}
 
 			// Install the extension using the VS Code CLI
 			argon_info!("Installing VS Code extension...");
+			trace!("Running: code --install-extension {} --force", vsix_path.display());
+
+			// Make sure file exists and has size
+			if !vsix_path.exists() {
+				argon_error!("VSIX file not found at {}", vsix_path.display());
+				return Ok(false);
+			}
+
+			let metadata = match std::fs::metadata(&vsix_path) {
+				Ok(meta) => meta,
+				Err(err) => {
+					argon_error!("Failed to get VSIX file metadata: {}", err);
+					return Ok(false);
+				}
+			};
+
+			if metadata.len() == 0 {
+				argon_error!("Downloaded VSIX file is empty");
+				return Ok(false);
+			}
 
 			let output = std::process::Command::new("code")
 				.arg("--install-extension")
@@ -452,20 +620,24 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				.output();
 
 			match output {
-				Ok(output) if output.status.success() => {
-					// Clean up the temporary file
-					let _ = std::fs::remove_file(vsix_path);
-
-					argon_info!(
-						"VS Code extension updated! Please reload VS Code to apply changes. Visit {} to read the changelog",
-						"https://argon.wiki/changelog/argon-vscode".bold()
-					);
-					status.vscode_version = latest_version.to_string();
-					return Ok(true);
-				}
 				Ok(output) => {
-					let stderr = String::from_utf8_lossy(&output.stderr);
-					argon_error!("Failed to install VS Code extension: {}", stderr);
+					trace!("VS Code stdout: {}", String::from_utf8_lossy(&output.stdout));
+					trace!("VS Code stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+					if output.status.success() {
+						// Clean up the temporary file
+						let _ = std::fs::remove_file(vsix_path);
+
+						argon_info!(
+							"VS Code extension updated! Please reload VS Code to apply changes. Visit {} to read the changelog",
+							"https://argon.wiki/changelog/argon-vscode".bold()
+						);
+						status.vscode_version = latest_version.to_string();
+						return Ok(true);
+					} else {
+						let stderr = String::from_utf8_lossy(&output.stderr);
+						argon_error!("Failed to install VS Code extension: {}", stderr);
+					}
 				}
 				Err(err) => {
 					argon_error!("Failed to run VS Code CLI: {}", err);
@@ -503,6 +675,9 @@ pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<
 		update_templates(&mut status, prompt, false)?;
 	}
 
+	// Also check for VS Code extension updates
+	let _ = update_vscode(&mut status, prompt, false);
+
 	status.last_checked = SystemTime::now();
 	set_status(&status)?;
 
@@ -515,24 +690,42 @@ pub fn manual_update(cli: bool, plugin: bool, templates: bool, vscode: bool, for
 	let mut status = get_status()?;
 	let mut updated = false;
 
-	if cli && update_cli(false, force)? {
-		updated = true;
+	if cli {
+		argon_info!("Checking for CLI updates...");
+		if update_cli(false, force)? {
+			updated = true;
+		}
 	}
 
-	if plugin && update_plugin(&mut status, false, force)? {
-		updated = true;
+	if plugin {
+		argon_info!("Checking for Plugin updates...");
+		if update_plugin(&mut status, false, force)? {
+			updated = true;
+		}
 	}
 
-	if templates && update_templates(&mut status, false, force)? {
-		updated = true;
+	if templates {
+		argon_info!("Checking for Template updates...");
+		if update_templates(&mut status, false, force)? {
+			updated = true;
+		}
 	}
 
-	if vscode && update_vscode(&mut status, false, force)? {
-		updated = true;
+	if vscode {
+		argon_info!("Checking for VS Code extension updates...");
+		if update_vscode(&mut status, false, force)? {
+			updated = true;
+		} else {
+			trace!("No VS Code extension updates found or update failed");
+		}
 	}
 
 	status.last_checked = SystemTime::now();
 	set_status(&status)?;
+
+	if !updated {
+		argon_info!("All components are up to date!");
+	}
 
 	Ok(updated)
 }
