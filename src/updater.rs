@@ -61,22 +61,22 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	let asset_name = {
 		#[cfg(target_os = "linux")]
 		{
-			format!("argon-{{version}}-linux-x86_64.zip")
+			"argon-{version}-linux-x86_64.zip".to_string()
 		}
 		#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 		{
-			format!("argon-{{version}}-macos-x86_64.zip")
+			"argon-{version}-macos-x86_64.zip".to_string()
 		}
 		#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 		{
-			format!("argon-{{version}}-macos-aarch64.zip")
+			"argon-{version}-macos-aarch64.zip".to_string()
 		}
 		#[cfg(target_os = "windows")]
 		{
-			format!("argon-{{version}}-windows-x86_64.zip")
+			"argon-{version}-windows-x86_64.zip".to_string()
 		}
 	};
-	
+
 	let update = Update::configure()
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
