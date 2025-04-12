@@ -6,15 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.7] - 2025-04-12
+
 ## [0.0.6] - 2025-04-12
 
 ### Fixed
+
 - Fixed auto-update for Apple Silicon (M1/M2) Macs
 - Added correct asset name mapping for all supported platforms
 
 ## [0.0.5] - 2025-04-11
 
 ### Changed
+
 - Fixed code formatting and style issues
 - Updated VS Code extension installation logic
 - Improved error handling for extension updates
@@ -22,12 +26,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.0.4] - 2025-04-11
 
 ### Added
+
 - Added VS Code extension update functionality
 - Support for updating the extension through the CLI
 
 ## [0.0.3] - 2025-04-10
 
 ### Fixed
+
 - Fixed project initialization error in VS Code extension
 - Improved game start detection and log clearing
 - Enhanced error handling for client-server communication
@@ -400,7 +406,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.2...HEAD
+[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.7...HEAD
+[0.0.7]: https://github.com/LupaHQ/argon/compare/0.0.2...0.0.7
 [0.0.2]: https://github.com/LupaHQ/argon/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/LupaHQ/argon/compare/2.0.23...0.0.1
 [2.0.23]: https://github.com/argon-rbx/argon/compare/2.0.22...2.0.23
