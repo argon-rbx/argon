@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [v0.0.8] - 2025-04-13
+## [0.0.8] - 2025-04-13
 
 ### Fixed
 - Fixed update command usage in VS Code extension to use the correct --mode flag
