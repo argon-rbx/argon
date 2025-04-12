@@ -1,6 +1,6 @@
 use clap::{Parser, ValueEnum};
 
-use crate::{updater};
+use crate::updater;
 use anyhow::Result;
 
 /// Forcefully update Argon components if available

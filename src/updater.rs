@@ -182,13 +182,13 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 	let current_version = &status.vscode_version;
 
 	// Get the latest release from GitHub
-	let release = reqwest::blocking::get(
-		"https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest",
-	)?
-	.json::<serde_json::Value>()?;
+	let release = reqwest::blocking::get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest")?
+		.json::<serde_json::Value>()?;
 
-	let latest_version = release["tag_name"].as_str().ok_or_else(|| anyhow!("Failed to get tag name"))?;
-	
+	let latest_version = release["tag_name"]
+		.as_str()
+		.ok_or_else(|| anyhow!("Failed to get tag name"))?;
+
 	// Remove leading 'v' if present
 	let latest_version = latest_version.trim_start_matches('v');
 
@@ -209,37 +209,42 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			}
 
 			// Find the VSIX asset
-			let assets = release["assets"].as_array().ok_or_else(|| anyhow!("Failed to get assets"))?;
-			let vsix_asset = assets.iter().find(|asset| {
-				asset["name"].as_str().is_some_and(|name| name.ends_with(".vsix"))
-			}).ok_or_else(|| anyhow!("Failed to find VSIX asset"))?;
+			let assets = release["assets"]
+				.as_array()
+				.ok_or_else(|| anyhow!("Failed to get assets"))?;
+			let vsix_asset = assets
+				.iter()
+				.find(|asset| asset["name"].as_str().is_some_and(|name| name.ends_with(".vsix")))
+				.ok_or_else(|| anyhow!("Failed to find VSIX asset"))?;
 
-			let download_url = vsix_asset["browser_download_url"].as_str().ok_or_else(|| anyhow!("Failed to get download URL"))?;
-			
+			let download_url = vsix_asset["browser_download_url"]
+				.as_str()
+				.ok_or_else(|| anyhow!("Failed to get download URL"))?;
+
 			// Download the VSIX file to a temporary location
 			let temp_dir = std::env::temp_dir();
 			let vsix_path = temp_dir.join(format!("argon-{}.vsix", latest_version));
-			
+
 			argon_info!("Downloading VS Code extension...");
-			
+
 			let mut response = reqwest::blocking::get(download_url)?;
 			let mut file = std::fs::File::create(&vsix_path)?;
 			std::io::copy(&mut response, &mut file)?;
-			
+
 			// Install the extension using the VS Code CLI
 			argon_info!("Installing VS Code extension...");
-			
+
 			let output = std::process::Command::new("code")
 				.arg("--install-extension")
 				.arg(&vsix_path)
 				.arg("--force")
 				.output();
-				
+
 			match output {
 				Ok(output) if output.status.success() => {
 					// Clean up the temporary file
 					let _ = std::fs::remove_file(vsix_path);
-					
+
 					argon_info!(
 						"VS Code extension updated! Please reload VS Code to apply changes. Visit {} to read the changelog",
 						"https://argon.wiki/changelog/argon-vscode".bold()
