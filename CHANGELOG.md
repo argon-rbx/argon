@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.0.8] - 2025-04-13
+## [v0.0.8] - 2025-04-13
 
 ### Fixed
 - Fixed update command usage in VS Code extension to use the correct --mode flag
@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Improved error handling for M1/M2 Mac updates
 - Added missing vscode update mode to TypeScript definition
 - Enhanced error logging for update diagnostics
+- Fixed GitHub Actions workflow release process
 
 ## [0.0.7] - 2025-04-12
 
