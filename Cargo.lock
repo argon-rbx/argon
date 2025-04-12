@@ -338,7 +338,11 @@ dependencies = [
 
 [[package]]
 name = "argon-rbx"
+<<<<<<< Updated upstream
 version = "0.0.7"
+=======
+version = "0.0.6"
+>>>>>>> Stashed changes
 dependencies = [
  "actix-msgpack",
  "actix-web",
