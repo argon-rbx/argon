@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- Fixed update command to properly detect when running from VS Code environment
+- Improved update process to correctly update system binary when called from VS Code extension
+- Enhanced cross-platform detection for VS Code on Windows, macOS, and Linux
+
 ## [0.0.9] - 2025-04-14
 
 ### Added
