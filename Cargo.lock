@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "argon-rbx"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "actix-msgpack",
  "actix-web",
@@ -356,6 +356,7 @@ dependencies = [
  "derive-from-one",
  "dialoguer",
  "directories",
+ "dirs 5.0.1",
  "documented",
  "env_logger",
  "glob",
@@ -967,6 +968,15 @@ checksum = "13aea89a5c93364a98e9b37b2fa237effbb694d5cfe01c5b70941f7eb087d5e3"
 dependencies = [
  "cfg-if 0.1.10",
  "dirs-sys 0.3.7",
+]
+
+[[package]]
+name = "dirs"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+dependencies = [
+ "dirs-sys 0.4.1",
 ]
 
 [[package]]
@@ -2749,7 +2759,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "743bb8c693a387f1ae8d2026d82d8b0c175cc4777b97c1f7b12fdb3be595bb13"
 dependencies = [
- "dirs",
+ "dirs 2.0.2",
  "thiserror",
  "winreg 0.6.2",
 ]
