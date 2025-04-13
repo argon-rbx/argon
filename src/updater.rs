@@ -5,6 +5,8 @@ use self_update::{backends::github::Update, cargo_crate_version, version::bump_i
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::{fs, sync::Once, time::SystemTime};
+use std::env;
+use dirs;
 
 use crate::{
 	argon_error, argon_info,
@@ -66,79 +68,73 @@ pub fn set_status(status: &UpdateStatus) -> Result<()> {
 	Ok(())
 }
 
-fn update_cli(prompt: bool, force: bool) -> Result<bool> {
+pub fn update_cli(
+	force: bool,
+	show_output: bool,
+) -> Result<bool, self_update::errors::Error> {
+	// Check if we're running from VS Code
+	let exe_path = std::env::current_exe().unwrap_or_default();
+	let exe_path_str = exe_path.to_string_lossy();
+	
+	// Platform-specific VS Code detection
+	#[cfg(target_os = "macos")]
+	let is_vscode = exe_path_str.contains("/Code.app/");
+	
+	#[cfg(target_os = "windows")]
+	let is_vscode = exe_path_str.contains("\\Microsoft VS Code\\") || 
+					exe_path_str.contains("\\Code\\");
+	
+	#[cfg(target_os = "linux")]
+	let is_vscode = exe_path_str.contains("/vscode/") || 
+					exe_path_str.contains("/code/");
+	
+	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+	let is_vscode = false;
+	
+	trace!("Exe path: {}", exe_path_str);
+	trace!("Is VS Code: {}", is_vscode);
+
+	// Get current exe path
+	let current_exe = env::current_exe()?;
+	trace!("Current executable path: {:?}", current_exe);
+	
+	// Get user home directory for better argon binary detection
+	let home_dir = dirs::home_dir().expect("Could not determine home directory");
+	let argon_bin_path = home_dir.join(".argon").join("bin").join("argon");
+	
+	// If called from VS Code, use the system binary path
+	let install_path = if is_vscode && argon_bin_path.exists() {
+		trace!("VS Code detected, updating system installation at: {:?}", argon_bin_path);
+		argon_bin_path.clone()
+	} else {
+		trace!("Updating current executable at: {:?}", current_exe);
+		current_exe.clone()
+	};
+	
 	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
-
-	// Get target-specific asset name for our convention
-	let asset_name = {
-		#[cfg(target_os = "linux")]
-		{
-			"argon-{version}-linux-x86_64.zip".to_string()
-		}
-		#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-		{
-			"argon-{version}-macos-x86_64.zip".to_string()
-		}
-		#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-		{
-			"argon-{version}-macos-aarch64.zip".to_string()
-		}
-		#[cfg(target_os = "windows")]
-		{
-			"argon-{version}-windows-x86_64.zip".to_string()
-		}
-	};
-
-	// For M1/M2 Macs, try direct download method first since releases often don't include aarch64 assets
-	#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-	{
-		trace!("Detected M1/M2 Mac (aarch64), attempting direct download first");
-		// Try direct download first for Apple Silicon
-		let download_url = format!(
-			"https://github.com/LupaHQ/argon/releases/download/{}/{}",
-			current_version,
-			asset_name.replace("{version}", current_version)
-		);
-
-		if !prompt {
-			argon_info!(
-				"Checking for updates using direct download from {}",
-				download_url.bold()
-			);
-		}
-	}
-
-	// Configure the update
-	let mut configure = Update::configure();
-	let update_config = configure
+	
+	// Simple update configuration without architecture specifics
+	let update = Update::configure()
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
+		.bin_install_path(install_path)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
-		// Use the identifier to match the specific asset name pattern
-		.identifier(&asset_name)
-		.no_confirm(true);
+		.no_confirm(true)
+		.build()?;
 
-	// Check the latest release first
-	let release = match update_config.build() {
-		Ok(u) => match u.get_latest_release() {
-			Ok(release) => release,
-			Err(err) => {
-				trace!("Failed to get latest release: {}", err);
-				// If we can't get the release or there are no assets, we'll use a direct download fallback
-				return download_direct_fallback(current_version, prompt, force, &asset_name);
-			}
-		},
+	let release = match update.get_latest_release() {
+		Ok(release) => release,
 		Err(err) => {
-			trace!("Failed to build update: {}", err);
-			return download_direct_fallback(current_version, prompt, force, &asset_name);
+			trace!("Failed to get latest release: {}", err);
+			return Ok(false);
 		}
 	};
 
-	if bump_is_greater(current_version, &release.version)? || force {
-		if !prompt
+	if bump_is_greater(&current_version, &release.version)? || force {
+		if !show_output
 			|| logger::prompt(
 				&format!(
 					"New Argon version: {} is available! Would you like to update?",
@@ -146,12 +142,11 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 				),
 				true,
 			) {
-			if !prompt {
+			if !show_output {
 				argon_info!("New Argon version: {} is available! Updating..", release.version.bold());
 			}
 
-			// Try to update through normal GitHub release asset
-			match update_config.build()?.update() {
+			match update.update() {
 				Ok(_) => {
 					argon_info!(
 						"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
@@ -161,8 +156,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 				}
 				Err(err) => {
 					trace!("Failed to update through asset: {}", err);
-					// If update through asset fails, try direct download
-					return download_direct_fallback(&release.version, prompt, true, &asset_name);
+					argon_error!("Failed to update Argon: {}", err);
 				}
 			}
 		} else {
@@ -173,154 +167,6 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	}
 
 	Ok(false)
-}
-
-// Fallback download function that directly fetches the release without relying on GitHub release assets
-fn download_direct_fallback(version: &str, _prompt: bool, _force: bool, asset_pattern: &str) -> Result<bool> {
-	let temp_dir = std::env::temp_dir();
-	let download_url = format!(
-		"https://github.com/LupaHQ/argon/releases/download/{}/{}",
-		version,
-		asset_pattern.replace("{version}", version)
-	);
-
-	argon_info!("Attempting direct download from {}", download_url);
-
-	// Create a reqwest client
-	let client = reqwest::blocking::Client::new();
-
-	// Check if the file exists by sending a HEAD request
-	let response = match client.head(&download_url).send() {
-		Ok(resp) => {
-			if !resp.status().is_success() {
-				argon_error!(
-					"File does not exist at URL: {} - HTTP status: {}",
-					download_url,
-					resp.status()
-				);
-				return Ok(false);
-			}
-			match client.get(&download_url).send() {
-				Ok(response) => response,
-				Err(err) => {
-					argon_error!("Failed to send GET request to URL: {} - Error: {}", download_url, err);
-					return Ok(false);
-				}
-			}
-		}
-		Err(err) => {
-			argon_error!(
-				"Failed to check file existence at URL: {} - Error: {}",
-				download_url,
-				err
-			);
-			return Ok(false);
-		}
-	};
-
-	if !response.status().is_success() {
-		argon_error!(
-			"Failed to download update: HTTP status {} from URL: {}",
-			response.status(),
-			download_url
-		);
-		return Ok(false);
-	}
-
-	// Download the file
-	argon_info!("Download successful, saving file to {}", temp_dir.display());
-	let target_file = temp_dir.join(asset_pattern.replace("{version}", version));
-	let mut file = match std::fs::File::create(&target_file) {
-		Ok(file) => file,
-		Err(err) => {
-			argon_error!("Failed to create file at {}: {}", target_file.display(), err);
-			return Ok(false);
-		}
-	};
-
-	// Get response bytes
-	let bytes = match response.bytes() {
-		Ok(bytes) => bytes,
-		Err(err) => {
-			argon_error!("Failed to read response body: {}", err);
-			return Ok(false);
-		}
-	};
-
-	// Copy response to file
-	match io::copy(&mut bytes.as_ref(), &mut file) {
-		Ok(size) => argon_info!("Downloaded {} bytes to {}", size, target_file.display()),
-		Err(err) => {
-			argon_error!("Failed to write file data: {}", err);
-			return Ok(false);
-		}
-	};
-
-	// Extract the binary
-	let extract_dir = temp_dir.join("extracted");
-	match std::fs::create_dir_all(&extract_dir) {
-		Ok(_) => argon_info!("Created extraction directory at {}", extract_dir.display()),
-		Err(err) => {
-			argon_error!("Failed to create extraction directory: {}", err);
-			return Ok(false);
-		}
-	};
-
-	// Use the self_update extract functionality
-	let bin_name = format!("argon{}", if cfg!(windows) { ".exe" } else { "" });
-
-	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
-	{
-		argon_info!(
-			"Extracting {} from {} to {}",
-			bin_name,
-			target_file.display(),
-			extract_dir.display()
-		);
-		let extraction_result = Extract::from_source(&target_file).extract_file(&extract_dir, &bin_name);
-		if let Err(err) = extraction_result {
-			argon_error!("Failed to extract file: {}", err);
-			return Ok(false);
-		}
-
-		// Get the executable path
-		let new_exe = extract_dir.join(&bin_name);
-		if !new_exe.exists() {
-			argon_error!("Extracted file doesn't exist at expected path: {}", new_exe.display());
-			return Ok(false);
-		}
-
-		// Replace the current executable - using std::fs to copy the file over
-		let current_exe = match std::env::current_exe() {
-			Ok(path) => path,
-			Err(err) => {
-				argon_error!("Failed to get current executable path: {}", err);
-				return Ok(false);
-			}
-		};
-
-		argon_info!(
-			"Replacing current executable at {} with new version from {}",
-			current_exe.display(),
-			new_exe.display()
-		);
-		if let Err(err) = fs::copy(&new_exe, &current_exe) {
-			argon_error!("Failed to copy new executable: {}", err);
-			return Ok(false);
-		}
-
-		argon_info!(
-			"CLI updated! Restart the program to apply changes. Visit {} to read the changelog",
-			"https://argon.wiki/changelog/argon".bold()
-		);
-		Ok(true)
-	}
-
-	#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-	{
-		argon_error!("Unsupported platform for direct download: {}", std::env::consts::OS);
-		Ok(false)
-	}
 }
 
 fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
@@ -440,68 +286,90 @@ fn get_vscode_version() -> Option<String> {
 }
 
 fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
+	println!("DEBUG: Starting VS Code extension update process");
 	trace!("Checking for VS Code extension updates");
-
+	
 	// Refresh our current version from installed extensions
 	if let Some(current) = get_vscode_version() {
+		println!("DEBUG: Current VS Code extension version detected: {}", current);
 		trace!("Current VS Code extension version: {}", current);
 		status.vscode_version = current;
 	} else {
-		trace!(
-			"Could not detect current VS Code extension version, using stored: {}",
-			status.vscode_version
-		);
+		println!("DEBUG: Could not detect current VS Code extension version, using stored: {}", status.vscode_version);
+		trace!("Could not detect current VS Code extension version, using stored: {}", status.vscode_version);
 	}
-
+	
 	let current_version = &status.vscode_version;
+	println!("DEBUG: Current version to compare against: {}", current_version);
 
 	// Get the latest release from GitHub
+	println!("DEBUG: Fetching latest release from GitHub");
 	trace!("Fetching latest VS Code extension release from GitHub");
-	let client = reqwest::blocking::Client::builder().user_agent("argon-cli").build()?;
-
-	let release = match client
-		.get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest")
-		.send()
-	{
+	let client = reqwest::blocking::Client::builder()
+		.user_agent("argon-cli")
+		.build()?;
+	
+	let release = match client.get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest").send() {
 		Ok(response) => {
+			println!("DEBUG: GitHub API status: {}", response.status());
 			if !response.status().is_success() {
+				println!("DEBUG: GitHub API request failed with status: {}", response.status());
 				trace!("GitHub API request failed with status: {}", response.status());
 				return Ok(false);
 			}
-
+			
 			match response.json::<serde_json::Value>() {
-				Ok(json) => json,
+				Ok(json) => {
+					println!("DEBUG: Successfully parsed GitHub API response");
+					json
+				},
 				Err(err) => {
+					println!("DEBUG: Failed to parse GitHub API response: {}", err);
 					trace!("Failed to parse GitHub API response: {}", err);
 					return Ok(false);
 				}
 			}
-		}
+		},
 		Err(err) => {
+			println!("DEBUG: Failed to get latest release information: {}", err);
 			trace!("Failed to get latest release information: {}", err);
 			return Ok(false);
 		}
 	};
 
 	let latest_version = match release["tag_name"].as_str() {
-		Some(tag) => tag.trim_start_matches('v'),
+		Some(tag) => {
+			let version = tag.trim_start_matches('v');
+			println!("DEBUG: Latest VS Code extension version: {}", version);
+			version
+		},
 		None => {
+			println!("DEBUG: Failed to get tag name from release");
 			trace!("Failed to get tag name from release");
 			return Ok(false);
 		}
 	};
-
+	
+	println!("DEBUG: Comparing versions - current: {}, latest: {}", current_version, latest_version);
 	trace!("Latest VS Code extension version: {}", latest_version);
 
 	// Compare versions and update if needed
-	let update_needed = match bump_is_greater(current_version, latest_version) {
-		Ok(result) => result || force,
+	let is_greater = bump_is_greater(current_version, latest_version);
+	println!("DEBUG: Is latest version greater? {:?}", is_greater);
+	
+	let update_needed = match is_greater {
+		Ok(result) => {
+			let needed = result || force;
+			println!("DEBUG: Update needed? {} (force={})", needed, force);
+			needed
+		},
 		Err(err) => {
+			println!("DEBUG: Failed to compare versions: {}", err);
 			trace!("Failed to compare versions: {}", err);
 			force // If comparison fails, only update if forced
 		}
 	};
-
+	
 	if update_needed {
 		if !prompt
 			|| logger::prompt(
@@ -644,9 +512,11 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				}
 			}
 		} else {
-			trace!("Argon VS Code extension is out of date!");
+			println!("DEBUG: No update needed");
+			trace!("Argon VS Code extension is up to date!");
 		}
 	} else {
+		println!("DEBUG: No update needed");
 		trace!("Argon VS Code extension is up to date!");
 	}
 
@@ -656,16 +526,15 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 pub fn check_for_updates(plugin: bool, templates: bool, prompt: bool) -> Result<()> {
 	let mut status = get_status()?;
 
-	if UPDATE_FORCED.is_completed() {
-		return Ok(());
-	}
-
-	if status.last_checked.elapsed()?.as_secs() < 3600 {
+	// If we've already checked within the last hour, skip
+	let now = SystemTime::now();
+	let one_hour = std::time::Duration::from_secs(60 * 60);
+	if now.duration_since(status.last_checked).unwrap_or(one_hour) < one_hour {
 		debug!("Update check already performed within the last hour");
 		return Ok(());
 	}
 
-	update_cli(prompt, false)?;
+	update_cli(false, false)?;
 
 	if plugin {
 		update_plugin(&mut status, prompt, false)?;
@@ -692,7 +561,7 @@ pub fn manual_update(cli: bool, plugin: bool, templates: bool, vscode: bool, for
 
 	if cli {
 		argon_info!("Checking for CLI updates...");
-		if update_cli(false, force)? {
+		if update_cli(force, false)? {
 			updated = true;
 		}
 	}
