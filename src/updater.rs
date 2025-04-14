@@ -174,7 +174,9 @@ pub fn update_cli(_force: bool, _show_output: bool) -> Result<bool, self_update:
 				.set_progress_style(style.0.clone(), style.1.clone())
 				.no_confirm(true);
 
+			println!("DEBUG: Attempting update for target: {}", target);
 			let result = target_configure.target(target).build()?.update();
+			println!("DEBUG: Update attempt result for target {}: {:?}", target, result.is_ok());
 
 			if result.is_ok() {
 				argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
@@ -212,15 +214,31 @@ pub fn update_cli(_force: bool, _show_output: bool) -> Result<bool, self_update:
 	#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 	{
 		println!("DEBUG: Standard architecture detected, attempting standard update...");
-		match update_configure.build()?.update() {
-			Ok(_) => {
-				argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
-				Ok(true)
+		let build_result = update_configure.build();
+		println!("DEBUG: Build result for standard update: {:?}", build_result.is_ok());
+		
+		if let Ok(updater) = build_result {
+			let update_result = updater.update();
+			println!("DEBUG: Update result for standard update: {:?}", update_result.is_ok());
+			match update_result {
+				Ok(_) => {
+					argon_info!(
+						"{}",
+						Paint::green("Argon CLI updated successfully! 🚀")
+					);
+					Ok(true)
+				}
+				Err(e) => {
+					println!("DEBUG: Standard update failed: {}", e);
+					argon_error!("Failed to update Argon: {}", e);
+					Err(e)
+				}
 			}
-			Err(e) => {
-				argon_error!("Failed to update Argon: {}", e);
-				Err(e)
-			}
+		} else {
+			let err = build_result.err().unwrap(); // We know it failed
+			println!("DEBUG: Failed to build standard updater: {}", err);
+			argon_error!("Failed to configure Argon update: {}", err);
+			Err(err)
 		}
 	}
 }
@@ -270,6 +288,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 					Ok(true)
 				}
 				Err(err) => {
+					println!("DEBUG: update_plugin failed: {}", err);
 					argon_error!("Failed to update Argon plugin: {}", err);
 					Ok(false)
 				}
@@ -557,7 +576,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				}
 				Err(err) => {
 					println!("DEBUG: Failed to run VS Code CLI: {}", err);
-					argon_error!("Failed to run VS Code CLI: {}", err);
+					argon_error!("Failed to run VS Code CLI: {}. Ensure 'code' command is in your system PATH.", err);
 				}
 			}
 		} else {
