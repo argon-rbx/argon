@@ -8,30 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.0.10] - 2025-04-14
 
-### Fixed
+### Added
+- Added detailed debug logging to the CLI update process for better diagnostics.
+- Added explicit fallback mechanism for Apple Silicon (aarch64 -> arm64 -> x86_64) during CLI updates.
 
-- Fixed update command to properly detect when running from VS Code environment
-- Improved update process to correctly update system binary when called from VS Code extension
-- Enhanced cross-platform detection for VS Code on Windows, macOS, and Linux
+### Fixed
+- Fixed various compilation errors related to recent updater changes.
+- Corrected dependencies and imports (added `yansi`).
+- Resolved conflict between local and remote changelog entries.
+
+### Changed
+- Prioritized CLI update before other components in the `manual_update` function.
 
 ## [0.0.9] - 2025-04-14
 
 ### Added
-
-- Improved VS Code extension update mechanism with better version detection
-- Added detailed logging for VS Code extension update process
-- Added validation of downloaded VSIX file before installation
+- Added detailed debug logging to the CLI update process for better diagnostics.
+- Added explicit fallback mechanism for Apple Silicon (aarch64 -> arm64 -> x86_64) during CLI updates.
 
 ### Fixed
+- Fixed various compilation errors related to recent updater changes.
+- Corrected dependencies and imports (added `yansi`).
+- Fixed update command to properly detect when running from VS Code environment
+- Improved update process to correctly update system binary when called from VS Code extension
+- Enhanced cross-platform detection for VS Code on Windows, macOS, and Linux
 
-- Fixed VS Code extension version detection when updating from CLI
-- Improved error handling for VS Code extension installation
-- Added proper fallback for when VS Code CLI is not available
+### Changed
+- Prioritized CLI update before other components in the `manual_update` function.
 
 ## [0.0.8] - 2025-04-13
 
 ### Fixed
-
 - Fixed update command usage in VS Code extension to use the correct --mode flag
 - Added fallback method for downloading updates when releases don't have proper assets
 - Improved error handling for M1/M2 Mac updates

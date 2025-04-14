@@ -1,7 +1,7 @@
 [package]
 name = "argon-rbx"
 authors = ["Dervex"]
-description = "Full featured tool for Roblox development"
+description = "Next-gen syncing and workflow tools for Roblox"
 repository = "https://github.com/LupaHQ/argon"
 documentation = "https://argon.wiki/docs"
 homepage = "https://argon.wiki"
