@@ -445,7 +445,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			};
 
 			let vsix_asset = match assets.iter().find(|asset| 
-				asset.get("name").and_then(|n| n.as_str()).map_or(false, |name| name.ends_with(".vsix"))
+				asset.get("name").and_then(|n| n.as_str()).is_some_and(|name| name.ends_with(".vsix"))
 			) {
 				Some(asset) => asset,
 				None => {
