@@ -89,7 +89,12 @@ impl SourceEntry {
 	}
 
 	pub fn index(&self) -> usize {
-		unsafe { *<*const _>::from(self).cast::<usize>() }
+		match self {
+			SourceEntry::File(_) => 0,
+			SourceEntry::Folder(_) => 1,
+			SourceEntry::Data(_) => 2,
+			SourceEntry::Project(_) => 3,
+		}
 	}
 }
 
