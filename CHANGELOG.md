@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.10] - 2025-04-14
+
 ### Fixed
+
 - Fixed update command to properly detect when running from VS Code environment
 - Improved update process to correctly update system binary when called from VS Code extension
 - Enhanced cross-platform detection for VS Code on Windows, macOS, and Linux
@@ -14,11 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.0.9] - 2025-04-14
 
 ### Added
+
 - Improved VS Code extension update mechanism with better version detection
 - Added detailed logging for VS Code extension update process
 - Added validation of downloaded VSIX file before installation
 
 ### Fixed
+
 - Fixed VS Code extension version detection when updating from CLI
 - Improved error handling for VS Code extension installation
 - Added proper fallback for when VS Code CLI is not available
@@ -26,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.0.8] - 2025-04-13
 
 ### Fixed
+
 - Fixed update command usage in VS Code extension to use the correct --mode flag
 - Added fallback method for downloading updates when releases don't have proper assets
 - Improved error handling for M1/M2 Mac updates
@@ -36,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.0.7] - 2025-04-12
 
 ### Fixed
+
 - Improved updater code with better identifier matching
 - Removed useless format! calls for better performance
 - Fixed code style issues and formatting
@@ -438,7 +445,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.9...HEAD
+[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.10...HEAD
+[0.0.10]: https://github.com/LupaHQ/argon/compare/0.0.9...0.0.10
 [0.0.9]: https://github.com/LupaHQ/argon/compare/0.0.8...0.0.9
 [0.0.8]: https://github.com/LupaHQ/argon/compare/0.0.7...0.0.8
 [0.0.7]: https://github.com/LupaHQ/argon/compare/0.0.2...0.0.7

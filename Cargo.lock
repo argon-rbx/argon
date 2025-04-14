@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "argon-rbx"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "actix-msgpack",
  "actix-web",
@@ -397,6 +397,7 @@ dependencies = [
  "whoami",
  "winsafe",
  "yaml2lua",
+ "yansi",
 ]
 
 [[package]]
@@ -4065,6 +4066,12 @@ dependencies = [
  "indexmap",
  "serde_yaml",
 ]
+
+[[package]]
+name = "yansi"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "zerocopy"
