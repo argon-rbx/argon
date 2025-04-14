@@ -2,7 +2,8 @@ use anyhow::Result;
 use clap::Parser;
 use eventsource_client as sse;
 use eventsource_client::Client;
-use log::{error, info};
+use log::{debug, error, info};
+use serde_json::Value;
 use tokio::runtime::Runtime;
 
 /// Connect to an MCP SSE endpoint (used internally by Cursor)
@@ -51,14 +52,52 @@ impl ConnectMcp {
 	async fn handle_sse_item(&self, item: sse::SSE) {
 		match item {
 			sse::SSE::Event(event) => {
-				info!(
-					"Received MCP message: type='{}', data='{}'",
-					event.event_type, event.data
-				);
-				// TODO: Add logic to process the message data (event.data) based on its type
+				// Process different event types
+				match event.event_type.as_str() {
+					"ping" => {
+						debug!("Received MCP ping");
+					}
+					"message" => {
+						// Try to parse the message as JSON
+						if let Ok(json) = serde_json::from_str::<Value>(&event.data) {
+							if let Some(message_type) = json.get("type").and_then(|t| t.as_str()) {
+								match message_type {
+									"completion" => {
+										if let Some(completion) = json.get("completion").and_then(|c| c.as_str()) {
+											info!("Received completion: {}", completion);
+										}
+									}
+									"error" => {
+										if let Some(error_msg) = json.get("error").and_then(|e| e.as_str()) {
+											error!("Received MCP error: {}", error_msg);
+										}
+									}
+									"status" => {
+										if let Some(status) = json.get("status").and_then(|s| s.as_str()) {
+											info!("MCP status change: {}", status);
+										}
+									}
+									_ => {
+										debug!("Unhandled message type: {}", message_type);
+									}
+								}
+							} else {
+								debug!("Received JSON message without type: {}", event.data);
+							}
+						} else {
+							debug!("Received non-JSON message: {}", event.data);
+						}
+					}
+					_ => {
+						info!(
+							"Received unhandled event type: {} with data: {}",
+							event.event_type, event.data
+						);
+					}
+				}
 			}
 			sse::SSE::Comment(comment) => {
-				log::debug!("Received SSE comment: {}", comment);
+				debug!("Received SSE comment: {}", comment);
 			}
 		}
 	}
