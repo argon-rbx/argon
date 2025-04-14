@@ -18,9 +18,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.0.12] - 2025-04-14
 
-### Added
+### Fixed
+- Added more specific debug logging around CLI update attempts, especially for Windows `IoError`.
+- Improved error message when VS Code CLI (`code`) command is not found, suggesting PATH check.
+- Corrected error handling logic in `update_plugin` to properly return `Ok(false)` on failure.
+- Resolved `clippy::needless_return` warnings.
+- Fixed several compilation errors introduced during refactoring, including type mismatches and incorrect method calls.
+- Refactored Apple Silicon update logic to iterate through targets correctly.
+- Removed final unreachable `Ok(false)` in `update_cli` to satisfy `-D warnings`.
+- Used `.is_some_and()` instead of `.map_or()` for cleaner VSIX asset check.
 
-- Add `connect-mcp` command to handle MCP SSE connections natively.
+### Changed
+- Applied `rustfmt` formatting.
 
 ## [0.0.11] - 2025-04-14
 
