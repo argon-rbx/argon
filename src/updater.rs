@@ -1,10 +1,10 @@
 use anyhow::Result;
+use dirs;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::{fs, sync::Once, time::SystemTime};
 use std::env;
-use dirs;
+use std::{fs, sync::Once, time::SystemTime};
 use yansi::Paint;
 
 use crate::{
@@ -67,32 +67,27 @@ pub fn set_status(status: &UpdateStatus) -> Result<()> {
 	Ok(())
 }
 
-pub fn update_cli(
-	_force: bool,
-	_show_output: bool,
-) -> Result<bool, self_update::errors::Error> {
+pub fn update_cli(_force: bool, _show_output: bool) -> Result<bool, self_update::errors::Error> {
 	// Check if we're running from VS Code
 	let exe_path = std::env::current_exe().unwrap_or_default();
 	let exe_path_str = exe_path.to_string_lossy();
-	
+
 	// Print debug info to verify execution path
 	println!("DEBUG: Current executable path: {}", exe_path_str);
-	
+
 	// Platform-specific VS Code detection
 	#[cfg(target_os = "macos")]
 	let is_vscode = exe_path_str.contains("/Code.app/");
-	
+
 	#[cfg(target_os = "windows")]
-	let is_vscode = exe_path_str.contains("\\Microsoft VS Code\\") || 
-					exe_path_str.contains("\\Code\\");
-	
+	let is_vscode = exe_path_str.contains("\\Microsoft VS Code\\") || exe_path_str.contains("\\Code\\");
+
 	#[cfg(target_os = "linux")]
-	let is_vscode = exe_path_str.contains("/vscode/") || 
-					exe_path_str.contains("/code/");
-	
+	let is_vscode = exe_path_str.contains("/vscode/") || exe_path_str.contains("/code/");
+
 	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 	let is_vscode = false;
-	
+
 	println!("DEBUG: Detected VS Code environment: {}", is_vscode);
 	trace!("Exe path: {}", exe_path_str);
 	trace!("Is VS Code: {}", is_vscode);
@@ -100,28 +95,34 @@ pub fn update_cli(
 	// Get current exe path
 	let current_exe = env::current_exe()?;
 	trace!("Current executable path: {:?}", current_exe);
-	
+
 	// Get user home directory for better argon binary detection
 	let home_dir = dirs::home_dir().expect("Could not determine home directory");
 	let argon_bin_path = home_dir.join(".argon").join("bin").join("argon");
-	
+
 	println!("DEBUG: Home directory path: {:?}", home_dir);
 	println!("DEBUG: Argon system binary path exists: {}", argon_bin_path.exists());
-	
+
 	// If called from VS Code, use the system binary path
 	let install_path = if is_vscode && argon_bin_path.exists() {
-		println!("DEBUG: VS Code detected, updating system installation at: {:?}", argon_bin_path);
-		trace!("VS Code detected, updating system installation at: {:?}", argon_bin_path);
+		println!(
+			"DEBUG: VS Code detected, updating system installation at: {:?}",
+			argon_bin_path
+		);
+		trace!(
+			"VS Code detected, updating system installation at: {:?}",
+			argon_bin_path
+		);
 		argon_bin_path.clone()
 	} else {
 		println!("DEBUG: Updating current executable at: {:?}", current_exe);
 		trace!("Updating current executable at: {:?}", current_exe);
 		current_exe.clone()
 	};
-	
+
 	let style = util::get_progress_style();
 	let _current_version = cargo_crate_version!();
-	
+
 	// Simple update configuration without architecture specifics
 	let mut update_configure = Update::configure();
 	update_configure
@@ -132,13 +133,13 @@ pub fn update_cli(
 		.show_download_progress(true)
 		.set_progress_style(style.0.clone(), style.1.clone())
 		.no_confirm(true);
-	
+
 	// Print debug info about target architecture
 	#[cfg(target_arch = "aarch64")]
 	println!("DEBUG: Running on aarch64 architecture");
 	#[cfg(target_arch = "x86_64")]
 	println!("DEBUG: Running on x86_64 architecture");
-	
+
 	// Debug info about target platform
 	#[cfg(target_os = "macos")]
 	println!("DEBUG: Running on macOS");
@@ -146,14 +147,14 @@ pub fn update_cli(
 	println!("DEBUG: Running on Windows");
 	#[cfg(target_os = "linux")]
 	println!("DEBUG: Running on Linux");
-	
+
 	// Try different targets for Apple Silicon
 	#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 	{
 		println!("DEBUG: Apple Silicon detected, attempting update with specific targets...");
 		let targets_to_try = [
 			"aarch64-apple-darwin",
-			"arm64-apple-darwin", // Alias sometimes used
+			"arm64-apple-darwin",  // Alias sometimes used
 			"x86_64-apple-darwin", // Rosetta fallback
 		];
 
@@ -161,7 +162,7 @@ pub fn update_cli(
 
 		for target in targets_to_try {
 			println!("DEBUG: Trying target: {}", target);
-			
+
 			// Re-create the builder for this specific target attempt
 			let mut target_configure = Update::configure();
 			target_configure
@@ -172,14 +173,11 @@ pub fn update_cli(
 				.show_download_progress(true)
 				.set_progress_style(style.0.clone(), style.1.clone())
 				.no_confirm(true);
-			
+
 			let result = target_configure.target(target).build()?.update();
 
 			if result.is_ok() {
-				argon_info!(
-					"{}",
-					Paint::green("Argon CLI updated successfully! 🚀")
-				);
+				argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
 				return Ok(true); // Success, exit early
 			}
 			println!("DEBUG: Target {} failed: {:?}", target, result.as_ref().err());
@@ -191,11 +189,12 @@ pub fn update_cli(
 		if let Some(err) = last_error {
 			let release = update_configure.build()?.get_latest_release().ok();
 			let available_assets = release.map_or_else(
-				|| "Could not fetch release info".to_string(), 
-				|r| r.assets.iter().map(|a| a.name.clone()).collect::<Vec<_>>().join(", ")
+				|| "Could not fetch release info".to_string(),
+				|r| r.assets.iter().map(|a| a.name.clone()).collect::<Vec<_>>().join(", "),
 			);
-			
-			argon_error!("Failed to update Argon: {}. No suitable binary found for your architecture. Available assets: {}", 
+
+			argon_error!(
+				"Failed to update Argon: {}. No suitable binary found for your architecture. Available assets: {}",
 				err,
 				available_assets
 			);
@@ -203,20 +202,19 @@ pub fn update_cli(
 		} else {
 			// This case should technically be unreachable
 			argon_error!("Failed to update Argon: Unknown error occurred after trying all targets.");
-			Err(self_update::errors::Error::Update("Update failed after trying all targets, but no specific error was captured.".to_string()))
+			Err(self_update::errors::Error::Update(
+				"Update failed after trying all targets, but no specific error was captured.".to_string(),
+			))
 		}
 	}
-	
+
 	// For other architectures, use standard update
 	#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 	{
 		println!("DEBUG: Standard architecture detected, attempting standard update...");
 		match update_configure.build()?.update() {
 			Ok(_) => {
-				argon_info!(
-					"{}",
-					Paint::green("Argon CLI updated successfully! 🚀")
-				);
+				argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
 				Ok(true)
 			}
 			Err(e) => {
@@ -274,7 +272,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				Err(err) => {
 					argon_error!("Failed to update Argon plugin: {}", err);
 					Ok(false)
-				},
+				}
 			}
 		} else {
 			trace!("Argon plugin is out of date!");
@@ -349,26 +347,33 @@ fn get_vscode_version() -> Option<String> {
 fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result<bool> {
 	println!("DEBUG: Starting VS Code extension update process");
 	trace!("Checking for VS Code extension updates");
-	
+
 	if let Some(current) = get_vscode_version() {
 		println!("DEBUG: Current VS Code extension version detected: {}", current);
 		trace!("Current VS Code extension version: {}", current);
 		status.vscode_version = current;
 	} else {
-		println!("DEBUG: Could not detect current VS Code extension version, using stored: {}", status.vscode_version);
-		trace!("Could not detect current VS Code extension version, using stored: {}", status.vscode_version);
+		println!(
+			"DEBUG: Could not detect current VS Code extension version, using stored: {}",
+			status.vscode_version
+		);
+		trace!(
+			"Could not detect current VS Code extension version, using stored: {}",
+			status.vscode_version
+		);
 	}
-	
+
 	let current_version = &status.vscode_version;
 	println!("DEBUG: Current version to compare against: {}", current_version);
 
 	println!("DEBUG: Fetching latest release from GitHub");
 	trace!("Fetching latest VS Code extension release from GitHub");
-	let client = reqwest::blocking::Client::builder()
-		.user_agent("argon-cli")
-		.build()?;
-	
-	let response = match client.get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest").send() {
+	let client = reqwest::blocking::Client::builder().user_agent("argon-cli").build()?;
+
+	let response = match client
+		.get("https://api.github.com/repos/LupaHQ/argon-vscode/releases/latest")
+		.send()
+	{
 		Ok(resp) => resp,
 		Err(err) => {
 			println!("DEBUG: Failed to send request for latest release: {}", err);
@@ -385,16 +390,16 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 
 	let release: serde_json::Value = match response.json() {
 		Ok(json) => {
-			 println!("DEBUG: Successfully parsed GitHub API response");
-			 json
-		},
+			println!("DEBUG: Successfully parsed GitHub API response");
+			json
+		}
 		Err(err) => {
 			println!("DEBUG: Failed to parse GitHub API response: {}", err);
 			trace!("Failed to parse GitHub API response: {}", err);
 			return Ok(false); // Early exit on parse error
 		}
 	};
-	
+
 	let latest_version_str = match release["tag_name"].as_str() {
 		Some(tag) => tag.trim_start_matches('v').to_string(),
 		None => {
@@ -404,13 +409,16 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 		}
 	};
 	let latest_version = &latest_version_str; // Borrow for comparison
-	
-	println!("DEBUG: Comparing versions - current: {}, latest: {}", current_version, latest_version);
+
+	println!(
+		"DEBUG: Comparing versions - current: {}, latest: {}",
+		current_version, latest_version
+	);
 	trace!("Latest VS Code extension version: {}", latest_version);
 
 	let is_greater = bump_is_greater(current_version, latest_version);
 	println!("DEBUG: Is latest version greater? {:?}", is_greater);
-	
+
 	let update_needed = match is_greater {
 		Ok(result) => result || force,
 		Err(err) => {
@@ -420,15 +428,16 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 		}
 	};
 	println!("DEBUG: Update needed? {} (force={})", update_needed, force);
-	
+
 	if update_needed {
-		if !prompt || logger::prompt(
-			&format!(
-				"New version of Argon VS Code extension: {} is available! Would you like to update?",
-				Paint::bold(latest_version)
-			),
-			true,
-		) {
+		if !prompt
+			|| logger::prompt(
+				&format!(
+					"New version of Argon VS Code extension: {} is available! Would you like to update?",
+					Paint::bold(latest_version)
+				),
+				true,
+			) {
 			if !prompt {
 				argon_info!(
 					"New version of Argon VS Code extension: {} is available! Updating..",
@@ -444,9 +453,12 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				}
 			};
 
-			let vsix_asset = match assets.iter().find(|asset| 
-				asset.get("name").and_then(|n| n.as_str()).is_some_and(|name| name.ends_with(".vsix"))
-			) {
+			let vsix_asset = match assets.iter().find(|asset| {
+				asset
+					.get("name")
+					.and_then(|n| n.as_str())
+					.is_some_and(|name| name.ends_with(".vsix"))
+			}) {
 				Some(asset) => asset,
 				None => {
 					trace!("Failed to find VSIX asset in release");
@@ -461,7 +473,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 					return Ok(false);
 				}
 			};
-			
+
 			let temp_dir = std::env::temp_dir();
 			let vsix_path = temp_dir.join(format!("argon-{}.vsix", latest_version));
 
@@ -476,7 +488,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			trace!("Downloading from URL: {}", download_url);
 
 			// Use a closure for download logic to handle intermediate errors cleanly
-			let download_result = || -> Result<()> { 
+			let download_result = || -> Result<()> {
 				let mut response = client.get(&download_url).send()?;
 				if !response.status().is_success() {
 					anyhow::bail!("Failed to download: HTTP status {}", response.status());
@@ -487,9 +499,9 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			};
 
 			if let Err(err) = download_result() {
-				 println!("DEBUG: Download failed: {}", err);
-				 argon_error!("Failed to download VS Code extension: {}", err);
-				 return Ok(false);
+				println!("DEBUG: Download failed: {}", err);
+				argon_error!("Failed to download VS Code extension: {}", err);
+				return Ok(false);
 			}
 
 			argon_info!("Installing VS Code extension...");
