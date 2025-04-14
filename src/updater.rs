@@ -1,15 +1,11 @@
 use anyhow::Result;
-use colored::Colorize;
 use log::{debug, trace, warn};
-use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater, Extract};
+use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::io;
 use std::{fs, sync::Once, time::SystemTime};
 use std::env;
 use dirs;
-use std::path::PathBuf;
 use yansi::Paint;
-use colored::Color;
 
 use crate::{
 	argon_error, argon_info,
@@ -72,8 +68,8 @@ pub fn set_status(status: &UpdateStatus) -> Result<()> {
 }
 
 pub fn update_cli(
-	force: bool,
-	show_output: bool,
+	_force: bool,
+	_show_output: bool,
 ) -> Result<bool, self_update::errors::Error> {
 	// Check if we're running from VS Code
 	let exe_path = std::env::current_exe().unwrap_or_default();
@@ -124,16 +120,17 @@ pub fn update_cli(
 	};
 	
 	let style = util::get_progress_style();
-	let current_version = cargo_crate_version!();
+	let _current_version = cargo_crate_version!();
 	
 	// Simple update configuration without architecture specifics
-	let update = Update::configure()
+	let mut update_configure = Update::configure();
+	update_configure
 		.repo_owner("LupaHQ")
 		.repo_name("argon")
 		.bin_name("argon")
 		.bin_install_path(&install_path)
 		.show_download_progress(true)
-		.set_progress_style(style.0, style.1)
+		.set_progress_style(style.0.clone(), style.1.clone())
 		.no_confirm(true);
 	
 	// Print debug info about target architecture
@@ -150,130 +147,82 @@ pub fn update_cli(
 	#[cfg(target_os = "linux")]
 	println!("DEBUG: Running on Linux");
 	
-	// Try to build with multiple asset identifiers for Apple Silicon
-	// This provides a fallback to x86_64 when aarch64 isn't available
+	// Try different targets for Apple Silicon
 	#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 	{
-		let version_placeholder = "{{version}}";
-		println!("DEBUG: Apple Silicon detected, checking for assets...");
-		println!("DEBUG: Attempting with three possible asset patterns:");
-		println!("DEBUG: 1. argon-{}-macos-aarch64.zip (aarch64 specific)", version_placeholder);
-		println!("DEBUG: 2. argon-{}-macos-arm64.zip (arm64 alias)", version_placeholder);
-		println!("DEBUG: 3. argon-{}-macos-x86_64.zip (Rosetta compatible fallback)", version_placeholder);
-	}
-	
-	let update_built = update.build()?;
-	
-	let release = match update_built.get_latest_release() {
-		Ok(release) => {
-			let version = release.version.to_string();
-			println!("DEBUG: Found latest release version: {}", version);
+		println!("DEBUG: Apple Silicon detected, attempting update with specific targets...");
+		let targets_to_try = [
+			"aarch64-apple-darwin",
+			"arm64-apple-darwin", // Alias sometimes used
+			"x86_64-apple-darwin", // Rosetta fallback
+		];
+
+		let mut last_error = None;
+
+		for target in targets_to_try {
+			println!("DEBUG: Trying target: {}", target);
 			
-			println!("DEBUG: Available assets:");
-			println!("DEBUG: 1. argon-{}-macos-aarch64.zip (aarch64 specific)", version);
-			println!("DEBUG: 2. argon-{}-macos-arm64.zip (arm64 alias)", version);
-			println!("DEBUG: 3. argon-{}-macos-x86_64.zip (Rosetta compatible fallback)", version);
+			// Re-create the builder for this specific target attempt
+			let mut target_configure = Update::configure();
+			target_configure
+				.repo_owner("LupaHQ")
+				.repo_name("argon")
+				.bin_name("argon")
+				.bin_install_path(&install_path)
+				.show_download_progress(true)
+				.set_progress_style(style.0.clone(), style.1.clone())
+				.no_confirm(true);
 			
-			release
-		},
-		Err(e) => {
-			println!("DEBUG: Error getting latest release: {}", e);
-			return Ok(false);
-		}
-	};
+			let result = target_configure.target(target).build()?.update();
 
-	let update_built = update_built.bin_install_path(&install_path).show_download_progress(true);
-
-	if bump_is_greater(&current_version, &release.version)? || force {
-		if !show_output
-			|| logger::prompt(
-				&format!(
-					"New Argon version: {} is available! Would you like to update?",
-					release.version.bold()
-				),
-				true,
-			) {
-			if !show_output {
-				argon_info!("New Argon version: {} is available! Updating..", release.version.bold());
-			}
-
-			// Try different targets for Apple Silicon
-			#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-			{
-				// Try Apple Silicon specific binary first
-				println!("DEBUG: Trying Apple Silicon (aarch64-apple-darwin) target first");
-				let result = update_built.version(current_version).target("aarch64-apple-darwin").update();
-				
-				if let Err(err) = &result {
-					println!("DEBUG: aarch64-apple-darwin failed: {}", err);
-					
-					// Try with arm64 naming convention
-					println!("DEBUG: Trying with arm64-apple-darwin target");
-					let arm_result = update_built.version(current_version).target("arm64-apple-darwin").update();
-					
-					if let Err(arm_err) = &arm_result {
-						println!("DEBUG: arm64-apple-darwin failed: {}", arm_err);
-						
-						// Fallback to x86_64 (Rosetta compatible)
-						println!("DEBUG: Falling back to x86_64-apple-darwin target");
-						let x86_result = update_built.version(current_version).target("x86_64-apple-darwin").update();
-						
-						if let Err(x86_err) = &x86_result {
-							println!("DEBUG: x86_64-apple-darwin failed: {}", x86_err);
-							println!("DEBUG: All target options failed, showing original error");
-							
-							// If all targets failed, show a more helpful error message
-							argon_error!("Failed to update Argon: {}. No suitable binary found for your architecture. Available assets: {}", 
-								err, 
-								release.assets.iter().map(|a| a.name.clone()).collect::<Vec<_>>().join(", ")
-							);
-							return Err(err.clone());
-						}
-						
-						// Return the x86_64 result
-						argon_info!(
-							"{}",
-							Paint::green("Argon CLI updated successfully! 🚀")
-						);
-						return x86_result.map(|_| true);
-					}
-					
-					// Return the arm64 result
-					argon_info!(
-						"{}",
-						Paint::green("Argon CLI updated successfully! 🚀")
-					);
-					return arm_result.map(|_| true);
-				}
-				
-				// Return the aarch64 result
+			if result.is_ok() {
 				argon_info!(
 					"{}",
 					Paint::green("Argon CLI updated successfully! 🚀")
 				);
-				return result.map(|_| true);
+				return Ok(true); // Success, exit early
 			}
-			
-			// For other architectures, use standard update
-			#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-			match update_built.update() {
-				Ok(_) => {
-					argon_info!(
-						"{}",
-						Paint::green("Argon CLI updated successfully! 🚀")
-					);
-					return Ok(true);
-				}
-				Err(e) => {
-					argon_error!("Failed to update Argon: {}", e);
-					return Err(e);
-				}
-			}
-		} else {
-			trace!("Argon is out of date!");
+			println!("DEBUG: Target {} failed: {:?}", target, result.as_ref().err());
+			last_error = result.err(); // Store the error from this attempt
 		}
-	} else {
-		trace!("Argon is up to date!");
+
+		// If all targets failed
+		println!("DEBUG: All target options failed.");
+		if let Some(err) = last_error {
+			let release = update_configure.build()?.get_latest_release().ok();
+			let available_assets = release.map_or_else(
+				|| "Could not fetch release info".to_string(), 
+				|r| r.assets.iter().map(|a| a.name.clone()).collect::<Vec<_>>().join(", ")
+			);
+			
+			argon_error!("Failed to update Argon: {}. No suitable binary found for your architecture. Available assets: {}", 
+				err,
+				available_assets
+			);
+			return Err(err);
+		}
+		
+		// Should be unreachable if last_error is always Some after loop failure
+		return Ok(false); 
+	}
+	
+	// For other architectures, use standard update
+	#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+	{
+		println!("DEBUG: Standard architecture detected, attempting standard update...");
+		match update_configure.build()?.update() {
+			Ok(_) => {
+				argon_info!(
+					"{}",
+					Paint::green("Argon CLI updated successfully! 🚀")
+				);
+				return Ok(true);
+			}
+			Err(e) => {
+				argon_error!("Failed to update Argon: {}", e);
+				return Err(e);
+			}
+		}
 	}
 
 	Ok(false)
@@ -290,7 +239,7 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 		.bin_name("Argon.rbxm")
 		.target("")
 		.show_download_progress(true)
-		.set_progress_style(style.0, style.1)
+		.set_progress_style(style.0.clone(), style.1.clone())
 		.bin_install_path(plugin_path)
 		.build()?;
 
@@ -316,8 +265,8 @@ fn update_plugin(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				Ok(_) => {
 					argon_info!(
 						"Roblox plugin updated! Make sure you have {} setting enabled to see changes. Visit {} to read the changelog",
-						"Reload plugins on file changed".bold(),
-						"https://argon.wiki/changelog/argon-roblox".bold()
+						Paint::bold(&"Reload plugins on file changed"),
+						Paint::bold(&"https://argon.wiki/changelog/argon-roblox")
 					);
 
 					status.plugin_version = release.version;
@@ -485,14 +434,14 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 			|| logger::prompt(
 				&format!(
 					"New version of Argon VS Code extension: {} is available! Would you like to update?",
-					latest_version.bold()
+					Paint::bold(&latest_version)
 				),
 				true,
 			) {
 			if !prompt {
 				argon_info!(
 					"New version of Argon VS Code extension: {} is available! Updating..",
-					latest_version.bold()
+					Paint::bold(&latest_version)
 				);
 			}
 
@@ -608,7 +557,7 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 
 						argon_info!(
 							"VS Code extension updated! Please reload VS Code to apply changes. Visit {} to read the changelog",
-							"https://argon.wiki/changelog/argon-vscode".bold()
+							Paint::bold(&"https://argon.wiki/changelog/argon-vscode")
 						);
 						status.vscode_version = latest_version.to_string();
 						return Ok(true);
