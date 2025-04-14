@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use eventsource_client as sse;
 use eventsource_client::Client;
@@ -15,7 +15,7 @@ pub struct ConnectMcp {
 
 impl ConnectMcp {
 	pub fn main(self) -> Result<()> {
-		let rt = Runtime::new().context("Failed to create Tokio runtime")?;
+		let rt = Runtime::new()?;
 		rt.block_on(async { self.run_connection().await })
 	}
 
@@ -59,9 +59,6 @@ impl ConnectMcp {
 			}
 			sse::SSE::Comment(comment) => {
 				log::debug!("Received SSE comment: {}", comment);
-			}
-			sse::SSE::Connected(details) => {
-				log::info!("SSE stream connected: {:?}", details);
 			}
 		}
 	}
