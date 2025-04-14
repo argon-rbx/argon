@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/LupaHQ/argon/compare/0.0.13...HEAD
+
+## [0.0.13] - 2025-04-14
+
+### Added
+
+- Add `connect-mcp` command to handle MCP SSE connections natively.
+
+[0.0.13]: https://github.com/LupaHQ/argon/compare/0.0.12...0.0.13
+
 ## [0.0.12] - 2025-04-14
 
 ### Added

@@ -9,6 +9,7 @@ use crate::util;
 
 mod build;
 mod config;
+mod connect_mcp;
 mod debug;
 mod doc;
 mod exec;
@@ -132,6 +133,7 @@ impl Cli {
 			Commands::Plugin(command) => command.main(),
 			Commands::Config(command) => command.main(),
 			Commands::Doc(command) => command.main(),
+			Commands::ConnectMcp(command) => command.main(),
 		}
 	}
 }
@@ -150,4 +152,5 @@ pub enum Commands {
 	Plugin(plugin::Plugin),
 	Config(config::Config),
 	Doc(doc::Doc),
+	ConnectMcp(connect_mcp::ConnectMcp),
 }
