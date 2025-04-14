@@ -176,7 +176,11 @@ pub fn update_cli(_force: bool, _show_output: bool) -> Result<bool, self_update:
 
 			println!("DEBUG: Attempting update for target: {}", target);
 			let result = target_configure.target(target).build()?.update();
-			println!("DEBUG: Update attempt result for target {}: {:?}", target, result.is_ok());
+			println!(
+				"DEBUG: Update attempt result for target {}: {:?}",
+				target,
+				result.is_ok()
+			);
 
 			if result.is_ok() {
 				argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
@@ -216,16 +220,13 @@ pub fn update_cli(_force: bool, _show_output: bool) -> Result<bool, self_update:
 		println!("DEBUG: Standard architecture detected, attempting standard update...");
 		let build_result = update_configure.build();
 		println!("DEBUG: Build result for standard update: {:?}", build_result.is_ok());
-		
+
 		if let Ok(updater) = build_result {
 			let update_result = updater.update();
 			println!("DEBUG: Update result for standard update: {:?}", update_result.is_ok());
 			match update_result {
 				Ok(_) => {
-					argon_info!(
-						"{}",
-						Paint::green("Argon CLI updated successfully! 🚀")
-					);
+					argon_info!("{}", Paint::green("Argon CLI updated successfully! 🚀"));
 					Ok(true)
 				}
 				Err(e) => {
@@ -576,7 +577,10 @@ fn update_vscode(status: &mut UpdateStatus, prompt: bool, force: bool) -> Result
 				}
 				Err(err) => {
 					println!("DEBUG: Failed to run VS Code CLI: {}", err);
-					argon_error!("Failed to run VS Code CLI: {}. Ensure 'code' command is in your system PATH.", err);
+					argon_error!(
+						"Failed to run VS Code CLI: {}. Ensure 'code' command is in your system PATH.",
+						err
+					);
 				}
 			}
 		} else {
