@@ -6,7 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/LupaHQ/argon/compare/0.0.13...HEAD
+[Unreleased]: https://github.com/LupaHQ/argon/compare/0.0.14...HEAD
+
+## [0.0.14] - 2025-04-17
+
+### Improved
+- Enhanced `connect-mcp` command with proper JSON-RPC message handling
+- Added robust reconnection logic with exponential backoff for MCP connections
+- Improved error handling in SSE client for greater stability
+- Added detailed logging for MCP protocol messages
+
+[0.0.14]: https://github.com/LupaHQ/argon/compare/0.0.13...0.0.14
 
 ## [0.0.13] - 2025-04-14
 
