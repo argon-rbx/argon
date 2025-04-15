@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/LupaHQ/argon/compare/0.0.14...HEAD
+## [0.0.15] - 2025-04-15
+
+[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.15...HEAD
+[0.0.15]: https://github.com/LupaHQ/argon/compare/0.0.14...0.0.15
 
 ## [0.0.14] - 2025-04-17
 
 ### Improved
+
 - Enhanced `connect-mcp` command with proper JSON-RPC message handling
 - Added robust reconnection logic with exponential backoff for MCP connections
 - Improved error handling in SSE client for greater stability
@@ -29,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.0.12] - 2025-04-14
 
 ### Fixed
+
 - Added more specific debug logging around CLI update attempts, especially for Windows `IoError`.
 - Improved error message when VS Code CLI (`code`) command is not found, suggesting PATH check.
 - Corrected error handling logic in `update_plugin` to properly return `Ok(false)` on failure.
@@ -39,11 +44,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Used `.is_some_and()` instead of `.map_or()` for cleaner VSIX asset check.
 
 ### Changed
+
 - Applied `rustfmt` formatting.
 
 ## [0.0.11] - 2025-04-14
 
 ### Fixed
+
 - Added more specific debug logging around CLI update attempts, especially for Windows `IoError`.
 - Improved error message when VS Code CLI (`code`) command is not found, suggesting PATH check.
 - Corrected error handling logic in `update_plugin` to properly return `Ok(false)` on failure.
@@ -54,29 +61,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Used `.is_some_and()` instead of `.map_or()` for cleaner VSIX asset check.
 
 ### Changed
+
 - Applied `rustfmt` formatting.
 
 ## [0.0.10] - 2025-04-14
 
 ### Added
+
 - Added detailed debug logging to the CLI update process for better diagnostics.
 - Added explicit fallback mechanism for Apple Silicon (aarch64 -> arm64 -> x86_64) during CLI updates.
 
 ### Fixed
+
 - Fixed various compilation errors related to recent updater changes.
 - Corrected dependencies and imports (added `yansi`).
 - Resolved conflict between local and remote changelog entries.
 
 ### Changed
+
 - Prioritized CLI update before other components in the `manual_update` function.
 
 ## [0.0.9] - 2025-04-14
 
 ### Added
+
 - Added detailed debug logging to the CLI update process for better diagnostics.
 - Added explicit fallback mechanism for Apple Silicon (aarch64 -> arm64 -> x86_64) during CLI updates.
 
 ### Fixed
+
 - Fixed various compilation errors related to recent updater changes.
 - Corrected dependencies and imports (added `yansi`).
 - Fixed update command to properly detect when running from VS Code environment
@@ -84,11 +97,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Enhanced cross-platform detection for VS Code on Windows, macOS, and Linux
 
 ### Changed
+
 - Prioritized CLI update before other components in the `manual_update` function.
 
 ## [0.0.8] - 2025-04-13
 
 ### Fixed
+
 - Fixed update command usage in VS Code extension to use the correct --mode flag
 - Added fallback method for downloading updates when releases don't have proper assets
 - Improved error handling for M1/M2 Mac updates
