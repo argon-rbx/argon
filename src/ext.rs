@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use env_logger::WriteStyle;
 use log::warn;
 use path_clean::PathClean;
+use rbx_reflection::{PropertyDescriptor, PropertyKind, PropertySerialization};
 use std::{
 	env,
 	fmt::Display,
@@ -169,5 +170,21 @@ impl<T: Write> WriterExt for T {
 				b"\n"
 			}
 		})
+	}
+}
+
+/// Additional methods for `rbx_reflection::PropertyDescriptor`
+pub trait PropertyDescriptorExt {
+	fn get_custom_serialization(&self) -> Option<String>;
+}
+
+impl PropertyDescriptorExt for PropertyDescriptor<'_> {
+	fn get_custom_serialization(&self) -> Option<String> {
+		match &self.kind {
+			PropertyKind::Canonical {
+				serialization: PropertySerialization::SerializesAs(data_type),
+			} => Some(data_type.to_string()),
+			_ => None,
+		}
 	}
 }

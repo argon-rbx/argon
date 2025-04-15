@@ -11,6 +11,8 @@ use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use std::{borrow::Borrow, collections::HashMap, fmt::Write};
 
+use crate::ext::PropertyDescriptorExt;
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnresolvedValue {
@@ -301,9 +303,8 @@ impl AmbiguousValue {
 						.keys()
 						.map(|value| value.borrow())
 						.collect::<Vec<&str>>();
-					examples.sort();
 
-					let examples = list_examples(&examples);
+					examples.sort();
 
 					format_err!(
 						"Invalid value for property {}.{}. Got {} but expected a member of the {} enum such as {}",
@@ -311,7 +312,7 @@ impl AmbiguousValue {
 						property,
 						value,
 						enum_name,
-						examples,
+						list_examples(&examples),
 					)
 				};
 
@@ -383,7 +384,16 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
-					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
+					let (r, g, b) = (color[0] as f32, color[1] as f32, color[2] as f32);
+
+					// Fix for the custom BasePart.Color serialization (https://github.com/argon-rbx/rbx-dom/blob/master/patches/parts.yml#L18)
+					if let Some(data_type) = descriptor.get_custom_serialization() {
+						if data_type == "Color3uint8" && (r > 1.0 || g > 1.0 || b > 1.0) {
+							return Ok(Color3::new(r / 255.0, g / 255.0, b / 255.0).into());
+						}
+					}
+
+					Ok(Color3::new(r, g, b).into())
 				}
 				(VariantType::Color3uint8, AmbiguousValue::Array3(color)) => {
 					Ok(Color3uint8::new(color[0] as u8, color[1] as u8, color[2] as u8).into())

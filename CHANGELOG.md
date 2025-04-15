@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Support for `Enum` attributes and `Content` properties
 - Improved performance of `.rbxm` parsing
 
+### Fixed
+
+- `BasePart.Color` property is now properly converted between `Color3` and `Color3uint8` types
+
 ### Changed
 
 - Updated `rbx-dom` library to the latest major version
