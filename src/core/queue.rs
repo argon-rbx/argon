@@ -39,7 +39,7 @@ struct Channel {
 pub struct Queue {
 	queues: RwLock<HashMap<u32, Channel>>,
 	listeners: RwLock<Vec<Listener>>,
-	unsynced_changes: RwLock<u16>,
+	unsynced_changes: RwLock<usize>,
 }
 
 impl Queue {

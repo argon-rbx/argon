@@ -1,6 +1,5 @@
 use anyhow::{bail, Result};
 use env_logger::WriteStyle;
-use log::warn;
 use path_clean::PathClean;
 use rbx_reflection::{PropertyDescriptor, PropertyKind, PropertySerialization};
 use std::{
@@ -10,7 +9,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use crate::config::Config;
+use crate::config::{Config, LineEnding};
 
 /// Collection of extension methods for `Path`
 pub trait PathExt {
@@ -158,17 +157,10 @@ pub trait WriterExt {
 
 impl<T: Write> WriterExt for T {
 	fn end(&mut self) -> io::Result<usize> {
-		self.write(match Config::new().line_ending.to_uppercase().as_str() {
-			"LF" => b"\n",
-			"CRLF" => b"\r\n",
-			"CR" => b"\r",
-			line_ending => {
-				warn!(
-					"Config specifies invalid line ending: {}, using LF instead",
-					line_ending
-				);
-				b"\n"
-			}
+		self.write(match Config::new().line_ending {
+			LineEnding::LF => b"\n",
+			LineEnding::CR => b"\r",
+			LineEnding::CRLF => b"\r\n",
 		})
 	}
 }

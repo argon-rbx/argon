@@ -11,6 +11,7 @@ use std::{
 	fmt::{self, Debug, Display, Formatter},
 	fs, mem,
 	path::{Path, PathBuf},
+	str::FromStr,
 	sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 use toml;
@@ -27,6 +28,14 @@ pub enum ConfigKind {
 	Default,
 	Global(PathBuf),
 	Workspace(PathBuf),
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize)]
+pub enum LineEnding {
+	#[default]
+	LF,
+	CR,
+	CRLF,
 }
 
 #[optfield(OptConfig, merge_fn, attrs = (derive(Deserialize)))]
@@ -85,12 +94,12 @@ pub struct Config {
 	/// Number of changes allowed before prompting user for confirmation
 	pub changes_threshold: usize,
 	/// Maximum number of unsynced changes before showing a warning
-	pub max_unsynced_changes: u16,
+	pub max_unsynced_changes: usize,
 
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
-	/// Line ending to use when writing files (LF, CRLF, CR)
-	pub line_ending: String,
+	/// Line ending to use when writing Argon-generated files (LF, CRLF, CR)
+	pub line_ending: LineEnding,
 	/// Package manager to use when running roblox-ts scripts (npm, bun, etc.)
 	pub package_manager: String,
 	/// Share anonymous Argon usage statistics with the community
@@ -135,7 +144,7 @@ impl Default for Config {
 			max_unsynced_changes: 10,
 
 			lua_extension: false,
-			line_ending: String::from("LF"),
+			line_ending: LineEnding::LF,
 			package_manager: String::from("npm"),
 			share_stats: true,
 
@@ -306,6 +315,25 @@ impl Display for ConfigKind {
 				Self::Workspace(_) => "Workspace",
 			}
 		)
+	}
+}
+
+impl Display for LineEnding {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "{:?}", self)
+	}
+}
+
+impl FromStr for LineEnding {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s.to_uppercase().as_str() {
+			"LF" => Ok(Self::LF),
+			"CR" => Ok(Self::CR),
+			"CRLF" => Ok(Self::CRLF),
+			_ => Err(format!("Invalid line ending: {}", s)),
+		}
 	}
 }
 
