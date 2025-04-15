@@ -1,3 +1,4 @@
+use clap::Parser;
 use env_logger::WriteStyle;
 use log::{debug, error, info, warn};
 use puffin_http::Server;
@@ -13,7 +14,30 @@ use argon::{argon_error, cli::Cli, config::Config, crash_handler, installer, log
 
 const PROFILER_ADDRESS: &str = "localhost:8888";
 
-fn main() -> ExitCode {
+#[macro_use]
+extern crate log;
+
+mod cli;
+mod config;
+mod logger;
+mod project;
+mod server;
+mod updater;
+mod util;
+mod vfs;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+	// Initialize file logging EARLY. Log to /tmp/argon_mcp.log (macOS/Linux)
+	// On Windows, this might go to C:\tmp or fail if /tmp doesn't exist.
+	// Consider using dirs crate for a platform-agnostic temp dir if needed.
+	match simple_log::log_to_file("/tmp/argon_mcp.log", log::LevelFilter::Trace) {
+		Ok(_) => {}
+		Err(e) => eprintln!("!!! FAILED TO INITIALIZE FILE LOGGING: {} !!!", e),
+	}
+	// Log that we *tried* to initialize logging (this will go to the file if successful)
+	log::info!("--- Argon process started, file logging initialized (or attempted) ---");
+
 	crash_handler::hook();
 
 	let config_kind = Config::load();
@@ -22,7 +46,8 @@ fn main() -> ExitCode {
 	let is_managed = installer::is_managed();
 	let installation = installer::verify(is_managed, config.install_plugin);
 
-	let cli = Cli::new();
+	let cli = cli::Cli::parse();
+	log::trace!("CLI arguments parsed: {:?}", cli); // Example log
 
 	let yes = cli.yes();
 	let backtrace = cli.backtrace();
@@ -88,7 +113,7 @@ fn main() -> ExitCode {
 		puffin::set_scopes_on(true);
 	}
 
-	let exit_code = match cli.main() {
+	let exit_code = match cli::handle_command(cli).await {
 		Ok(()) => {
 			debug!("Successfully executed command!");
 			ExitCode::SUCCESS

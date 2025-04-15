@@ -6,9 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.0.15] - 2025-04-15
+[Unreleased]: https://github.com/LupaHQ/argon/compare/0.0.15...HEAD
 
-[unreleased]: https://github.com/LupaHQ/argon/compare/0.0.15...HEAD
+## [0.0.15] - 2025-04-21
+
+### Changed
+- Reimplemented the MCP server connectivity using the `mcpr` library for improved stability
+- Refactored the `connect-mcp` command to use JSON-RPC over stdio transport
+- Integrated direct Pinecone API connectivity for local RAG functionality
+- Eliminated dependency on external SSE/eventsource handling by moving all processing into the CLI
+
 [0.0.15]: https://github.com/LupaHQ/argon/compare/0.0.14...0.0.15
 
 ## [0.0.14] - 2025-04-17
