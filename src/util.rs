@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use directories::UserDirs;
 use env_logger::WriteStyle;
+use json_formatter::JsonFormatter;
 use log::LevelFilter;
 use rbx_dom_weak::types::Variant;
 use rbx_reflection::ClassTag;
@@ -147,7 +148,7 @@ pub fn env_yes() -> bool {
 	yes == "1"
 }
 
-/// Return line of code count from snapshot's properties
+/// Returns line of code count from snapshot's properties
 pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	let mut loc = 0;
 
@@ -158,4 +159,9 @@ pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	}
 
 	loc
+}
+
+/// Returns a custom serde_json formatter
+pub fn get_json_formatter() -> JsonFormatter<'static> {
+	JsonFormatter::new().with_array_breaks(false).with_extra_newline(true)
 }

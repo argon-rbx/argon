@@ -14,35 +14,40 @@ macro_rules! tri {
 #[derive(Clone, Debug)]
 pub struct JsonFormatter<'a> {
 	current_indent: usize,
-	array_breaks: bool,
 	has_value: bool,
 	indent: &'a [u8],
+	array_breaks: bool,
+	extra_newline: bool,
 }
 
 impl<'a> JsonFormatter<'a> {
 	/// Construct a pretty printer formatter that defaults to using two spaces for indentation.
 	pub fn new() -> Self {
-		JsonFormatter::with_indent(b"  ")
-	}
-
-	/// Construct a pretty printer formatter that uses the `indent` string for indentation.
-	pub fn with_indent(indent: &'a [u8]) -> Self {
 		JsonFormatter {
 			current_indent: 0,
 			array_breaks: true,
-			has_value: false,
-			indent,
-		}
-	}
-
-	/// Construct a pretty printer formatter that optionally break arrays into multiple lines.
-	pub fn with_array_breaks(array_breaks: bool) -> Self {
-		JsonFormatter {
-			current_indent: 0,
-			array_breaks,
+			extra_newline: false,
 			has_value: false,
 			indent: b"  ",
 		}
+	}
+
+	/// Construct a pretty printer formatter that uses the `indent` string for indentation.
+	pub fn with_indent(mut self, indent: &'a [u8]) -> Self {
+		self.indent = indent;
+		self
+	}
+
+	/// Construct a pretty printer formatter that optionally break arrays into multiple lines.
+	pub fn with_array_breaks(mut self, array_breaks: bool) -> Self {
+		self.array_breaks = array_breaks;
+		self
+	}
+
+	/// Construct a pretty printer formatter that adds an extra newline at the end.
+	pub fn with_extra_newline(mut self, extra_newline: bool) -> Self {
+		self.extra_newline = extra_newline;
+		self
 	}
 }
 
@@ -126,7 +131,13 @@ impl<'a> Formatter for JsonFormatter<'a> {
 			tri!(indent(writer, self.current_indent, self.indent));
 		}
 
-		writer.write_all(b"}")
+		tri!(writer.write_all(b"}"));
+
+		if self.current_indent == 0 && self.extra_newline {
+			writer.write_all(b"\n")
+		} else {
+			Ok(())
+		}
 	}
 
 	#[inline]

@@ -5,11 +5,8 @@ use rbx_reflection::{PropertyDescriptor, PropertyKind, PropertySerialization};
 use std::{
 	env,
 	fmt::Display,
-	io::{self, Write},
 	path::{Path, PathBuf},
 };
-
-use crate::config::{Config, LineEnding};
 
 /// Collection of extension methods for `Path`
 pub trait PathExt {
@@ -147,21 +144,6 @@ impl WriteStyleExt for WriteStyle {
 		};
 
 		String::from(write_style)
-	}
-}
-
-/// Collection of extension methods for `io::Write`
-pub trait WriterExt {
-	fn end(&mut self) -> io::Result<usize>;
-}
-
-impl<T: Write> WriterExt for T {
-	fn end(&mut self) -> io::Result<usize> {
-		self.write(match Config::new().line_ending {
-			LineEnding::LF => b"\n",
-			LineEnding::CR => b"\r",
-			LineEnding::CRLF => b"\r\n",
-		})
 	}
 }
 

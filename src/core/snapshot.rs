@@ -106,7 +106,8 @@ impl Snapshot {
 		}
 
 		if let Some(original_name) = data.original_name {
-			self.name = original_name;
+			self.name = original_name.clone();
+			self.meta.set_original_name(Some(original_name));
 		}
 
 		if let Some(mesh_source) = data.mesh_source {

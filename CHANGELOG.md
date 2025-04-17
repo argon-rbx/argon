@@ -15,11 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - `BasePart.Color` property is now properly converted between `Color3` and `Color3uint8` types
+- Mismatched line endings no longer cause script diffs (all files are now normalized to `LF`)
 
 ### Changed
 
 - Updated `rbx-dom` library to the latest major version
-- Config will now fail to load if `line_ending` setting is invalid
+- Removed `line_ending` setting in favor of new `ignore_line_endings` setting
 
 ## [2.0.23] - 2025-02-05
 

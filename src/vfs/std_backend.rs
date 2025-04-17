@@ -30,7 +30,13 @@ impl VfsBackend for StdBackend {
 	}
 
 	fn read_to_string(&self, path: &Path) -> Result<String> {
-		fs::read_to_string(path)
+		let contents = fs::read_to_string(path)?;
+
+		if Config::new().ignore_line_endings && contents.contains('\r') {
+			return Ok(contents.replace("\r\n", "\n").replace("\r", "\n"));
+		}
+
+		Ok(contents)
 	}
 
 	fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {

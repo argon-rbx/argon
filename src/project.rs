@@ -1,6 +1,5 @@
 use anyhow::Result;
 use colored::Colorize;
-use json_formatter::JsonFormatter;
 use rbx_dom_weak::{types::Ref, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use serde_json::Serializer;
@@ -16,9 +15,10 @@ use crate::{
 		meta::{NodePath, SyncRule},
 		tree::Tree,
 	},
-	ext::{PathExt, ResultExt, WriterExt},
+	ext::{PathExt, ResultExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
+	util::get_json_formatter,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -129,14 +129,10 @@ impl Project {
 	}
 
 	pub fn save(&self, path: &Path) -> Result<()> {
-		let formatter = JsonFormatter::with_array_breaks(false);
-
 		let mut writer = Vec::new();
-		let mut serializer = Serializer::with_formatter(&mut writer, formatter);
+		let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
 
 		self.serialize(&mut serializer)?;
-		writer.end()?;
-
 		fs::write(path, &writer)?;
 
 		Ok(())

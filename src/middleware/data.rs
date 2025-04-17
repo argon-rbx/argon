@@ -1,5 +1,4 @@
 use anyhow::Result;
-use json_formatter::JsonFormatter;
 use log::error;
 use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
@@ -11,10 +10,10 @@ use std::{
 
 use crate::{
 	core::meta::Meta,
-	ext::{PathExt, WriterExt},
+	ext::PathExt,
 	middleware::helpers,
 	resolution::UnresolvedValue,
-	util,
+	util::{self, get_json_formatter},
 	vfs::Vfs,
 	Properties,
 };
@@ -163,6 +162,7 @@ pub fn write_data<'a>(
 	let mut data = WritableData {
 		class_name,
 		properties,
+		original_name: meta.original_name.clone(),
 		..WritableData::default()
 	};
 
@@ -182,14 +182,10 @@ pub fn write_data<'a>(
 		return Ok(None);
 	}
 
-	let formatter = JsonFormatter::with_array_breaks(false);
-
 	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, formatter);
+	let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
 
 	data.serialize(&mut serializer)?;
-	writer.end()?;
-
 	vfs.write(path, &writer)?;
 
 	Ok(Some(path))
@@ -236,14 +232,10 @@ pub fn write_original_name(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<()> {
 		data
 	};
 
-	let formatter = JsonFormatter::with_array_breaks(false);
-
 	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, formatter);
+	let mut serializer = Serializer::with_formatter(&mut writer, get_json_formatter());
 
 	data.serialize(&mut serializer)?;
-	writer.end()?;
-
 	vfs.write(path, &writer)?;
 
 	Ok(())
