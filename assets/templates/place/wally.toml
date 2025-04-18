@@ -6,3 +6,5 @@ realm = "shared"
 private = true
 
 [dependencies]
+
+[server-dependencies]

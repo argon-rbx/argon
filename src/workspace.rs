@@ -77,8 +77,6 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 							new_contents.push('\n');
 
 							iterator.nth(1);
-
-							continue;
 						} else {
 							new_contents.push_str(&(line.to_owned() + "\n"));
 						}

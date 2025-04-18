@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Support for `Enum` attributes and `Content` properties
 - Improved performance of `.rbxm` parsing
 - `max_unsynced_changes` setting can now be set to much higher values
+- Automatic Wally detection now supports `ServerPackages` and `DevPackages`
 
 ### Fixed
 
@@ -21,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Updated `rbx-dom` library to the latest major version
 - Removed `line_ending` setting in favor of new `ignore_line_endings` setting
+- All project templates now include improved `.gitignore`, `wally.toml` and `project.json` files
 
 ## [2.0.23] - 2025-02-05
 

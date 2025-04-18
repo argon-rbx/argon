@@ -110,8 +110,8 @@ where
 	{
 		match self {
 			Ok(ok) => Ok(ok),
-			Err(error) => {
-				bail!("{}: {}", desc, error);
+			Err(err) => {
+				bail!("{}: {}", desc, err);
 			}
 		}
 	}
@@ -123,8 +123,8 @@ where
 	{
 		match self {
 			Ok(ok) => Ok(ok),
-			Err(error) => {
-				bail!("{}: {}", desc(), error);
+			Err(err) => {
+				bail!("{}: {}", desc(), err);
 			}
 		}
 	}

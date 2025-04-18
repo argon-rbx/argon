@@ -146,7 +146,7 @@ impl Build {
 		let use_ts = self.ts || config.ts_mode || (config.detect_project && project.is_ts());
 
 		if use_wally {
-			integration::check_wally_packages(&project.workspace_dir)?;
+			integration::check_wally_packages(&project.workspace_dir);
 		}
 
 		if use_ts {

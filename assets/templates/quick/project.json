@@ -15,7 +15,10 @@
       }
     },
     "ServerScriptService": {
-      "$path": "src/ServerScriptService"
+      "$path": "src/ServerScriptService",
+      "ServerPackages": {
+        "$path": "ServerPackages"
+      }
     },
     "ServerStorage": {
       "$path": "src/ServerStorage"
