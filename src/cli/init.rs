@@ -8,7 +8,7 @@ use crate::{
 	config::Config,
 	ext::PathExt,
 	logger, project, stats,
-	workspace::{self, WorkspaceConfig},
+	workspace::{self, WorkspaceConfig, WorkspaceLicense},
 };
 
 /// Initialize a new Argon project
@@ -91,17 +91,21 @@ impl Init {
 
 		let project = self.project.unwrap_or_default();
 		let template = self.template.unwrap_or(config.template.clone());
-		let license = self.license.unwrap_or(config.license.clone());
 		let git = self.git.unwrap_or(config.use_git);
 		let wally = self.wally.unwrap_or(config.use_wally);
 		let selene = self.selene.unwrap_or(config.use_selene);
 		let docs = self.docs.unwrap_or(config.include_docs);
 		let ts = self.ts.unwrap_or(config.ts_mode);
 
+		let license = WorkspaceLicense {
+			force: self.license.is_some(),
+			inner: &self.license.unwrap_or(config.license.clone()),
+		};
+
 		let mut workspace_config = WorkspaceConfig {
-			project: &project.clone(),
+			project: &project,
 			template: &template,
-			license: &license,
+			license,
 			git,
 			wally,
 			selene,

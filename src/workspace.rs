@@ -17,10 +17,16 @@ use crate::{
 };
 
 #[derive(Debug)]
+pub struct WorkspaceLicense<'a> {
+	pub inner: &'a str,
+	pub force: bool,
+}
+
+#[derive(Debug)]
 pub struct WorkspaceConfig<'a> {
 	pub project: &'a Path,
 	pub template: &'a str,
-	pub license: &'a str,
+	pub license: WorkspaceLicense<'a>,
 	pub git: bool,
 	pub wally: bool,
 	pub selene: bool,
@@ -95,7 +101,7 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 					let contents = fs::read_to_string(path)?;
 					let contents = contents.replace("$name", &project_name.to_lowercase());
 					let contents = contents.replace("$author", &util::get_username().to_lowercase());
-					let contents = contents.replace("$license", workspace.license);
+					let contents = contents.replace("$license", workspace.license.inner);
 
 					fs::write(new_path, contents)?;
 				}
@@ -115,9 +121,9 @@ pub fn init(workspace: WorkspaceConfig) -> Result<()> {
 					}
 				}
 				"LICENSE" => {
-					if workspace.docs {
+					if workspace.docs || workspace.license.force {
 						let fallback = fs::read_to_string(path)?;
-						add_license(&new_path, workspace.license, &fallback)?;
+						add_license(&new_path, workspace.license.inner, &fallback)?;
 					}
 				}
 				_ => {
@@ -234,9 +240,9 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 				}
 			}
 			"LICENSE" => {
-				if workspace.docs {
+				if workspace.docs || workspace.license.force {
 					let fallback = fs::read_to_string(path)?;
-					add_license(&new_path, workspace.license, &fallback)?;
+					add_license(&new_path, workspace.license.inner, &fallback)?;
 				}
 			}
 
@@ -274,7 +280,7 @@ fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
 				if let Some(body) = json["body"].as_str() {
 					Ok(body.to_owned())
 				} else {
-					bail!("Bad SPDX License ID")
+					bail!("Bad SPDX License identifier")
 				}
 			}
 			Err(_) => {

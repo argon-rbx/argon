@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `BasePart.Color` property is now properly converted between `Color3` and `Color3uint8` types
 - Mismatched line endings no longer cause script diffs (all files are now normalized to `LF`)
+- `--license` argument now independent from the `--docs` argument in `argon init` command
 
 ### Changed
 
