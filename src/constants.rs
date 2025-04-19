@@ -35,17 +35,30 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 
 	SYNC_RULES.get_or_init(|| {
 		vec![
+			// Project and data files
 			SyncRule::new(Middleware::Project)
 				.with_pattern("*.project.json")
 				.with_child_pattern("default.project.json"),
 			SyncRule::new(Middleware::InstanceData)
 				.with_pattern("*.data.json")
 				.with_child_pattern(".data.json"),
-			SyncRule::new(Middleware::InstanceData) // Rojo
+			SyncRule::new(Middleware::InstanceData)
 				.with_pattern("*.meta.json")
 				.with_child_pattern("init.meta.json"),
 			//////////////////////////////////////////////////////////////////////////////////////////
-			// Luau scripts for Argon
+			// Luau scripts
+			SyncRule::new(Middleware::ServerScript)
+				.with_pattern("*.server.luau")
+				.with_child_pattern("init.server.luau")
+				.with_suffix(".server.luau"),
+			SyncRule::new(Middleware::ClientScript)
+				.with_pattern("*.client.luau")
+				.with_child_pattern("init.client.luau")
+				.with_suffix(".client.luau"),
+			SyncRule::new(Middleware::ModuleScript)
+				.with_pattern("*.luau")
+				.with_child_pattern("init.luau"),
+			// Luau scripts for Argon Legacy
 			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.luau")
 				.with_child_pattern(".src.server.luau")
@@ -60,20 +73,20 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.luau")
 				.with_child_pattern(".src.luau")
 				.with_exclude("init.luau"),
-			// Luau scripts for Rojo
-			SyncRule::new(Middleware::ServerScript)
-				.with_pattern("*.server.luau")
-				.with_child_pattern("init.server.luau")
-				.with_suffix(".server.luau"),
-			SyncRule::new(Middleware::ClientScript)
-				.with_pattern("*.client.luau")
-				.with_child_pattern("init.client.luau")
-				.with_suffix(".client.luau"),
-			SyncRule::new(Middleware::ModuleScript)
-				.with_pattern("*.luau")
-				.with_child_pattern("init.luau"),
 			//////////////////////////////////////////////////////////////////////////////////////////
-			// Lua scripts for Argon
+			// Lua scripts
+			SyncRule::new(Middleware::ServerScript)
+				.with_pattern("*.server.lua")
+				.with_child_pattern("init.server.lua")
+				.with_suffix(".server.lua"),
+			SyncRule::new(Middleware::ClientScript)
+				.with_pattern("*.client.lua")
+				.with_child_pattern("init.client.lua")
+				.with_suffix(".client.lua"),
+			SyncRule::new(Middleware::ModuleScript)
+				.with_pattern("*.lua")
+				.with_child_pattern("init.lua"),
+			// Lua scripts for Argon legacy
 			SyncRule::new(Middleware::ServerScript)
 				.with_pattern("*.server.lua")
 				.with_child_pattern(".src.server.lua")
@@ -88,56 +101,44 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.lua")
 				.with_child_pattern(".src.lua")
 				.with_exclude("init.lua"),
-			// Lua scripts for Rojo
-			SyncRule::new(Middleware::ServerScript)
-				.with_pattern("*.server.lua")
-				.with_child_pattern("init.server.lua")
-				.with_suffix(".server.lua"),
-			SyncRule::new(Middleware::ClientScript)
-				.with_pattern("*.client.lua")
-				.with_child_pattern("init.client.lua")
-				.with_suffix(".client.lua"),
-			SyncRule::new(Middleware::ModuleScript)
-				.with_pattern("*.lua")
-				.with_child_pattern("init.lua"),
 			//////////////////////////////////////////////////////////////////////////////////////////
-			// Other file types, Argon only
+			// Other file types
 			SyncRule::new(Middleware::StringValue)
 				.with_pattern("*.txt")
-				.with_child_pattern(".src.txt"),
+				.with_child_pattern("init.txt"),
 			SyncRule::new(Middleware::RichStringValue)
 				.with_pattern("*.md")
-				.with_child_pattern(".src.md"),
+				.with_child_pattern("init.md"),
 			SyncRule::new(Middleware::LocalizationTable)
 				.with_pattern("*.csv")
-				.with_child_pattern(".src.csv"),
+				.with_child_pattern("init.csv"),
 			SyncRule::new(Middleware::JsonModule)
 				.with_pattern("*.json")
-				.with_child_pattern(".src.json")
+				.with_child_pattern("init.json")
 				.with_excludes(&["*.model.json", "*.data.json", "*.meta.json"]),
 			SyncRule::new(Middleware::TomlModule)
 				.with_pattern("*.toml")
-				.with_child_pattern(".src.toml"),
+				.with_child_pattern("init.toml"),
 			SyncRule::new(Middleware::YamlModule)
 				.with_pattern("*.yaml")
-				.with_child_pattern(".src.yaml"),
+				.with_child_pattern("init.yaml"),
 			SyncRule::new(Middleware::YamlModule)
 				.with_pattern("*.yml")
-				.with_child_pattern(".src.yml"),
+				.with_child_pattern("init.yml"),
 			SyncRule::new(Middleware::MsgpackModule)
 				.with_pattern("*.msgpack")
-				.with_child_pattern(".src.msgpack"),
-			// Model files, Argon only
+				.with_child_pattern("init.msgpack"),
+			// Model files
 			SyncRule::new(Middleware::JsonModel)
 				.with_pattern("*.model.json")
-				.with_child_pattern(".src.model.json")
+				.with_child_pattern("init.model.json")
 				.with_suffix(".model.json"),
 			SyncRule::new(Middleware::RbxmModel)
 				.with_pattern("*.rbxm")
-				.with_child_pattern(".src.rbxm"),
+				.with_child_pattern("init.rbxm"),
 			SyncRule::new(Middleware::RbxmxModel)
 				.with_pattern("*.rbxmx")
-				.with_child_pattern(".src.rbxmx"),
+				.with_child_pattern("init.rbxmx"),
 		]
 	})
 }

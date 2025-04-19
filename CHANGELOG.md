@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `BasePart.Color` property is now properly converted between `Color3` and `Color3uint8` types
 - Mismatched line endings no longer cause script diffs (all files are now normalized to `LF`)
 - `--license` argument now independent from the `--docs` argument in `argon init` command
+- Empty StringValues (`txt` files) are no longer ignored when syncing back
 
 ### Changed
 
@@ -25,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Removed `line_ending` setting in favor of new `ignore_line_endings` setting
 - All project templates now include improved `.gitignore`, `wally.toml` and `project.json` files
 - Empty project are no longer included in the tree (in result root project cannot be empty!)
+- Argon legacy namespace for child file definitions (`.src`) is no longer supported by this middleware: `StringValue`, `RichStringValue`, `LocalizationTable`, `JsonModule`, `TomlModule`, `YamlModule`, `MsgpackModule`, `JsonModel`, `RbxmModel`, `RbxmxModel`
 
 ## [2.0.23] - 2025-02-05
 

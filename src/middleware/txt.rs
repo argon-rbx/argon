@@ -16,9 +16,13 @@ pub fn read_txt(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 #[profiling::function]
 pub fn write_txt(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
+	let mut contents = String::new();
+
 	if let Some(Variant::String(value)) = properties.remove(&Ustr::from("Value")) {
-		vfs.write(path, value.as_bytes())?;
+		contents = value;
 	}
+
+	vfs.write(path, contents.as_bytes())?;
 
 	Ok(properties)
 }
