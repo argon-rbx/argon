@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Updated `rbx-dom` library to the latest major version
 - Removed `line_ending` setting in favor of new `ignore_line_endings` setting
 - All project templates now include improved `.gitignore`, `wally.toml` and `project.json` files
+- Empty project are no longer included in the tree (in result root project cannot be empty!)
 
 ## [2.0.23] - 2025-02-05
 

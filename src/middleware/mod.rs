@@ -204,6 +204,8 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 			snapshot.set_name(&name);
 			snapshot.meta.set_context(context);
 			snapshot.meta.set_source(Source::file(path));
+		} else if snapshot.class == "Folder" && snapshot.children.is_empty() {
+			return Ok(None);
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), path, context, vfs)? {
@@ -240,6 +242,8 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 					snapshot.add_child(child_snapshot);
 				}
 			}
+		} else if snapshot.class == "Folder" && snapshot.children.is_empty() {
+			return Ok(None);
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), parent, context, vfs)? {

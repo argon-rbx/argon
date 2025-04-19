@@ -48,6 +48,7 @@ impl Core {
 		let meta = Meta::from_project(&project);
 		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?.expect(
 			"Failed to snapshot root project. \
+		Note that projects cannot be empty. \
 		If you are using custom sync rules make sure you have one with the `Project` type. \
 		Otherwise, this is a bug.",
 		);

@@ -82,9 +82,12 @@ pub fn check_wally_packages(workspace_path: &Path) {
 
 			for (short, long) in dependencies {
 				let short = Glob::from_path(&path.join(short + ".lua*"))?;
-				let long = long.replace('/', "_");
 
-				if short.first().is_none() || !index_path.join(long).exists() {
+				let long = long.replace('/', "_");
+				let long = long.rsplit_once("@").unwrap_or_default().0.to_owned();
+				let long = Glob::from_path(&index_path.join(long + "*"))?;
+
+				if short.first().is_none() || long.first().is_none() {
 					return install_wally_packages(workspace_path);
 				}
 			}
