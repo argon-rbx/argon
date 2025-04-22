@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Improved performance of `.rbxm` parsing
 - `max_unsynced_changes` setting can now be set to much higher values
 - Automatic Wally detection now supports `ServerPackages` and `DevPackages`
+- Argon legacy namespace migration warning (`.src` to `init`) for every path that contains `.src` in its name
 
 ### Fixed
 
@@ -19,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Mismatched line endings no longer cause script diffs (all files are now normalized to `LF`)
 - `--license` argument now independent from the `--docs` argument in `argon init` command
 - Empty StringValues (`txt` files) are no longer ignored when syncing back
+- Syncback now respects original file extensions so it no longer changes `.lua` to `.luau` when writing
 
 ### Changed
 

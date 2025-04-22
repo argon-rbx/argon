@@ -13,6 +13,7 @@ use std::{
 
 use self::data::DataSnapshot;
 use crate::{
+	argon_warn,
 	constants::BLACKLISTED_PATHS,
 	core::{
 		meta::{Context, Source},
@@ -219,8 +220,18 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 }
 
 /// Create a snapshot of a directory that has a child source or data,
-/// example: `foo/bar/.src.luau`
+/// example: `foo/bar/init.luau`
 fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if path.contains(&[".src.luau"]) || path.contains(&[".src.lua"]) {
+		argon_warn!(
+			"Your project uses legacy {} files which won't be supported in the next versions of Argon. \
+			Make sure to rename {} file to {} for future compatibility!",
+			".src".bold(),
+			path.to_string().bold(),
+			path.to_string().replace(".src", "init").bold()
+		);
+	}
+
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve_child(path)) {
 		let middleware = resolved.middleware;
 		let name = resolved.name;

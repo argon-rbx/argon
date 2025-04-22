@@ -401,11 +401,17 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				None
 			},
 		) {
-			let new_path = meta
-				.context
-				.sync_rules_of_type(&middleware, true)
-				.iter()
-				.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
+			let new_path = {
+				let mut paths = meta
+					.context
+					.sync_rules_of_type(&middleware, true)
+					.iter()
+					.filter_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)))
+					.collect::<Vec<PathBuf>>();
+
+				paths.sort_by_key(|path| path.exists());
+				paths.first().map(|path| path.to_owned())
+			};
 
 			let file_path = if let Some(SourceEntry::File(path)) = meta.source.get_file_mut() {
 				let mut current_path = path.to_owned();

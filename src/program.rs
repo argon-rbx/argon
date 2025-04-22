@@ -138,7 +138,7 @@ impl Program {
 		}
 
 		let mut command = Command::new(program);
-		command.current_dir(self.current_dir.clone()).args(self.args.clone());
+		command.current_dir(&self.current_dir).args(&self.args);
 
 		if util::env_verbosity() == LevelFilter::Off {
 			command.stdout(Stdio::null());
