@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::{debug, error, trace};
-use rbx_dom_weak::{types::Variant, InstanceBuilder, Ustr, WeakDom};
+use rbx_dom_weak::{types::Variant, ustr, InstanceBuilder, WeakDom};
 use roblox_install::RobloxStudio;
 use std::{
 	collections::HashMap,
@@ -22,7 +22,7 @@ pub fn save_mesh(properties: &Properties) -> Option<String> {
 	let mut mesh_properties: HashMap<&str, Variant> = HashMap::new();
 
 	for property in CUSTOM_MESH_PART_PROPERTIES {
-		if let Some(value) = properties.get(&Ustr::from(property)) {
+		if let Some(value) = properties.get(&ustr(property)) {
 			mesh_properties.insert(property, value.clone());
 		}
 	}

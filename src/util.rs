@@ -103,7 +103,7 @@ pub fn process_exists(pid: u32) -> bool {
 pub fn get_progress_style() -> (String, String) {
 	let mut template = match env_log_style() {
 		WriteStyle::Always => "PROGRESS: ".magenta().bold().to_string(),
-		_ => "PROGRESS: ".to_string(),
+		_ => "PROGRESS: ".into(),
 	};
 	template.push_str("[{bar:40}] ({bytes}/{total_bytes})");
 
@@ -112,7 +112,7 @@ pub fn get_progress_style() -> (String, String) {
 
 /// Returns the `RUST_VERBOSE` environment variable
 pub fn env_verbosity() -> LevelFilter {
-	let verbosity = env::var("RUST_VERBOSE").unwrap_or("ERROR".to_owned());
+	let verbosity = env::var("RUST_VERBOSE").unwrap_or("ERROR".into());
 
 	match verbosity.as_str() {
 		"OFF" => LevelFilter::Off,
@@ -127,7 +127,7 @@ pub fn env_verbosity() -> LevelFilter {
 
 /// Returns the `RUST_LOG_STYLE` environment variable
 pub fn env_log_style() -> WriteStyle {
-	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_owned());
+	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".into());
 
 	match log_style.as_str() {
 		"always" => WriteStyle::Always,
@@ -138,13 +138,13 @@ pub fn env_log_style() -> WriteStyle {
 
 /// Returns the `RUST_BACKTRACE` environment variable
 pub fn env_backtrace() -> bool {
-	let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_owned());
+	let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".into());
 	backtrace == "1"
 }
 
 /// Returns the `RUST_YES` environment variable
 pub fn env_yes() -> bool {
-	let yes = env::var("RUST_YES").unwrap_or("0".to_owned());
+	let yes = env::var("RUST_YES").unwrap_or("0".into());
 	yes == "1"
 }
 

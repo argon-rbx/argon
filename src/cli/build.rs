@@ -248,28 +248,28 @@ impl Build {
 		}
 
 		if let Some(output) = self.output {
-			args.push(String::from("--output"));
+			args.push("--output".into());
 			args.push(output.to_string())
 		}
 
 		if self.watch {
-			args.push(String::from("--watch"))
+			args.push("--watch".into())
 		}
 
 		if self.sourcemap {
-			args.push(String::from("--sourcemap"))
+			args.push("--sourcemap".into())
 		}
 
 		if self.plugin {
-			args.push(String::from("--plugin"))
+			args.push("--plugin".into())
 		}
 
 		if self.xml {
-			args.push(String::from("--xml"))
+			args.push("--xml".into())
 		}
 
 		if self.ts {
-			args.push(String::from("--ts"))
+			args.push("--ts".into())
 		}
 
 		Program::new(ProgramName::Argon).args(args).spawn()?;

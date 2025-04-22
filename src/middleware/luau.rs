@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rbx_dom_weak::{
 	types::{Enum, Variant},
-	HashMapExt, Ustr, UstrMap,
+	ustr, HashMapExt, UstrMap,
 };
 use std::path::Path;
 
@@ -47,11 +47,11 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 
 	if script_type != ScriptType::Module {
 		if let Some(run_context) = run_context {
-			properties.insert(Ustr::from("RunContext"), run_context);
+			properties.insert(ustr("RunContext"), run_context);
 		}
 	}
 
-	properties.insert(Ustr::from("Source"), Variant::String(source));
+	properties.insert(ustr("Source"), Variant::String(source));
 	snapshot.set_properties(properties);
 
 	Ok(snapshot)
@@ -59,7 +59,7 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 
 #[profiling::function]
 pub fn write_luau(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
-	if let Some(Variant::String(value)) = properties.remove(&Ustr::from("Source")) {
+	if let Some(Variant::String(value)) = properties.remove(&ustr("Source")) {
 		vfs.write(path, value.as_bytes())?;
 	}
 

@@ -2,7 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 use include_dir::{include_dir, Dir};
 use log::trace;
-use rbx_dom_weak::{types::Variant, Ustr};
+use rbx_dom_weak::{types::Variant, ustr};
 use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
 use std::{env, fs, path::Path};
 
@@ -180,7 +180,7 @@ pub fn get_plugin_version() -> String {
 	if let Ok(dom) = rbx_binary::from_reader(ARGON_PLUGIN) {
 		for (_, instance) in dom.into_raw().1 {
 			if instance.name == "manifest" && instance.class == "ModuleScript" {
-				if let Some(Variant::String(source)) = instance.properties.get(&Ustr::from("Source")) {
+				if let Some(Variant::String(source)) = instance.properties.get(&ustr("Source")) {
 					let source = &source[source.find(r#"["version"] = ""#).unwrap_or(0) + 15..];
 					return source[..source.find(r#"","#).unwrap_or(6)].to_owned();
 				}

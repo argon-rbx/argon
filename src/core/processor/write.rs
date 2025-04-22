@@ -556,7 +556,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 					node.properties = UstrMap::new();
 					node.attributes = None;
-					node.tags = vec![];
+					node.tags = Vec::new();
 					node.keep_unknowns = None;
 				} else {
 					let node = project
@@ -567,7 +567,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					let properties = validate_properties(properties, meta.context.syncback_filter());
 
 					node.properties = serialize_properties(&class, properties.clone());
-					node.tags = vec![];
+					node.tags = Vec::new();
 					node.keep_unknowns = None;
 
 					instance.properties = properties;

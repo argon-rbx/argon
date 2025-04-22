@@ -43,16 +43,10 @@ impl Stop {
 			table.set_header(vec!["ID", "Host", "Port", "PID"]);
 
 			for (id, session) in sessions {
-				let port = if let Some(port) = session.port {
-					port.to_string()
-				} else {
-					String::from("None")
-				};
-
 				table.add_row(vec![
 					id,
-					session.host.unwrap_or(String::from("None")),
-					port,
+					session.host.unwrap_or("None".into()),
+					session.port.map(|p| p.to_string()).unwrap_or("None".into()),
 					session.pid.to_string(),
 				]);
 			}

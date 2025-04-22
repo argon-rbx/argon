@@ -113,7 +113,7 @@ impl Core {
 		let tree = self.tree();
 
 		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
-			let mut snapshot_children = vec![];
+			let mut snapshot_children = Vec::new();
 
 			for child in children {
 				let meta = tree.get_meta(*child).unwrap();
@@ -194,7 +194,7 @@ impl Core {
 				return None;
 			}
 
-			let file_paths = tree.get_meta(id).map_or(vec![], |meta| {
+			let file_paths = tree.get_meta(id).map_or(Vec::new(), |meta| {
 				meta.source
 					.relevant()
 					.iter()
@@ -237,7 +237,7 @@ impl Core {
 		let mut sources = if let Some(meta) = tree.get_meta(instance) {
 			meta.source.relevant().to_owned()
 		} else {
-			vec![]
+			Vec::new()
 		};
 
 		sources.sort_by_key(|source| source.index());

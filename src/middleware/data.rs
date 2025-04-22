@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::error;
-use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
+use rbx_dom_weak::{types::Tags, ustr, HashMapExt, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
 use serde_json::Serializer;
 use std::{
@@ -91,7 +91,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 	if let Some(attributes) = data.attributes {
 		match attributes.resolve(&class, "Attributes") {
 			Ok(value) => {
-				properties.insert(Ustr::from("Attributes"), value);
+				properties.insert(ustr("Attributes"), value);
 			}
 			Err(err) => {
 				error!("Failed to parse attributes: {} at {}", err, path.display());
@@ -101,7 +101,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 
 	// Resolve tags
 	if !data.tags.is_empty() {
-		properties.insert(Ustr::from("Tags"), Tags::from(data.tags).into());
+		properties.insert(ustr("Tags"), Tags::from(data.tags).into());
 	}
 
 	let mesh_source = if class == "MeshPart" {

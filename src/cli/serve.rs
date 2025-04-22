@@ -189,21 +189,21 @@ impl Serve {
 		}
 
 		if let Some(host) = self.host {
-			args.push(String::from("--host"));
+			args.push("--host".into());
 			args.push(host)
 		}
 
 		if let Some(port) = self.port {
-			args.push(String::from("--port"));
+			args.push("--port".into());
 			args.push(port.to_string());
 		}
 
 		if self.sourcemap {
-			args.push(String::from("--sourcemap"));
+			args.push("--sourcemap".into());
 		}
 
 		if self.ts {
-			args.push(String::from("--ts"));
+			args.push("--ts".into());
 		}
 
 		Program::new(ProgramName::Argon).args(args).spawn()?;

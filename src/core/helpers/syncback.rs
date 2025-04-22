@@ -1,5 +1,5 @@
 use colored::Colorize;
-use rbx_dom_weak::{HashMapExt, Ustr, UstrMap};
+use rbx_dom_weak::{ustr, HashMapExt, UstrMap};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -27,16 +27,16 @@ const FORBIDDEN_FILE_NAMES: [&str; 22] = [
 
 pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 	let (messages, renamed) = {
-		let mut messages = vec![];
+		let mut messages = Vec::new();
 		let mut name = name.clone();
 
 		if name.len() > 255 {
 			messages.push("file name cannot be longer than 255 characters".into());
-			name = name[..255].into();
+			name = name[..255].to_owned();
 		}
 
 		{
-			let mut forbidden_chars = vec![];
+			let mut forbidden_chars = Vec::new();
 
 			for char in name.chars() {
 				if FORBIDDEN_CHARACTERS.contains(&char) && !forbidden_chars.contains(&char) {
@@ -87,7 +87,7 @@ pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 			messages.push("file name cannot end with a period or space".into());
 
 			while name.ends_with('.') || name.ends_with(' ') {
-				name = name[..name.len() - 1].into();
+				name = name[..name.len() - 1].to_owned();
 			}
 		}
 
@@ -171,7 +171,7 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 
 pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
 	// Temporary solution for empty Luau maps being serialized as arrays
-	if properties.contains_key(&Ustr::from("ArgonEmpty")) {
+	if properties.contains_key(&ustr("ArgonEmpty")) {
 		UstrMap::new()
 	} else {
 		properties

@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use colored::Colorize;
 use log::error;
 use path_clean::PathClean;
-use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
+use rbx_dom_weak::{types::Tags, ustr, HashMapExt, UstrMap};
 use std::path::Path;
 
 use super::new_snapshot;
@@ -79,7 +79,7 @@ pub fn new_snapshot_node(
 		if let Some(attributes) = &node.attributes {
 			match attributes.clone().resolve(&class, "Attributes") {
 				Ok(value) => {
-					properties.insert(Ustr::from("Attributes"), value);
+					properties.insert(ustr("Attributes"), value);
 				}
 				Err(err) => {
 					error!(
@@ -93,7 +93,7 @@ pub fn new_snapshot_node(
 		}
 
 		if !node.tags.is_empty() {
-			properties.insert(Ustr::from("Tags"), Tags::from(node.tags.clone()).into());
+			properties.insert(ustr("Tags"), Tags::from(node.tags.clone()).into());
 		}
 
 		properties

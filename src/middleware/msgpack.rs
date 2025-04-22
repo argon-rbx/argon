@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rbx_dom_weak::{types::Variant, HashMapExt, Ustr, UstrMap};
+use rbx_dom_weak::{types::Variant, ustr, HashMapExt, UstrMap};
 use rmp_serde::Deserializer;
 use rmpv::Value;
 use std::path::Path;
@@ -20,7 +20,7 @@ pub fn read_msgpack(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let lua = format!("return {}", msgpack_to_lua(&msgpack));
 
 	let mut properties = UstrMap::new();
-	properties.insert(Ustr::from("Source"), Variant::String(lua));
+	properties.insert(ustr("Source"), Variant::String(lua));
 
 	Ok(Snapshot::new().with_class("ModuleScript").with_properties(properties))
 }

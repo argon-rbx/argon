@@ -1,6 +1,6 @@
 use anyhow::Result;
 use log::error;
-use rbx_dom_weak::{types::Tags, HashMapExt, Ustr, UstrMap};
+use rbx_dom_weak::{types::Tags, ustr, HashMapExt, Ustr, UstrMap};
 use serde::Deserialize;
 use std::path::Path;
 
@@ -71,7 +71,7 @@ fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 	if let Some(attributes) = model.attributes {
 		match attributes.resolve(&class, "Attributes") {
 			Ok(value) => {
-				properties.insert(Ustr::from("Attributes"), value);
+				properties.insert(ustr("Attributes"), value);
 			}
 			Err(err) => {
 				error!("Failed to parse attributes: {} at {}", err, path.display());
@@ -81,7 +81,7 @@ fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 
 	// Resolve tags
 	if let Some(tags) = model.tags {
-		properties.insert(Ustr::from("Tags"), Tags::from(tags).into());
+		properties.insert(ustr("Tags"), Tags::from(tags).into());
 	}
 
 	if class == "MeshPart" {

@@ -67,15 +67,15 @@ impl UnresolvedValue {
 				let mut array = Vec::new();
 
 				if axes.contains(Axes::X) {
-					array.push("X".to_owned());
+					array.push("X".into());
 				}
 
 				if axes.contains(Axes::Y) {
-					array.push("Y".to_owned());
+					array.push("Y".into());
 				}
 
 				if axes.contains(Axes::Z) {
-					array.push("Z".to_owned());
+					array.push("Z".into());
 				}
 
 				AmbiguousValue::StringArray(array)
@@ -111,7 +111,7 @@ impl UnresolvedValue {
 
 			Variant::Content(content) => AmbiguousValue::String(match content.value() {
 				ContentType::Object(referent) => referent.to_string(),
-				ContentType::Uri(uri) => uri.to_string(),
+				ContentType::Uri(uri) => uri.to_owned(),
 				_ => String::new(),
 			}),
 			Variant::ContentId(content) => AmbiguousValue::String(content.into_string()),
@@ -138,27 +138,27 @@ impl UnresolvedValue {
 				let mut array = Vec::new();
 
 				if faces.contains(Faces::RIGHT) {
-					array.push("Right".to_owned());
+					array.push("Right".into());
 				}
 
 				if faces.contains(Faces::TOP) {
-					array.push("Top".to_owned());
+					array.push("Top".into());
 				}
 
 				if faces.contains(Faces::BACK) {
-					array.push("Back".to_owned());
+					array.push("Back".into());
 				}
 
 				if faces.contains(Faces::LEFT) {
-					array.push("Left".to_owned());
+					array.push("Left".into());
 				}
 
 				if faces.contains(Faces::BOTTOM) {
-					array.push("Bottom".to_owned());
+					array.push("Bottom".into());
 				}
 
 				if faces.contains(Faces::FRONT) {
-					array.push("Front".to_owned());
+					array.push("Front".into());
 				}
 
 				AmbiguousValue::StringArray(array)
@@ -195,14 +195,14 @@ impl UnresolvedValue {
 						cf.orientation.z.z as f64,
 					])
 				} else {
-					AmbiguousValue::String("null".to_owned())
+					AmbiguousValue::String("null".into())
 				}
 			}
 
 			Variant::PhysicalProperties(PhysicalProperties::Custom(custom)) => {
 				AmbiguousValue::PhysicalProperties(custom)
 			}
-			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String(String::from("Default")),
+			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String("Default".into()),
 
 			Variant::Ray(ray) => AmbiguousValue::Array3Array2([
 				[ray.origin.x as f64, ray.origin.y as f64, ray.origin.z as f64],
@@ -232,7 +232,7 @@ impl UnresolvedValue {
 			}
 			Variant::String(str) => AmbiguousValue::String(str),
 
-			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
+			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.into()).collect()),
 
 			Variant::UDim(udim) => AmbiguousValue::Array2([udim.scale as f64, udim.offset as f64]),
 

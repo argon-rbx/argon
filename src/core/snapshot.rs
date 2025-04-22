@@ -1,6 +1,6 @@
 use rbx_dom_weak::{
 	types::{Ref, Variant},
-	HashMapExt, Ustr, UstrMap,
+	ustr, HashMapExt, Ustr, UstrMap,
 };
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Debug, Formatter};
@@ -167,7 +167,7 @@ impl Debug for Snapshot {
 		if !self.properties.is_empty() {
 			let mut properties = self.properties.clone();
 
-			if let Some(property) = properties.get_mut(&Ustr::from("Source")) {
+			if let Some(property) = properties.get_mut(&ustr("Source")) {
 				if let Variant::String(source) = property {
 					let lines = source.lines().count();
 

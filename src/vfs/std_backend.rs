@@ -40,7 +40,7 @@ impl VfsBackend for StdBackend {
 	}
 
 	fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
-		let mut paths = vec![];
+		let mut paths = Vec::new();
 
 		for entry in fs::read_dir(path)? {
 			paths.push(entry?.path());

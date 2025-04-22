@@ -61,7 +61,7 @@ impl VfsBackend for MemBackend {
 	}
 
 	fn write(&mut self, path: &Path, contents: &[u8]) -> Result<()> {
-		let entry = self.inner.entry(path.to_owned()).or_insert(VfsEntry::File(vec![]));
+		let entry = self.inner.entry(path.to_owned()).or_insert(VfsEntry::File(Vec::new()));
 
 		match entry {
 			VfsEntry::File(old) => contents.clone_into(old),
@@ -82,7 +82,7 @@ impl VfsBackend for MemBackend {
 				Some(VfsEntry::File(_)) => return not_dir(&cur_path),
 				Some(VfsEntry::Directory(_)) => (),
 				None => {
-					self.inner.insert(cur_path.clone(), VfsEntry::Directory(vec![]));
+					self.inner.insert(cur_path.clone(), VfsEntry::Directory(Vec::new()));
 
 					if let Some(VfsEntry::Directory(children)) = self.inner.get_mut(&last_path) {
 						children.push(cur_path.clone());
