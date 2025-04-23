@@ -200,11 +200,7 @@ impl Core {
 					.iter()
 					.filter_map(|entry| match entry {
 						SourceEntry::File(path) | SourceEntry::Data(path) | SourceEntry::Project(path) => {
-							if let Ok(path) = path.strip_prefix(workspace_dir) {
-								Some(path.to_owned())
-							} else {
-								Some(path.to_owned())
-							}
+							Some(path.strip_prefix(workspace_dir).unwrap_or(path).to_owned())
 						}
 						_ => None,
 					})

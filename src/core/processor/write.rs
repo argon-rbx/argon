@@ -409,7 +409,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 					.filter_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)))
 					.collect::<Vec<PathBuf>>();
 
-				paths.sort_by_key(|path| path.exists());
+				paths.sort_by_key(|path| !path.exists());
 				paths.first().map(|path| path.to_owned())
 			};
 

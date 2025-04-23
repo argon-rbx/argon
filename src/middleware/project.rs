@@ -28,10 +28,7 @@ pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let meta = Meta::from_project(&project);
 	let mut snapshot = new_snapshot_node(&project.name, path, project.node, NodePath::new(), &meta.context, vfs)?;
 
-	let mut source = Source::file(path).with_relevant(snapshot.meta.source.relevant().to_owned());
-	source.add_project(path);
-
-	snapshot.set_meta(meta.with_source(source));
+	snapshot.meta.source.add_project(path);
 
 	Ok(snapshot)
 }

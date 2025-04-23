@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `--license` argument is now independent from the `--docs` argument in `argon init` command
 - Empty StringValues (`.txt` files) are no longer ignored when syncing back
 - Syncback now respects original file extensions so it no longer changes `.lua` to `.luau` when writing
+- Package projects (that contain only root `$path`) are now properly synced back
 
 ### Changed
 

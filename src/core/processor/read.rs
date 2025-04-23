@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use log::{error, trace};
 use rbx_dom_weak::types::Ref;
 
@@ -21,23 +23,31 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
 	let meta = tree.get_meta(id)?;
 	let source = meta.source.get();
 
+	let process_path = |path: &Path| -> Option<Option<Snapshot>> {
+		match new_snapshot(path, &meta.context, vfs) {
+			Ok(snapshot) => Some(snapshot),
+			Err(err) => {
+				error!("Failed to process changes: {}, source: {:?}", err, source);
+				None
+			}
+		}
+	};
+
 	let snapshot = match source {
 		SourceKind::Project(name, path, node, node_path) => {
-			match new_snapshot_node(name, path, node.clone(), node_path.clone(), &meta.context, vfs) {
-				Ok(snapshot) => Some(snapshot),
-				Err(err) => {
-					error!("Failed to process changes: {}, source: {:?}", err, source);
-					return Some(changes);
+			if node_path.is_root() {
+				process_path(path)?
+			} else {
+				match new_snapshot_node(name, path, node.clone(), node_path.clone(), &meta.context, vfs) {
+					Ok(snapshot) => Some(snapshot),
+					Err(err) => {
+						error!("Failed to process changes: {}, source: {:?}", err, source);
+						return Some(changes);
+					}
 				}
 			}
 		}
-		SourceKind::Path(path) => match new_snapshot(path, &meta.context, vfs) {
-			Ok(snapshot) => snapshot,
-			Err(err) => {
-				error!("Failed to process changes: {}, source: {:?}", err, source);
-				return Some(changes);
-			}
-		},
+		SourceKind::Path(path) => process_path(path)?,
 		SourceKind::None => panic!(
 			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {:?}, meta: {:#?}",
 			id, meta
