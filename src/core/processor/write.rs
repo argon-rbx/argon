@@ -306,7 +306,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let parent_source =
 					add_non_project_instances(parent_id, &custom_path, snapshot, &mut parent_meta, tree, vfs)?;
 
-				let parent_source = Source::project(&name, &path, node.clone(), node_path.clone())
+				let parent_source = Source::project(&name, &path, *node, node_path.clone())
 					.with_relevant(parent_source.relevant().to_owned());
 
 				parent_meta.set_source(parent_source);
@@ -595,7 +595,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				let node_path = node_path.parent().join(&new_name);
 
-				*meta.source.get_mut() = SourceKind::Project(new_name.clone(), path.clone(), node, node_path);
+				*meta.source.get_mut() = SourceKind::Project(new_name.clone(), path.clone(), Box::new(node), node_path);
 
 				instance.name = new_name;
 			}

@@ -134,7 +134,7 @@ fn map_error(err: notify::Error) -> io::Error {
 		notify::ErrorKind::Io(err) => err,
 		notify::ErrorKind::PathNotFound => io::Error::new(io::ErrorKind::NotFound, err),
 		notify::ErrorKind::WatchNotFound => io::Error::new(io::ErrorKind::NotFound, err),
-		_ => io::Error::new(io::ErrorKind::Other, err),
+		_ => io::Error::other(err),
 	}
 }
 

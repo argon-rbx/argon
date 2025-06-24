@@ -166,15 +166,15 @@ fn not_found<T>(path: &Path) -> Result<T> {
 }
 
 fn not_file<T>(path: &Path) -> Result<T> {
-	Err(Error::new(
-		ErrorKind::Other,
-		format!("path {} was a directory, but must be a file", path.display()),
-	))
+	Err(Error::other(format!(
+		"path {} was a directory, but must be a file",
+		path.display()
+	)))
 }
 
 fn not_dir<T>(path: &Path) -> Result<T> {
-	Err(Error::new(
-		ErrorKind::Other,
-		format!("path {} was a file, but must be a directory", path.display()),
-	))
+	Err(Error::other(format!(
+		"path {} was a file, but must be a directory",
+		path.display()
+	)))
 }
