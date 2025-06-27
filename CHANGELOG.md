@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Argon can now run on older Linux versions (with `glibc 2.35+`)
+- Updating instance meta now triggers client sync
+
 ## [2.0.24] - 2025-04-28
 
 ### Added

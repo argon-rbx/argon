@@ -233,6 +233,6 @@ impl UpdatedSnapshot {
 	}
 
 	pub fn is_empty(&self) -> bool {
-		self.name.is_none() && self.class.is_none() && self.properties.is_none()
+		self.meta.is_none() && self.name.is_none() && self.class.is_none() && self.properties.is_none()
 	}
 }
