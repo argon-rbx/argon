@@ -277,12 +277,14 @@ impl Config {
 				if defaults_only {
 					table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
 				} else {
-					table.add_row(vec![
-						setting.to_owned(),
-						default.to_string(),
-						self.get(setting).map(|v| v.to_string()).unwrap(),
-						doc.trim().to_owned(),
-					]);
+					let default = default.to_string();
+					let mut current = self.get(setting).map(|v| v.to_string()).unwrap();
+
+					if current == default {
+						current = String::new();
+					}
+
+					table.add_row(vec![setting.to_owned(), default, current, doc.trim().to_owned()]);
 				}
 			}
 		}

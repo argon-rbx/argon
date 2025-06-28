@@ -241,7 +241,7 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	}
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectDetails {
 	version: String,

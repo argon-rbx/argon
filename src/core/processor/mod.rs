@@ -141,17 +141,25 @@ impl Handler {
 			trace!("No changes detected when processing path: {:?}", path);
 		}
 
-		if lock!(self.project).path == path {
+		let mut project = lock!(self.project);
+
+		if project.path == path {
 			if let VfsEvent::Write(_) = event {
 				debug!("Project file was modified. Reloading project..");
 
-				match lock!(self.project).reload() {
+				let old_details = ProjectDetails::from_project(&project, &tree);
+
+				match project.reload() {
 					Ok(project) => {
 						info!("Project reloaded");
 
-						let details = server::SyncDetails(ProjectDetails::from_project(project, &tree));
+						let details = ProjectDetails::from_project(project, &tree);
 
-						match self.queue.push(details, None) {
+						if details == old_details {
+							return;
+						}
+
+						match self.queue.push(server::SyncDetails(details), None) {
 							Ok(()) => trace!("Project details synced"),
 							Err(err) => warn!("Failed to sync project details: {}", err),
 						}
