@@ -107,9 +107,7 @@ impl Queue {
 
 		drop(queues);
 
-		let message = receiver.recv().ok();
-
-		Ok(message)
+		Ok(receiver.recv().ok())
 	}
 
 	pub fn get_timeout(&self, id: u32) -> Result<Option<Message>> {
@@ -122,9 +120,26 @@ impl Queue {
 
 		drop(queues);
 
-		let message = receiver.recv_timeout(QUEUE_TIMEOUT).ok();
+		Ok(receiver.recv_timeout(QUEUE_TIMEOUT).ok())
+	}
 
-		Ok(message)
+	pub fn get_change(&self, id: u32) -> Result<Message> {
+		if !self.is_subscribed(id) {
+			bail!("Not subscribed")
+		}
+
+		let queues = read!(self.queues);
+		let receiver = queues.get(&id).unwrap().receiver.clone();
+
+		drop(queues);
+
+		Ok(loop {
+			if let Ok(message) = receiver.recv() {
+				if message.is_change() {
+					break message;
+				}
+			}
+		})
 	}
 
 	pub fn subscribe(&self, id: u32, name: &str) -> Result<()> {

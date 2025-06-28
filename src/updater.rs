@@ -3,7 +3,12 @@ use colored::Colorize;
 use log::{debug, trace, warn};
 use self_update::{backends::github::Update, cargo_crate_version, version::bump_is_greater};
 use serde::{Deserialize, Serialize};
-use std::{fs, sync::Once, time::SystemTime};
+use std::{
+	env::consts::{ARCH, OS},
+	fs,
+	sync::Once,
+	time::SystemTime,
+};
 
 use crate::{
 	argon_error, argon_info,
@@ -55,10 +60,20 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 	let style = util::get_progress_style();
 	let current_version = cargo_crate_version!();
 
+	let target = {
+		// Windows automatically translates x86_64 programs to aarch64
+		if OS == "windows" && ARCH == "aarch64" {
+			"windows-x86_64"
+		} else {
+			&format!("{}-{}", OS, ARCH)
+		}
+	};
+
 	let update = Update::configure()
 		.repo_owner("argon-rbx")
 		.repo_name("argon")
 		.bin_name("argon")
+		.target(target)
 		.show_download_progress(true)
 		.set_progress_style(style.0, style.1)
 		.build()?;

@@ -143,7 +143,7 @@ impl Serve {
 			argon_info!("Generated sourcemap at: {}", path.to_string().bold());
 
 			thread::spawn(move || loop {
-				let _message = queue.get(0).unwrap();
+				let _message = queue.get_change(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 

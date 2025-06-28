@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- CLI can now be updated on Windows on ARM CPUs
 - Argon can now run on older Linux versions (with `glibc 2.35+`)
 - Updating instance meta now triggers client sync
+
+### Changed
+
+- Sourcemap regeneration is now only triggered by relevant changes
 
 ## [2.0.24] - 2025-04-28
 

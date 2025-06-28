@@ -100,7 +100,7 @@ impl Sourcemap {
 			queue.subscribe_internal().unwrap();
 
 			loop {
-				let _message = queue.get(0).unwrap();
+				let _message = queue.get_change(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 				core.sourcemap(self.output.clone(), self.non_scripts)?;

@@ -33,6 +33,12 @@ pub enum Message {
 	Disconnect(Disconnect),
 }
 
+impl Message {
+	pub fn is_change(&self) -> bool {
+		matches!(self, Message::SyncChanges(_) | Message::SyncbackChanges(_))
+	}
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct SyncChanges(pub Changes);
 
