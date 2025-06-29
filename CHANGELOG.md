@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Numbers in all JSON files are now formatted with up to 4 decimal places
+
 ### Fixed
 
 - CLI can now be updated on Windows on ARM CPUs

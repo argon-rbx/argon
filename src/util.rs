@@ -163,5 +163,8 @@ pub fn count_loc_from_properties(properties: &Properties) -> usize {
 
 /// Returns a custom serde_json formatter
 pub fn get_json_formatter() -> JsonFormatter<'static> {
-	JsonFormatter::new().with_array_breaks(false).with_extra_newline(true)
+	JsonFormatter::new()
+		.with_array_breaks(false)
+		.with_extra_newline(true)
+		.with_max_decimals(4)
 }

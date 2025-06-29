@@ -18,6 +18,7 @@ pub struct JsonFormatter<'a> {
 	indent: &'a [u8],
 	array_breaks: bool,
 	extra_newline: bool,
+	max_decimals: usize,
 }
 
 impl<'a> JsonFormatter<'a> {
@@ -25,10 +26,11 @@ impl<'a> JsonFormatter<'a> {
 	pub fn new() -> Self {
 		JsonFormatter {
 			current_indent: 0,
-			array_breaks: true,
-			extra_newline: false,
 			has_value: false,
 			indent: b"  ",
+			array_breaks: true,
+			extra_newline: false,
+			max_decimals: 0,
 		}
 	}
 
@@ -49,6 +51,12 @@ impl<'a> JsonFormatter<'a> {
 		self.extra_newline = extra_newline;
 		self
 	}
+
+	/// Construct a pretty printer formatter that limits the number of decimal places.
+	pub fn with_max_decimals(mut self, max_decimals: usize) -> Self {
+		self.max_decimals = max_decimals;
+		self
+	}
 }
 
 impl<'a> Default for JsonFormatter<'a> {
@@ -58,6 +66,21 @@ impl<'a> Default for JsonFormatter<'a> {
 }
 
 impl<'a> Formatter for JsonFormatter<'a> {
+	#[inline]
+	fn write_f64<W>(&mut self, writer: &mut W, mut value: f64) -> io::Result<()>
+	where
+		W: ?Sized + io::Write,
+	{
+		if self.max_decimals > 0 {
+			let multiplier = 10_f64.powi(self.max_decimals as i32);
+			value = (value * multiplier).round() / multiplier;
+		}
+
+		let mut buffer = ryu::Buffer::new();
+		let s = buffer.format_finite(value);
+		writer.write_all(s.as_bytes())
+	}
+
 	#[inline]
 	fn begin_array<W>(&mut self, writer: &mut W) -> io::Result<()>
 	where
