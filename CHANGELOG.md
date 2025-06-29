@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Numbers in all JSON files are now formatted with up to 4 decimal places
+- Support for top-level arrays in JSON and YAML files
 
 ### Fixed
 
