@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Scripts are now written to the filesystem even if they are empty (syncback)
 - Sourcemap regeneration is now only triggered by relevant changes
 - Project details are now only synced when relevant project properties change
 - `argon config -l` now displays only modified settings in `Current` column

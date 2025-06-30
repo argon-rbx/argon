@@ -59,9 +59,13 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 
 #[profiling::function]
 pub fn write_luau(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
-	if let Some(Variant::String(value)) = properties.remove(&ustr("Source")) {
-		vfs.write(path, value.as_bytes())?;
-	}
+	let source = if let Some(Variant::String(source)) = properties.remove(&ustr("Source")) {
+		source
+	} else {
+		String::new()
+	};
+
+	vfs.write(path, source.as_bytes())?;
 
 	Ok(properties)
 }
