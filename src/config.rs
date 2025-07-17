@@ -216,14 +216,14 @@ impl Config {
 	#[inline]
 	fn load_specific(kind: ConfigKind) {
 		if mem::discriminant(&kind) == mem::discriminant(&CONFIG.read().unwrap().kind) {
-			debug!("{} config file already loaded", kind);
+			debug!("{kind} config file already loaded");
 			return;
 		}
 
 		let path = kind.path().unwrap();
 
 		if !path.exists() {
-			debug!("{} config file not found", kind);
+			debug!("{kind} config file not found");
 			return;
 		}
 
@@ -244,7 +244,7 @@ impl Config {
 		}();
 
 		match load_result {
-			Ok(()) => info!("{} config file loaded", kind),
+			Ok(()) => info!("{kind} config file loaded"),
 			Err(err) => {
 				argon_error!("Failed to load {} config file: {}", kind.to_string().bold(), err);
 			}

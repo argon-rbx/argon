@@ -35,7 +35,7 @@ pub fn is_running(title: Option<String>) -> Result<bool> {
 		let windows = String::from_utf8(output.stdout)?;
 
 		if let Some(title) = title {
-			Ok(windows.contains(&format!("{} - Roblox Studio", title)))
+			Ok(windows.contains(&format!("{title} - Roblox Studio")))
 		} else {
 			Ok(windows.contains("Roblox Studio"))
 		}

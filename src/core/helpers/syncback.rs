@@ -145,7 +145,7 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 		let suffix = path.get_name().strip_prefix(name.as_str()).unwrap_or_default();
 
 		let renamed = format!("{}_{}", name, Uuid::new_v4());
-		let renamed_path = path.with_file_name(format!("{}{}", renamed, suffix));
+		let renamed_path = path.with_file_name(format!("{renamed}{suffix}"));
 
 		argon_warn!(
 			"Instance with path: {} got renamed to: {}, because it already exists!",

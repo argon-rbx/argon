@@ -25,7 +25,7 @@ impl From<Middleware> for ScriptType {
 			Middleware::ServerScript => ScriptType::Server,
 			Middleware::ClientScript => ScriptType::Client,
 			Middleware::ModuleScript => ScriptType::Module,
-			_ => panic!("Cannot convert {:?} to ScriptType", middleware),
+			_ => panic!("Cannot convert {middleware:?} to ScriptType"),
 		}
 	}
 }

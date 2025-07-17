@@ -54,7 +54,7 @@ impl Exec {
 			});
 
 			if let Some(address) = address {
-				let url = format!("{}/exec", address);
+				let url = format!("{address}/exec");
 
 				let body = rmp_serde::to_vec(&Request {
 					code: code.to_owned(),

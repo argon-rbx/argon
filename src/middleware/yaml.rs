@@ -9,7 +9,7 @@ pub fn read_yaml(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let yaml = vfs.read_to_string(path)?;
 	let lua = yaml2lua::parse(&yaml)?;
 
-	let source = format!("return {}", lua);
+	let source = format!("return {lua}");
 
 	let mut properties = UstrMap::new();
 	properties.insert(ustr("Source"), Variant::String(source));

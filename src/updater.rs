@@ -65,7 +65,7 @@ fn update_cli(prompt: bool, force: bool) -> Result<bool> {
 		if OS == "windows" && ARCH == "aarch64" {
 			"windows-x86_64"
 		} else {
-			&format!("{}-{}", OS, ARCH)
+			&format!("{OS}-{ARCH}")
 		}
 	};
 

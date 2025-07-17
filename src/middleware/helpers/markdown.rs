@@ -54,7 +54,7 @@ fn format_list(elements: &[ListItem], ordered: bool) -> String {
 		))
 	}
 
-	format!("{}\n", string)
+	format!("{string}\n")
 }
 
 fn format_header(elements: &[Span], _level: usize) -> String {

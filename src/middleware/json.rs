@@ -14,7 +14,7 @@ pub fn read_json(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	let lua = json2lua::parse(&json)?;
 
-	let source = format!("return {}", lua);
+	let source = format!("return {lua}");
 
 	let mut properties = UstrMap::new();
 	properties.insert(ustr("Source"), Variant::String(source));

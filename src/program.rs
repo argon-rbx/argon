@@ -204,7 +204,7 @@ impl Program {
 				"pnpm" => "https://pnpm.io/installation",
 				"bun" => "https://bun.sh/docs/installation",
 				"npm" => "https://nodejs.org/en/download/",
-				package_manager => return format!("https://www.google.com/search?q={}", package_manager),
+				package_manager => return format!("https://www.google.com/search?q={package_manager}"),
 			}
 			.to_owned(),
 			ProgramName::Wally => "https://wally.run".into(),

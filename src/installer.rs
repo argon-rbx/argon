@@ -99,7 +99,7 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 			_ => unreachable!(),
 		},
 		Err(err) => {
-			trace!("Failed to install Argon plugin from GitHub: {}", err);
+			trace!("Failed to install Argon plugin from GitHub: {err}");
 
 			#[allow(clippy::const_is_empty)]
 			if ARGON_PLUGIN.is_empty() {

@@ -9,7 +9,7 @@ pub fn read_toml(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let toml = vfs.read_to_string(path)?;
 	let lua = toml2lua::parse(&toml)?;
 
-	let source = format!("return {}", lua);
+	let source = format!("return {lua}");
 
 	let mut properties = UstrMap::new();
 	properties.insert(ustr("Source"), Variant::String(source));

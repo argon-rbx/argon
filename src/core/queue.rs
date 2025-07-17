@@ -178,7 +178,7 @@ impl Queue {
 
 		let listener = Listener {
 			id,
-			name: format!("Internal listener #{}", id),
+			name: format!("Internal listener #{id}"),
 			is_internal: true,
 		};
 

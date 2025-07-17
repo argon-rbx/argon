@@ -172,7 +172,7 @@ impl Debug for Snapshot {
 					let lines = source.lines().count();
 
 					if lines > 1 {
-						*property = Variant::String(format!("Truncated... ({} lines)", lines));
+						*property = Variant::String(format!("Truncated... ({lines} lines)"));
 					}
 				}
 			}

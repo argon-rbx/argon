@@ -316,7 +316,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				let node = project
 					.find_node_by_path(&node_path)
-					.context(format!("Failed to find project node with path {:?}", node_path))?;
+					.context(format!("Failed to find project node with path {node_path:?}"))?;
 
 				add_project_instances(parent_id, &path, node_path.clone(), snapshot, node, &parent_meta, tree);
 
@@ -558,7 +558,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 					let node = project
 						.find_node_by_path(&node_path)
-						.context(format!("Failed to find project node with path {:?}", node_path))?;
+						.context(format!("Failed to find project node with path {node_path:?}"))?;
 
 					node.properties = UstrMap::new();
 					node.attributes = None;
@@ -567,7 +567,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				} else {
 					let node = project
 						.find_node_by_path(&node_path)
-						.context(format!("Failed to find project node with path {:?}", node_path))?;
+						.context(format!("Failed to find project node with path {node_path:?}"))?;
 
 					let class = node.class_name.unwrap_or(Ustr::from(&name));
 					let properties = validate_properties(properties, meta.context.syncback_filter());
@@ -589,7 +589,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let node = parent_node
 					.tree
 					.remove(&name)
-					.context(format!("Failed to remove project node with path {:?}", node_path))?;
+					.context(format!("Failed to remove project node with path {node_path:?}"))?;
 
 				parent_node.tree.insert(new_name.clone(), node.clone());
 
@@ -620,7 +620,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 }
 
 pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
-	trace!("Removing {:?}", id);
+	trace!("Removing {id:?}");
 
 	if let Some(instance) = tree.get_instance(id) {
 		let filter = tree.get_meta(id).unwrap().context.syncback_filter();
@@ -630,7 +630,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 			return Ok(());
 		}
 	} else {
-		warn!("Attempted to remove instance that doesn't exist: {:?}", id);
+		warn!("Attempted to remove instance that doesn't exist: {id:?}");
 		return Ok(());
 	}
 
@@ -725,7 +725,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 
 			project.save(path)?;
 		}
-		SourceKind::None => panic!("Attempted to remove instance with no source: {:?}", id),
+		SourceKind::None => panic!("Attempted to remove instance with no source: {id:?}"),
 	}
 
 	tree.remove_instance(id);

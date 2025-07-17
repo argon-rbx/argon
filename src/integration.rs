@@ -99,7 +99,7 @@ pub fn check_wally_packages(workspace_path: &Path) {
 	match verify_wally_manifest() {
 		Ok(()) => (),
 		Err(err) => {
-			warn!("Failed to verify or install missing Wally packages: {}", err);
+			warn!("Failed to verify or install missing Wally packages: {err}");
 		}
 	}
 }

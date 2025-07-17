@@ -30,7 +30,7 @@ async fn main(request: MsgPack<Request>, core: Data<Arc<Core>>) -> impl Responde
 		if let Some(name) = queue.get_first_non_internal_listener_name() {
 			match studio::focus(Some(name)) {
 				Ok(()) => (),
-				Err(err) => error!("Failed to focus Roblox Studio: {}", err),
+				Err(err) => error!("Failed to focus Roblox Studio: {err}"),
 			}
 		}
 	}

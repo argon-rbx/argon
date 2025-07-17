@@ -147,7 +147,7 @@ impl Display for Table {
 			separator.push_str(&format!("|{0:-<1$}", "", column + 2));
 		}
 
-		write!(f, "{}|\n{}|\n", header, separator)?;
+		write!(f, "{header}|\n{separator}|\n")?;
 
 		for row in self.rows.iter().skip(1) {
 			for (i, column) in row.iter().enumerate() {

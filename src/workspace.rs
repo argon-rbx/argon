@@ -179,7 +179,7 @@ pub fn init_ts(workspace: WorkspaceConfig) -> Result<Option<PathBuf>> {
 		.arg(command)
 		.arg("--skipBuild")
 		.arg(format!("--git={}", workspace.git))
-		.arg(format!("--packageManager={}", package_manager))
+		.arg(format!("--packageManager={package_manager}"))
 		.args(["--dir", &project.to_string()])
 		.arg(if env_yes { "--yes" } else { "" })
 		.spawn()?;
@@ -268,9 +268,9 @@ pub fn initialize_repo(directory: &Path) -> Result<()> {
 }
 
 fn add_license(path: &Path, license: &str, fallback: &str) -> Result<()> {
-	trace!("Getting {} license template..", license);
+	trace!("Getting {license} license template..");
 
-	let url = format!("https://api.github.com/licenses/{}", license);
+	let url = format!("https://api.github.com/licenses/{license}");
 
 	let license_template = || -> Result<String> {
 		match Client::new().get(url).header(USER_AGENT, "Argon").send() {

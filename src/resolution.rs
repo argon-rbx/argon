@@ -364,10 +364,10 @@ impl AmbiguousValue {
 				(VariantType::Bool, AmbiguousValue::Bool(bool)) => Ok(bool.into()),
 
 				(VariantType::BrickColor, AmbiguousValue::Number(num)) => Ok(BrickColor::from_number(num as u16)
-					.context(format!("{} is not valid BrickColor number", num))?
+					.context(format!("{num} is not valid BrickColor number"))?
 					.into()),
 				(VariantType::BrickColor, AmbiguousValue::String(name)) => Ok(BrickColor::from_name(&name)
-					.context(format!("{} is not valid BrickColor name", name))?
+					.context(format!("{name} is not valid BrickColor name"))?
 					.into()),
 
 				(VariantType::CFrame, AmbiguousValue::Array12(cf)) => {

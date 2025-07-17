@@ -86,14 +86,14 @@ impl Handler {
 	fn on_vfs_event(&self, event: VfsEvent) {
 		profiling::start_frame!();
 
-		trace!("Received VFS event: {:?}", event);
+		trace!("Received VFS event: {event:?}");
 
 		let mut tree = lock!(self.tree);
 		let path = event.path();
 
 		let changes = {
 			if BLACKLISTED_PATHS.iter().any(|blacklisted| path.ends_with(blacklisted)) {
-				trace!("Processing of {:?} aborted: blacklisted", path);
+				trace!("Processing of {path:?} aborted: blacklisted");
 				return;
 			}
 
@@ -108,7 +108,7 @@ impl Handler {
 					match current_path.parent() {
 						Some(parent) => current_path = parent,
 						None => {
-							trace!("No ID found for path {:?}", path);
+							trace!("No ID found for path {path:?}");
 							return;
 						}
 					}
@@ -134,11 +134,11 @@ impl Handler {
 			match result {
 				Ok(()) => trace!("Added changes to the queue"),
 				Err(err) => {
-					error!("Failed to add changes to the queue: {}", err);
+					error!("Failed to add changes to the queue: {err}");
 				}
 			}
 		} else {
-			trace!("No changes detected when processing path: {:?}", path);
+			trace!("No changes detected when processing path: {path:?}");
 		}
 
 		let mut project = lock!(self.project);
@@ -161,10 +161,10 @@ impl Handler {
 
 						match self.queue.push(server::SyncDetails(details), None) {
 							Ok(()) => trace!("Project details synced"),
-							Err(err) => warn!("Failed to sync project details: {}", err),
+							Err(err) => warn!("Failed to sync project details: {err}"),
 						}
 					}
-					Err(err) => error!("Failed to reload project: {}", err),
+					Err(err) => error!("Failed to reload project: {err}"),
 				}
 			} else if let VfsEvent::Delete(_) = event {
 				argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
@@ -200,8 +200,8 @@ impl Handler {
 				);
 
 				match self.queue.disconnect("Client and server got out of sync!", client_id) {
-					Ok(()) => trace!("Client {} disconnected", client_id),
-					Err(err) => warn!("Failed to disconnect client: {}", err),
+					Ok(()) => trace!("Client {client_id} disconnected"),
+					Err(err) => warn!("Failed to disconnect client: {err}"),
 				}
 
 				return;
@@ -228,7 +228,7 @@ impl Handler {
 
 		match result {
 			Ok(()) => trace!("Changes applied successfully"),
-			Err(err) => error!("Failed to apply changes: {}", err),
+			Err(err) => error!("Failed to apply changes: {err}"),
 		}
 
 		self.queue.push(server::SyncbackChanges(), Some(0)).ok();

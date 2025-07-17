@@ -48,27 +48,27 @@ fn main() -> ExitCode {
 	logger::init(verbosity, log_style);
 
 	match config_kind {
-		Ok(kind) => info!("{:?} config loaded", kind),
-		Err(err) => error!("Failed to load config file: {}", err),
+		Ok(kind) => info!("{kind:?} config loaded"),
+		Err(err) => error!("Failed to load config file: {err}"),
 	}
 
 	match installation {
 		Ok(()) => info!("Argon installation verified successfully!"),
-		Err(err) => warn!("Failed to verify Argon installation: {}", err),
+		Err(err) => warn!("Failed to verify Argon installation: {err}"),
 	}
 
 	let handle = thread::spawn(move || {
 		if !is_managed && config.check_updates {
 			match updater::check_for_updates(config.install_plugin, config.update_templates, !config.auto_update) {
 				Ok(()) => info!("Update check completed successfully!"),
-				Err(err) => warn!("Update check failed: {}", err),
+				Err(err) => warn!("Update check failed: {err}"),
 			}
 		}
 
 		if config.share_stats {
 			match stats::track() {
 				Ok(()) => info!("Stat tracker initialized successfully!"),
-				Err(err) => warn!("Failed to initialize stat tracker: {}", err),
+				Err(err) => warn!("Failed to initialize stat tracker: {err}"),
 			}
 		}
 	});
@@ -78,10 +78,10 @@ fn main() -> ExitCode {
 			Ok(server) => {
 				let _ = ManuallyDrop::new(server);
 
-				info!("Profiler started at {}", PROFILER_ADDRESS);
+				info!("Profiler started at {PROFILER_ADDRESS}");
 			}
 			Err(err) => {
-				error!("Failed to start profiler: {}", err);
+				error!("Failed to start profiler: {err}");
 			}
 		}
 

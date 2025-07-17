@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
-	trace!("Processing changes for instance: {:?}", id);
+	trace!("Processing changes for instance: {id:?}");
 
 	let mut changes = Changes::new();
 
@@ -27,7 +27,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
 		match new_snapshot(path, &meta.context, vfs) {
 			Ok(snapshot) => Some(snapshot),
 			Err(err) => {
-				error!("Failed to process changes: {}, source: {:?}", err, source);
+				error!("Failed to process changes: {err}, source: {source:?}");
 				None
 			}
 		}
@@ -41,7 +41,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
 				match new_snapshot_node(name, path, *node.clone(), node_path.clone(), &meta.context, vfs) {
 					Ok(snapshot) => Some(snapshot),
 					Err(err) => {
-						error!("Failed to process changes: {}, source: {:?}", err, source);
+						error!("Failed to process changes: {err}, source: {source:?}");
 						return Some(changes);
 					}
 				}
@@ -49,8 +49,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
 		}
 		SourceKind::Path(path) => process_path(path)?,
 		SourceKind::None => panic!(
-			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {:?}, meta: {:#?}",
-			id, meta
+			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {id:?}, meta: {meta:#?}"
 		),
 	};
 

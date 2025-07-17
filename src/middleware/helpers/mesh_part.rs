@@ -46,7 +46,7 @@ pub fn save_mesh(properties: &Properties) -> Option<String> {
 
 			thread::spawn(move || match clear(&path) {
 				Ok(_) => debug!("Cleared temporary mesh models"),
-				Err(err) => error!("Failed to clear temporary mesh models: {}", err),
+				Err(err) => error!("Failed to clear temporary mesh models: {err}"),
 			});
 		}
 
@@ -70,7 +70,7 @@ pub fn save_mesh(properties: &Properties) -> Option<String> {
 			Some(name)
 		}
 		Err(err) => {
-			error!("Failed to write MeshPart temporary model: {}", err);
+			error!("Failed to write MeshPart temporary model: {err}");
 			None
 		}
 	}

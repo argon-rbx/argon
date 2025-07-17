@@ -109,7 +109,7 @@ impl Stop {
 	}
 
 	fn make_request(address: &String, pid: u32) {
-		let url = format!("{}/stop", address);
+		let url = format!("{address}/stop");
 
 		match Client::new().post(url).send() {
 			Ok(_) => argon_info!("Stopped Argon session with address: {}", address.bold()),
