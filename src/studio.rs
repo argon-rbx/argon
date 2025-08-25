@@ -6,7 +6,7 @@ use std::{
 };
 
 #[cfg(target_os = "windows")]
-use winsafe::{co::SW, prelude::user_Hwnd, EnumWindows};
+use winsafe::{co::SW, EnumWindows};
 
 pub fn launch(path: Option<PathBuf>) -> Result<()> {
 	let studio_path = RobloxStudio::locate()?.application_path().to_owned();

@@ -4274,9 +4274,9 @@ dependencies = [
 
 [[package]]
 name = "winsafe"
-version = "0.0.24"
+version = "0.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4271ae8f63c109d73bc6fcf352b117166757fabcce6a769649ef18303dbf2491"
+checksum = "488c5cd3500ddab6aa8790bff51619203b807619b106b21a9e694161d4de028f"
 
 [[package]]
 name = "wit-bindgen-rt"
