@@ -168,7 +168,6 @@ impl Handler {
 				}
 			} else if let VfsEvent::Delete(_) = event {
 				argon_error!("Warning! Top level project file was deleted. This might cause unexpected behavior. Skipping processing of changes!");
-				return;
 			}
 		}
 	}
