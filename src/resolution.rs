@@ -454,7 +454,7 @@ impl AmbiguousValue {
 						Vector3::new(cf[9], cf[10], cf[11]),
 					);
 
-					Ok(CFrame::new(pos, orientation).into())
+					Ok(Some(CFrame::new(pos, orientation)).into())
 				}
 
 				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(custom)) => {

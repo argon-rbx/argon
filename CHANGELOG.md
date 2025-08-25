@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Ambiguous deserialization of `OptionalCFrame` property now works properly
+
 ## [2.0.25] - 2025-07-17
 
 ### Added

@@ -240,7 +240,7 @@ mod unresolved_value {
 	fn optional_cframe() {
 		assert_eq!(
 			resolve("Model", "WorldPivotData", "[1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
-			CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity()).into()
+			Some(CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity())).into()
 		);
 	}
 
