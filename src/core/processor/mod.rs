@@ -46,7 +46,7 @@ impl Processor {
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
 		Builder::new()
-			.name("processor".to_owned())
+			.name("processor".into())
 			.spawn(move || -> Result<()> {
 				let vfs_receiver = vfs.receiver();
 				let client_receiver = receiver;

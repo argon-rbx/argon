@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Files deleted by commands like `git checkout` not being detected by Argon
+
 ## [2.0.26] - 2025-08-25
 
 ### Fixed
