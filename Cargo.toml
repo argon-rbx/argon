@@ -85,7 +85,7 @@ ctrlc = "3.5.1"
 toml = "0.9.8"
 glob = "0.3.3"
 open = "5.3.3"
-log = "0.4.28"
+log = "0.4.29"
 csv = "1.4.0"
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
