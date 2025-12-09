@@ -67,6 +67,21 @@ impl<'a> Default for JsonFormatter<'a> {
 
 impl<'a> Formatter for JsonFormatter<'a> {
 	#[inline]
+	fn write_f32<W>(&mut self, writer: &mut W, mut value: f32) -> io::Result<()>
+	where
+		W: ?Sized + io::Write,
+	{
+		if self.max_decimals > 0 {
+			let multiplier = 10_f32.powi(self.max_decimals as i32);
+			value = (value * multiplier).round() / multiplier;
+		}
+
+		let mut buffer = ryu::Buffer::new();
+		let s = buffer.format_finite(value);
+		writer.write_all(s.as_bytes())
+	}
+
+	#[inline]
 	fn write_f64<W>(&mut self, writer: &mut W, mut value: f64) -> io::Result<()>
 	where
 		W: ?Sized + io::Write,

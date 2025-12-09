@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Files deleted by commands like `git checkout` not being detected by Argon
+- Formatting of `f32` values being inconsistent between syncback events ([#230](https://github.com/argon-rbx/argon/issues/230))
 
 ## [2.0.26] - 2025-08-25
 
