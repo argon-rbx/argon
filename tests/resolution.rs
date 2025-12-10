@@ -246,19 +246,13 @@ mod unresolved_value {
 
 	#[test]
 	fn physical_properties() {
-		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
-			density: 1.2,
-			friction: 3.4,
-			elasticity: 5.6,
-			friction_weight: 7.8,
-			elasticity_weight: 9.0,
-		});
+		let properties = PhysicalProperties::Custom(CustomPhysicalProperties::new(1.2, 3.4, 5.6, 7.8, 9.0, 10.0));
 
 		assert_eq!(
 			resolve(
 				"Part",
 				"CustomPhysicalProperties",
-				r#"{"density": 1.2, "friction": 3.4, "elasticity": 5.6, "frictionWeight": 7.8, "elasticityWeight": 9}"#
+				r#"{"density": 1.2, "friction": 3.4, "elasticity": 5.6, "frictionWeight": 7.8, "elasticityWeight": 9, "acousticAbsorption": 10}"#
 			),
 			properties.into()
 		);
@@ -641,13 +635,7 @@ mod resolved_value {
 
 	#[test]
 	fn physical_properties() {
-		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
-			density: 1.2,
-			friction: 3.4,
-			elasticity: 5.6,
-			friction_weight: 7.8,
-			elasticity_weight: 9.0,
-		});
+		let properties = PhysicalProperties::Custom(CustomPhysicalProperties::new(1.2, 3.4, 5.6, 7.8, 9.0, 10.0));
 
 		assert_eq(
 			from_variant(properties),
@@ -657,6 +645,7 @@ mod resolved_value {
 				"elasticity": 5.6,
 				"frictionWeight": 7.8,
 				"elasticityWeight": 9,
+				"acousticAbsorption": 10,
 			}),
 		);
 		assert_eq(from_variant(PhysicalProperties::Default), json!("Default"));

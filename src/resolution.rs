@@ -11,7 +11,7 @@ use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use std::{borrow::Borrow, collections::HashMap, fmt::Write};
 
-use crate::ext::PropertyDescriptorExt;
+use crate::{ext::PropertyDescriptorExt, util::get_reflection_database};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -119,9 +119,7 @@ impl UnresolvedValue {
 			Variant::Enum(rbx_enum) => {
 				if let Some(property) = find_descriptor(class, property) {
 					if let DataType::Enum(enum_name) = &property.data_type {
-						let database = rbx_reflection_database::get();
-
-						if let Some(enum_descriptor) = database.enums.get(enum_name) {
+						if let Some(enum_descriptor) = get_reflection_database().enums.get(enum_name) {
 							for (variant_name, id) in &enum_descriptor.items {
 								if *id == rbx_enum.to_u32() {
 									return Self::Ambiguous(AmbiguousValue::String(variant_name.to_string()));
@@ -292,7 +290,7 @@ impl AmbiguousValue {
 
 		match &descriptor.data_type {
 			DataType::Enum(enum_name) => {
-				let descriptor = rbx_reflection_database::get()
+				let descriptor = get_reflection_database()
 					.enums
 					.get(enum_name)
 					.ok_or_else(|| format_err!("Unknown enum {}. Probably not implemented yet!", enum_name))?;
@@ -567,7 +565,7 @@ impl AmbiguousValue {
 }
 
 fn find_descriptor(class: &str, property: &str) -> Option<&'static PropertyDescriptor<'static>> {
-	let database = rbx_reflection_database::get();
+	let database = get_reflection_database();
 	let mut current_class = class;
 
 	loop {

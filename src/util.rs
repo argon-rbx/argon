@@ -5,7 +5,7 @@ use env_logger::WriteStyle;
 use json_formatter::JsonFormatter;
 use log::LevelFilter;
 use rbx_dom_weak::types::Variant;
-use rbx_reflection::ClassTag;
+use rbx_reflection::{ClassTag, ReflectionDatabase};
 use roblox_install::RobloxStudio;
 use std::{env, path::PathBuf, process::Command};
 
@@ -37,7 +37,7 @@ pub fn get_plugin_path() -> Result<PathBuf> {
 
 /// Checks if the given `class` is a service
 pub fn is_service(class: &str) -> bool {
-	let descriptor = rbx_reflection_database::get().classes.get(class);
+	let descriptor = get_reflection_database().classes.get(class);
 
 	let has_tag = if let Some(descriptor) = descriptor {
 		descriptor.tags.contains(&ClassTag::Service)
@@ -167,4 +167,12 @@ pub fn get_json_formatter() -> JsonFormatter<'static> {
 		.with_array_breaks(false)
 		.with_extra_newline(true)
 		.with_max_decimals(4)
+}
+
+/// Returns local or bundled reflection database
+pub fn get_reflection_database() -> &'static ReflectionDatabase<'static> {
+	rbx_reflection_database::get_local()
+		.ok()
+		.flatten()
+		.unwrap_or_else(rbx_reflection_database::get_bundled)
 }
