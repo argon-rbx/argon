@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.27] - 2025-12-10
+
 ### Fixed
 
 - Files deleted by commands like `git checkout` not being detected by Argon
@@ -419,7 +421,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.26...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.27...HEAD
+[2.0.27]: https://github.com/argon-rbx/argon/compare/2.0.26...2.0.27
 [2.0.26]: https://github.com/argon-rbx/argon/compare/2.0.25...2.0.26
 [2.0.25]: https://github.com/argon-rbx/argon/compare/2.0.24...2.0.25
 [2.0.24]: https://github.com/argon-rbx/argon/compare/2.0.23...2.0.24
