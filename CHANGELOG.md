@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.28] - 2026-03-04
+
 ### Added
 
 - Support for Linux on ARM CPUs
@@ -430,7 +432,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.27...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.28...HEAD
+[2.0.28]: https://github.com/argon-rbx/argon/compare/2.0.27...2.0.28
 [2.0.27]: https://github.com/argon-rbx/argon/compare/2.0.26...2.0.27
 [2.0.26]: https://github.com/argon-rbx/argon/compare/2.0.25...2.0.26
 [2.0.25]: https://github.com/argon-rbx/argon/compare/2.0.24...2.0.25
