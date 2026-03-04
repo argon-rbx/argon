@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Support for Linux on ARM CPUs
+- Native binary for Windows on ARM CPUs
+
 ### Fixed
 
 - Code execution for paths pointing to a script in the working directory
