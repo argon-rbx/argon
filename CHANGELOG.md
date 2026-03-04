@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Code execution for paths pointing to a script in the working directory
+
 ## [2.0.27] - 2025-12-10
 
 ### Fixed

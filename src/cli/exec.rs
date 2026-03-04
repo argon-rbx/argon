@@ -2,9 +2,9 @@ use anyhow::Result;
 use clap::Parser;
 use reqwest::{blocking::Client, header::CONTENT_TYPE};
 use serde::Serialize;
-use std::{fs, path::MAIN_SEPARATOR};
+use std::{fs, path::Path};
 
-use crate::{argon_error, argon_info, sessions};
+use crate::{argon_error, argon_info, ext::PathExt, sessions};
 
 /// Execute Luau code in Roblox Studio (requires running session)
 #[derive(Parser)]
@@ -36,8 +36,12 @@ pub struct Exec {
 
 impl Exec {
 	pub fn main(self) -> Result<()> {
-		let code = if self.is_path() {
-			fs::read_to_string(self.code)?
+		let code = if let Some(path) = Path::new(&self.code)
+			.resolve()
+			.ok()
+			.and_then(|path| path.exists().then_some(path))
+		{
+			fs::read_to_string(path)?
 		} else {
 			self.code
 		};
@@ -88,18 +92,6 @@ impl Exec {
 		}
 
 		Ok(())
-	}
-
-	fn is_path(&self) -> bool {
-		if self.code.contains('\n') {
-			return false;
-		}
-
-		if !self.code.contains(MAIN_SEPARATOR) {
-			return false;
-		}
-
-		true
 	}
 }
 
