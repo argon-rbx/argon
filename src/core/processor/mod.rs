@@ -123,6 +123,8 @@ impl Handler {
 				}
 			}
 
+			tree.resolve_refs();
+
 			changes
 		};
 

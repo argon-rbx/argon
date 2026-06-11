@@ -1,5 +1,7 @@
+use rbx_dom_weak::Ustr;
 use serde::{Deserialize, Serialize};
 use std::{
+	collections::HashMap,
 	fmt::Display,
 	path::{Path, PathBuf},
 };
@@ -207,6 +209,18 @@ impl Source {
 
 	pub fn paths(&self) -> Vec<&Path> {
 		self.relevant.iter().map(|entry| entry.path()).collect()
+	}
+
+	pub fn anchor_dir(&self) -> Option<&Path> {
+		if let Some(SourceEntry::Folder(path)) = self
+			.relevant
+			.iter()
+			.find(|entry| matches!(entry, SourceEntry::Folder(_)))
+		{
+			return Some(path);
+		}
+
+		self.inner.path().and_then(Path::parent)
 	}
 }
 
@@ -488,6 +502,9 @@ pub struct Meta {
 	pub original_name: Option<String>,
 	/// Custom Mesh Part source path
 	pub mesh_source: Option<String>,
+	/// `Ref` properties pending resolution to relative paths -> `Variant::Ref`
+	#[serde(skip)]
+	pub pending_refs: HashMap<Ustr, String>,
 }
 
 impl Meta {
@@ -500,6 +517,7 @@ impl Meta {
 			keep_unknowns: false,
 			original_name: None,
 			mesh_source: None,
+			pending_refs: HashMap::new(),
 		}
 	}
 

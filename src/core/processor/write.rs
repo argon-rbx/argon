@@ -7,7 +7,9 @@ use std::path::{Path, PathBuf};
 use crate::{
 	config::Config,
 	core::{
-		helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path},
+		helpers::syncback::{
+			rename_path, resolve_ref_properties, serialize_properties, validate_properties, verify_name, verify_path,
+		},
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
@@ -72,6 +74,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		path: &mut PathBuf,
 		snapshot: &mut Snapshot,
 		parent_meta: &Meta,
+		tree: &Tree,
 		vfs: &Vfs,
 	) -> Result<Option<Meta>> {
 		let mut meta = snapshot.meta.clone().with_context(&parent_meta.context);
@@ -119,6 +122,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				return Ok(None);
 			}
 
+			if let Some(anchor_dir) = meta.source.anchor_dir() {
+				resolve_ref_properties(&mut properties, &snapshot.class, anchor_dir, tree);
+			}
+
 			let properties = middleware.write(properties, &file_path, vfs)?;
 			let data_path = locate_instance_data(has_children, path, snapshot, parent_meta)?;
 
@@ -141,6 +148,10 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			dir::write_dir(path, vfs)?;
 
 			meta.set_source(Source::directory(path));
+
+			if let Some(anchor_dir) = meta.source.anchor_dir() {
+				resolve_ref_properties(&mut properties, &snapshot.class, anchor_dir, tree);
+			}
 
 			let data_path = locate_instance_data(true, path, snapshot, parent_meta)?;
 
@@ -233,12 +244,12 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		let mut path = parent_path.join(&snapshot.name);
 
 		if snapshot.children.is_empty() {
-			if let Some(meta) = write_instance(false, &mut path, &mut snapshot, parent_meta, vfs)? {
+			if let Some(meta) = write_instance(false, &mut path, &mut snapshot, parent_meta, tree, vfs)? {
 				let snapshot = snapshot.with_meta(meta);
 
 				tree.insert_instance_with_ref(snapshot, parent_id);
 			}
-		} else if let Some(mut meta) = write_instance(true, &mut path, &mut snapshot, parent_meta, vfs)? {
+		} else if let Some(mut meta) = write_instance(true, &mut path, &mut snapshot, parent_meta, tree, vfs)? {
 			let snapshot = snapshot.with_meta(meta.clone());
 
 			tree.insert_instance_with_ref(snapshot.clone(), parent_id);
@@ -261,9 +272,15 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		parent_meta: &Meta,
 		tree: &mut Tree,
 	) {
+		let mut properties = snapshot.properties.clone();
+
+		if let Some(anchor_dir) = path.parent() {
+			resolve_ref_properties(&mut properties, &snapshot.class, anchor_dir, tree);
+		}
+
 		let mut node = ProjectNode {
 			class_name: Some(snapshot.class),
-			properties: serialize_properties(&snapshot.class, snapshot.properties.clone()),
+			properties: serialize_properties(&snapshot.class, properties),
 			..ProjectNode::default()
 		};
 
@@ -335,7 +352,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 	trace!("Updating {:?}", snapshot.id);
 
-	if let Some(instance) = tree.get_instance(snapshot.id) {
+	let class = if let Some(instance) = tree.get_instance(snapshot.id) {
 		let filter = tree.get_meta(snapshot.id).unwrap().context.syncback_filter();
 
 		if filter.matches_name(&instance.name) || filter.matches_class(&instance.class) {
@@ -352,12 +369,21 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			filter_warn!(snapshot.id);
 			return Ok(());
 		}
+
+		instance.class
 	} else {
 		warn!("Attempted to update instance that doesn't exist: {:?}", snapshot.id);
 		return Ok(());
-	}
+	};
 
 	let mut meta = tree.get_meta(snapshot.id).unwrap().clone();
+	let mut snapshot = snapshot;
+
+	if let Some(properties) = snapshot.properties.as_mut() {
+		if let Some(anchor_dir) = meta.source.anchor_dir() {
+			resolve_ref_properties(properties, &class, anchor_dir, tree);
+		}
+	}
 	let instance = tree.get_instance_mut(snapshot.id).unwrap();
 
 	fn locate_instance_data(name: &str, path: &Path, meta: &Meta, vfs: &Vfs) -> Option<PathBuf> {

@@ -5,7 +5,11 @@ use serde::Deserialize;
 use std::path::Path;
 
 use super::helpers;
-use crate::{core::snapshot::Snapshot, resolution::UnresolvedValue, vfs::Vfs};
+use crate::{
+	core::snapshot::Snapshot,
+	resolution::{is_ref_property, UnresolvedValue},
+	vfs::Vfs,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -56,6 +60,24 @@ fn walk(model: JsonModel, path: &Path) -> Result<Snapshot> {
 	// Resolve properties
 	if let Some(model_properties) = model.properties {
 		for (property, value) in model_properties {
+			if is_ref_property(&class, &property) {
+				match value.as_str() {
+					Some("") => {}
+					Some(ref_path) => {
+						snapshot.meta.pending_refs.insert(property, ref_path.to_owned());
+					}
+					None => {
+						error!(
+							"Failed to parse property: {} at {} - Ref properties must be a relative path string",
+							property,
+							path.display()
+						);
+					}
+				}
+
+				continue;
+			}
+
 			match value.resolve(&class, &property) {
 				Ok(value) => {
 					properties.insert(property, value);

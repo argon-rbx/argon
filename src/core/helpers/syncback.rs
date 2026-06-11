@@ -1,14 +1,20 @@
 use colored::Colorize;
-use rbx_dom_weak::{ustr, HashMapExt, UstrMap};
+use rbx_dom_weak::{
+	types::{Ref, Variant},
+	ustr, HashMapExt, Ustr, UstrMap,
+};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
 	argon_error, argon_warn,
 	config::Config,
-	core::meta::{Meta, SyncbackFilter},
+	core::{
+		meta::{Meta, SyncbackFilter},
+		tree::Tree,
+	},
 	ext::PathExt,
-	resolution::UnresolvedValue,
+	resolution::{is_ref_property, UnresolvedValue},
 	vfs::Vfs,
 	Properties,
 };
@@ -181,6 +187,72 @@ pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> P
 	}
 }
 
+pub fn resolve_ref_properties(properties: &mut Properties, class: &str, anchor_dir: &Path, tree: &Tree) {
+	let ref_properties: Vec<Ustr> = properties
+		.keys()
+		.copied()
+		.filter(|property| is_ref_property(class, property))
+		.collect();
+
+	for property in ref_properties {
+		let target = match properties.get(&property) {
+			Some(Variant::Ref(target)) => *target,
+			_ => continue,
+		};
+
+		if target == Ref::none() {
+			properties.remove(&property);
+			continue;
+		}
+
+		match tree.get_meta(target).and_then(|meta| meta.source.anchor_dir()) {
+			Some(target_dir) => {
+				let relative = relative_path(anchor_dir, target_dir);
+				properties.insert(property, Variant::String(path_to_ref_string(&relative)));
+			}
+			None => {
+				argon_warn!(
+					"Failed to serialize Ref property {}.{}: target instance is outside of the synced tree",
+					class.bold(),
+					property.bold()
+				);
+
+				properties.remove(&property);
+			}
+		}
+	}
+}
+
+fn relative_path(from: &Path, to: &Path) -> PathBuf {
+	let from: Vec<_> = from.components().collect();
+	let to: Vec<_> = to.components().collect();
+
+	let common = from.iter().zip(to.iter()).take_while(|(a, b)| a == b).count();
+
+	let mut result = PathBuf::new();
+
+	for _ in common..from.len() {
+		result.push("..");
+	}
+
+	for component in &to[common..] {
+		result.push(component.as_os_str());
+	}
+
+	if result.as_os_str().is_empty() {
+		result.push(".");
+	}
+
+	result
+}
+
+fn path_to_ref_string(path: &Path) -> String {
+	path.components()
+		.map(|component| component.as_os_str().to_string_lossy())
+		.collect::<Vec<_>>()
+		.join("/")
+}
+
 pub fn serialize_properties(class: &str, properties: Properties) -> UstrMap<UnresolvedValue> {
 	properties
 		.iter()
@@ -199,4 +271,102 @@ pub fn rename_path(path: &Path, from: &str, to: &str) -> PathBuf {
 		to,
 		path.get_name().strip_prefix(from).unwrap_or_default()
 	))
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::core::{
+		meta::{Meta, Source},
+		snapshot::Snapshot,
+		tree::Tree,
+	};
+
+	#[test]
+	fn resolve_ref_properties_computes_relative_path() {
+		let root_path = Path::new("/project/src/Model");
+		let part_a_path = root_path.join("PartA");
+		let part_b_path = root_path.join("PartB");
+
+		let mut root_meta = Meta::new();
+		root_meta.set_source(Source::directory(root_path));
+
+		let mut part_a_meta = Meta::new();
+		part_a_meta.set_source(Source::directory(&part_a_path));
+
+		let mut part_b_meta = Meta::new();
+		part_b_meta.set_source(Source::directory(&part_b_path));
+
+		let snapshot = Snapshot::new()
+			.with_class("Model")
+			.with_name("Model")
+			.with_meta(root_meta)
+			.with_children(vec![
+				Snapshot::new()
+					.with_class("Weld")
+					.with_name("PartA")
+					.with_meta(part_a_meta),
+				Snapshot::new()
+					.with_class("Folder")
+					.with_name("PartB")
+					.with_meta(part_b_meta),
+			]);
+
+		let tree = Tree::new(snapshot);
+
+		let part_b_id = tree.root().children()[1];
+
+		let mut properties = Properties::default();
+		properties.insert(ustr("Part0"), Variant::Ref(part_b_id));
+
+		resolve_ref_properties(&mut properties, "Weld", &part_a_path, &tree);
+
+		assert_eq!(
+			properties.get(&ustr("Part0")),
+			Some(&Variant::String("../PartB".to_owned()))
+		);
+	}
+
+	#[test]
+	fn resolve_ref_properties_removes_unset_ref() {
+		let mut properties = Properties::default();
+		properties.insert(ustr("Part0"), Variant::Ref(Ref::none()));
+
+		let snapshot = Snapshot::new().with_class("Model").with_name("Model");
+		let tree = Tree::new(snapshot);
+
+		resolve_ref_properties(&mut properties, "Weld", Path::new("/project/src/Model"), &tree);
+
+		assert!(!properties.contains_key(&ustr("Part0")));
+	}
+
+	#[test]
+	fn relative_path_siblings() {
+		let from = Path::new("/project/src/Hitbox");
+		let to = Path::new("/project/src/Welds");
+
+		assert_eq!(relative_path(from, to), Path::new("../Welds"));
+	}
+
+	#[test]
+	fn relative_path_descendant() {
+		let from = Path::new("/project/src/Model");
+		let to = Path::new("/project/src/Model/Hitbox");
+
+		assert_eq!(relative_path(from, to), Path::new("Hitbox"));
+	}
+
+	#[test]
+	fn relative_path_same_dir() {
+		let path = Path::new("/project/src/Model");
+
+		assert_eq!(relative_path(path, path), Path::new("."));
+	}
+
+	#[test]
+	fn path_to_ref_string_uses_forward_slashes() {
+		let relative = Path::new("..").join("Welds").join("Weld");
+
+		assert_eq!(path_to_ref_string(&relative), "../Welds/Weld");
+	}
 }

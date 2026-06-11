@@ -207,15 +207,15 @@ impl UnresolvedValue {
 				[ray.direction.x as f64, ray.direction.y as f64, ray.direction.z as f64],
 			]),
 
+			Variant::Ref(_) => AmbiguousValue::String(String::new()),
+
 			Variant::Rect(rect) => AmbiguousValue::Array4([
 				rect.min.x as f64,
 				rect.min.y as f64,
 				rect.max.x as f64,
 				rect.max.y as f64,
 			]),
-			// TODO: Implement Ref
-			// Variant::Ref(reference) => AmbiguousValue::
-			//
+
 			Variant::Region3(region) => AmbiguousValue::Array3Array2([
 				[region.min.x as f64, region.min.y as f64, region.min.z as f64],
 				[region.max.x as f64, region.max.y as f64, region.max.z as f64],
@@ -477,9 +477,11 @@ impl AmbiguousValue {
 					Vector2::new(rect[2] as f32, rect[3] as f32),
 				)
 				.into()),
-				// TODO: Implement Ref
-				// (VariantType::Ref, AmbiguousValue::String(path)) => Ok(),
-				//
+
+				(VariantType::Ref, _) => {
+					bail!("Ref properties must be a relative path string and are resolved separately")
+				}
+
 				(VariantType::Region3, AmbiguousValue::Array3Array2(region)) => Ok(Region3::new(
 					Vector3::new(region[0][0] as f32, region[0][1] as f32, region[0][2] as f32),
 					Vector3::new(region[1][0] as f32, region[1][1] as f32, region[1][2] as f32),
@@ -562,6 +564,13 @@ impl AmbiguousValue {
 			AmbiguousValue::Object(_) => "a generic object",
 		}
 	}
+}
+
+pub fn is_ref_property(class: &str, property: &str) -> bool {
+	matches!(
+		find_descriptor(class, property).map(|descriptor| &descriptor.data_type),
+		Some(DataType::Value(VariantType::Ref))
+	)
 }
 
 fn find_descriptor(class: &str, property: &str) -> Option<&'static PropertyDescriptor<'static>> {

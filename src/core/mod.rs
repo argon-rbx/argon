@@ -56,7 +56,11 @@ impl Core {
 		trace!("Building Tree and Queue");
 
 		let vfs = Arc::new(vfs);
-		let tree = Arc::new(Mutex::new(Tree::new(snapshot)));
+
+		let mut tree = Tree::new(snapshot);
+		tree.resolve_refs();
+
+		let tree = Arc::new(Mutex::new(tree));
 		let queue = Arc::new(Queue::new());
 
 		trace!("Starting Processor");

@@ -1,7 +1,7 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use log::{error, trace};
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::types::{Ref, Variant};
 
 use crate::{
 	core::{
@@ -156,11 +156,45 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 }
 
 fn insert_children(snapshot: &mut Snapshot, parent: Ref, tree: &mut Tree) {
+	let mut ref_map = HashMap::new();
+
+	insert_children_recursive(snapshot, parent, tree, &mut ref_map);
+
+	if !ref_map.is_empty() {
+		remap_inserted_refs(snapshot, &ref_map, tree);
+	}
+}
+
+fn insert_children_recursive(snapshot: &mut Snapshot, parent: Ref, tree: &mut Tree, ref_map: &mut HashMap<Ref, Ref>) {
+	let placeholder = snapshot.ref_id;
+
 	let id = tree.insert_instance(snapshot.clone(), parent);
 
 	snapshot.set_id(id);
 
+	if placeholder.is_some() {
+		ref_map.insert(placeholder, id);
+	}
+
 	for child in snapshot.children.iter_mut() {
-		insert_children(child, id, tree);
+		insert_children_recursive(child, id, tree, ref_map);
+	}
+}
+
+fn remap_inserted_refs(snapshot: &mut Snapshot, ref_map: &HashMap<Ref, Ref>, tree: &mut Tree) {
+	for value in snapshot.properties.values_mut() {
+		if let Variant::Ref(reference) = value {
+			if let Some(&mapped) = ref_map.get(reference) {
+				*value = Variant::Ref(mapped);
+			}
+		}
+	}
+
+	if let Some(instance) = tree.get_instance_mut(snapshot.id) {
+		instance.properties.clone_from(&snapshot.properties);
+	}
+
+	for child in snapshot.children.iter_mut() {
+		remap_inserted_refs(child, ref_map, tree);
 	}
 }

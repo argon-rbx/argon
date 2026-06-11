@@ -11,6 +11,8 @@ use crate::{middleware::data::DataSnapshot, Properties};
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Snapshot {
 	pub id: Ref,
+	#[serde(skip, default = "Ref::none")]
+	pub ref_id: Ref,
 	pub meta: Meta,
 
 	// Roblox related
@@ -26,6 +28,7 @@ impl Snapshot {
 	pub fn new() -> Self {
 		Self {
 			id: Ref::none(),
+			ref_id: Ref::none(),
 			meta: Meta::new(),
 			name: String::new(),
 			class: Ustr::from("Folder"),
@@ -115,6 +118,7 @@ impl Snapshot {
 		}
 
 		self.extend_properties(data.properties);
+		self.meta.pending_refs.extend(data.ref_properties);
 		self.meta.source.add_data(&data.path);
 	}
 
@@ -203,6 +207,7 @@ impl From<AddedSnapshot> for Snapshot {
 	fn from(snapshot: AddedSnapshot) -> Self {
 		Self {
 			id: snapshot.id,
+			ref_id: Ref::none(),
 			meta: snapshot.meta,
 			name: snapshot.name,
 			class: snapshot.class,

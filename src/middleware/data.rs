@@ -11,7 +11,7 @@ use crate::{
 	core::meta::Meta,
 	ext::PathExt,
 	middleware::helpers,
-	resolution::UnresolvedValue,
+	resolution::{is_ref_property, UnresolvedValue},
 	util::{self, serialize_json},
 	vfs::Vfs,
 	Properties,
@@ -39,6 +39,7 @@ pub struct DataSnapshot {
 	pub path: PathBuf,
 	pub class: Option<Ustr>,
 	pub properties: Properties,
+	pub ref_properties: HashMap<Ustr, String>,
 	pub keep_unknowns: Option<bool>,
 	pub original_name: Option<String>,
 	pub mesh_source: Option<String>,
@@ -55,6 +56,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 	let data: Data = serde_json::from_str(&data)?;
 
 	let mut properties = UstrMap::new();
+	let mut ref_properties = HashMap::new();
 
 	let class = if let Some(class) = class.or(data.class_name.as_deref()) {
 		class.to_owned()
@@ -76,6 +78,24 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 
 	// Resolve properties
 	for (property, value) in data.properties {
+		if is_ref_property(&class, &property) {
+			match value.as_str() {
+				Some("") => {}
+				Some(path) => {
+					ref_properties.insert(property, path.to_owned());
+				}
+				None => {
+					error!(
+						"Failed to parse property: {} at {} - Ref properties must be a relative path string",
+						property,
+						path.display()
+					);
+				}
+			}
+
+			continue;
+		}
+
 		match value.resolve(&class, &property) {
 			Ok(value) => {
 				properties.insert(property, value);
@@ -113,6 +133,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 		path: path.to_owned(),
 		class: data.class_name,
 		properties,
+		ref_properties,
 		keep_unknowns: data.keep_unknowns,
 		original_name: data.original_name,
 		mesh_source,
