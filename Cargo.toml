@@ -79,7 +79,7 @@ colored = "2.2.0"
 
 anyhow = "1.0.102"
 chrono = "0.4.44"
-notify = "6.1.1"
+notify = "7.0.0"
 whoami = "1.6.1"
 trash = "5.2.5"
 ctrlc = "3.5.2"
@@ -105,5 +105,4 @@ self_update = { version = "0.39.0", default-features = false, features = [
 approx = "0.5.1"
 
 [patch.crates-io]
-notify-debouncer-full = { path = "crates/notify-debouncer-full" }
 self_update = { path = "crates/self_update" }
