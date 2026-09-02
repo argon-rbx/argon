@@ -1,6 +1,6 @@
 use crossbeam_channel::Receiver;
 use log::trace;
-use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{EventKind, RecommendedWatcher, RecursiveMode};
 use notify_debouncer_full::{new_debouncer, DebouncedEvent, Debouncer, FileIdMap};
 use std::{
 	io::{self, Result},
@@ -51,7 +51,7 @@ impl VfsDebouncer {
 		let (inner_sender, inner_receiver) = mpsc::channel();
 		let (sender, receiver) = crossbeam_channel::unbounded();
 
-		let debouncer = new_debouncer(Duration::from_millis(100), None, inner_sender, false).unwrap();
+		let debouncer = new_debouncer(Duration::from_millis(100), None, inner_sender).unwrap();
 
 		let pause_state = Arc::new(RwLock::new((false, Instant::now())));
 		let local_pause_state = pause_state.clone();
@@ -103,15 +103,13 @@ impl VfsDebouncer {
 			RecursiveMode::NonRecursive
 		};
 
-		self.inner.watcher().watch(path, recursive).map_err(map_error)?;
-		self.inner.cache().add_root(path, recursive);
+		self.inner.watch(path, recursive).map_err(map_error)?;
 
 		Ok(())
 	}
 
 	pub fn unwatch(&mut self, path: &Path) -> Result<()> {
-		self.inner.watcher().unwatch(path).map_err(map_error)?;
-		self.inner.cache().remove_root(path);
+		self.inner.unwatch(path).map_err(map_error)?;
 
 		Ok(())
 	}
