@@ -2,13 +2,15 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use directories::UserDirs;
 use env_logger::WriteStyle;
+use json_formatter::JsonFormatter;
 use log::LevelFilter;
 use rbx_dom_weak::types::Variant;
-use rbx_reflection::ClassTag;
+use rbx_reflection::{ClassTag, ReflectionDatabase};
 use roblox_install::RobloxStudio;
+use serde::Serialize;
 use std::{env, path::PathBuf, process::Command};
 
-use crate::Properties;
+use crate::{ext::ResultExt, Properties};
 
 /// Returns the `.argon` directory
 pub fn get_argon_dir() -> Result<PathBuf> {
@@ -36,7 +38,7 @@ pub fn get_plugin_path() -> Result<PathBuf> {
 
 /// Checks if the given `class` is a service
 pub fn is_service(class: &str) -> bool {
-	let descriptor = rbx_reflection_database::get().classes.get(class);
+	let descriptor = get_reflection_database().classes.get(class);
 
 	let has_tag = if let Some(descriptor) = descriptor {
 		descriptor.tags.contains(&ClassTag::Service)
@@ -102,7 +104,7 @@ pub fn process_exists(pid: u32) -> bool {
 pub fn get_progress_style() -> (String, String) {
 	let mut template = match env_log_style() {
 		WriteStyle::Always => "PROGRESS: ".magenta().bold().to_string(),
-		_ => "PROGRESS: ".to_string(),
+		_ => "PROGRESS: ".into(),
 	};
 	template.push_str("[{bar:40}] ({bytes}/{total_bytes})");
 
@@ -111,7 +113,7 @@ pub fn get_progress_style() -> (String, String) {
 
 /// Returns the `RUST_VERBOSE` environment variable
 pub fn env_verbosity() -> LevelFilter {
-	let verbosity = env::var("RUST_VERBOSE").unwrap_or("ERROR".to_owned());
+	let verbosity = env::var("RUST_VERBOSE").unwrap_or("ERROR".into());
 
 	match verbosity.as_str() {
 		"OFF" => LevelFilter::Off,
@@ -126,7 +128,7 @@ pub fn env_verbosity() -> LevelFilter {
 
 /// Returns the `RUST_LOG_STYLE` environment variable
 pub fn env_log_style() -> WriteStyle {
-	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".to_owned());
+	let log_style = env::var("RUST_LOG_STYLE").unwrap_or("auto".into());
 
 	match log_style.as_str() {
 		"always" => WriteStyle::Always,
@@ -137,17 +139,17 @@ pub fn env_log_style() -> WriteStyle {
 
 /// Returns the `RUST_BACKTRACE` environment variable
 pub fn env_backtrace() -> bool {
-	let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".to_owned());
+	let backtrace = env::var("RUST_BACKTRACE").unwrap_or("0".into());
 	backtrace == "1"
 }
 
 /// Returns the `RUST_YES` environment variable
 pub fn env_yes() -> bool {
-	let yes = env::var("RUST_YES").unwrap_or("0".to_owned());
+	let yes = env::var("RUST_YES").unwrap_or("0".into());
 	yes == "1"
 }
 
-/// Return line of code count from snapshot's properties
+/// Returns line of code count from snapshot's properties
 pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	let mut loc = 0;
 
@@ -158,4 +160,23 @@ pub fn count_loc_from_properties(properties: &Properties) -> usize {
 	}
 
 	loc
+}
+
+/// Serializes value to a pretty-printed and sorted JSON
+pub fn serialize_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+	let formatter = JsonFormatter::new()
+		.with_array_breaks(false)
+		.with_extra_newline(true)
+		.with_sorted_keys(true)
+		.with_max_decimals(4);
+
+	formatter.to_vec(value).desc("Failed to serialize JSON")
+}
+
+/// Returns local or bundled reflection database
+pub fn get_reflection_database() -> &'static ReflectionDatabase<'static> {
+	rbx_reflection_database::get_local()
+		.ok()
+		.flatten()
+		.unwrap_or_else(rbx_reflection_database::get_bundled)
 }

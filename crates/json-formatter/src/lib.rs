@@ -1,5 +1,6 @@
-use serde_json::ser::Formatter;
-use std::io;
+use serde::Serialize;
+use serde_json::{ser::Formatter, Serializer, Value};
+use std::{io, mem};
 
 macro_rules! tri {
 	($e:expr $(,)?) => {
@@ -14,35 +15,76 @@ macro_rules! tri {
 #[derive(Clone, Debug)]
 pub struct JsonFormatter<'a> {
 	current_indent: usize,
-	array_breaks: bool,
 	has_value: bool,
 	indent: &'a [u8],
+	array_breaks: bool,
+	extra_newline: bool,
+	max_decimals: usize,
+	sorted_keys: bool,
 }
 
 impl<'a> JsonFormatter<'a> {
 	/// Construct a pretty printer formatter that defaults to using two spaces for indentation.
 	pub fn new() -> Self {
-		JsonFormatter::with_indent(b"  ")
+		JsonFormatter {
+			current_indent: 0,
+			has_value: false,
+			indent: b"  ",
+			array_breaks: true,
+			extra_newline: false,
+			max_decimals: 0,
+			sorted_keys: false,
+		}
 	}
 
 	/// Construct a pretty printer formatter that uses the `indent` string for indentation.
-	pub fn with_indent(indent: &'a [u8]) -> Self {
-		JsonFormatter {
-			current_indent: 0,
-			array_breaks: true,
-			has_value: false,
-			indent,
-		}
+	pub fn with_indent(mut self, indent: &'a [u8]) -> Self {
+		self.indent = indent;
+		self
 	}
 
 	/// Construct a pretty printer formatter that optionally break arrays into multiple lines.
-	pub fn with_array_breaks(array_breaks: bool) -> Self {
-		JsonFormatter {
-			current_indent: 0,
-			array_breaks,
-			has_value: false,
-			indent: b"  ",
+	pub fn with_array_breaks(mut self, array_breaks: bool) -> Self {
+		self.array_breaks = array_breaks;
+		self
+	}
+
+	/// Construct a pretty printer formatter that adds an extra newline at the end.
+	pub fn with_extra_newline(mut self, extra_newline: bool) -> Self {
+		self.extra_newline = extra_newline;
+		self
+	}
+
+	/// Construct a pretty printer formatter that limits the number of decimal places.
+	pub fn with_max_decimals(mut self, max_decimals: usize) -> Self {
+		self.max_decimals = max_decimals;
+		self
+	}
+
+	/// Construct a pretty printer formatter that writes object fields in alphabetical order.
+	pub fn with_sorted_keys(mut self, sorted_keys: bool) -> Self {
+		self.sorted_keys = sorted_keys;
+		self
+	}
+
+	/// Serialize `value` to a UTF-8 byte vector using this formatter's settings.
+	pub fn to_vec<T>(&self, value: &T) -> serde_json::Result<Vec<u8>>
+	where
+		T: ?Sized + Serialize,
+	{
+		let mut writer = Vec::new();
+		let mut serializer = Serializer::with_formatter(&mut writer, self.clone());
+
+		if self.sorted_keys {
+			let mut value = serde_json::to_value(value)?;
+			sort_object_keys(&mut value);
+
+			value.serialize(&mut serializer)?;
+		} else {
+			value.serialize(&mut serializer)?;
 		}
+
+		Ok(writer)
 	}
 }
 
@@ -53,6 +95,36 @@ impl<'a> Default for JsonFormatter<'a> {
 }
 
 impl<'a> Formatter for JsonFormatter<'a> {
+	#[inline]
+	fn write_f32<W>(&mut self, writer: &mut W, mut value: f32) -> io::Result<()>
+	where
+		W: ?Sized + io::Write,
+	{
+		if self.max_decimals > 0 {
+			let multiplier = 10_f32.powi(self.max_decimals as i32);
+			value = (value * multiplier).round() / multiplier;
+		}
+
+		let mut buffer = ryu::Buffer::new();
+		let s = buffer.format_finite(value);
+		writer.write_all(s.as_bytes())
+	}
+
+	#[inline]
+	fn write_f64<W>(&mut self, writer: &mut W, mut value: f64) -> io::Result<()>
+	where
+		W: ?Sized + io::Write,
+	{
+		if self.max_decimals > 0 {
+			let multiplier = 10_f64.powi(self.max_decimals as i32);
+			value = (value * multiplier).round() / multiplier;
+		}
+
+		let mut buffer = ryu::Buffer::new();
+		let s = buffer.format_finite(value);
+		writer.write_all(s.as_bytes())
+	}
+
 	#[inline]
 	fn begin_array<W>(&mut self, writer: &mut W) -> io::Result<()>
 	where
@@ -126,7 +198,13 @@ impl<'a> Formatter for JsonFormatter<'a> {
 			tri!(indent(writer, self.current_indent, self.indent));
 		}
 
-		writer.write_all(b"}")
+		tri!(writer.write_all(b"}"));
+
+		if self.current_indent == 0 && self.extra_newline {
+			writer.write_all(b"\n")
+		} else {
+			Ok(())
+		}
 	}
 
 	#[inline]
@@ -165,4 +243,32 @@ where
 	}
 
 	Ok(())
+}
+
+fn sort_object_keys(value: &mut Value) {
+	match value {
+		Value::Object(map) => {
+			let mut entries: Vec<_> = mem::take(map).into_iter().collect();
+
+			for (_, value) in &mut entries {
+				sort_object_keys(value);
+			}
+
+			entries.sort_by(|(a, _), (b, _)| {
+				a.to_lowercase()
+					.cmp(&b.to_lowercase())
+					.then_with(|| a.cmp(b))
+			});
+
+			for (key, value) in entries {
+				map.insert(key, value);
+			}
+		}
+		Value::Array(values) => {
+			for value in values {
+				sort_object_keys(value);
+			}
+		}
+		_ => {}
+	}
 }

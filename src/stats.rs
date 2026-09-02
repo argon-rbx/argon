@@ -127,7 +127,7 @@ pub fn track() -> Result<()> {
 			});
 
 			Client::new()
-				.post(format!("https://api.argon.wiki/push?auth={}", token))
+				.post(format!("https://api.argon.wiki/push?auth={token}"))
 				.json(&stats)
 				.send()?;
 
@@ -150,7 +150,7 @@ pub fn track() -> Result<()> {
 
 		match save() {
 			Ok(_) => debug!("Stats saved successfully"),
-			Err(err) => warn!("Failed to save stats: {}", err),
+			Err(err) => warn!("Failed to save stats: {err}"),
 		}
 	});
 

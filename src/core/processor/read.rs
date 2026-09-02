@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use log::{error, trace};
 use rbx_dom_weak::types::Ref;
 
@@ -13,34 +15,41 @@ use crate::{
 	vfs::Vfs,
 };
 
-pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
-	trace!("Processing changes for instance: {:?}", id);
+pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Option<Changes> {
+	trace!("Processing changes for instance: {id:?}");
 
 	let mut changes = Changes::new();
 
-	let meta = tree.get_meta(id).unwrap();
+	let meta = tree.get_meta(id)?;
 	let source = meta.source.get();
+
+	let process_path = |path: &Path| -> Option<Option<Snapshot>> {
+		match new_snapshot(path, &meta.context, vfs) {
+			Ok(snapshot) => Some(snapshot),
+			Err(err) => {
+				error!("Failed to process changes: {err}, source: {source:?}");
+				None
+			}
+		}
+	};
 
 	let snapshot = match source {
 		SourceKind::Project(name, path, node, node_path) => {
-			match new_snapshot_node(name, path, node.clone(), node_path.clone(), &meta.context, vfs) {
-				Ok(snapshot) => Some(snapshot),
-				Err(err) => {
-					error!("Failed to process changes: {}, source: {:?}", err, source);
-					return changes;
+			if node_path.is_root() {
+				process_path(path)?
+			} else {
+				match new_snapshot_node(name, path, *node.clone(), node_path.clone(), &meta.context, vfs) {
+					Ok(snapshot) => Some(snapshot),
+					Err(err) => {
+						error!("Failed to process changes: {err}, source: {source:?}");
+						return Some(changes);
+					}
 				}
 			}
 		}
-		SourceKind::Path(path) => match new_snapshot(path, &meta.context, vfs) {
-			Ok(snapshot) => snapshot,
-			Err(err) => {
-				error!("Failed to process changes: {}, source: {:?}", err, source);
-				return changes;
-			}
-		},
+		SourceKind::Path(path) => process_path(path)?,
 		SourceKind::None => panic!(
-			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {:?}, meta: {:#?}",
-			id, meta
+			"Fatal processing error: `SourceKind::None` should not be present in the tree! Id: {id:?}, meta: {meta:#?}"
 		),
 	};
 
@@ -53,7 +62,7 @@ pub fn process_changes(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Changes {
 		changes.remove(id);
 	}
 
-	changes
+	Some(changes)
 }
 
 fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes, tree: &mut Tree) {
@@ -61,6 +70,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 	let mut updated_snapshot = UpdatedSnapshot::new(id);
 
 	updated_snapshot.meta = if snapshot.meta != *tree.get_meta(id).expect("Instance meta not found") {
+		tree.update_meta(id, snapshot.meta.clone());
 		Some(snapshot.meta)
 	} else {
 		None
@@ -146,7 +156,7 @@ fn process_child_changes(id: Ref, mut snapshot: Snapshot, changes: &mut Changes,
 }
 
 fn insert_children(snapshot: &mut Snapshot, parent: Ref, tree: &mut Tree) {
-	let id = tree.insert_instance_non_recursive(snapshot.clone(), parent);
+	let id = tree.insert_instance(snapshot.clone(), parent);
 
 	snapshot.set_id(id);
 

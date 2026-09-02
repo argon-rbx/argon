@@ -2,7 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 use include_dir::{include_dir, Dir};
 use log::trace;
-use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::{types::Variant, ustr};
 use self_update::{backends::github::Update, self_replace, update::UpdateStatus};
 use std::{env, fs, path::Path};
 
@@ -28,7 +28,7 @@ pub fn is_managed() -> bool {
 		Err(_) => return false,
 	};
 
-	path.contains(&["tool-storage"]) || (path.contains(&["bin"]) && !path.contains(&[".argon", "bin"]))
+	!path.contains(&[".argon", "bin"]) && (path.contains(&["bin"]) || path.contains(&["tool-storage"]))
 }
 
 pub fn verify(is_managed: bool, with_plugin: bool) -> Result<()> {
@@ -99,7 +99,7 @@ pub fn install_plugin(path: &Path, show_progress: bool) -> Result<()> {
 			_ => unreachable!(),
 		},
 		Err(err) => {
-			trace!("Failed to install Argon plugin from GitHub: {}", err);
+			trace!("Failed to install Argon plugin from GitHub: {err}");
 
 			#[allow(clippy::const_is_empty)]
 			if ARGON_PLUGIN.is_empty() {
@@ -180,7 +180,7 @@ pub fn get_plugin_version() -> String {
 	if let Ok(dom) = rbx_binary::from_reader(ARGON_PLUGIN) {
 		for (_, instance) in dom.into_raw().1 {
 			if instance.name == "manifest" && instance.class == "ModuleScript" {
-				if let Some(Variant::String(source)) = instance.properties.get("Source") {
+				if let Some(Variant::String(source)) = instance.properties.get(&ustr("Source")) {
 					let source = &source[source.find(r#"["version"] = ""#).unwrap_or(0) + 15..];
 					return source[..source.find(r#"","#).unwrap_or(6)].to_owned();
 				}

@@ -146,7 +146,7 @@ impl Build {
 		let use_ts = self.ts || config.ts_mode || (config.detect_project && project.is_ts());
 
 		if use_wally {
-			integration::check_wally_packages(&project.workspace_dir)?;
+			integration::check_wally_packages(&project.workspace_dir);
 		}
 
 		if use_ts {
@@ -205,7 +205,7 @@ impl Build {
 			queue.subscribe_internal().unwrap();
 
 			loop {
-				let _message = queue.get(0).unwrap();
+				let _message = queue.get_change(0).unwrap();
 
 				info!("Rebuilding project..");
 				core.build(&path, xml)?;
@@ -248,28 +248,28 @@ impl Build {
 		}
 
 		if let Some(output) = self.output {
-			args.push(String::from("--output"));
+			args.push("--output".into());
 			args.push(output.to_string())
 		}
 
 		if self.watch {
-			args.push(String::from("--watch"))
+			args.push("--watch".into())
 		}
 
 		if self.sourcemap {
-			args.push(String::from("--sourcemap"))
+			args.push("--sourcemap".into())
 		}
 
 		if self.plugin {
-			args.push(String::from("--plugin"))
+			args.push("--plugin".into())
 		}
 
 		if self.xml {
-			args.push(String::from("--xml"))
+			args.push("--xml".into())
 		}
 
 		if self.ts {
-			args.push(String::from("--ts"))
+			args.push("--ts".into())
 		}
 
 		Program::new(ProgramName::Argon).args(args).spawn()?;

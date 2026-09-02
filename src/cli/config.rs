@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{Parser, ValueEnum};
 use colored::Colorize;
 use open;
@@ -59,7 +59,6 @@ impl Config {
 		};
 
 		let config = ArgonConfig::new();
-		let config_path = config.kind().path().unwrap().to_owned();
 
 		if self.list {
 			argon_info!(
@@ -70,6 +69,12 @@ impl Config {
 
 			return Ok(());
 		}
+
+		let config_path = config
+			.kind()
+			.path()
+			.ok_or(anyhow!("Resolve all config errors before using this command!"))?
+			.to_owned();
 
 		if self.default {
 			if config_path.exists() {

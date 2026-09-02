@@ -43,16 +43,10 @@ impl Stop {
 			table.set_header(vec!["ID", "Host", "Port", "PID"]);
 
 			for (id, session) in sessions {
-				let port = if let Some(port) = session.port {
-					port.to_string()
-				} else {
-					String::from("None")
-				};
-
 				table.add_row(vec![
 					id,
-					session.host.unwrap_or(String::from("None")),
-					port,
+					session.host.unwrap_or("None".into()),
+					session.port.map(|p| p.to_string()).unwrap_or("None".into()),
 					session.pid.to_string(),
 				]);
 			}
@@ -115,7 +109,7 @@ impl Stop {
 	}
 
 	fn make_request(address: &String, pid: u32) {
-		let url = format!("{}/stop", address);
+		let url = format!("{address}/stop");
 
 		match Client::new().post(url).send() {
 			Ok(_) => argon_info!("Stopped Argon session with address: {}", address.bold()),

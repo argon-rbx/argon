@@ -57,7 +57,7 @@ impl VfsDebouncer {
 		let local_pause_state = pause_state.clone();
 
 		Builder::new()
-			.name("debouncer".to_owned())
+			.name("debouncer".into())
 			.spawn(move || {
 				#[cfg(target_os = "linux")]
 				let mut context = DebounceContext {
@@ -132,7 +132,7 @@ fn map_error(err: notify::Error) -> io::Error {
 		notify::ErrorKind::Io(err) => err,
 		notify::ErrorKind::PathNotFound => io::Error::new(io::ErrorKind::NotFound, err),
 		notify::ErrorKind::WatchNotFound => io::Error::new(io::ErrorKind::NotFound, err),
-		_ => io::Error::new(io::ErrorKind::Other, err),
+		_ => io::Error::other(err),
 	}
 }
 
@@ -148,6 +148,7 @@ fn debounce(event: &DebouncedEvent) -> Option<VfsEvent> {
 				None
 			}
 		}
+		EventKind::Remove(_) => Some(VfsEvent::Delete(event_path!(event))),
 		EventKind::Modify(kind) => match kind {
 			ModifyKind::Name(_) => {
 				let path = event_path!(event);
@@ -182,6 +183,7 @@ fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<Vfs
 
 			Some(VfsEvent::Create(path))
 		}
+		EventKind::Remove(_) => Some(VfsEvent::Delete(event_path!(event))),
 		EventKind::Modify(ModifyKind::Name(mode)) => match mode {
 			RenameMode::From => Some(VfsEvent::Delete(event_path!(event))),
 			RenameMode::To => Some(VfsEvent::Create(event_path!(event))),
@@ -196,7 +198,7 @@ fn debounce(event: &DebouncedEvent, context: &mut DebounceContext) -> Option<Vfs
 					return None;
 				}
 
-				Some(VfsEvent::Write(event_path!(event)))
+				Some(VfsEvent::Write(path))
 			} else {
 				None
 			}

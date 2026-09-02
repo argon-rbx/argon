@@ -100,7 +100,7 @@ impl Sourcemap {
 			queue.subscribe_internal().unwrap();
 
 			loop {
-				let _message = queue.get(0).unwrap();
+				let _message = queue.get_change(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 				core.sourcemap(self.output.clone(), self.non_scripts)?;
@@ -122,16 +122,16 @@ impl Sourcemap {
 		}
 
 		if let Some(output) = self.output {
-			args.push(String::from("--output"));
+			args.push("--output".into());
 			args.push(output.to_string())
 		}
 
 		if self.watch {
-			args.push(String::from("--watch"))
+			args.push("--watch".into())
 		}
 
 		if self.non_scripts {
-			args.push(String::from("--non-scripts"))
+			args.push("--non-scripts".into())
 		}
 
 		Program::new(ProgramName::Argon).args(args).spawn()?;

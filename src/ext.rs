@@ -1,15 +1,12 @@
 use anyhow::{bail, Result};
 use env_logger::WriteStyle;
-use log::warn;
 use path_clean::PathClean;
+use rbx_reflection::{PropertyDescriptor, PropertyKind, PropertySerialization};
 use std::{
 	env,
 	fmt::Display,
-	io::{self, Write},
 	path::{Path, PathBuf},
 };
-
-use crate::config::Config;
 
 /// Collection of extension methods for `Path`
 pub trait PathExt {
@@ -113,8 +110,8 @@ where
 	{
 		match self {
 			Ok(ok) => Ok(ok),
-			Err(error) => {
-				bail!("{}: {}", desc, error);
+			Err(err) => {
+				bail!("{}: {}", desc, err);
 			}
 		}
 	}
@@ -126,8 +123,8 @@ where
 	{
 		match self {
 			Ok(ok) => Ok(ok),
-			Err(error) => {
-				bail!("{}: {}", desc(), error);
+			Err(err) => {
+				bail!("{}: {}", desc(), err);
 			}
 		}
 	}
@@ -150,24 +147,18 @@ impl WriteStyleExt for WriteStyle {
 	}
 }
 
-/// Collection of extension methods for `io::Write`
-pub trait WriterExt {
-	fn end(&mut self) -> io::Result<usize>;
+/// Additional methods for `rbx_reflection::PropertyDescriptor`
+pub trait PropertyDescriptorExt {
+	fn get_custom_serialization(&self) -> Option<String>;
 }
 
-impl<T: Write> WriterExt for T {
-	fn end(&mut self) -> io::Result<usize> {
-		self.write(match Config::new().line_ending.to_uppercase().as_str() {
-			"LF" => b"\n",
-			"CRLF" => b"\r\n",
-			"CR" => b"\r",
-			line_ending => {
-				warn!(
-					"Config specifies invalid line ending: {}, using LF instead",
-					line_ending
-				);
-				b"\n"
-			}
-		})
+impl PropertyDescriptorExt for PropertyDescriptor<'_> {
+	fn get_custom_serialization(&self) -> Option<String> {
+		match &self.kind {
+			PropertyKind::Canonical {
+				serialization: PropertySerialization::SerializesAs(data_type),
+			} => Some(data_type.to_string()),
+			_ => None,
+		}
 	}
 }

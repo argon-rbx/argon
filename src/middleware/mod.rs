@@ -1,7 +1,10 @@
 use anyhow::Result;
 use colored::Colorize;
 use log::trace;
-use rbx_dom_weak::types::{Enum, Variant};
+use rbx_dom_weak::{
+	types::{Enum, Variant},
+	ustr,
+};
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::{self, Display, Formatter},
@@ -10,6 +13,7 @@ use std::{
 
 use self::data::DataSnapshot;
 use crate::{
+	argon_warn,
 	constants::BLACKLISTED_PATHS,
 	core::{
 		meta::{Context, Source},
@@ -62,7 +66,7 @@ pub enum Middleware {
 
 impl Display for Middleware {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		write!(f, "{:?}", self)
+		write!(f, "{self:?}")
 	}
 }
 
@@ -122,7 +126,7 @@ impl Middleware {
 		match class {
 			"Script" => {
 				if let Some(properties) = properties {
-					if let Some(Variant::Enum(run_context)) = properties.remove("RunContext") {
+					if let Some(Variant::Enum(run_context)) = properties.remove(&ustr("RunContext")) {
 						let run_context = run_context.to_u32();
 
 						return Some(match run_context {
@@ -130,8 +134,7 @@ impl Middleware {
 							2 => Middleware::ClientScript,
 							_ => {
 								// This is currently unreachable so we can handle it inefficiently just for safety
-								properties
-									.insert(String::from("RunContext"), Variant::Enum(Enum::from_u32(run_context)));
+								properties.insert(ustr("RunContext"), Variant::Enum(Enum::from_u32(run_context)));
 
 								Middleware::ServerScript
 							}
@@ -202,6 +205,8 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 			snapshot.set_name(&name);
 			snapshot.meta.set_context(context);
 			snapshot.meta.set_source(Source::file(path));
+		} else if snapshot.class == "Folder" && snapshot.children.is_empty() {
+			return Ok(None);
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), path, context, vfs)? {
@@ -215,8 +220,18 @@ fn new_snapshot_file(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option
 }
 
 /// Create a snapshot of a directory that has a child source or data,
-/// example: `foo/bar/.src.luau`
+/// example: `foo/bar/init.luau`
 fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<Option<Snapshot>> {
+	if path.contains(&[".src.luau"]) || path.contains(&[".src.lua"]) {
+		argon_warn!(
+			"Your project uses legacy {} files which won't be supported in the next versions of Argon. \
+			Make sure to rename {} file to {} for future compatibility!",
+			".src".bold(),
+			path.to_string().bold(),
+			path.to_string().replace(".src", "init").bold()
+		);
+	}
+
 	if let Some(resolved) = context.sync_rules().iter().find_map(|rule| rule.resolve_child(path)) {
 		let middleware = resolved.middleware;
 		let name = resolved.name;
@@ -238,6 +253,8 @@ fn new_snapshot_file_child(path: &Path, context: &Context, vfs: &Vfs) -> Result<
 					snapshot.add_child(child_snapshot);
 				}
 			}
+		} else if snapshot.class == "Folder" && snapshot.children.is_empty() {
+			return Ok(None);
 		}
 
 		if let Some(instance_data) = get_instance_data(&name, Some(&snapshot.class), parent, context, vfs)? {
@@ -269,7 +286,7 @@ fn get_instance_data(
 	context: &Context,
 	vfs: &Vfs,
 ) -> Result<Option<DataSnapshot>> {
-	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData) {
+	for sync_rule in context.sync_rules_of_type(&Middleware::InstanceData, false) {
 		if let Some(data_path) = sync_rule.locate(path, name, vfs.is_dir(path)) {
 			if vfs.exists(&data_path) {
 				let data = data::read_data(&data_path, class, vfs).with_desc(|| {

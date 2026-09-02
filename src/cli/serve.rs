@@ -87,7 +87,7 @@ impl Serve {
 		let use_ts = self.ts || config.ts_mode || (config.detect_project && project.is_ts());
 
 		if use_wally {
-			integration::check_wally_packages(&project.workspace_dir)?;
+			integration::check_wally_packages(&project.workspace_dir);
 		}
 
 		if use_ts {
@@ -143,7 +143,7 @@ impl Serve {
 			argon_info!("Generated sourcemap at: {}", path.to_string().bold());
 
 			thread::spawn(move || loop {
-				let _message = queue.get(0).unwrap();
+				let _message = queue.get_change(0).unwrap();
 
 				info!("Regenerating sourcemap..");
 
@@ -189,21 +189,21 @@ impl Serve {
 		}
 
 		if let Some(host) = self.host {
-			args.push(String::from("--host"));
+			args.push("--host".into());
 			args.push(host)
 		}
 
 		if let Some(port) = self.port {
-			args.push(String::from("--port"));
+			args.push("--port".into());
 			args.push(port.to_string());
 		}
 
 		if self.sourcemap {
-			args.push(String::from("--sourcemap"));
+			args.push("--sourcemap".into());
 		}
 
 		if self.ts {
-			args.push(String::from("--ts"));
+			args.push("--ts".into());
 		}
 
 		Program::new(ProgramName::Argon).args(args).spawn()?;

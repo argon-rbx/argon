@@ -16,7 +16,7 @@ impl Session {
 	pub fn get_address(&self) -> Option<String> {
 		if let Some(host) = &self.host {
 			if let Some(port) = self.port {
-				return Some(format!("http://{}:{}", host, port));
+				return Some(format!("http://{host}:{port}"));
 			}
 		}
 
@@ -73,7 +73,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 		ctrlc::set_handler(move || {
 			match remove(&session) {
 				Ok(()) => trace!("Session entry removed"),
-				Err(err) => warn!("Failed to remove session entry: {}", err),
+				Err(err) => warn!("Failed to remove session entry: {err}"),
 			}
 
 			process::exit(0);
@@ -85,7 +85,7 @@ pub fn add(id: Option<String>, host: Option<String>, port: Option<u16>, pid: u32
 	// on UNIX cleanup will remove crashed sessions
 	thread::spawn(move || match cleanup(sessions) {
 		Ok(()) => debug!("Session cleanup completed"),
-		Err(err) => warn!("Failed to cleanup sessions: {}", err),
+		Err(err) => warn!("Failed to cleanup sessions: {err}"),
 	});
 
 	Ok(())

@@ -550,7 +550,7 @@ impl<T: Watcher, C: FileIdCache> Debouncer<T, C> {
 	}
 
 	/// Access to the internally used notify Watcher backend
-	pub fn cache(&mut self) -> MappedMutexGuard<C> {
+	pub fn cache(&'_ mut self) -> MappedMutexGuard<'_, C> {
 		MutexGuard::map(self.data.lock(), |data| &mut data.cache)
 	}
 }

@@ -1,3 +1,4 @@
+use log::error;
 use multimap::MultiMap;
 use rbx_dom_weak::{types::Ref, Instance, InstanceBuilder, WeakDom};
 use std::{
@@ -31,7 +32,7 @@ impl Tree {
 		tree.insert_meta(root_ref, snapshot.meta);
 
 		for child in snapshot.children {
-			tree.insert_instance(child, root_ref);
+			tree.insert_instance_recursive(child, root_ref);
 		}
 
 		tree
@@ -46,14 +47,10 @@ impl Tree {
 
 		self.insert_meta(id, snapshot.meta);
 
-		for child in snapshot.children {
-			self.insert_instance(child, id);
-		}
-
 		id
 	}
 
-	pub fn insert_instance_non_recursive(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
+	pub fn insert_instance_recursive(&mut self, snapshot: Snapshot, parent: Ref) -> Ref {
 		let builder = InstanceBuilder::new(snapshot.class)
 			.with_name(snapshot.meta.original_name.as_ref().unwrap_or(&snapshot.name))
 			.with_properties(snapshot.properties);
@@ -61,6 +58,10 @@ impl Tree {
 		let id = self.dom.insert(parent, builder);
 
 		self.insert_meta(id, snapshot.meta);
+
+		for child in snapshot.children {
+			self.insert_instance_recursive(child, id);
+		}
 
 		id
 	}
@@ -77,6 +78,11 @@ impl Tree {
 	}
 
 	pub fn remove_instance(&mut self, id: Ref) {
+		if id == self.root_ref() {
+			error!("Attempted to remove root instance: {id:?}");
+			return;
+		}
+
 		let mut to_remove = vec![id];
 
 		fn walk(id: Ref, dom: &WeakDom, to_remove: &mut Vec<Ref>) {

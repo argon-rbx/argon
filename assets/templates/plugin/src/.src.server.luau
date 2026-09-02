@@ -1,1 +1,1 @@
-print('Hello world, from plugin!')
+print("Hello world, from plugin!")

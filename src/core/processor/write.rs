@@ -1,16 +1,13 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use log::{error, trace, warn};
 use path_clean::PathClean;
-use rbx_dom_weak::{types::Ref, Instance};
-use std::{
-	collections::HashMap,
-	path::{Path, PathBuf},
-};
+use rbx_dom_weak::{types::Ref, HashMapExt, Instance, Ustr, UstrMap};
+use std::path::{Path, PathBuf};
 
-use super::helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path};
 use crate::{
 	config::Config,
 	core::{
+		helpers::syncback::{rename_path, serialize_properties, validate_properties, verify_name, verify_path},
 		meta::{Meta, NodePath, Source, SourceEntry, SourceKind},
 		snapshot::{AddedSnapshot, Snapshot, UpdatedSnapshot},
 		tree::Tree,
@@ -64,7 +61,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 	fn locate_instance_data(is_dir: bool, path: &Path, snapshot: &Snapshot, parent_meta: &Meta) -> Result<PathBuf> {
 		parent_meta
 			.context
-			.sync_rules_of_type(&Middleware::InstanceData)
+			.sync_rules_of_type(&Middleware::InstanceData, true)
 			.iter()
 			.find_map(|rule| rule.locate(path, &snapshot.name, is_dir))
 			.with_context(|| format!("Failed to locate data path for parent: {}", path.display()))
@@ -91,7 +88,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		) {
 			let mut file_path = parent_meta
 				.context
-				.sync_rules_of_type(&middleware)
+				.sync_rules_of_type(&middleware, true)
 				.iter()
 				.find_map(|rule| rule.locate(path, &snapshot.name, has_children))
 				.with_context(|| format!("Failed to locate file path for parent: {}", path.display()))?;
@@ -202,7 +199,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			let data_paths = if let Some(data) = parent_meta.source.get_data() {
 				let new_path = parent_meta
 					.context
-					.sync_rules_of_type(&Middleware::InstanceData)
+					.sync_rules_of_type(&Middleware::InstanceData, true)
 					.iter()
 					.find_map(|rule| rule.locate(&folder_path, &name, true))
 					.with_context(|| format!("Failed to locate data path for parent: {}", folder_path.display()))?;
@@ -265,7 +262,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 		tree: &mut Tree,
 	) {
 		let mut node = ProjectNode {
-			class_name: Some(snapshot.class.clone()),
+			class_name: Some(snapshot.class),
 			properties: serialize_properties(&snapshot.class, snapshot.properties.clone()),
 			..ProjectNode::default()
 		};
@@ -309,7 +306,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let parent_source =
 					add_non_project_instances(parent_id, &custom_path, snapshot, &mut parent_meta, tree, vfs)?;
 
-				let parent_source = Source::project(&name, &path, node.clone(), node_path.clone())
+				let parent_source = Source::project(&name, &path, *node, node_path.clone())
 					.with_relevant(parent_source.relevant().to_owned());
 
 				parent_meta.set_source(parent_source);
@@ -319,7 +316,7 @@ pub fn apply_addition(snapshot: AddedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 				let node = project
 					.find_node_by_path(&node_path)
-					.context(format!("Failed to find project node with path {:?}", node_path))?;
+					.context(format!("Failed to find project node with path {node_path:?}"))?;
 
 				add_project_instances(parent_id, &path, node_path.clone(), snapshot, node, &parent_meta, tree);
 
@@ -368,7 +365,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 			Some(data.path().to_owned())
 		} else {
 			meta.context
-				.sync_rules_of_type(&Middleware::InstanceData)
+				.sync_rules_of_type(&Middleware::InstanceData, true)
 				.iter()
 				.find_map(|rule| rule.locate(path, name, vfs.is_dir(path)))
 		};
@@ -404,11 +401,17 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				None
 			},
 		) {
-			let new_path = meta
-				.context
-				.sync_rules_of_type(&middleware)
-				.iter()
-				.find_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)));
+			let new_path = {
+				let mut paths = meta
+					.context
+					.sync_rules_of_type(&middleware, true)
+					.iter()
+					.filter_map(|rule| rule.locate(path, &instance.name, vfs.is_dir(path)))
+					.collect::<Vec<PathBuf>>();
+
+				paths.sort_by_key(|path| !path.exists());
+				paths.first().map(|path| path.to_owned())
+			};
 
 			let file_path = if let Some(SourceEntry::File(path)) = meta.source.get_file_mut() {
 				let mut current_path = path.to_owned();
@@ -555,22 +558,22 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 
 					let node = project
 						.find_node_by_path(&node_path)
-						.context(format!("Failed to find project node with path {:?}", node_path))?;
+						.context(format!("Failed to find project node with path {node_path:?}"))?;
 
-					node.properties = HashMap::new();
+					node.properties = UstrMap::new();
 					node.attributes = None;
-					node.tags = vec![];
+					node.tags = Vec::new();
 					node.keep_unknowns = None;
 				} else {
 					let node = project
 						.find_node_by_path(&node_path)
-						.context(format!("Failed to find project node with path {:?}", node_path))?;
+						.context(format!("Failed to find project node with path {node_path:?}"))?;
 
-					let class = node.class_name.as_ref().unwrap_or(&name);
+					let class = node.class_name.unwrap_or(Ustr::from(&name));
 					let properties = validate_properties(properties, meta.context.syncback_filter());
 
-					node.properties = serialize_properties(class, properties.clone());
-					node.tags = vec![];
+					node.properties = serialize_properties(&class, properties.clone());
+					node.tags = Vec::new();
 					node.keep_unknowns = None;
 
 					instance.properties = properties;
@@ -586,13 +589,13 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 				let node = parent_node
 					.tree
 					.remove(&name)
-					.context(format!("Failed to remove project node with path {:?}", node_path))?;
+					.context(format!("Failed to remove project node with path {node_path:?}"))?;
 
 				parent_node.tree.insert(new_name.clone(), node.clone());
 
 				let node_path = node_path.parent().join(&new_name);
 
-				*meta.source.get_mut() = SourceKind::Project(new_name.clone(), path.clone(), node, node_path);
+				*meta.source.get_mut() = SourceKind::Project(new_name.clone(), path.clone(), Box::new(node), node_path);
 
 				instance.name = new_name;
 			}
@@ -617,7 +620,7 @@ pub fn apply_update(snapshot: UpdatedSnapshot, tree: &mut Tree, vfs: &Vfs) -> Re
 }
 
 pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
-	trace!("Removing {:?}", id);
+	trace!("Removing {id:?}");
 
 	if let Some(instance) = tree.get_instance(id) {
 		let filter = tree.get_meta(id).unwrap().context.syncback_filter();
@@ -627,7 +630,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 			return Ok(());
 		}
 	} else {
-		warn!("Attempted to remove instance that doesn't exist: {:?}", id);
+		warn!("Attempted to remove instance that doesn't exist: {id:?}");
 		return Ok(());
 	}
 
@@ -685,7 +688,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 					if let Some(data) = meta.source.get_data() {
 						let data_path = meta
 							.context
-							.sync_rules_of_type(&Middleware::InstanceData)
+							.sync_rules_of_type(&Middleware::InstanceData, true)
 							.iter()
 							.find_map(|rule| rule.locate(folder_path, name, false));
 
@@ -722,7 +725,7 @@ pub fn apply_removal(id: Ref, tree: &mut Tree, vfs: &Vfs) -> Result<()> {
 
 			project.save(path)?;
 		}
-		SourceKind::None => panic!("Attempted to remove instance with no source: {:?}", id),
+		SourceKind::None => error!("Attempted to remove instance with no source: {id:?}"),
 	}
 
 	tree.remove_instance(id);

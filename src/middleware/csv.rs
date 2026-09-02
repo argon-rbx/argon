@@ -1,6 +1,6 @@
 use anyhow::Result;
 use csv::{ReaderBuilder, WriterBuilder};
-use rbx_dom_weak::types::Variant;
+use rbx_dom_weak::{types::Variant, ustr, HashMapExt, UstrMap};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
 
@@ -29,7 +29,7 @@ pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 		.from_reader(contents.as_slice());
 
 	let headers = reader.headers()?.clone();
-	let mut entries = vec![];
+	let mut entries = Vec::new();
 
 	for record in reader.records() {
 		let mut entry = LocalizationEntry::default();
@@ -61,8 +61,8 @@ pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 
 	let contents = serde_json::to_string(&entries)?;
 
-	let mut properties = HashMap::new();
-	properties.insert(String::from("Contents"), Variant::String(contents));
+	let mut properties = UstrMap::new();
+	properties.insert(ustr("Contents"), Variant::String(contents));
 
 	Ok(Snapshot::new()
 		.with_class("LocalizationTable")
@@ -70,8 +70,8 @@ pub fn read_csv(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 }
 
 #[profiling::function]
-pub fn write_csv(mut properties: HashMap<String, Variant>, path: &Path, vfs: &Vfs) -> Result<Properties> {
-	if let Some(Variant::String(contents)) = properties.remove("Contents") {
+pub fn write_csv(mut properties: Properties, path: &Path, vfs: &Vfs) -> Result<Properties> {
+	if let Some(Variant::String(contents)) = properties.remove(&ustr("Contents")) {
 		let entries: Vec<LocalizationEntry> = serde_json::from_str(&contents)?;
 		let mut contents = Vec::new();
 

@@ -1,9 +1,7 @@
 use anyhow::Result;
 use colored::Colorize;
-use json_formatter::JsonFormatter;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
-use serde_json::Serializer;
 use std::{
 	collections::{BTreeMap, HashMap},
 	fs, mem,
@@ -16,9 +14,10 @@ use crate::{
 		meta::{NodePath, SyncRule},
 		tree::Tree,
 	},
-	ext::{PathExt, ResultExt, WriterExt},
+	ext::{PathExt, ResultExt},
 	glob::Glob,
 	resolution::UnresolvedValue,
+	util::serialize_json,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -40,14 +39,14 @@ impl ProjectPath {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProjectNode {
 	#[serde(rename = "$className", skip_serializing_if = "Option::is_none")]
-	pub class_name: Option<String>,
+	pub class_name: Option<Ustr>,
 	#[serde(rename = "$path", skip_serializing_if = "Option::is_none")]
 	pub path: Option<ProjectPath>,
 	#[serde(flatten)]
 	pub tree: BTreeMap<String, ProjectNode>,
 
 	#[serde(rename = "$properties", default, skip_serializing_if = "HashMap::is_empty")]
-	pub properties: HashMap<String, UnresolvedValue>,
+	pub properties: UstrMap<UnresolvedValue>,
 	#[serde(rename = "$attributes", skip_serializing_if = "Option::is_none")]
 	pub attributes: Option<UnresolvedValue>,
 	#[serde(rename = "$tags", default, skip_serializing_if = "Vec::is_empty")]
@@ -129,15 +128,7 @@ impl Project {
 	}
 
 	pub fn save(&self, path: &Path) -> Result<()> {
-		let formatter = JsonFormatter::with_array_breaks(false);
-
-		let mut writer = Vec::new();
-		let mut serializer = Serializer::with_formatter(&mut writer, formatter);
-
-		self.serialize(&mut serializer)?;
-		writer.end()?;
-
-		fs::write(path, &writer)?;
+		fs::write(path, serialize_json(self)?)?;
 
 		Ok(())
 	}
@@ -245,7 +236,7 @@ pub fn resolve(path: PathBuf) -> Result<PathBuf> {
 	}
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectDetails {
 	version: String,

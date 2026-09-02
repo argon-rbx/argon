@@ -60,7 +60,7 @@ pub fn hook() {
 			argon_error!("{}:\n{:?}", "Backtrace".bold(), backtrace);
 
 			// Temporary solution for broken OsString parser
-			let mut backtrace = format!("{:?}", backtrace);
+			let mut backtrace = format!("{backtrace:?}");
 			backtrace = backtrace.replace("             ", "\t\t");
 			backtrace = backtrace.replace("    ", "\t");
 			backtrace = backtrace.replace("   ", "");
@@ -92,7 +92,7 @@ pub fn hook() {
 
 		if report_issue {
 			let mut url = env!("CARGO_PKG_REPOSITORY").to_owned();
-			url.push_str(&format!("/issues/new?title=Argon crashed: {}&body=", message));
+			url.push_str(&format!("/issues/new?title=Argon crashed: {message}&body="));
 
 			#[cfg(not(target_os = "windows"))]
 			url.push_str(&report);
@@ -101,7 +101,7 @@ pub fn hook() {
 			url.push_str(&report.replace('\n', "%0A").replace('\t', "%09"));
 
 			match open::that(url) {
-				Err(err) => error!("Failed to launch system browser: {}", err),
+				Err(err) => error!("Failed to launch system browser: {err}"),
 				Ok(()) => trace!("Browser launched successfully"),
 			}
 		}

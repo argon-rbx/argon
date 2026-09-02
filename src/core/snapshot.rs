@@ -1,11 +1,11 @@
-use rbx_dom_weak::types::{Ref, Variant};
-use serde::{Deserialize, Serialize};
-use std::{
-	collections::HashMap,
-	fmt::{self, Debug, Formatter},
+use rbx_dom_weak::{
+	types::{Ref, Variant},
+	ustr, HashMapExt, Ustr, UstrMap,
 };
+use serde::{Deserialize, Serialize};
+use std::fmt::{self, Debug, Formatter};
 
-use super::meta::Meta;
+use super::{helpers::apply_migrations, meta::Meta};
 use crate::{middleware::data::DataSnapshot, Properties};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -15,7 +15,7 @@ pub struct Snapshot {
 
 	// Roblox related
 	pub name: String,
-	pub class: String,
+	pub class: Ustr,
 	pub properties: Properties,
 	pub children: Vec<Snapshot>,
 }
@@ -28,8 +28,8 @@ impl Snapshot {
 			id: Ref::none(),
 			meta: Meta::new(),
 			name: String::new(),
-			class: String::from("Folder"),
-			properties: HashMap::new(),
+			class: Ustr::from("Folder"),
+			properties: UstrMap::new(),
 			children: Vec::new(),
 		}
 	}
@@ -84,11 +84,12 @@ impl Snapshot {
 	}
 
 	pub fn set_class(&mut self, class: &str) {
-		class.clone_into(&mut self.class);
+		self.class = class.into();
 	}
 
 	pub fn set_properties(&mut self, properties: Properties) {
 		self.properties = properties;
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn set_children(&mut self, children: Vec<Snapshot>) {
@@ -105,7 +106,8 @@ impl Snapshot {
 		}
 
 		if let Some(original_name) = data.original_name {
-			self.name = original_name;
+			self.name = original_name.clone();
+			self.meta.set_original_name(Some(original_name));
 		}
 
 		if let Some(mesh_source) = data.mesh_source {
@@ -119,7 +121,8 @@ impl Snapshot {
 	// Adding to snapshot fields
 
 	pub fn add_property(&mut self, name: &str, value: Variant) {
-		self.properties.insert(name.to_owned(), value);
+		self.properties.insert(name.into(), value);
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn add_child(&mut self, child: Snapshot) {
@@ -130,6 +133,7 @@ impl Snapshot {
 
 	pub fn extend_properties(&mut self, properties: Properties) {
 		self.properties.extend(properties);
+		apply_migrations(&self.class, &mut self.properties);
 	}
 
 	pub fn extend_children(&mut self, children: Vec<Snapshot>) {
@@ -144,7 +148,7 @@ impl Snapshot {
 			meta: self.meta.clone(),
 			parent,
 			name: self.name.clone(),
-			class: self.class.clone(),
+			class: self.class,
 			properties: self.properties.clone(),
 			children: self.children.clone(),
 		}
@@ -163,12 +167,12 @@ impl Debug for Snapshot {
 		if !self.properties.is_empty() {
 			let mut properties = self.properties.clone();
 
-			if let Some(property) = properties.get_mut("Source") {
+			if let Some(property) = properties.get_mut(&ustr("Source")) {
 				if let Variant::String(source) = property {
 					let lines = source.lines().count();
 
 					if lines > 1 {
-						*property = Variant::String(format!("Truncated... ({} lines)", lines));
+						*property = Variant::String(format!("Truncated... ({lines} lines)"));
 					}
 				}
 			}
@@ -190,7 +194,7 @@ pub struct AddedSnapshot {
 	pub meta: Meta,
 	pub parent: Ref,
 	pub name: String,
-	pub class: String,
+	pub class: Ustr,
 	pub properties: Properties,
 	pub children: Vec<Snapshot>,
 }
@@ -213,7 +217,7 @@ pub struct UpdatedSnapshot {
 	pub id: Ref,
 	pub meta: Option<Meta>,
 	pub name: Option<String>,
-	pub class: Option<String>,
+	pub class: Option<Ustr>,
 	pub properties: Option<Properties>,
 }
 
@@ -229,6 +233,6 @@ impl UpdatedSnapshot {
 	}
 
 	pub fn is_empty(&self) -> bool {
-		self.name.is_none() && self.class.is_none() && self.properties.is_none()
+		self.meta.is_none() && self.name.is_none() && self.class.is_none() && self.properties.is_none()
 	}
 }

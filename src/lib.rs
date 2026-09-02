@@ -1,7 +1,6 @@
 #![allow(clippy::new_without_default)]
 
-use rbx_dom_weak::types::Variant;
-use std::collections::HashMap;
+use rbx_dom_weak::{types::Variant, UstrMap};
 
 pub mod cli;
 pub mod config;
@@ -27,7 +26,7 @@ pub mod vfs;
 pub mod workspace;
 
 /// Global type for snapshot and instance properties
-pub type Properties = HashMap<String, Variant>;
+pub type Properties = UstrMap<Variant>;
 
 /// A shorter way to lock the Mutex
 #[macro_export]

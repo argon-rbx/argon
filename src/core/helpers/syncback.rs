@@ -1,8 +1,6 @@
 use colored::Colorize;
-use std::{
-	collections::HashMap,
-	path::{Path, PathBuf},
-};
+use rbx_dom_weak::{ustr, HashMapExt, UstrMap};
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
@@ -29,16 +27,16 @@ const FORBIDDEN_FILE_NAMES: [&str; 22] = [
 
 pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 	let (messages, renamed) = {
-		let mut messages = vec![];
+		let mut messages = Vec::new();
 		let mut name = name.clone();
 
 		if name.len() > 255 {
 			messages.push("file name cannot be longer than 255 characters".into());
-			name = name[..255].into();
+			name = name[..255].to_owned();
 		}
 
 		{
-			let mut forbidden_chars = vec![];
+			let mut forbidden_chars = Vec::new();
 
 			for char in name.chars() {
 				if FORBIDDEN_CHARACTERS.contains(&char) && !forbidden_chars.contains(&char) {
@@ -89,7 +87,7 @@ pub fn verify_name(name: &mut String, meta: &mut Meta) -> bool {
 			messages.push("file name cannot end with a period or space".into());
 
 			while name.ends_with('.') || name.ends_with(' ') {
-				name = name[..name.len() - 1].into();
+				name = name[..name.len() - 1].to_owned();
 			}
 		}
 
@@ -143,11 +141,11 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 		return true;
 	}
 
-	if Config::new().rename_instances {
+	if Config::new().keep_duplicates {
 		let suffix = path.get_name().strip_prefix(name.as_str()).unwrap_or_default();
 
 		let renamed = format!("{}_{}", name, Uuid::new_v4());
-		let renamed_path = path.with_file_name(format!("{}{}", renamed, suffix));
+		let renamed_path = path.with_file_name(format!("{renamed}{suffix}"));
 
 		argon_warn!(
 			"Instance with path: {} got renamed to: {}, because it already exists!",
@@ -173,8 +171,8 @@ pub fn verify_path(path: &mut PathBuf, name: &mut String, meta: &mut Meta, vfs: 
 
 pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> Properties {
 	// Temporary solution for empty Luau maps being serialized as arrays
-	if properties.contains_key("ArgonEmpty") {
-		HashMap::new()
+	if properties.contains_key(&ustr("ArgonEmpty")) {
+		UstrMap::new()
 	} else {
 		properties
 			.into_iter()
@@ -183,12 +181,12 @@ pub fn validate_properties(properties: Properties, filter: &SyncbackFilter) -> P
 	}
 }
 
-pub fn serialize_properties(class: &str, properties: Properties) -> HashMap<String, UnresolvedValue> {
+pub fn serialize_properties(class: &str, properties: Properties) -> UstrMap<UnresolvedValue> {
 	properties
 		.iter()
 		.map(|(property, variant)| {
 			(
-				property.to_owned(),
+				*property,
 				UnresolvedValue::from_variant(variant.clone(), class, property),
 			)
 		})

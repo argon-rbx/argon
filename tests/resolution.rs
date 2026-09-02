@@ -3,7 +3,7 @@ mod unresolved_value {
 
 	use rbx_dom_weak::types::{
 		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-		Content, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
+		Content, ContentId, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
 		NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3int16, Tags, UDim, UDim2,
 		Variant, Vector2, Vector3, Vector3int16,
 	};
@@ -119,8 +119,16 @@ mod unresolved_value {
 	#[test]
 	fn content() {
 		assert_eq!(
+			resolve("Decal", "TextureContent", r#""rbxasset://some-uri.png""#),
+			Content::from("rbxasset://some-uri.png").into(),
+		);
+	}
+
+	#[test]
+	fn content_id() {
+		assert_eq!(
 			resolve("Decal", "Texture", r#""rbxassetid://1234567890""#),
-			Content::from("rbxassetid://1234567890").into(),
+			ContentId::from("rbxassetid://1234567890").into(),
 		);
 	}
 
@@ -232,25 +240,19 @@ mod unresolved_value {
 	fn optional_cframe() {
 		assert_eq!(
 			resolve("Model", "WorldPivotData", "[1.2, 3.4, 5.6, 1, 0, 0, 0, 1, 0, 0, 0, 1]"),
-			CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity()).into()
+			Some(CFrame::new(Vector3::new(1.2, 3.4, 5.6), Matrix3::identity())).into()
 		);
 	}
 
 	#[test]
 	fn physical_properties() {
-		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
-			density: 1.2,
-			friction: 3.4,
-			elasticity: 5.6,
-			friction_weight: 7.8,
-			elasticity_weight: 9.0,
-		});
+		let properties = PhysicalProperties::Custom(CustomPhysicalProperties::new(1.2, 3.4, 5.6, 7.8, 9.0, 10.0));
 
 		assert_eq!(
 			resolve(
 				"Part",
 				"CustomPhysicalProperties",
-				r#"{"density": 1.2, "friction": 3.4, "elasticity": 5.6, "frictionWeight": 7.8, "elasticityWeight": 9}"#
+				r#"{"density": 1.2, "friction": 3.4, "elasticity": 5.6, "frictionWeight": 7.8, "elasticityWeight": 9, "acousticAbsorption": 10}"#
 			),
 			properties.into()
 		);
@@ -277,7 +279,7 @@ mod unresolved_value {
 	}
 
 	#[test]
-	fn refs() {
+	fn referent() {
 		// TODO: Implement Ref
 		// assert_eq!(resolve("Model", "PrimaryPart", ""), Ref::none().into());
 	}
@@ -302,7 +304,7 @@ mod unresolved_value {
 
 	#[test]
 	fn shared_string() {
-		// Currently there is not valid SharedString property to test
+		// Currently there is no valid SharedString property to test
 
 		// assert_eq!(
 		// 	resolve("Not", "Available", r#""Hello, world!""#),
@@ -383,9 +385,9 @@ mod resolved_value {
 
 	use rbx_dom_weak::types::{
 		Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-		CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange, NumberSequence,
-		NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, SharedString, Tags, UDim, UDim2,
-		Variant, Vector2, Vector2int16, Vector3, Vector3int16,
+		Content, ContentId, CustomPhysicalProperties, Enum, Faces, Font, FontStyle, FontWeight, Matrix3, NumberRange,
+		NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, SharedString,
+		Tags, UDim, UDim2, Variant, Vector2, Vector2int16, Vector3, Vector3int16,
 	};
 	use serde_json::{json, Value};
 
@@ -527,7 +529,15 @@ mod resolved_value {
 	#[test]
 	fn content() {
 		assert_eq(
-			from_variant("rbxassetid://1234567890"),
+			from_variant(Content::from("rbxasset://some-uri.png")),
+			json!("rbxasset://some-uri.png"),
+		);
+	}
+
+	#[test]
+	fn content_id() {
+		assert_eq(
+			from_variant(ContentId::from("rbxassetid://1234567890")),
 			json!("rbxassetid://1234567890"),
 		);
 	}
@@ -625,13 +635,7 @@ mod resolved_value {
 
 	#[test]
 	fn physical_properties() {
-		let properties = PhysicalProperties::Custom(CustomPhysicalProperties {
-			density: 1.2,
-			friction: 3.4,
-			elasticity: 5.6,
-			friction_weight: 7.8,
-			elasticity_weight: 9.0,
-		});
+		let properties = PhysicalProperties::Custom(CustomPhysicalProperties::new(1.2, 3.4, 5.6, 7.8, 9.0, 10.0));
 
 		assert_eq(
 			from_variant(properties),
@@ -641,6 +645,7 @@ mod resolved_value {
 				"elasticity": 5.6,
 				"frictionWeight": 7.8,
 				"elasticityWeight": 9,
+				"acousticAbsorption": 10,
 			}),
 		);
 		assert_eq(from_variant(PhysicalProperties::Default), json!("Default"));
@@ -663,7 +668,7 @@ mod resolved_value {
 	}
 
 	#[test]
-	fn refs() {
+	fn referent() {
 		// TODO: Implement Ref
 		// assert_eq(from_variant(Ref::none()), json!(null));
 	}

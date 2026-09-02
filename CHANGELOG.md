@@ -6,6 +6,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.29] - 2026-05-18
+
+### Added
+
+- Alphabetical sorting of object properties in all JSON files ([#268](https://github.com/argon-rbx/argon/issues/268))
+
+### Fixed
+
+- Crashes caused by the `Cannot destroy the root instance of a WeakDom` error ([#257](https://github.com/argon-rbx/argon/issues/257))
+- Crashes caused by the `Attempted to remove instance with no source` error ([#280](https://github.com/argon-rbx/argon/issues/280))
+
+## [2.0.28] - 2026-03-04
+
+### Added
+
+- Support for Linux on ARM CPUs
+- Native binary for Windows on ARM CPUs
+
+### Fixed
+
+- Code execution for paths pointing to a script in the working directory
+
+## [2.0.27] - 2025-12-10
+
+### Fixed
+
+- Files deleted by commands like `git checkout` not being detected by Argon
+- Formatting of `f32` values being inconsistent between syncback events ([#230](https://github.com/argon-rbx/argon/issues/230))
+
+## [2.0.26] - 2025-08-25
+
+### Fixed
+
+- Ambiguous deserialization of `OptionalCFrame` property now works properly
+
+## [2.0.25] - 2025-07-17
+
+### Added
+
+- Numbers in all JSON files are now formatted with up to 4 decimal places
+- Support for top-level arrays in JSON and YAML files
+
+### Fixed
+
+- CLI can now be updated on Windows on ARM CPUs
+- Argon can now run on older Linux versions (with `glibc 2.35+`)
+- Updating instance meta now triggers client sync
+
+### Changed
+
+- Scripts are now written to the filesystem even if they are empty (syncback)
+- Sourcemap regeneration is now only triggered by relevant changes
+- Project details are now only synced when relevant project properties change
+- `argon config -l` now displays only modified settings in `Current` column
+
+## [2.0.24] - 2025-04-28
+
+### Added
+
+- Support for `Enum` attributes and `Content` properties
+- Improved performance of `.rbxm` parsing
+- `max_unsynced_changes` setting can now be set to much higher values
+- Automatic Wally detection now supports `ServerPackages` and `DevPackages`
+- Argon legacy namespace migration warning (`.src` to `init`) for every path that contains `.src` in its name
+
+### Fixed
+
+- `BasePart.Color` property is now properly converted between `Color3` and `Color3uint8` types
+- Mismatched line endings no longer cause script diffs (all files are now normalized to `LF`)
+- `--license` argument is now independent from the `--docs` argument in `argon init` command
+- Empty StringValues (`.txt` files) are no longer ignored when syncing back
+- Syncback now respects original file extensions so it no longer changes `.lua` to `.luau` when writing
+- Package projects (that contain only root `$path`) are now properly synced back
+
+### Changed
+
+- Updated `rbx-dom` library to the latest major version
+- Removed `line_ending` setting in favor of new `ignore_line_endings` setting
+- All project templates now include improved `.gitignore`, `wally.toml` and `project.json` files
+- Empty projects are no longer included in the tree (in result root project cannot be empty!)
+- Argon legacy namespace for child file definitions (`.src`) is no longer supported by following middleware: `StringValue`, `RichStringValue`, `LocalizationTable`, `JsonModule`, `TomlModule`, `YamlModule`, `MsgpackModule`, `JsonModel`, `RbxmModel`, `RbxmxModel`
+
+## [2.0.23] - 2025-02-05
+
+### Fixed
+
+- Legacy `.src` and `.data` files are working again when `rojo_mode` setting is enabled
+
+## [2.0.22] - 2025-01-26
+
+### Added
+
+- Support for `.md` (Markdown) files that get transformed into `StringValue` containing rich text
+- Separate `keep_duplicates` setting which was previously controlled by `rename_instances` setting
+
+### Fixed
+
+- Fix meta changes not being updated in the tree (sourcemap regeneration issue for new `.src` and `init` files)
+- Argon no longer crashes when removing files that are described by multiple sync rules
+
+### Changed
+
+- `rojo_mode` setting is now `true` by default (will be removed in the future along with Argon legacy namespace)
+
 ## [2.0.21] - 2024-11-22
 
 ### Added
@@ -339,7 +443,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Brand new Argon CLI, written in Rust
 
-[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.21...HEAD
+[unreleased]: https://github.com/argon-rbx/argon/compare/2.0.29...HEAD
+[2.0.29]: https://github.com/argon-rbx/argon/compare/2.0.28...2.0.29
+[2.0.28]: https://github.com/argon-rbx/argon/compare/2.0.27...2.0.28
+[2.0.27]: https://github.com/argon-rbx/argon/compare/2.0.26...2.0.27
+[2.0.26]: https://github.com/argon-rbx/argon/compare/2.0.25...2.0.26
+[2.0.25]: https://github.com/argon-rbx/argon/compare/2.0.24...2.0.25
+[2.0.24]: https://github.com/argon-rbx/argon/compare/2.0.23...2.0.24
+[2.0.23]: https://github.com/argon-rbx/argon/compare/2.0.22...2.0.23
+[2.0.22]: https://github.com/argon-rbx/argon/compare/2.0.21...2.0.22
 [2.0.21]: https://github.com/argon-rbx/argon/compare/2.0.20...2.0.21
 [2.0.20]: https://github.com/argon-rbx/argon/compare/2.0.19...2.0.20
 [2.0.19]: https://github.com/argon-rbx/argon/compare/2.0.18...2.0.19

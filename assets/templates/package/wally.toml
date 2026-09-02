@@ -7,4 +7,4 @@ authors = ["$author"]
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
-[dependencies]
+[dev-dependencies]

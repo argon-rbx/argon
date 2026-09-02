@@ -3,13 +3,15 @@
 use anyhow::{bail, format_err, Context};
 use rbx_dom_weak::types::{
 	Attributes, Axes, BinaryString, BrickColor, CFrame, Color3, Color3uint8, ColorSequence, ColorSequenceKeypoint,
-	Content, CustomPhysicalProperties, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange, NumberSequence,
-	NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2, Variant,
-	VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
+	Content, ContentId, ContentType, CustomPhysicalProperties, Enum, Faces, Font, MaterialColors, Matrix3, NumberRange,
+	NumberSequence, NumberSequenceKeypoint, PhysicalProperties, Ray, Rect, Region3, Region3int16, Tags, UDim, UDim2,
+	Variant, VariantType, Vector2, Vector2int16, Vector3, Vector3int16,
 };
 use rbx_reflection::{DataType, PropertyDescriptor};
 use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use std::{borrow::Borrow, collections::HashMap, fmt::Write};
+
+use crate::{ext::PropertyDescriptorExt, util::get_reflection_database};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -65,15 +67,15 @@ impl UnresolvedValue {
 				let mut array = Vec::new();
 
 				if axes.contains(Axes::X) {
-					array.push("X".to_owned());
+					array.push("X".into());
 				}
 
 				if axes.contains(Axes::Y) {
-					array.push("Y".to_owned());
+					array.push("Y".into());
 				}
 
 				if axes.contains(Axes::Z) {
-					array.push("Z".to_owned());
+					array.push("Z".into());
 				}
 
 				AmbiguousValue::StringArray(array)
@@ -105,16 +107,19 @@ impl UnresolvedValue {
 			Variant::Color3(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
 			Variant::Color3uint8(color) => AmbiguousValue::Array3([color.r as f64, color.g as f64, color.b as f64]),
 
-			Variant::ColorSequence(sequence) => AmbiguousValue::ColorSequence(sequence.keypoints.clone()),
+			Variant::ColorSequence(sequence) => AmbiguousValue::ColorSequence(sequence.keypoints),
 
-			Variant::Content(content) => AmbiguousValue::String(content.into_string()),
+			Variant::Content(content) => AmbiguousValue::String(match content.value() {
+				ContentType::Object(referent) => referent.to_string(),
+				ContentType::Uri(uri) => uri.to_owned(),
+				_ => String::new(),
+			}),
+			Variant::ContentId(content) => AmbiguousValue::String(content.into_string()),
 
 			Variant::Enum(rbx_enum) => {
 				if let Some(property) = find_descriptor(class, property) {
 					if let DataType::Enum(enum_name) = &property.data_type {
-						let database = rbx_reflection_database::get();
-
-						if let Some(enum_descriptor) = database.enums.get(enum_name) {
+						if let Some(enum_descriptor) = get_reflection_database().enums.get(enum_name) {
 							for (variant_name, id) in &enum_descriptor.items {
 								if *id == rbx_enum.to_u32() {
 									return Self::Ambiguous(AmbiguousValue::String(variant_name.to_string()));
@@ -131,27 +136,27 @@ impl UnresolvedValue {
 				let mut array = Vec::new();
 
 				if faces.contains(Faces::RIGHT) {
-					array.push("Right".to_owned());
+					array.push("Right".into());
 				}
 
 				if faces.contains(Faces::TOP) {
-					array.push("Top".to_owned());
+					array.push("Top".into());
 				}
 
 				if faces.contains(Faces::BACK) {
-					array.push("Back".to_owned());
+					array.push("Back".into());
 				}
 
 				if faces.contains(Faces::LEFT) {
-					array.push("Left".to_owned());
+					array.push("Left".into());
 				}
 
 				if faces.contains(Faces::BOTTOM) {
-					array.push("Bottom".to_owned());
+					array.push("Bottom".into());
 				}
 
 				if faces.contains(Faces::FRONT) {
-					array.push("Front".to_owned());
+					array.push("Front".into());
 				}
 
 				AmbiguousValue::StringArray(array)
@@ -169,7 +174,7 @@ impl UnresolvedValue {
 
 			Variant::NumberRange(range) => AmbiguousValue::Array2([range.min as f64, range.max as f64]),
 
-			Variant::NumberSequence(sequence) => AmbiguousValue::NumberSequence(sequence.keypoints.clone()),
+			Variant::NumberSequence(sequence) => AmbiguousValue::NumberSequence(sequence.keypoints),
 
 			Variant::OptionalCFrame(cf) => {
 				if let Some(cf) = cf {
@@ -188,14 +193,14 @@ impl UnresolvedValue {
 						cf.orientation.z.z as f64,
 					])
 				} else {
-					AmbiguousValue::String("null".to_owned())
+					AmbiguousValue::String("null".into())
 				}
 			}
 
 			Variant::PhysicalProperties(PhysicalProperties::Custom(custom)) => {
 				AmbiguousValue::PhysicalProperties(custom)
 			}
-			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String(String::from("Default")),
+			Variant::PhysicalProperties(PhysicalProperties::Default) => AmbiguousValue::String("Default".into()),
 
 			Variant::Ray(ray) => AmbiguousValue::Array3Array2([
 				[ray.origin.x as f64, ray.origin.y as f64, ray.origin.z as f64],
@@ -225,7 +230,7 @@ impl UnresolvedValue {
 			}
 			Variant::String(str) => AmbiguousValue::String(str),
 
-			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.to_string()).collect()),
+			Variant::Tags(tags) => AmbiguousValue::StringArray(tags.iter().map(|s| s.into()).collect()),
 
 			Variant::UDim(udim) => AmbiguousValue::Array2([udim.scale as f64, udim.offset as f64]),
 
@@ -285,7 +290,7 @@ impl AmbiguousValue {
 
 		match &descriptor.data_type {
 			DataType::Enum(enum_name) => {
-				let descriptor = rbx_reflection_database::get()
+				let descriptor = get_reflection_database()
 					.enums
 					.get(enum_name)
 					.ok_or_else(|| format_err!("Unknown enum {}. Probably not implemented yet!", enum_name))?;
@@ -296,9 +301,8 @@ impl AmbiguousValue {
 						.keys()
 						.map(|value| value.borrow())
 						.collect::<Vec<&str>>();
-					examples.sort();
 
-					let examples = list_examples(&examples);
+					examples.sort();
 
 					format_err!(
 						"Invalid value for property {}.{}. Got {} but expected a member of the {} enum such as {}",
@@ -306,7 +310,7 @@ impl AmbiguousValue {
 						property,
 						value,
 						enum_name,
-						examples,
+						list_examples(&examples),
 					)
 				};
 
@@ -335,7 +339,7 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Axes, AmbiguousValue::StringArray(axes)) => {
-					let mut bits: u8 = 0;
+					let mut bits = 0;
 
 					for axis in axes {
 						match axis.as_ref() {
@@ -358,10 +362,10 @@ impl AmbiguousValue {
 				(VariantType::Bool, AmbiguousValue::Bool(bool)) => Ok(bool.into()),
 
 				(VariantType::BrickColor, AmbiguousValue::Number(num)) => Ok(BrickColor::from_number(num as u16)
-					.context(format!("{} is not valid BrickColor number", num))?
+					.context(format!("{num} is not valid BrickColor number"))?
 					.into()),
 				(VariantType::BrickColor, AmbiguousValue::String(name)) => Ok(BrickColor::from_name(&name)
-					.context(format!("{} is not valid BrickColor name", name))?
+					.context(format!("{name} is not valid BrickColor name"))?
 					.into()),
 
 				(VariantType::CFrame, AmbiguousValue::Array12(cf)) => {
@@ -378,7 +382,16 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Color3, AmbiguousValue::Array3(color)) => {
-					Ok(Color3::new(color[0] as f32, color[1] as f32, color[2] as f32).into())
+					let (r, g, b) = (color[0] as f32, color[1] as f32, color[2] as f32);
+
+					// Fix for the custom BasePart.Color serialization (https://github.com/argon-rbx/rbx-dom/blob/master/patches/parts.yml#L18)
+					if let Some(data_type) = descriptor.get_custom_serialization() {
+						if data_type == "Color3uint8" && (r > 1.0 || g > 1.0 || b > 1.0) {
+							return Ok(Color3::new(r / 255.0, g / 255.0, b / 255.0).into());
+						}
+					}
+
+					Ok(Color3::new(r, g, b).into())
 				}
 				(VariantType::Color3uint8, AmbiguousValue::Array3(color)) => {
 					Ok(Color3uint8::new(color[0] as u8, color[1] as u8, color[2] as u8).into())
@@ -389,9 +402,10 @@ impl AmbiguousValue {
 				}
 
 				(VariantType::Content, AmbiguousValue::String(content)) => Ok(Content::from(content).into()),
+				(VariantType::ContentId, AmbiguousValue::String(content)) => Ok(ContentId::from(content).into()),
 
 				(VariantType::Faces, AmbiguousValue::StringArray(faces)) => {
-					let mut bits: u8 = 0;
+					let mut bits = 0;
 
 					for face in faces {
 						match face.as_ref() {
@@ -438,7 +452,7 @@ impl AmbiguousValue {
 						Vector3::new(cf[9], cf[10], cf[11]),
 					);
 
-					Ok(CFrame::new(pos, orientation).into())
+					Ok(Some(CFrame::new(pos, orientation)).into())
 				}
 
 				(VariantType::PhysicalProperties, AmbiguousValue::PhysicalProperties(custom)) => {
@@ -551,7 +565,7 @@ impl AmbiguousValue {
 }
 
 fn find_descriptor(class: &str, property: &str) -> Option<&'static PropertyDescriptor<'static>> {
-	let database = rbx_reflection_database::get();
+	let database = get_reflection_database();
 	let mut current_class = class;
 
 	loop {

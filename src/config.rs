@@ -76,25 +76,28 @@ pub struct Config {
 	/// Use roblox-ts by default
 	pub ts_mode: bool,
 
-	/// Automatically rename corrupted or duplicate instances when syncing back
+	/// Automatically rename corrupted instances when syncing back
 	pub rename_instances: bool,
+	/// Keep duplicate instances (by adding UUID suffixes) when syncing back
+	pub keep_duplicates: bool,
 	/// Move files to the bin instead of deleting them (two-way sync)
 	pub move_to_bin: bool,
 	/// Number of changes allowed before prompting user for confirmation
 	pub changes_threshold: usize,
 	/// Maximum number of unsynced changes before showing a warning
-	pub max_unsynced_changes: u16,
+	pub max_unsynced_changes: usize,
 
 	/// Use .lua file extension instead of .luau when writing scripts
 	pub lua_extension: bool,
-	/// Line ending to use when writing files (LF, CRLF, CR)
-	pub line_ending: String,
+	/// Ignore line endings when reading files to avoid script diffs
+	pub ignore_line_endings: bool,
 	/// Package manager to use when running roblox-ts scripts (npm, bun, etc.)
 	pub package_manager: String,
 	/// Share anonymous Argon usage statistics with the community
 	pub share_stats: bool,
 
 	#[serde(skip)]
+	/// Internal
 	kind: ConfigKind,
 }
 
@@ -122,16 +125,17 @@ impl Default for Config {
 			install_plugin: true,
 			update_templates: true,
 
-			rojo_mode: false,
+			rojo_mode: true,
 			ts_mode: false,
 
 			rename_instances: true,
+			keep_duplicates: false,
 			move_to_bin: false,
 			changes_threshold: 5,
 			max_unsynced_changes: 10,
 
 			lua_extension: false,
-			line_ending: String::from("LF"),
+			ignore_line_endings: true,
 			package_manager: String::from("npm"),
 			share_stats: true,
 
@@ -212,14 +216,14 @@ impl Config {
 	#[inline]
 	fn load_specific(kind: ConfigKind) {
 		if mem::discriminant(&kind) == mem::discriminant(&CONFIG.read().unwrap().kind) {
-			debug!("{} config file already loaded", kind);
+			debug!("{kind} config file already loaded");
 			return;
 		}
 
 		let path = kind.path().unwrap();
 
 		if !path.exists() {
-			debug!("{} config file not found", kind);
+			debug!("{kind} config file not found");
 			return;
 		}
 
@@ -240,7 +244,7 @@ impl Config {
 		}();
 
 		match load_result {
-			Ok(()) => info!("{} config file loaded", kind),
+			Ok(()) => info!("{kind} config file loaded"),
 			Err(err) => {
 				argon_error!("Failed to load {} config file: {}", kind.to_string().bold(), err);
 			}
@@ -273,12 +277,14 @@ impl Config {
 				if defaults_only {
 					table.add_row(vec![setting.to_owned(), default.to_string(), doc.trim().to_owned()]);
 				} else {
-					table.add_row(vec![
-						setting.to_owned(),
-						default.to_string(),
-						self.get(setting).map(|v| v.to_string()).unwrap(),
-						doc.trim().to_owned(),
-					]);
+					let default = default.to_string();
+					let mut current = self.get(setting).map(|v| v.to_string()).unwrap();
+
+					if current == default {
+						current = String::new();
+					}
+
+					table.add_row(vec![setting.to_owned(), default, current, doc.trim().to_owned()]);
 				}
 			}
 		}

@@ -147,7 +147,7 @@ impl Display for Table {
 			separator.push_str(&format!("|{0:-<1$}", "", column + 2));
 		}
 
-		write!(f, "{}|\n{}|\n", header, separator)?;
+		write!(f, "{header}|\n{separator}|\n")?;
 
 		for row in self.rows.iter().skip(1) {
 			for (i, column) in row.iter().enumerate() {
@@ -209,8 +209,8 @@ impl PromptTheme {
 	fn color() -> Self {
 		Self {
 			prompt_style: Style::new().for_stderr(),
-			prompt_prefix: style("PROMPT".to_owned()).for_stderr().blue().bold(),
-			prompt_suffix: style("·".to_owned()).for_stderr().black().bright(),
+			prompt_prefix: style("PROMPT".into()).for_stderr().blue().bold(),
+			prompt_suffix: style("·".into()).for_stderr().black().bright(),
 			yes_style: Style::new().for_stderr().green(),
 			no_style: Style::new().for_stderr().red(),
 			none_style: Style::new().for_stderr().cyan(),
@@ -221,8 +221,8 @@ impl PromptTheme {
 	fn no_color() -> Self {
 		Self {
 			prompt_style: Style::new().for_stderr(),
-			prompt_prefix: style("PROMPT".to_owned()).for_stderr(),
-			prompt_suffix: style("·".to_owned()).for_stderr(),
+			prompt_prefix: style("PROMPT".into()).for_stderr(),
+			prompt_suffix: style("·".into()).for_stderr(),
 			yes_style: Style::new().for_stderr(),
 			no_style: Style::new().for_stderr(),
 			none_style: Style::new().for_stderr(),

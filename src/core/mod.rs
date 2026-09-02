@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use log::trace;
-use rbx_dom_weak::types::Ref;
+use rbx_dom_weak::{types::Ref, Ustr};
 use serde::Serialize;
 use snapshot::AddedSnapshot;
 use std::{
@@ -19,6 +19,7 @@ use self::{
 use crate::{core::snapshot::Snapshot, lock, middleware::new_snapshot, project::Project, stats, util, vfs::Vfs};
 
 pub mod changes;
+pub mod helpers;
 pub mod meta;
 pub mod processor;
 pub mod queue;
@@ -47,6 +48,7 @@ impl Core {
 		let meta = Meta::from_project(&project);
 		let snapshot = new_snapshot(&project.path, &meta.context, &vfs)?.expect(
 			"Failed to snapshot root project. \
+		Note that projects cannot be empty. \
 		If you are using custom sync rules make sure you have one with the `Project` type. \
 		Otherwise, this is a bug.",
 		);
@@ -111,7 +113,7 @@ impl Core {
 		let tree = self.tree();
 
 		fn walk(children: &[Ref], tree: &Tree) -> Vec<Snapshot> {
-			let mut snapshot_children = vec![];
+			let mut snapshot_children = Vec::new();
 
 			for child in children {
 				let meta = tree.get_meta(*child).unwrap();
@@ -192,17 +194,13 @@ impl Core {
 				return None;
 			}
 
-			let file_paths = tree.get_meta(id).map_or(vec![], |meta| {
+			let file_paths = tree.get_meta(id).map_or(Vec::new(), |meta| {
 				meta.source
 					.relevant()
 					.iter()
 					.filter_map(|entry| match entry {
 						SourceEntry::File(path) | SourceEntry::Data(path) | SourceEntry::Project(path) => {
-							if let Ok(path) = path.strip_prefix(workspace_dir) {
-								Some(path.to_owned())
-							} else {
-								Some(path.to_owned())
-							}
+							Some(path.strip_prefix(workspace_dir).unwrap_or(path).to_owned())
 						}
 						_ => None,
 					})
@@ -211,7 +209,7 @@ impl Core {
 
 			Some(SourcemapNode {
 				name: instance.name.clone(),
-				class_name: instance.class.clone(),
+				class_name: instance.class,
 				file_paths,
 				children,
 			})
@@ -235,7 +233,7 @@ impl Core {
 		let mut sources = if let Some(meta) = tree.get_meta(instance) {
 			meta.source.relevant().to_owned()
 		} else {
-			vec![]
+			Vec::new()
 		};
 
 		sources.sort_by_key(|source| source.index());
@@ -253,7 +251,7 @@ impl Core {
 #[serde(rename_all = "camelCase")]
 struct SourcemapNode {
 	name: String,
-	class_name: String,
+	class_name: Ustr,
 	#[serde(skip_serializing_if = "Vec::is_empty")]
 	file_paths: Vec<PathBuf>,
 	#[serde(skip_serializing_if = "Vec::is_empty")]

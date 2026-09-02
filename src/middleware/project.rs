@@ -2,8 +2,8 @@ use anyhow::{bail, Result};
 use colored::Colorize;
 use log::error;
 use path_clean::PathClean;
-use rbx_dom_weak::types::Tags;
-use std::{collections::HashMap, path::Path};
+use rbx_dom_weak::{types::Tags, ustr, HashMapExt, UstrMap};
+use std::path::Path;
 
 use super::new_snapshot;
 use crate::{
@@ -28,10 +28,7 @@ pub fn read_project(path: &Path, vfs: &Vfs) -> Result<Snapshot> {
 	let meta = Meta::from_project(&project);
 	let mut snapshot = new_snapshot_node(&project.name, path, project.node, NodePath::new(), &meta.context, vfs)?;
 
-	let mut source = Source::file(path).with_relevant(snapshot.meta.source.relevant().to_owned());
-	source.add_project(path);
-
-	snapshot.set_meta(meta.with_source(source));
+	snapshot.meta.source.add_project(path);
 
 	Ok(snapshot)
 }
@@ -58,12 +55,12 @@ pub fn new_snapshot_node(
 	};
 
 	let properties = {
-		let mut properties = HashMap::new();
+		let mut properties = UstrMap::new();
 
 		for (property, value) in &node.properties {
 			match value.clone().resolve(&class, property) {
 				Ok(value) => {
-					properties.insert(property.to_owned(), value);
+					properties.insert(*property, value);
 				}
 				Err(err) => {
 					error!(
@@ -79,7 +76,7 @@ pub fn new_snapshot_node(
 		if let Some(attributes) = &node.attributes {
 			match attributes.clone().resolve(&class, "Attributes") {
 				Ok(value) => {
-					properties.insert(String::from("Attributes"), value);
+					properties.insert(ustr("Attributes"), value);
 				}
 				Err(err) => {
 					error!(
@@ -93,7 +90,7 @@ pub fn new_snapshot_node(
 		}
 
 		if !node.tags.is_empty() {
-			properties.insert(String::from("Tags"), Tags::from(node.tags.clone()).into());
+			properties.insert(ustr("Tags"), Tags::from(node.tags.clone()).into());
 		}
 
 		properties

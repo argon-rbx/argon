@@ -61,8 +61,8 @@ jobs:
         with:
           version: ${{ github.ref_name }}
 
-      - name: Get previus Tag
-        id: previus-tag
+      - name: Get previous Tag
+        id: previous-tag
         uses: WyriHaximus/github-action-get-previous-tag@v1
 
       - name: Create Release
@@ -74,7 +74,7 @@ jobs:
             ## Changelog
             ${{ steps.read-changes.outputs.changes }}
           prerelease: ${{ contains(github.ref_name, 'pre') }}
-          notes_start_tag: ${{ steps.previus-tag.outputs.tag }}
+          notes_start_tag: ${{ steps.previous-tag.outputs.tag }}
           generate_release_notes: true
           commitish: main
           draft: true
@@ -94,7 +94,7 @@ jobs:
             label: linux-x86_64
 
           - host: macos
-            os: macos-latest
+            os: macos-15-intel
             target: x86_64-apple-darwin
             label: macos-x86_64
 
@@ -104,10 +104,20 @@ jobs:
             label: windows-x86_64
 
             # aarch64
+          - host: linux
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            label: linux-aarch64
+
           - host: macos
             os: macos-latest
             target: aarch64-apple-darwin
             label: macos-aarch64
+
+          - host: windows
+            os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            label: windows-aarch64
 
     steps:
       - uses: actions/checkout@v4
@@ -115,9 +125,12 @@ jobs:
           ref: main
 
       - name: Setup Rust
-        uses: hecrj/setup-rust-action@v2
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Build
         run: cargo build --all-features --release --verbose --target ${{ matrix.target }}

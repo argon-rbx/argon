@@ -6,7 +6,7 @@ use std::{
 };
 
 #[cfg(target_os = "windows")]
-use winsafe::{co::SW, prelude::user_Hwnd, EnumWindows};
+use winsafe::{co::SW, EnumWindows};
 
 pub fn launch(path: Option<PathBuf>) -> Result<()> {
 	let studio_path = RobloxStudio::locate()?.application_path().to_owned();
@@ -35,7 +35,7 @@ pub fn is_running(title: Option<String>) -> Result<bool> {
 		let windows = String::from_utf8(output.stdout)?;
 
 		if let Some(title) = title {
-			Ok(windows.contains(&format!("{} - Roblox Studio", title)))
+			Ok(windows.contains(&format!("{title} - Roblox Studio")))
 		} else {
 			Ok(windows.contains("Roblox Studio"))
 		}

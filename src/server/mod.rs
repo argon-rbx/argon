@@ -33,6 +33,12 @@ pub enum Message {
 	Disconnect(Disconnect),
 }
 
+impl Message {
+	pub fn is_change(&self) -> bool {
+		matches!(self, Message::SyncChanges(_) | Message::SyncbackChanges(_))
+	}
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct SyncChanges(pub Changes);
 
@@ -128,5 +134,5 @@ pub fn get_free_port(host: &str, port: u16) -> u16 {
 }
 
 pub fn format_address(host: &str, port: u16) -> String {
-	format!("http://{}:{}", host, port)
+	format!("http://{host}:{port}")
 }

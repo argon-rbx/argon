@@ -1,7 +1,7 @@
 use crossbeam_channel::Receiver;
 use std::{
 	fs,
-	io::{Error, ErrorKind, Result},
+	io::{Error, Result},
 	path::{Path, PathBuf},
 };
 
@@ -30,11 +30,17 @@ impl VfsBackend for StdBackend {
 	}
 
 	fn read_to_string(&self, path: &Path) -> Result<String> {
-		fs::read_to_string(path)
+		let contents = fs::read_to_string(path)?;
+
+		if Config::new().ignore_line_endings && contents.contains('\r') {
+			return Ok(contents.replace("\r\n", "\n").replace("\r", "\n"));
+		}
+
+		Ok(contents)
 	}
 
 	fn read_dir(&self, path: &Path) -> Result<Vec<PathBuf>> {
-		let mut paths = vec![];
+		let mut paths = Vec::new();
 
 		for entry in fs::read_dir(path)? {
 			paths.push(entry?.path());
@@ -59,7 +65,7 @@ impl VfsBackend for StdBackend {
 		self.unwatch(path)?;
 
 		if Config::new().move_to_bin {
-			trash::delete(path).map_err(|err| Error::new(ErrorKind::Other, err))
+			trash::delete(path).map_err(Error::other)
 		} else if path.is_dir() {
 			fs::remove_dir_all(path)
 		} else {

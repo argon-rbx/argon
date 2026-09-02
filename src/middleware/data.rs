@@ -1,9 +1,7 @@
 use anyhow::Result;
-use json_formatter::JsonFormatter;
 use log::error;
-use rbx_dom_weak::types::Tags;
+use rbx_dom_weak::{types::Tags, ustr, HashMapExt, Ustr, UstrMap};
 use serde::{Deserialize, Serialize};
-use serde_json::Serializer;
 use std::{
 	collections::{BTreeMap, HashMap},
 	path::{Path, PathBuf},
@@ -11,10 +9,10 @@ use std::{
 
 use crate::{
 	core::meta::Meta,
-	ext::{PathExt, WriterExt},
+	ext::PathExt,
 	middleware::helpers,
 	resolution::UnresolvedValue,
-	util,
+	util::{self, serialize_json},
 	vfs::Vfs,
 	Properties,
 };
@@ -22,10 +20,10 @@ use crate::{
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Data {
-	class_name: Option<String>,
+	class_name: Option<Ustr>,
 
 	#[serde(default)]
-	properties: HashMap<String, UnresolvedValue>,
+	properties: HashMap<Ustr, UnresolvedValue>,
 	attributes: Option<UnresolvedValue>,
 	#[serde(default)]
 	tags: Vec<String>,
@@ -39,7 +37,7 @@ struct Data {
 #[derive(Debug, Default)]
 pub struct DataSnapshot {
 	pub path: PathBuf,
-	pub class: Option<String>,
+	pub class: Option<Ustr>,
 	pub properties: Properties,
 	pub keep_unknowns: Option<bool>,
 	pub original_name: Option<String>,
@@ -56,7 +54,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 
 	let data: Data = serde_json::from_str(&data)?;
 
-	let mut properties = HashMap::new();
+	let mut properties = UstrMap::new();
 
 	let class = if let Some(class) = class.or(data.class_name.as_deref()) {
 		class.to_owned()
@@ -92,7 +90,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 	if let Some(attributes) = data.attributes {
 		match attributes.resolve(&class, "Attributes") {
 			Ok(value) => {
-				properties.insert(String::from("Attributes"), value);
+				properties.insert(ustr("Attributes"), value);
 			}
 			Err(err) => {
 				error!("Failed to parse attributes: {} at {}", err, path.display());
@@ -102,7 +100,7 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 
 	// Resolve tags
 	if !data.tags.is_empty() {
-		properties.insert(String::from("Tags"), Tags::from(data.tags).into());
+		properties.insert(ustr("Tags"), Tags::from(data.tags).into());
 	}
 
 	let mesh_source = if class == "MeshPart" {
@@ -125,9 +123,9 @@ pub fn read_data(path: &Path, class: Option<&str>, vfs: &Vfs) -> Result<DataSnap
 #[serde(rename_all = "camelCase")]
 struct WritableData {
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub class_name: Option<String>,
+	pub class_name: Option<Ustr>,
 	#[serde(skip_serializing_if = "BTreeMap::is_empty")]
-	pub properties: BTreeMap<String, UnresolvedValue>,
+	pub properties: BTreeMap<Ustr, UnresolvedValue>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub keep_unknowns: Option<bool>,
@@ -145,7 +143,7 @@ pub fn write_data<'a>(
 	vfs: &Vfs,
 ) -> Result<Option<&'a Path>> {
 	let class_name = if !has_file && class != "Folder" {
-		Some(class.to_owned())
+		Some(Ustr::from(class))
 	} else {
 		None
 	};
@@ -154,7 +152,7 @@ pub fn write_data<'a>(
 		.iter()
 		.map(|(property, variant)| {
 			(
-				property.to_owned(),
+				*property,
 				UnresolvedValue::from_variant(variant.clone(), class, property),
 			)
 		})
@@ -163,6 +161,7 @@ pub fn write_data<'a>(
 	let mut data = WritableData {
 		class_name,
 		properties,
+		original_name: meta.original_name.clone(),
 		..WritableData::default()
 	};
 
@@ -182,15 +181,7 @@ pub fn write_data<'a>(
 		return Ok(None);
 	}
 
-	let formatter = JsonFormatter::with_array_breaks(false);
-
-	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, formatter);
-
-	data.serialize(&mut serializer)?;
-	writer.end()?;
-
-	vfs.write(path, &writer)?;
+	vfs.write(path, &serialize_json(&data)?)?;
 
 	Ok(Some(path))
 }
@@ -236,15 +227,7 @@ pub fn write_original_name(path: &Path, meta: &Meta, vfs: &Vfs) -> Result<()> {
 		data
 	};
 
-	let formatter = JsonFormatter::with_array_breaks(false);
-
-	let mut writer = Vec::new();
-	let mut serializer = Serializer::with_formatter(&mut writer, formatter);
-
-	data.serialize(&mut serializer)?;
-	writer.end()?;
-
-	vfs.write(path, &writer)?;
+	vfs.write(path, &serialize_json(&data)?)?;
 
 	Ok(())
 }

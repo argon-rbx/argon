@@ -30,7 +30,7 @@ impl Program {
 	pub fn new(program: ProgramName) -> Self {
 		Self {
 			program,
-			args: vec![],
+			args: Vec::new(),
 			current_dir: env::current_dir().unwrap(),
 			message: String::from("Failed to start child process"),
 		}
@@ -48,7 +48,7 @@ impl Program {
 
 		// npm create requires -- before the command
 		if self.args.len() == 1 && self.program == ProgramName::Npm && Config::new().package_manager.as_str() == "npm" {
-			self.args.push("--".to_owned());
+			self.args.push("--".into());
 		}
 
 		self.args.push(arg);
@@ -138,7 +138,7 @@ impl Program {
 		}
 
 		let mut command = Command::new(program);
-		command.current_dir(self.current_dir.clone()).args(self.args.clone());
+		command.current_dir(&self.current_dir).args(&self.args);
 
 		if util::env_verbosity() == LevelFilter::Off {
 			command.stdout(Stdio::null());
@@ -198,16 +198,16 @@ impl Program {
 
 	fn get_link(&self) -> String {
 		match self.program {
-			ProgramName::Git => "https://git-scm.com/downloads".to_owned(),
+			ProgramName::Git => "https://git-scm.com/downloads".into(),
 			ProgramName::Npm | ProgramName::Npx => match Config::new().package_manager.as_str() {
 				"yarn" => "https://yarnpkg.com/getting-started/install",
 				"pnpm" => "https://pnpm.io/installation",
 				"bun" => "https://bun.sh/docs/installation",
 				"npm" => "https://nodejs.org/en/download/",
-				package_manager => return format!("https://www.google.com/search?q={}", package_manager),
+				package_manager => return format!("https://www.google.com/search?q={package_manager}"),
 			}
 			.to_owned(),
-			ProgramName::Wally => "https://wally.run".to_owned(),
+			ProgramName::Wally => "https://wally.run".into(),
 			ProgramName::Argon => unreachable!(),
 		}
 	}
