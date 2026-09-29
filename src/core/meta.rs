@@ -223,11 +223,13 @@ pub struct ResolvedSyncRule {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncRule {
-	#[serde(rename = "type")]
+	#[serde(rename = "type", alias = "use")]
 	pub middleware: Middleware,
 
 	pub pattern: Option<Glob>,
+	#[serde(rename = "child_pattern", alias = "childPattern")]
 	pub child_pattern: Option<Glob>,
 	#[serde(default)]
 	pub exclude: Vec<Glob>,
@@ -298,18 +300,23 @@ impl SyncRule {
 	}
 
 	pub fn resolve_child(&self, path: &Path) -> Option<ResolvedSyncRule> {
-		if let Some(child_pattern) = &self.child_pattern {
-			let stripped_path = path.strip_prefix(path.get_parent()).unwrap();
+		let stripped_path = path.strip_prefix(path.get_parent()).unwrap();
+		let child_matches = if let Some(child_pattern) = &self.child_pattern {
+			child_pattern.matches_path(stripped_path)
+		} else if let Some(suffix) = &self.suffix {
+			stripped_path
+				.to_str()
+				.map(|s| s == format!("init{suffix}"))
+				.unwrap_or(false)
+		} else {
+			false
+		};
 
-			if child_pattern.matches_path(stripped_path)
-				&& !self.is_excluded(path)
-				&& self.middleware != Middleware::InstanceData
-			{
-				return Some(ResolvedSyncRule {
-					middleware: self.middleware.clone(),
-					name: path.get_parent().get_name().to_owned(),
-				});
-			}
+		if child_matches && !self.is_excluded(path) && self.middleware != Middleware::InstanceData {
+			return Some(ResolvedSyncRule {
+				middleware: self.middleware.clone(),
+				name: path.get_parent().get_name().to_owned(),
+			});
 		}
 
 		None
@@ -515,8 +522,22 @@ impl Meta {
 			SyncbackFilter::default()
 		};
 
+		let mut sync_rules = project.sync_rules.clone();
+		for rule in &mut sync_rules {
+			if rule.child_pattern.is_none() {
+				if let Some(suffix) = &rule.suffix {
+					rule.child_pattern = Some(Glob::new(&format!("init{suffix}")).unwrap());
+				}
+			}
+		}
+		if !sync_rules.is_empty() {
+			for default_rule in default_sync_rules() {
+				sync_rules.push(default_rule.clone());
+			}
+		}
+
 		let context = Context {
-			sync_rules: project.sync_rules.clone(),
+			sync_rules,
 			ignore_rules: IgnoreRule::from_globs(project.ignore_globs.clone(), project.workspace_dir.clone()),
 			syncback_filter,
 			legacy_scripts: project.legacy_scripts.unwrap_or(true),

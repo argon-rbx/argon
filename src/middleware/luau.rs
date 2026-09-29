@@ -17,6 +17,8 @@ pub enum ScriptType {
 	Server,
 	Client,
 	Module,
+	LegacyServer,
+	LegacyClient,
 }
 
 impl From<Middleware> for ScriptType {
@@ -25,6 +27,8 @@ impl From<Middleware> for ScriptType {
 			Middleware::ServerScript => ScriptType::Server,
 			Middleware::ClientScript => ScriptType::Client,
 			Middleware::ModuleScript => ScriptType::Module,
+			Middleware::LegacyServerScript => ScriptType::LegacyServer,
+			Middleware::LegacyClientScript => ScriptType::LegacyClient,
 			_ => panic!("Cannot convert {middleware:?} to ScriptType"),
 		}
 	}
@@ -35,8 +39,10 @@ pub fn read_luau(path: &Path, context: &Context, vfs: &Vfs, script_type: ScriptT
 	let (class_name, run_context) = match (context.use_legacy_scripts(), &script_type) {
 		(false, ScriptType::Server) => ("Script", Some(Variant::Enum(Enum::from_u32(1)))),
 		(false, ScriptType::Client) => ("Script", Some(Variant::Enum(Enum::from_u32(2)))),
-		(true, ScriptType::Server) => ("Script", Some(Variant::Enum(Enum::from_u32(0)))),
-		(true, ScriptType::Client) => ("LocalScript", None),
+		(true, ScriptType::Server) | (_, ScriptType::LegacyServer) => {
+			("Script", Some(Variant::Enum(Enum::from_u32(0))))
+		}
+		(true, ScriptType::Client) | (_, ScriptType::LegacyClient) => ("LocalScript", None),
 		(_, ScriptType::Module) => ("ModuleScript", None),
 	};
 

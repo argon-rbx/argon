@@ -55,6 +55,14 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.client.luau")
 				.with_child_pattern("init.client.luau")
 				.with_suffix(".client.luau"),
+			SyncRule::new(Middleware::LegacyServerScript)
+				.with_pattern("*.legacy.luau")
+				.with_child_pattern("init.legacy.luau")
+				.with_suffix(".legacy.luau"),
+			SyncRule::new(Middleware::LegacyClientScript)
+				.with_pattern("*.local.luau")
+				.with_child_pattern("init.local.luau")
+				.with_suffix(".local.luau"),
 			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.luau")
 				.with_child_pattern("init.luau"),
@@ -83,6 +91,14 @@ pub fn default_sync_rules() -> &'static Vec<SyncRule> {
 				.with_pattern("*.client.lua")
 				.with_child_pattern("init.client.lua")
 				.with_suffix(".client.lua"),
+			SyncRule::new(Middleware::LegacyServerScript)
+				.with_pattern("*.legacy.lua")
+				.with_child_pattern("init.legacy.lua")
+				.with_suffix(".legacy.lua"),
+			SyncRule::new(Middleware::LegacyClientScript)
+				.with_pattern("*.local.lua")
+				.with_child_pattern("init.local.lua")
+				.with_suffix(".local.lua"),
 			SyncRule::new(Middleware::ModuleScript)
 				.with_pattern("*.lua")
 				.with_child_pattern("init.lua"),

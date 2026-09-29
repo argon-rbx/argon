@@ -24,7 +24,7 @@ fn format_spans(elements: &[Span]) -> String {
 			Emphasis(ref content) => format!("<i>{}</i>", format_spans(content)),
 			Code(ref text) => format!(
 				"<font family='rbxasset://fonts/families/RobotoMono.json'>{}</font>",
-				&escape(text)
+				escape(text)
 			),
 			Link(ref text, _, _) => escape(text),
 			Image(_, _, _) => String::new(),
@@ -72,7 +72,7 @@ fn format_blockquote(elements: &[Block]) -> String {
 fn format_codeblock(_lang: &Option<String>, elements: &str) -> String {
 	format!(
 		"<font family='rbxasset://fonts/families/RobotoMono.json'>{}</font>\n\n",
-		&escape(elements)
+		escape(elements)
 	)
 }
 

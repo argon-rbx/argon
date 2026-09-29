@@ -46,7 +46,7 @@ fn msgpack_to_lua(value: &Value) -> String {
 				lua.push_str(&f.to_string())
 			}
 		}
-		Value::String(s) => lua.push_str(&format!("\"{}\"", &escape_chars(s.as_str().unwrap_or_default()))),
+		Value::String(s) => lua.push_str(&format!("\"{}\"", escape_chars(s.as_str().unwrap_or_default()))),
 		Value::Binary(b) => lua.push_str(&String::from_utf8_lossy(b)),
 		Value::Array(a) => {
 			lua.push('{');
@@ -62,7 +62,7 @@ fn msgpack_to_lua(value: &Value) -> String {
 			lua.push('{');
 
 			for (k, v) in t {
-				lua.push_str(&format!("[{}] = ", &msgpack_to_lua(k)));
+				lua.push_str(&format!("[{}] = ", msgpack_to_lua(k)));
 				lua.push_str(&msgpack_to_lua(v));
 				lua.push(',');
 			}
